@@ -14,6 +14,7 @@ FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     for (Fact *fact : {
         &_opTimeBootUs,
         &_opBootId,
+        &_opBootIdHex,
         &_opProfileId,
         &_authorityEpoch,
         &_directiveEpoch,
@@ -393,6 +394,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _markFamilyReceived(QStringLiteral("operation"));
         _opTimeBootUs.setRawValue(value.time_boot_us);
         _opBootId.setRawValue(value.boot_id);
+        _opBootIdHex.setRawValue(QString::number(value.boot_id, 16).rightJustified(16, QLatin1Char('0')).toUpper());
         _opProfileId.setRawValue(value.profile_id);
         _authorityEpoch.setRawValue(value.authority_epoch);
         _directiveEpoch.setRawValue(value.directive_epoch);
