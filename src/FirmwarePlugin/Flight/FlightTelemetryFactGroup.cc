@@ -224,6 +224,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastTimeStatusTimeBootUs = 0;
     _lastEventTimeBootUs = 0;
     _eventIdsAtLastTimestamp.clear();
+    _eventIdsAtLastTimestampOrder.clear();
     _lastPrearmTimeBootUs = 0;
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
@@ -493,11 +494,16 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (value.time_boot_us > _lastEventTimeBootUs) {
             _lastEventTimeBootUs = value.time_boot_us;
             _eventIdsAtLastTimestamp.clear();
+            _eventIdsAtLastTimestampOrder.clear();
         }
         if (_eventIdsAtLastTimestamp.contains(value.event_id)) {
             return;
         }
         _eventIdsAtLastTimestamp.insert(value.event_id);
+        _eventIdsAtLastTimestampOrder.enqueue(value.event_id);
+        while (_eventIdsAtLastTimestampOrder.size() > _recentEventHistoryCapacity) {
+            _eventIdsAtLastTimestamp.remove(_eventIdsAtLastTimestampOrder.dequeue());
+        }
         _eventTimeBootUs.setRawValue(value.time_boot_us);
         _eventBootId.setRawValue(value.boot_id);
         _eventProfileId.setRawValue(value.profile_id);
