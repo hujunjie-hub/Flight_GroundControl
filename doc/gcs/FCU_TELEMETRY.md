@@ -130,7 +130,8 @@ values should be displayed as unknown, not silently mapped to healthy.
   0x0701–0x0705, and SensorConsistency 0–8. The UI displays unknown numeric
   codes as unknown rather than guessing their meaning.
 - Pre-arm check state: 0 UNKNOWN, 1 PASS, 2 FAIL, 3 WARNING. Check IDs are
-  fixed 0..14; bit positions in masks equal the check ID.
+  fixed 0..14; bit positions in masks equal the check ID. Check epochs start at
+  1; epoch 0 is reserved and rejected.
 - Build digest kind: 0 FIRMWARE, 1 CORE_PARAMETERS, 2 PROFILE, 3 ABI.
   Each digest is a complete 32-byte SHA-256 represented as 64 lowercase hex
   characters. Source commit is 20 bytes represented as 40 hex characters
