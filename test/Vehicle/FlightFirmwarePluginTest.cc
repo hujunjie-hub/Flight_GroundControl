@@ -454,6 +454,28 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(updatedPrearmCheck.value(QStringLiteral("checkState")).toUInt(), 2U);
     QCOMPARE(updatedPrearmCheck.value(QStringLiteral("reasonCode")).toUInt(), 3U);
 
+    // A single PreArm snapshot may publish several check IDs at one timestamp.
+    prearm.time_boot_us = 206;
+    prearm.check_id = 3;
+    prearm.check_state = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 3);
+
+    prearm.check_id = 4;
+    prearm.check_state = 3;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 4);
+
+    // An exact duplicate of one check at the same timestamp is still rejected.
+    prearm.check_id = 3;
+    prearm.check_state = 2;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 4);
+    QCOMPARE(telemetry.prearmChecks().at(2).toMap().value(QStringLiteral("checkState")).toUInt(), 1U);
+
     const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
     QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
     QVERIFY(receiveAges.value(QStringLiteral("event")).toLongLong() >= 0);
