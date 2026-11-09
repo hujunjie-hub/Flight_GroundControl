@@ -9,6 +9,8 @@
 FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     : FactGroup(0, parent)
 {
+    _receiveClock.start();
+
     for (Fact *fact : {
         &_opTimeBootUs,
         &_opBootId,
@@ -182,6 +184,30 @@ QVariantList FlightTelemetryFactGroup::recentEvents() const
     return _recentEvents;
 }
 
+QVariantMap FlightTelemetryFactGroup::familyReceiveAgeMs() const
+{
+    const qint64 nowMs = _receiveClock.elapsed();
+    QVariantMap ages;
+    for (const QString &family : {
+             QStringLiteral("operation"), QStringLiteral("navigation"),
+             QStringLiteral("sensorHealth"), QStringLiteral("control"),
+             QStringLiteral("actuator"), QStringLiteral("link"),
+             QStringLiteral("storage"), QStringLiteral("resource"),
+             QStringLiteral("time"), QStringLiteral("event"),
+             QStringLiteral("prearm"), QStringLiteral("rcInput"),
+             QStringLiteral("buildInfo")}) {
+        const qint64 lastReceiveMs = _lastReceiveElapsedMs.value(family, -1);
+        ages.insert(family, lastReceiveMs < 0 ? -1 : qMax<qint64>(0, nowMs - lastReceiveMs));
+    }
+    return ages;
+}
+
+void FlightTelemetryFactGroup::_markFamilyReceived(const QString &family)
+{
+    _lastReceiveElapsedMs.insert(family, _receiveClock.elapsed());
+    emit familyReceiveAgeMsChanged();
+}
+
 bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
 {
@@ -244,6 +270,8 @@ void FlightTelemetryFactGroup::_resetTelemetryAvailability()
     _resourceAvailable.setRawValue(false);
     _timeAvailable.setRawValue(false);
     _eventAvailable.setRawValue(false);
+    _lastReceiveElapsedMs.clear();
+    emit familyReceiveAgeMsChanged();
     if (!_recentEvents.isEmpty()) {
         _recentEvents.clear();
         emit recentEventsChanged();
@@ -280,6 +308,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastOperationTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("operation"));
         _opTimeBootUs.setRawValue(value.time_boot_us);
         _opBootId.setRawValue(value.boot_id);
         _opProfileId.setRawValue(value.profile_id);
@@ -308,6 +337,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastNavigationTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("navigation"));
         _navTimeBootUs.setRawValue(value.time_boot_us);
         _navBootId.setRawValue(value.boot_id);
         _navProfileId.setRawValue(value.profile_id);
@@ -330,6 +360,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastSensorTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("sensorHealth"));
         _sensorTimeBootUs.setRawValue(value.time_boot_us);
         _sensorBootId.setRawValue(value.boot_id);
         _sensorProfileId.setRawValue(value.profile_id);
@@ -351,6 +382,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastControlTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("control"));
         _controlTimeBootUs.setRawValue(value.time_boot_us);
         _controlBootId.setRawValue(value.boot_id);
         _controlProfileId.setRawValue(value.profile_id);
@@ -372,6 +404,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastActuatorTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("actuator"));
         _actuatorTimeBootUs.setRawValue(value.time_boot_us);
         _actuatorBootId.setRawValue(value.boot_id);
         _actuatorProfileId.setRawValue(value.profile_id);
@@ -397,6 +430,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastLinkTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("link"));
         _linkTimeBootUs.setRawValue(value.time_boot_us);
         _linkBootId.setRawValue(value.boot_id);
         _linkProfileId.setRawValue(value.profile_id);
@@ -420,6 +454,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastStorageTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("storage"));
         _storageTimeBootUs.setRawValue(value.time_boot_us);
         _storageBootId.setRawValue(value.boot_id);
         _storageProfileId.setRawValue(value.profile_id);
@@ -443,6 +478,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastResourceTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("resource"));
         _resourceTimeBootUs.setRawValue(value.time_boot_us);
         _resourceBootId.setRawValue(value.boot_id);
         _resourceProfileId.setRawValue(value.profile_id);
@@ -464,6 +500,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastTimeStatusTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("time"));
         _timeStatusTimeBootUs.setRawValue(value.time_boot_us);
         _timeStatusBootId.setRawValue(value.boot_id);
         _timeStatusUnixTimeUs.setRawValue(value.unix_time_us);
@@ -504,6 +541,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         while (_eventIdsAtLastTimestampOrder.size() > _recentEventHistoryCapacity) {
             _eventIdsAtLastTimestamp.remove(_eventIdsAtLastTimestampOrder.dequeue());
         }
+        _markFamilyReceived(QStringLiteral("event"));
         _eventTimeBootUs.setRawValue(value.time_boot_us);
         _eventBootId.setRawValue(value.boot_id);
         _eventProfileId.setRawValue(value.profile_id);
@@ -552,6 +590,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("prearm"));
         _prearmTimeBootUs.setRawValue(value.time_boot_us);
         _prearmBootId.setRawValue(value.boot_id);
         _prearmEvidenceTimeUs.setRawValue(value.evidence_time_us);
@@ -581,6 +620,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastRcInputTimeBootUs)) {
             return;
         }
+        _markFamilyReceived(QStringLiteral("rcInput"));
         _rcTimeBootUs.setRawValue(value.time_boot_us);
         _rcBootId.setRawValue(value.boot_id);
         _rcProfileId.setRawValue(value.profile_id);
@@ -624,6 +664,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             return;
         }
         _lastBuildInfoDigestMask |= digestBit;
+        _markFamilyReceived(QStringLiteral("buildInfo"));
         _buildTimeBootUs.setRawValue(value.time_boot_us);
         _buildBootId.setRawValue(value.boot_id);
         _buildProfileId.setRawValue(value.profile_id);
