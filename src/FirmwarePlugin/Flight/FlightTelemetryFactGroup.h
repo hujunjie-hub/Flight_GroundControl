@@ -23,17 +23,26 @@ class FlightTelemetryFactGroup final : public FactGroup
 public:
     Q_PROPERTY(QVariantList recentEvents READ recentEvents NOTIFY recentEventsChanged)
     Q_PROPERTY(QVariantList prearmChecks READ prearmChecks NOTIFY prearmChecksChanged)
+    Q_PROPERTY(QVariantList sensorHealthStatuses READ sensorHealthStatuses NOTIFY sensorHealthStatusesChanged)
+    Q_PROPERTY(QVariantList linkStatuses READ linkStatuses NOTIFY linkStatusesChanged)
+    Q_PROPERTY(QVariantList resourceStatuses READ resourceStatuses NOTIFY resourceStatusesChanged)
     Q_PROPERTY(QVariantMap familyReceiveAgeMs READ familyReceiveAgeMs NOTIFY familyReceiveAgeMsChanged)
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
     QVariantList recentEvents() const;
     QVariantList prearmChecks() const;
+    QVariantList sensorHealthStatuses() const;
+    QVariantList linkStatuses() const;
+    QVariantList resourceStatuses() const;
     QVariantMap familyReceiveAgeMs() const;
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
     void recentEventsChanged();
     void prearmChecksChanged();
+    void sensorHealthStatusesChanged();
+    void linkStatusesChanged();
+    void resourceStatusesChanged();
     void familyReceiveAgeMsChanged();
 
 private:
@@ -208,6 +217,8 @@ private:
     Fact _sourceCommitValid{0, QStringLiteral("sourceCommitValid"), FactMetaData::valueTypeBool, this};
 
     bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs);
+    bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint32 instanceId,
+                                 QHash<quint32, quint64> &lastTimeByInstance);
     void _activateBoot(quint64 bootId);
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
@@ -218,18 +229,22 @@ private:
     quint64 _activeBootId = 0;
     quint64 _lastOperationTimeBootUs = 0;
     quint64 _lastNavigationTimeBootUs = 0;
-    quint64 _lastSensorTimeBootUs = 0;
+    QHash<quint32, quint64> _lastSensorTimeByInstance;
     quint64 _lastControlTimeBootUs = 0;
     quint64 _lastActuatorTimeBootUs = 0;
-    quint64 _lastLinkTimeBootUs = 0;
+    QHash<quint32, quint64> _lastLinkTimeByInstance;
     quint64 _lastStorageTimeBootUs = 0;
-    quint64 _lastResourceTimeBootUs = 0;
+    QHash<quint32, quint64> _lastResourceTimeByTask;
     quint64 _lastTimeStatusTimeBootUs = 0;
     quint64 _lastEventTimeBootUs = 0;
     QSet<quint32> _eventIdsAtLastTimestamp;
     QQueue<quint32> _eventIdsAtLastTimestampOrder;
     QVariantList _recentEvents;
     QMap<quint8, QVariantMap> _prearmChecksById;
+    QMap<quint32, QVariantMap> _sensorHealthByInstance;
+    QMap<quint32, QVariantMap> _linkStatusesByInstance;
+    QMap<quint32, QVariantMap> _resourceStatusesByTask;
+    static constexpr int _resourceTaskCapacity = 64;
     quint32 _prearmCheckEpochValue = 0;
     bool _hasPrearmCheckEpoch = false;
     static constexpr int _recentEventHistoryCapacity = 64;
