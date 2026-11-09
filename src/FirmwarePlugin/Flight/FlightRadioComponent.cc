@@ -2,8 +2,16 @@
 #include "FlightRcMonitor.h"
 
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 namespace {
+bool canCalibrateVehicle(const Vehicle *vehicle)
+{
+    return vehicle && !vehicle->armed() && !vehicle->flying() &&
+           vehicle->vehicleLinkManager() &&
+           !vehicle->vehicleLinkManager()->communicationLost();
+}
+
 constexpr const char *kRadioQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightRadio.qml";
 constexpr int kRadioCalKind = 6;
@@ -31,7 +39,8 @@ FlightRadioComponent::~FlightRadioComponent() = default;
 
 void FlightRadioComponent::startCalibration()
 {
-    if (!_vehicle || _vehicle->armed() || _calibrationState == 1)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState == 1 ||
+        !_rcMonitor || _rcMonitor->channelCount() < 4)
         return;
 
     _detail.clear();
@@ -43,7 +52,7 @@ void FlightRadioComponent::startCalibration()
 
 void FlightRadioComponent::saveCalibration()
 {
-    if (!_vehicle || _vehicle->armed() || _calibrationState != 1)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState != 1)
         return;
 
     _detail.clear();
@@ -53,7 +62,7 @@ void FlightRadioComponent::saveCalibration()
 
 void FlightRadioComponent::cancelCalibration()
 {
-    if (!_vehicle || _vehicle->armed() || _calibrationState != 1)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState != 1)
         return;
 
     _detail.clear();
@@ -63,7 +72,8 @@ void FlightRadioComponent::cancelCalibration()
 
 void FlightRadioComponent::copyTrims()
 {
-    if (!_vehicle || _vehicle->armed() || _vehicle->flying() || _calibrationState == 1)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState != 2 ||
+        !_rcMonitor || _rcMonitor->channelCount() < 4)
         return;
 
     _detail.clear();
@@ -73,7 +83,7 @@ void FlightRadioComponent::copyTrims()
 
 void FlightRadioComponent::bindCrsf()
 {
-    if (!_vehicle || _vehicle->armed() || _vehicle->flying() || _calibrationState == 1)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState == 1)
         return;
 
     _detail.clear();
