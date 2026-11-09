@@ -330,7 +330,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastEventTimeBootUs = 0;
     _eventIdsAtLastTimestamp.clear();
     _eventIdsAtLastTimestampOrder.clear();
-    _lastPrearmTimeBootUs = 0;
+    _lastPrearmTimeByCheckId.clear();
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
     _lastBuildInfoDigestMask = 0;
@@ -762,7 +762,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             newCheckEpoch = true;
         }
 
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
+        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.check_id,
+                                     _lastPrearmTimeByCheckId)) {
             return;
         }
 
