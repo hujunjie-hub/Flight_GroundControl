@@ -87,6 +87,8 @@ jobs:
           DETECT_LINUX: ${{ steps.detect.outputs.linux }}
           DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
         run: |
-          echo "should_build=${DETECT_ANY}" >> "$GITHUB_OUTPUT"
-          echo "linux=${DETECT_LINUX}" >> "$GITHUB_OUTPUT"
-          echo "windows=${DETECT_WINDOWS}" >> "$GITHUB_OUTPUT"
+          {
+            echo "should_build=${DETECT_ANY}"
+            echo "linux=${DETECT_LINUX}"
+            echo "windows=${DETECT_WINDOWS}"
+          } >> "$GITHUB_OUTPUT"
