@@ -12,15 +12,6 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build type'
-        required: false
-        default: 'Release'
-        type: choice
-        options:
-          - Release
-          - Debug
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ['${{ inputs.build_type || ''Release'' }}']
+        build_type: ['Release']
 
     defaults:
       run:
