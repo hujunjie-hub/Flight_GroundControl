@@ -324,4 +324,58 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
 }
 
+
+void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues()
+{
+    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR);
+    FlightTelemetryFactGroup telemetry;
+    mavlink_message_t message{};
+
+    mavlink_fcu_operation_status_t operation{};
+    operation.time_boot_us = 10;
+    operation.boot_id = 7;
+    operation.arm_state = 1;
+    operation.flight_mode = 4;
+    operation.authority = 1;
+    operation.failsafe_level = 0;
+    operation.mission_state = 0;
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
+
+    operation.time_boot_us = 11;
+    operation.flight_mode = 9; // Reserved FlightMode must not replace the last valid snapshot.
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 10ULL);
+    QCOMPARE(telemetry.getFact(QStringLiteral("flightMode"))->rawValue().toUInt(), 4U);
+
+    mavlink_fcu_nav_status_t navigation{};
+    navigation.time_boot_us = 12;
+    navigation.boot_id = operation.boot_id;
+    navigation.position_std_m = -0.1F;
+    navigation.velocity_std_mps = 0.1F;
+    navigation.heading_std_rad = 0.01F;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+
+    mavlink_fcu_rc_input_status_t rc{};
+    rc.time_boot_us = 13;
+    rc.boot_id = operation.boot_id;
+    rc.valid_axes_mask = 1U << 0;
+    rc.roll_norm = 1.5F;
+    rc.link_state = 2;
+    mavlink_msg_fcu_rc_input_status_encode(vehicle.id(), vehicle.compId(), &message, &rc);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("rcInputAvailable"))->rawValue().toBool());
+
+    rc.time_boot_us = 14;
+    rc.roll_norm = 0.5F;
+    mavlink_msg_fcu_rc_input_status_encode(vehicle.id(), vehicle.compId(), &message, &rc);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("rcInputAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("rcRollNorm"))->rawValue().toFloat(), 0.5F);
+}
+
 UT_REGISTER_TEST(FlightFirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)
