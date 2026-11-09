@@ -13,6 +13,9 @@ SetupPage {
 
     readonly property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property var _telemetry: _vehicle ? _vehicle.flightTelemetry : null
+    property int _ageRefreshTick: 0
+    readonly property var _receiveAges: _ageRefreshTick >= 0 && _telemetry
+                                        ? _telemetry.familyReceiveAgeMs : ({})
 
     function _availabilityForFact(name) {
         if (name.endsWith("Available")) {
@@ -83,6 +86,14 @@ SetupPage {
         }
         const fact = _telemetry.getFact(name)
         return fact ? fact.rawValue : null
+    }
+
+    function _receiveAgeText(family) {
+        const ageMs = Number(_receiveAges[family])
+        if (!Number.isFinite(ageMs) || ageMs < 0) {
+            return qsTr("未收到")
+        }
+        return qsTr("%1 s 前").arg((ageMs / 1000).toFixed(1))
     }
 
     function _familyStatus(name) {
@@ -178,6 +189,13 @@ SetupPage {
         return _maskBit(maskName, bit) ? _number(name, decimals, suffix) : qsTr("无效")
     }
 
+    Timer {
+        interval: 500
+        repeat: true
+        running: root.visible
+        onTriggered: root._ageRefreshTick += 1
+    }
+
     Component {
         id: pageComponent
 
@@ -219,6 +237,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("操作与飞行模式")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("operationAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("operation") }
                     VehicleSummaryRow { labelText: qsTr("解锁状态"); valueText: root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")]) }
                     VehicleSummaryRow { labelText: qsTr("飞行模式"); valueText: root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")]) }
                     VehicleSummaryRow { labelText: qsTr("控制权"); valueText: root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]) }
@@ -246,6 +265,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("导航状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("navigationAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("navigation") }
                     VehicleSummaryRow { labelText: qsTr("状态代次 / 原点 ID"); valueText: root._integer("navStateEpoch") + " / " + root._integer("originId") }
                     VehicleSummaryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
                     VehicleSummaryRow { labelText: qsTr("位置标准差"); valueText: root._number("positionStdM", 3, " m") }
@@ -258,6 +278,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("传感器健康")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("sensorHealthAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("sensorHealth") }
                     VehicleSummaryRow { labelText: qsTr("传感器实例"); valueText: root._integer("sensorInstanceId") }
                     VehicleSummaryRow { labelText: qsTr("健康状态"); valueText: root._enum("sensorHealthState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")]) }
                     VehicleSummaryRow { labelText: qsTr("处理动作"); valueText: root._integer("sensorAction") }
@@ -269,6 +290,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("控制器状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("controlAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("control") }
                     VehicleSummaryRow { labelText: qsTr("求解器"); valueText: root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")]) }
                     VehicleSummaryRow { labelText: qsTr("控制序号"); valueText: root._integer("controlSequence") }
                     VehicleSummaryRow { labelText: qsTr("求解耗时"); valueText: root._number("controlSolveTimeUs", 0, " μs") }
@@ -281,6 +303,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("执行器状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("actuatorAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("actuator") }
                     VehicleSummaryRow { labelText: qsTr("控制序号"); valueText: root._integer("actuatorControlSequence") }
                     VehicleSummaryRow { labelText: qsTr("输出许可代次"); valueText: root._integer("actuatorPermitEpoch") }
                     VehicleSummaryRow { labelText: qsTr("可用执行器"); valueText: root._mask("actuatorAvailableMask") }
@@ -293,6 +316,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("通信链路")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
                     VehicleSummaryRow { labelText: qsTr("链路类型"); valueText: root._enum("linkKind", [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")]) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("linkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
                     VehicleSummaryRow { labelText: qsTr("RSSI"); valueText: root._maskBit("linkValidityMask", 8) ? root._number("linkRssiDbm", 0, " dBm") : qsTr("无效") }
@@ -305,6 +329,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("存储状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
                     VehicleSummaryRow {
                         labelText: qsTr("SD")
                         valueText: root._maskBit("storageValidityMask", 0)
@@ -327,6 +352,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("实时资源")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("resource") }
                     VehicleSummaryRow { labelText: qsTr("任务 ID"); valueText: root._integer("resourceTaskId") }
                     VehicleSummaryRow {
                         labelText: qsTr("CPU")
@@ -343,6 +369,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("时间同步")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("timeAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                     VehicleSummaryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     VehicleSummaryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     VehicleSummaryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : (root._fact("utcValid") ? qsTr("是") : qsTr("否")) }
@@ -359,6 +386,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("最新事件")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("eventAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("event") }
                     VehicleSummaryRow { labelText: qsTr("事件 ID"); valueText: root._integer("eventId") }
                     VehicleSummaryRow { labelText: qsTr("严重度"); valueText: root._enum("eventSeverity", [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]) }
                     VehicleSummaryRow { labelText: qsTr("来源 ID"); valueText: root._integer("eventSourceId") }
@@ -403,6 +431,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("解锁前检查")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
                     VehicleSummaryRow { labelText: qsTr("检查项"); valueText: root._enum("prearmCheckId", [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")]) }
                     VehicleSummaryRow { labelText: qsTr("检查结果"); valueText: root._enum("prearmCheckState", [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")]) }
                     VehicleSummaryRow { labelText: qsTr("模式掩码"); valueText: root._mask("prearmModeMask") }
@@ -414,6 +443,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("遥控输入")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }
                     VehicleSummaryRow {
                         labelText: qsTr("横滚 / 俯仰")
                         valueText: (root._maskBit("rcValidAxesMask", 0) ? root._number("rcRollNorm", 3, "") : qsTr("无效"))
@@ -436,6 +466,7 @@ SetupPage {
                 StatusCard {
                     title: qsTr("固件与版本")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("buildInfoAvailable") }
+                    VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("buildInfo") }
                     VehicleSummaryRow { labelText: qsTr("产品版本"); valueText: root._integer("buildProductRevision") }
                     VehicleSummaryRow { labelText: qsTr("接口版本"); valueText: root._integer("buildPortRevision") }
                     VehicleSummaryRow { labelText: qsTr("Schema"); valueText: root._integer("buildSchemaMajor") + "." + root._integer("buildSchemaMinor") }
