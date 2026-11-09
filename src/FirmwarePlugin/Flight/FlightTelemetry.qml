@@ -171,6 +171,74 @@ SetupPage {
                ? qsTr("未上报") : String(raw).substring(0, 16) + "…"
     }
 
+    function _reasonText(namespace, code) {
+        if (namespace === null || namespace === undefined || code === null || code === undefined) {
+            return qsTr("未上报")
+        }
+
+        const ns = Number(namespace)
+        const value = Number(code)
+        if (!Number.isInteger(ns) || !Number.isInteger(value) || value < 0) {
+            return qsTr("无效")
+        }
+
+        const common = [
+            qsTr("无"), qsTr("参数无效"), qsTr("未就绪"), qsTr("超出范围"),
+            qsTr("不支持"), qsTr("数值异常"), qsTr("超过截止时间"), qsTr("配置不匹配"),
+            qsTr("模型适用域外"), qsTr("容量不足"), qsTr("数据过期"), qsTr("未获许可"),
+            qsTr("代次不匹配"), qsTr("坐标系或原点不匹配"), qsTr("时间无效"), qsTr("认证失败"),
+            qsTr("重放检测"), qsTr("传感器数据缺失"), qsTr("硬件故障"), qsTr("策略未验证"),
+            qsTr("已取消"), qsTr("GNSS 导航丢失"), qsTr("PPS 丢失"), qsTr("UTC 代次无效"),
+            qsTr("时间映射降级"), qsTr("时间基准故障")
+        ]
+        const guidance = {
+            "0": qsTr("无"),
+            "1537": qsTr("制导输入过期"),
+            "1538": qsTr("代次不匹配"),
+            "1539": qsTr("坐标系或原点不匹配"),
+            "1540": qsTr("障碍物无效"),
+            "1541": qsTr("障碍物未知"),
+            "1542": qsTr("地理围栏无效"),
+            "1543": qsTr("触发地理围栏"),
+            "1544": qsTr("静态碰撞"),
+            "1545": qsTr("动态碰撞"),
+            "1546": qsTr("安全间隔未证实"),
+            "1547": qsTr("不确定度无界"),
+            "1548": qsTr("时间预算超限"),
+            "1549": qsTr("数值无效"),
+            "1550": qsTr("飞行器包线无效"),
+            "1551": qsTr("参考轨迹过期")
+        }
+        const control = {
+            "0": qsTr("无"),
+            "1793": qsTr("控制分配不可行"),
+            "1794": qsTr("控制分配秩亏"),
+            "1795": qsTr("控制分配数值失败"),
+            "1796": qsTr("执行器受限"),
+            "1797": qsTr("MPC 悬停点超出近似适用域")
+        }
+        const sensor = [
+            qsTr("无"), qsTr("策略禁用"), qsTr("时间未就绪"), qsTr("标定未就绪"),
+            qsTr("样本不足"), qsTr("数值失败"), qsTr("数据不一致"),
+            qsTr("证据超时"), qsTr("版本不匹配")
+        ]
+
+        let label
+        if (ns === 0) {
+            label = common[value]
+        } else if (ns === 1) {
+            label = guidance[String(value)]
+        } else if (ns === 2) {
+            label = control[String(value)]
+        } else if (ns === 3) {
+            label = sensor[value]
+        }
+
+        return label === undefined
+               ? qsTr("未知原因 (%1)").arg(value)
+               : qsTr("%1 (%2)").arg(label).arg(value)
+    }
+
     function _eventSeverityLabel(severity) {
         const labels = [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]
         const value = Number(severity)
@@ -255,10 +323,8 @@ SetupPage {
                         labelText: qsTr("输出许可代次")
                         valueText: root._integer("permitEpoch")
                     }
-                    VehicleSummaryRow {
-                        labelText: qsTr("请求 ID / 原因码")
-                        valueText: root._integer("requestId") + " / " + root._integer("operationReasonCode")
-                    }
+                    VehicleSummaryRow { labelText: qsTr("请求 ID"); valueText: root._integer("requestId") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("operationReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("opTimeBootUs") }
                 }
 
@@ -272,6 +338,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("速度标准差"); valueText: root._number("velocityStdMps", 3, " m/s") }
                     VehicleSummaryRow { labelText: qsTr("航向标准差"); valueText: root._number("headingStdRad", 3, " rad") }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("navigationAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("navTimeBootUs") }
                 }
 
@@ -282,7 +349,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("传感器实例"); valueText: root._integer("sensorInstanceId") }
                     VehicleSummaryRow { labelText: qsTr("健康状态"); valueText: root._enum("sensorHealthState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")]) }
                     VehicleSummaryRow { labelText: qsTr("处理动作"); valueText: root._integer("sensorAction") }
-                    VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("sensorReasonCode") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("sensorReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("间隙 / 拒绝计数"); valueText: root._integer("sensorGapCount") + " / " + root._integer("sensorRejectCount") }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("sensorTimeBootUs") }
                 }
@@ -296,7 +363,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("求解耗时"); valueText: root._number("controlSolveTimeUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("可控 DOF"); valueText: root._mask("controllableDofMask") }
                     VehicleSummaryRow { labelText: qsTr("降级 DOF"); valueText: root._mask("degradedDofMask") }
-                    VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("controlReasonCode") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(2, root._fact("controlReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("controlTimeBootUs") }
                 }
 
@@ -310,6 +377,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("饱和执行器"); valueText: root._mask("actuatorSaturatedMask") }
                     VehicleSummaryRow { labelText: qsTr("输出策略"); valueText: root._integer("actuatorOutputPolicyId") }
                     VehicleSummaryRow { labelText: qsTr("反馈能力"); valueText: root._integer("actuatorFeedbackCapability") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("actuatorReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("actuatorTimeBootUs") }
                 }
 
@@ -323,6 +391,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("链路质量"); valueText: root._maskBit("linkValidityMask", 9) ? root._permillePercent("linkQualityPermille") : qsTr("无效") }
                     VehicleSummaryRow { labelText: qsTr("丢包率"); valueText: root._maskBit("linkValidityMask", 10) ? root._lossPercent("linkPacketLossPpm") : qsTr("无效") }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("linkAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("linkReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("linkTimeBootUs") }
                 }
 
@@ -346,6 +415,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
                     VehicleSummaryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
                     VehicleSummaryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("storageReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("storageTimeBootUs") }
                 }
 
@@ -363,6 +433,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
                     VehicleSummaryRow { labelText: qsTr("截止期错过"); valueText: root._integer("resourceDeadlineMissCount") }
                     VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._validValue("resourceAxiFreeBytes", "resourceValidityMask", 3, 0, " B") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("resourceReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("resourceTimeBootUs") }
                 }
 
@@ -391,7 +462,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("严重度"); valueText: root._enum("eventSeverity", [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]) }
                     VehicleSummaryRow { labelText: qsTr("来源 ID"); valueText: root._integer("eventSourceId") }
                     VehicleSummaryRow { labelText: qsTr("原因命名空间"); valueText: root._enum("eventReasonNamespace", [qsTr("通用"), qsTr("制导"), qsTr("控制"), qsTr("传感器一致性")]) }
-                    VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("eventReasonCode") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(root._fact("eventReasonNamespace"), root._fact("eventReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("本地接收序号"); valueText: root._integer("eventSequence") }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("eventTimeBootUs") }
                 }
@@ -416,10 +487,10 @@ SetupPage {
                             QGCLabel {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
-                                text: qsTr("ID %1 · 来源 %2 · 原因 %3")
+                                text: qsTr("ID %1 · 来源 %2 · %3")
                                       .arg(modelData.eventId)
                                       .arg(modelData.sourceId)
-                                      .arg(modelData.reasonCode)
+                                      .arg(root._reasonText(modelData.reasonNamespace, modelData.reasonCode))
                             }
                             QGCLabel {
                                 text: root._eventSeverityLabel(modelData.severity)
@@ -435,7 +506,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("检查项"); valueText: root._enum("prearmCheckId", [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")]) }
                     VehicleSummaryRow { labelText: qsTr("检查结果"); valueText: root._enum("prearmCheckState", [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")]) }
                     VehicleSummaryRow { labelText: qsTr("模式掩码"); valueText: root._mask("prearmModeMask") }
-                    VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("prearmReasonCode") }
+                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("恢复条件"); valueText: root._enum("prearmRecoveryCondition", [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
                 }
