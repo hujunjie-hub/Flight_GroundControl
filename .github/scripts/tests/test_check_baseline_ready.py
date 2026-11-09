@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from check_baseline_ready import evaluate_readiness
 
-PLATFORMS = ["Linux", "Windows", "MacOS", "Android"]
+PLATFORMS = ["Windows"]
 
 
 def _run(
@@ -24,8 +24,8 @@ def _run(
     }
 
 
-def test_evaluate_readiness_ready_when_all_latest_push_runs_succeed() -> None:
-    runs = [_run(name) for name in PLATFORMS]
+def test_evaluate_readiness_ready_when_windows_release_succeeds() -> None:
+    runs = [_run("Windows")]
     ready, missing, incomplete, failed = evaluate_readiness(runs, PLATFORMS, "push")
     assert ready is True
     assert missing == []
@@ -33,26 +33,36 @@ def test_evaluate_readiness_ready_when_all_latest_push_runs_succeed() -> None:
     assert failed == []
 
 
-def test_evaluate_readiness_reports_missing_incomplete_and_failed() -> None:
-    runs = [
-        _run("Linux", status="in_progress"),
-        _run("Windows", conclusion="failure"),
-        _run("MacOS"),
-    ]
+def test_evaluate_readiness_reports_missing_windows_workflow() -> None:
+    ready, missing, incomplete, failed = evaluate_readiness([], PLATFORMS, "push")
+    assert ready is False
+    assert missing == ["Windows"]
+    assert incomplete == []
+    assert failed == []
+
+
+def test_evaluate_readiness_reports_incomplete_windows_workflow() -> None:
+    runs = [_run("Windows", status="in_progress")]
     ready, missing, incomplete, failed = evaluate_readiness(runs, PLATFORMS, "push")
     assert ready is False
-    assert missing == ["Android"]
-    assert incomplete == ["Linux"]
+    assert missing == []
+    assert incomplete == ["Windows"]
+    assert failed == []
+
+
+def test_evaluate_readiness_reports_failed_windows_workflow() -> None:
+    runs = [_run("Windows", conclusion="failure")]
+    ready, missing, incomplete, failed = evaluate_readiness(runs, PLATFORMS, "push")
+    assert ready is False
+    assert missing == []
+    assert incomplete == []
     assert failed == ["Windows"]
 
 
-def test_evaluate_readiness_uses_latest_run_per_platform() -> None:
+def test_evaluate_readiness_uses_latest_windows_run() -> None:
     runs = [
-        _run("Linux", conclusion="failure", created_at="2026-02-24T00:00:00Z"),
-        _run("Linux", conclusion="success", created_at="2026-02-24T01:00:00Z"),
-        _run("Windows"),
-        _run("MacOS"),
-        _run("Android"),
+        _run("Windows", conclusion="failure", created_at="2026-02-24T00:00:00Z"),
+        _run("Windows", conclusion="success", created_at="2026-02-24T01:00:00Z"),
     ]
     ready, missing, incomplete, failed = evaluate_readiness(runs, PLATFORMS, "push")
     assert ready is True
@@ -62,9 +72,9 @@ def test_evaluate_readiness_uses_latest_run_per_platform() -> None:
 
 
 def test_evaluate_readiness_filters_by_event() -> None:
-    runs = [_run(name, event="pull_request") for name in PLATFORMS]
+    runs = [_run("Windows", event="pull_request")]
     ready, missing, incomplete, failed = evaluate_readiness(runs, PLATFORMS, "push")
     assert ready is False
-    assert missing == PLATFORMS
+    assert missing == ["Windows"]
     assert incomplete == []
     assert failed == []
