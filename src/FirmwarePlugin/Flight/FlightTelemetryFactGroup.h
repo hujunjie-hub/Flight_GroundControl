@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QSet>
+
 #include "Fact.h"
 #include "FactGroup.h"
 #include "FactMetaData.h"
