@@ -4,6 +4,8 @@
 #include "Vehicle.h"
 #include "FlightTelemetryFactGroup.h"
 
+#include <QtTest/QTest>
+
 // These wire-layout values are generated from Flight's authoritative
 // spec/contracts/FCU.xml (Schema 6). A changed CRC or payload length is an
 // intentional ICD change and must be reviewed against the firmware generator.
@@ -407,26 +409,40 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
 
     // Distinct instances may publish at the same FCU timestamp and must not
     // overwrite one another or be rejected by a family-global timestamp.
+    QTest::qWait(20);
     sensor.sensor_instance_id = 3;
     sensor.health_state = 2;
     mavlink_msg_fcu_sensor_health_encode(vehicle.id(), vehicle.compId(), &message, &sensor);
     dispatch(message);
     QCOMPARE(telemetry.sensorHealthStatuses().size(), 2);
-    QCOMPARE(telemetry.sensorHealthStatuses().last().toMap().value(QStringLiteral("sensorInstanceId")).toUInt(), 3U);
+    const QVariantList sensorStatuses = telemetry.sensorHealthStatuses();
+    const QVariantMap olderSensor = sensorStatuses.first().toMap();
+    const QVariantMap newerSensor = sensorStatuses.last().toMap();
+    QCOMPARE(newerSensor.value(QStringLiteral("sensorInstanceId")).toUInt(), 3U);
+    QVERIFY(olderSensor.value(QStringLiteral("receiveAgeMs")).toLongLong() >
+            newerSensor.value(QStringLiteral("receiveAgeMs")).toLongLong());
 
+    QTest::qWait(20);
     link.link_instance_id = 2;
     link.link_kind = 2;
     link.rssi_dbm = -70;
     mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
     dispatch(message);
     QCOMPARE(telemetry.linkStatuses().size(), 2);
-    QCOMPARE(telemetry.linkStatuses().last().toMap().value(QStringLiteral("linkInstanceId")).toUInt(), 2U);
+    const QVariantList linkStatuses = telemetry.linkStatuses();
+    QVERIFY(linkStatuses.first().toMap().value(QStringLiteral("receiveAgeMs")).toLongLong() >
+            linkStatuses.last().toMap().value(QStringLiteral("receiveAgeMs")).toLongLong());
+    QCOMPARE(linkStatuses.last().toMap().value(QStringLiteral("linkInstanceId")).toUInt(), 2U);
 
+    QTest::qWait(20);
     resource.task_id = 7;
     mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
     dispatch(message);
     QCOMPARE(telemetry.resourceStatuses().size(), 2);
-    QCOMPARE(telemetry.resourceStatuses().last().toMap().value(QStringLiteral("taskId")).toUInt(), 7U);
+    const QVariantList resourceStatuses = telemetry.resourceStatuses();
+    QVERIFY(resourceStatuses.first().toMap().value(QStringLiteral("receiveAgeMs")).toLongLong() >
+            resourceStatuses.last().toMap().value(QStringLiteral("receiveAgeMs")).toLongLong());
+    QCOMPARE(resourceStatuses.last().toMap().value(QStringLiteral("taskId")).toUInt(), 7U);
 
     // A duplicate sample for one instance is still rejected independently.
     sensor.health_state = 6;
