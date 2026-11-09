@@ -11,4 +11,5 @@ private slots:
     void _coordinateHomeActionIsNotAdvertised();
     void _takeoffIsNotAFlightMode();
     void _flightOperationTelemetryIsDecodedPerVehicle();
+    void _flightTelemetryDecodesAllFcuMessages();
 };
