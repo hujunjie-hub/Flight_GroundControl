@@ -109,6 +109,40 @@ void FlightFirmwarePluginTest::_flightOperationTelemetryIsDecodedPerVehicle()
 }
 
 
+void FlightFirmwarePluginTest::_flightTelemetryFactGroupIsRegisteredOnVehicle()
+{
+    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR);
+    auto *telemetry = qobject_cast<FlightTelemetryFactGroup *>(vehicle.flightTelemetryFactGroup());
+
+    QVERIFY(telemetry);
+    QVERIFY(vehicle.factGroupNames().contains(QStringLiteral("flightTelemetry")));
+    QCOMPARE(vehicle.getFactGroup(QStringLiteral("flightTelemetry")), telemetry);
+
+    mavlink_fcu_operation_status_t payload{};
+    payload.time_boot_us = 987654;
+    payload.boot_id = 0xAABBCCDDEEFF0011ULL;
+    payload.profile_id = 0x00010001;
+    payload.arm_state = 0;
+    payload.flight_mode = 4;
+    payload.authority = 1;
+    payload.failsafe_level = 0;
+    payload.mission_state = 0;
+
+    mavlink_message_t message{};
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &payload);
+    telemetry->handleMessage(&vehicle, message);
+
+    QCOMPARE(telemetry->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 987654ULL);
+    QCOMPARE(telemetry->getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(),
+             0xAABBCCDDEEFF0011ULL);
+    QVERIFY(telemetry->getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
+
+    // The registered Vehicle FactGroup must still reject packets from another component.
+    message.compid = static_cast<uint8_t>(vehicle.compId() + 1);
+    telemetry->handleMessage(&vehicle, message);
+    QCOMPARE(telemetry->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 987654ULL);
+}
+
 void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
 {
     Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR);
