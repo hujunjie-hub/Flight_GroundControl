@@ -443,8 +443,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("operation"));
-        _opTimeBootUs.setRawValue(value.time_boot_us);
-        _opBootId.setRawValue(value.boot_id);
+        _opTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _opBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _opBootIdHex.setRawValue(QString::number(value.boot_id, 16).rightJustified(16, QLatin1Char('0')).toUpper());
         _opProfileId.setRawValue(value.profile_id);
         _authorityEpoch.setRawValue(value.authority_epoch);
@@ -477,8 +477,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("navigation"));
-        _navTimeBootUs.setRawValue(value.time_boot_us);
-        _navBootId.setRawValue(value.boot_id);
+        _navTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _navBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _navProfileId.setRawValue(value.profile_id);
         _navStateEpoch.setRawValue(value.state_epoch);
         _originId.setRawValue(value.origin_id);
@@ -504,8 +504,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("sensorHealth"));
-        _sensorTimeBootUs.setRawValue(value.time_boot_us);
-        _sensorBootId.setRawValue(value.boot_id);
+        _sensorTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _sensorBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _sensorProfileId.setRawValue(value.profile_id);
         _sensorInstanceId.setRawValue(value.sensor_instance_id);
         _sensorPolicyEpoch.setRawValue(value.policy_epoch);
@@ -545,8 +545,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("control"));
-        _controlTimeBootUs.setRawValue(value.time_boot_us);
-        _controlBootId.setRawValue(value.boot_id);
+        _controlTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _controlBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _controlProfileId.setRawValue(value.profile_id);
         _controlSequence.setRawValue(value.control_sequence);
         _controlReferenceId.setRawValue(value.reference_id);
@@ -572,8 +572,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("actuator"));
-        _actuatorTimeBootUs.setRawValue(value.time_boot_us);
-        _actuatorBootId.setRawValue(value.boot_id);
+        _actuatorTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _actuatorBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _actuatorProfileId.setRawValue(value.profile_id);
         _actuatorControlSequence.setRawValue(value.control_sequence);
         _actuatorPermitEpoch.setRawValue(value.permit_epoch);
@@ -604,8 +604,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("link"));
-        _linkTimeBootUs.setRawValue(value.time_boot_us);
-        _linkBootId.setRawValue(value.boot_id);
+        _linkTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _linkBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _linkProfileId.setRawValue(value.profile_id);
         _linkInstanceId.setRawValue(value.link_instance_id);
         _linkValidityMask.setRawValue(value.validity_mask);
@@ -650,8 +650,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("storage"));
-        _storageTimeBootUs.setRawValue(value.time_boot_us);
-        _storageBootId.setRawValue(value.boot_id);
+        _storageTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _storageBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _storageProfileId.setRawValue(value.profile_id);
         _storageValidityMask.setRawValue(value.validity_mask);
         _storageSettingsGeneration.setRawValue(value.settings_generation);
@@ -681,8 +681,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("resource"));
-        _resourceTimeBootUs.setRawValue(value.time_boot_us);
-        _resourceBootId.setRawValue(value.boot_id);
+        _resourceTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _resourceBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _resourceProfileId.setRawValue(value.profile_id);
         _resourceValidityMask.setRawValue(value.validity_mask);
         _resourceTaskId.setRawValue(value.task_id);
@@ -719,9 +719,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("time"));
-        _timeStatusTimeBootUs.setRawValue(value.time_boot_us);
-        _timeStatusBootId.setRawValue(value.boot_id);
-        _timeStatusUnixTimeUs.setRawValue(value.unix_time_us);
+        _timeStatusTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _timeStatusBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
+        _timeStatusUnixTimeUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.unix_time_us)));
         _timeStatusProfileId.setRawValue(value.profile_id);
         _timeEpoch.setRawValue(value.time_epoch);
         _sourceMappingEpoch.setRawValue(value.source_mapping_epoch);
@@ -761,8 +761,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             _eventIdsAtLastTimestamp.remove(_eventIdsAtLastTimestampOrder.dequeue());
         }
         _markFamilyReceived(QStringLiteral("event"));
-        _eventTimeBootUs.setRawValue(value.time_boot_us);
-        _eventBootId.setRawValue(value.boot_id);
+        _eventTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _eventBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _eventProfileId.setRawValue(value.profile_id);
         _eventId.setRawValue(value.event_id);
         _eventReasonCode.setRawValue(value.reason_code);
@@ -781,7 +781,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         QVariantMap eventRecord;
         eventRecord.insert(QStringLiteral("sequence"), _eventSequenceValue);
         eventRecord.insert(QStringLiteral("eventId"), value.event_id);
-        eventRecord.insert(QStringLiteral("bootId"), value.boot_id);
+        eventRecord.insert(QStringLiteral("bootId"), QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         eventRecord.insert(QStringLiteral("profileId"), value.profile_id);
         eventRecord.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
         eventRecord.insert(QStringLiteral("sourceId"), value.source_id);
@@ -842,9 +842,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _commitTelemetryProfile(value.profile_id);
 
         _markFamilyReceived(QStringLiteral("prearm"));
-        _prearmTimeBootUs.setRawValue(value.time_boot_us);
-        _prearmBootId.setRawValue(value.boot_id);
-        _prearmEvidenceTimeUs.setRawValue(value.evidence_time_us);
+        _prearmTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _prearmBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
+        _prearmEvidenceTimeUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.evidence_time_us)));
         _prearmProfileId.setRawValue(value.profile_id);
         _prearmCheckEpoch.setRawValue(value.check_epoch);
         _prearmModeMask.setRawValue(value.mode_mask);
@@ -888,8 +888,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _commitTelemetryProfile(value.profile_id);
         _markFamilyReceived(QStringLiteral("rcInput"));
-        _rcTimeBootUs.setRawValue(value.time_boot_us);
-        _rcBootId.setRawValue(value.boot_id);
+        _rcTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _rcBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _rcProfileId.setRawValue(value.profile_id);
         _rcValidAxesMask.setRawValue(value.valid_axes_mask);
         _rcRollNorm.setRawValue(value.roll_norm);
@@ -963,8 +963,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         }
         _lastBuildInfoDigestMask |= digestBit;
         _markFamilyReceived(QStringLiteral("buildInfo"));
-        _buildTimeBootUs.setRawValue(value.time_boot_us);
-        _buildBootId.setRawValue(value.boot_id);
+        _buildTimeBootUs.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.time_boot_us)));
+        _buildBootId.setRawValue(QVariant::fromValue<qulonglong>(static_cast<qulonglong>(value.boot_id)));
         _buildProfileId.setRawValue(value.profile_id);
         _buildProductRevision.setRawValue(value.product_revision);
         _buildPortRevision.setRawValue(value.port_revision);
