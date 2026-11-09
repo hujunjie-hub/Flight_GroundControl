@@ -184,6 +184,16 @@ QVariantList FlightTelemetryFactGroup::recentEvents() const
     return _recentEvents;
 }
 
+QVariantList FlightTelemetryFactGroup::prearmChecks() const
+{
+    QVariantList checks;
+    checks.reserve(_prearmChecksById.size());
+    for (auto it = _prearmChecksById.cbegin(); it != _prearmChecksById.cend(); ++it) {
+        checks.append(it.value());
+    }
+    return checks;
+}
+
 QVariantMap FlightTelemetryFactGroup::familyReceiveAgeMs() const
 {
     const qint64 nowMs = _receiveClock.elapsed();
@@ -256,6 +266,8 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastBuildInfoTimeBootUs = 0;
     _lastBuildInfoDigestMask = 0;
     _eventSequenceValue = 0;
+    _prearmCheckEpochValue = 0;
+    _hasPrearmCheckEpoch = false;
 }
 
 void FlightTelemetryFactGroup::_resetTelemetryAvailability()
@@ -277,6 +289,11 @@ void FlightTelemetryFactGroup::_resetTelemetryAvailability()
         emit recentEventsChanged();
     }
     _prearmAvailable.setRawValue(false);
+    if (!_prearmChecksById.isEmpty()) {
+        _prearmChecksById.clear();
+        emit prearmChecksChanged();
+    }
+    _prearmCheckEpoch.setRawValue(0);
     _rcInputAvailable.setRawValue(false);
     _buildInfoAvailable.setRawValue(false);
     _firmwareSha256.setRawValue(QString());
@@ -586,10 +603,30 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_fcu_prearm_status_t value{};
         mavlink_msg_fcu_prearm_status_decode(&message, &value);
         if (value.check_id > 14 || value.check_state > 3 || value.reason_namespace > 3 ||
-            value.recovery_condition > 4 ||
-            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
+            value.recovery_condition > 4) {
             return;
         }
+
+        bool newCheckEpoch = !_hasPrearmCheckEpoch;
+        if (_hasPrearmCheckEpoch && value.check_epoch != _prearmCheckEpochValue) {
+            const quint32 epochDelta = value.check_epoch - _prearmCheckEpochValue;
+            // Use wrap-safe serial-number ordering; the half-range value is ambiguous.
+            if (epochDelta == 0 || epochDelta >= 0x80000000U) {
+                return;
+            }
+            newCheckEpoch = true;
+        }
+
+        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
+            return;
+        }
+
+        if (newCheckEpoch) {
+            _prearmChecksById.clear();
+            _prearmCheckEpochValue = value.check_epoch;
+            _hasPrearmCheckEpoch = true;
+        }
+
         _markFamilyReceived(QStringLiteral("prearm"));
         _prearmTimeBootUs.setRawValue(value.time_boot_us);
         _prearmBootId.setRawValue(value.boot_id);
@@ -602,6 +639,20 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _prearmReasonNamespace.setRawValue(value.reason_namespace);
         _prearmRecoveryCondition.setRawValue(value.recovery_condition);
         _prearmCheckState.setRawValue(value.check_state);
+
+        QVariantMap check;
+        check.insert(QStringLiteral("checkId"), value.check_id);
+        check.insert(QStringLiteral("checkState"), value.check_state);
+        check.insert(QStringLiteral("reasonNamespace"), value.reason_namespace);
+        check.insert(QStringLiteral("reasonCode"), value.reason_code);
+        check.insert(QStringLiteral("recoveryCondition"), value.recovery_condition);
+        check.insert(QStringLiteral("modeMask"), value.mode_mask);
+        check.insert(QStringLiteral("checkEpoch"), value.check_epoch);
+        check.insert(QStringLiteral("evidenceTimeUs"), QVariant::fromValue<qulonglong>(value.evidence_time_us));
+        check.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        _prearmChecksById.insert(value.check_id, check);
+        emit prearmChecksChanged();
+
         _prearmAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
         break;
