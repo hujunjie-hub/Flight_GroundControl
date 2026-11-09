@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "heading": "ADSB Server",
+            "headingDescription": "qsTr(\"Connect to an SBS-1 TCP feed from a local receiver or network server.\")",
+            "keywords": ["adsb", "ads-b", "traffic", "aircraft", "tracking", "sbs", "server", "host", "port"],
+            "controls": [
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerConnectEnabled"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerHostAddress"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerPort"
+                }
+            ]
+        }
+    ]
+}
