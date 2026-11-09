@@ -39,6 +39,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flight_configure_pages
         FlightSensors.qml
         FlightStorage.qml
         FlightSummary.qml
+        FlightTelemetry.qml
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} flight_section_icons
