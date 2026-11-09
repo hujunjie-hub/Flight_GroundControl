@@ -203,5 +203,6 @@ private:
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
     quint32 _lastEventId = 0;
+    quint8 _lastBuildInfoDigestKind = 0xFF;
     quint32 _eventSequenceValue = 0;
 };
