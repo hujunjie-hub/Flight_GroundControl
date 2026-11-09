@@ -7,57 +7,14 @@
   },
   "build": {
     "cmake_minimum_version": "3.25",
-    "platform_workflows": "Linux,Windows"
+    "platform_workflows": "Windows"
   },
   "gstreamer": {
-    "version": {
-      "default": "1.28.4",
-      "minimum": "1.20.0",
-      "windows": "1.28.4"
-    },
+    "version": {"default": "1.28.4", "minimum": "1.20.0", "windows": "1.28.4"},
     "plugins": {
-      "common": [
-        "app",
-        "coreelements",
-        "isomp4",
-        "libav",
-        "matroska",
-        "mpegtsdemux",
-        "multifile",
-        "opengl",
-        "openh264",
-        "playback",
-        "rtp",
-        "rtpmanager",
-        "rtsp",
-        "sdpelem",
-        "tcp",
-        "typefindfunctions",
-        "udp",
-        "videoparsersbad",
-        "vpx",
-        "videoconvertscale",
-        "videoconvert",
-        "videoscale"
-      ],
-      "windows": [
-        "d3d",
-        "d3d11",
-        "d3d12",
-        "dav1d",
-        "nvcodec"
-      ],
-      "linux": [
-        "nvcodec",
-        "qsv",
-        "va",
-        "vulkan"
-      ]
+      "common": ["app","coreelements","isomp4","libav","matroska","mpegtsdemux","multifile","opengl","openh264","playback","rtp","rtpmanager","rtsp","sdpelem","tcp","typefindfunctions","udp","videoparsersbad","vpx","videoconvertscale","videoconvert","videoscale"],
+      "windows": ["d3d","d3d11","d3d12","dav1d","nvcodec"]
     },
-    "checksums": {
-      "1.28.4": {
-        "windows_msvc_x64": "1a745d67225e43394a4a5db929c97397cb56e74b1c38bb77c6ded4b037d3c040"
-      }
-    }
+    "checksums": {"1.28.4": {"windows_msvc_x64": "1a745d67225e43394a4a5db929c97397cb56e74b1c38bb77c6ded4b037d3c040"}}
   }
 }

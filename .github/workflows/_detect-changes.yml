@@ -4,16 +4,13 @@ on:
   workflow_call:
     inputs:
       platform:
-        description: 'Build platform (linux or windows)'
+        description: 'Build platform (windows only)'
         required: true
         type: string
     outputs:
       should_build:
-        description: 'Whether the requested platform build should run'
+        description: 'Whether Windows x64 build should run'
         value: ${{ jobs.detect.outputs.should_build }}
-      linux:
-        description: 'Whether Linux-relevant files changed'
-        value: ${{ jobs.detect.outputs.linux }}
       windows:
         description: 'Whether Windows-relevant files changed'
         value: ${{ jobs.detect.outputs.windows }}
@@ -32,7 +29,6 @@ jobs:
     timeout-minutes: 5
     outputs:
       should_build: ${{ steps.nonpr.outputs.should_build || steps.pr.outputs.should_build }}
-      linux: ${{ steps.nonpr.outputs.linux || steps.pr.outputs.linux }}
       windows: ${{ steps.nonpr.outputs.windows || steps.pr.outputs.windows }}
     steps:
       - name: Checkout passthrough script (non-PR)
@@ -76,7 +72,7 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-changes
         with:
-          platform: ${{ inputs.platform }}
+          platform: windows
 
       - name: Compute outputs (PR)
         if: github.event_name == 'pull_request'
@@ -84,11 +80,9 @@ jobs:
         shell: bash
         env:
           DETECT_ANY: ${{ steps.detect.outputs.any }}
-          DETECT_LINUX: ${{ steps.detect.outputs.linux }}
           DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
         run: |
           {
             echo "should_build=${DETECT_ANY}"
-            echo "linux=${DETECT_LINUX}"
             echo "windows=${DETECT_WINDOWS}"
           } >> "$GITHUB_OUTPUT"
