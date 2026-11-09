@@ -656,7 +656,11 @@ SetupPage {
                             spacing: 3
                             RowLayout {
                                 Layout.fillWidth: true
-                                QGCLabel { text: qsTr("任务 %1").arg(modelData.taskId) }
+                                QGCLabel {
+                                text: Number(modelData.taskId) === 0
+                                      ? qsTr("系统汇总")
+                                      : qsTr("任务 %1").arg(modelData.taskId)
+                            }
                                 QGCLabel {
                                     Layout.fillWidth: true
                                     text: qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
