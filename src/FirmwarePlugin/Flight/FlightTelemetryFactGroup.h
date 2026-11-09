@@ -1,12 +1,12 @@
 #pragma once
 
-#include "FactGroup.h"
-#include "Fact.h"
-#include "FactMetaData.h"
-#include "QGCMAVLink.h"
-
 #include <QtCore/QQueue>
 #include <QtCore/QSet>
+
+#include "Fact.h"
+#include "FactGroup.h"
+#include "FactMetaData.h"
+#include "QGCMAVLink.h"
 
 /// Per-vehicle Flight FCU telemetry cache.
 ///
@@ -103,7 +103,8 @@ private:
     Fact _actuatorSaturatedMask{0, QStringLiteral("actuatorSaturatedMask"), FactMetaData::valueTypeUint32, this};
     Fact _actuatorReasonCode{0, QStringLiteral("actuatorReasonCode"), FactMetaData::valueTypeUint32, this};
     Fact _actuatorOutputPolicyId{0, QStringLiteral("actuatorOutputPolicyId"), FactMetaData::valueTypeUint16, this};
-    Fact _actuatorFeedbackCapability{0, QStringLiteral("actuatorFeedbackCapability"), FactMetaData::valueTypeUint16, this};
+    Fact _actuatorFeedbackCapability{
+        0, QStringLiteral("actuatorFeedbackCapability"), FactMetaData::valueTypeUint16, this};
     Fact _linkTimeBootUs{0, QStringLiteral("linkTimeBootUs"), FactMetaData::valueTypeUint64, this};
     Fact _linkBootId{0, QStringLiteral("linkBootId"), FactMetaData::valueTypeUint64, this};
     Fact _linkProfileId{0, QStringLiteral("linkProfileId"), FactMetaData::valueTypeUint32, this};
@@ -120,8 +121,10 @@ private:
     Fact _storageBootId{0, QStringLiteral("storageBootId"), FactMetaData::valueTypeUint64, this};
     Fact _storageProfileId{0, QStringLiteral("storageProfileId"), FactMetaData::valueTypeUint32, this};
     Fact _storageValidityMask{0, QStringLiteral("storageValidityMask"), FactMetaData::valueTypeUint32, this};
-    Fact _storageSettingsGeneration{0, QStringLiteral("storageSettingsGeneration"), FactMetaData::valueTypeUint32, this};
-    Fact _storageCriticalEventDrops{0, QStringLiteral("storageCriticalEventDrops"), FactMetaData::valueTypeUint32, this};
+    Fact _storageSettingsGeneration{
+        0, QStringLiteral("storageSettingsGeneration"), FactMetaData::valueTypeUint32, this};
+    Fact _storageCriticalEventDrops{
+        0, QStringLiteral("storageCriticalEventDrops"), FactMetaData::valueTypeUint32, this};
     Fact _storageLogDrops{0, QStringLiteral("storageLogDrops"), FactMetaData::valueTypeUint32, this};
     Fact _storageFreeKib{0, QStringLiteral("storageFreeKib"), FactMetaData::valueTypeUint32, this};
     Fact _storageReasonCode{0, QStringLiteral("storageReasonCode"), FactMetaData::valueTypeUint32, this};
@@ -134,7 +137,8 @@ private:
     Fact _resourceTaskId{0, QStringLiteral("resourceTaskId"), FactMetaData::valueTypeUint32, this};
     Fact _resourceWcetUs{0, QStringLiteral("resourceWcetUs"), FactMetaData::valueTypeUint32, this};
     Fact _resourceStackFreeBytes{0, QStringLiteral("resourceStackFreeBytes"), FactMetaData::valueTypeUint32, this};
-    Fact _resourceDeadlineMissCount{0, QStringLiteral("resourceDeadlineMissCount"), FactMetaData::valueTypeUint32, this};
+    Fact _resourceDeadlineMissCount{
+        0, QStringLiteral("resourceDeadlineMissCount"), FactMetaData::valueTypeUint32, this};
     Fact _resourceAxiFreeBytes{0, QStringLiteral("resourceAxiFreeBytes"), FactMetaData::valueTypeUint32, this};
     Fact _resourceCpuLoadPermille{0, QStringLiteral("resourceCpuLoadPermille"), FactMetaData::valueTypeUint16, this};
     Fact _timeStatusTimeBootUs{0, QStringLiteral("timeStatusTimeBootUs"), FactMetaData::valueTypeUint64, this};
