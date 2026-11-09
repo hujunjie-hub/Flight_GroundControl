@@ -144,6 +144,26 @@ def test_resolve_package_alternatives_drops_when_none_available() -> None:
         ]
 
 
+def test_print_debian_packages_resolves_package_alternatives(monkeypatch, capsys) -> None:
+    from setup.install_dependencies import _cli
+
+    packages = ["cmake", "libgstreamer-plugins-good1.0-dev"]
+    resolved = ["cmake", "libgstreamer-plugins-extra1.0-dev"]
+    calls = []
+
+    monkeypatch.setattr(_cli, "get_debian_packages", lambda category=None: packages)
+
+    def fake_resolve(items):
+        calls.append(items)
+        return resolved
+
+    monkeypatch.setattr(_cli, "resolve_package_alternatives", fake_resolve)
+    _cli.print_packages("debian")
+
+    assert calls == [packages]
+    assert capsys.readouterr().out.strip() == "cmake libgstreamer-plugins-extra1.0-dev"
+
+
 def test_get_macos_packages() -> None:
     pkgs = get_macos_packages()
     assert "cmake" in pkgs
