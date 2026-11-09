@@ -203,7 +203,7 @@ private:
     quint64 _lastResourceTimeBootUs = 0;
     quint64 _lastTimeStatusTimeBootUs = 0;
     quint64 _lastEventTimeBootUs = 0;
-    quint32 _lastEventId = 0;
+    QSet<quint32> _eventIdsAtLastTimestamp;
     quint64 _lastPrearmTimeBootUs = 0;
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
