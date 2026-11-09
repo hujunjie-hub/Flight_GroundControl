@@ -46,6 +46,11 @@ FlightFirmwarePlugin::~FlightFirmwarePlugin()
 {
 }
 
+FactGroup *FlightFirmwarePlugin::createFactGroup(Vehicle *vehicle) const
+{
+    return vehicle ? new FlightTelemetryFactGroup(vehicle) : nullptr;
+}
+
 bool FlightFirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const
 {
     // Flight implements exactly these MAVLink capabilities. Everything else is deliberately
