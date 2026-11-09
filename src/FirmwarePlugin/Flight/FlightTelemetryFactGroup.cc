@@ -219,8 +219,9 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastPrearmTimeBootUs = 0;
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
-    _lastEventId = 0;
-    _lastBuildInfoDigestKind = 0xFF;
+    _recentEventIds.clear();
+    _recentEventOrder.clear();
+    _lastBuildInfoDigestMask = 0;
     _eventSequenceValue = 0;
 }
 
@@ -469,14 +470,18 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             value.reason_namespace > 3 ||
             (_activeBootId != 0 && value.boot_id != _activeBootId) ||
             value.time_boot_us < _lastEventTimeBootUs ||
-            (_lastEventTimeBootUs != 0 && value.event_id == _lastEventId)) {
+            _recentEventIds.contains(value.event_id)) {
             return;
         }
         if (_activeBootId == 0) {
             _activeBootId = value.boot_id;
         }
         _lastEventTimeBootUs = value.time_boot_us;
-        _lastEventId = value.event_id;
+        _recentEventIds.insert(value.event_id);
+        _recentEventOrder.enqueue(value.event_id);
+        while (_recentEventOrder.size() > _recentEventIdCapacity) {
+            _recentEventIds.remove(_recentEventOrder.dequeue());
+        }
         _eventTimeBootUs.setRawValue(value.time_boot_us);
         _eventBootId.setRawValue(value.boot_id);
         _eventProfileId.setRawValue(value.profile_id);
@@ -548,16 +553,21 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (value.boot_id == 0 || value.time_boot_us == 0 || value.digest_kind > 3 ||
             value.source_commit_valid > 1 ||
             (_activeBootId != 0 && value.boot_id != _activeBootId) ||
-            value.time_boot_us < _lastBuildInfoTimeBootUs ||
-            (value.time_boot_us == _lastBuildInfoTimeBootUs &&
-             value.digest_kind == _lastBuildInfoDigestKind)) {
+            value.time_boot_us < _lastBuildInfoTimeBootUs) {
             return;
         }
         if (_activeBootId == 0) {
             _activeBootId = value.boot_id;
         }
-        _lastBuildInfoTimeBootUs = value.time_boot_us;
-        _lastBuildInfoDigestKind = value.digest_kind;
+        if (value.time_boot_us > _lastBuildInfoTimeBootUs) {
+            _lastBuildInfoTimeBootUs = value.time_boot_us;
+            _lastBuildInfoDigestMask = 0;
+        }
+        const quint8 digestBit = static_cast<quint8>(1U << value.digest_kind);
+        if ((_lastBuildInfoDigestMask & digestBit) != 0) {
+            return;
+        }
+        _lastBuildInfoDigestMask |= digestBit;
         _buildTimeBootUs.setRawValue(value.time_boot_us);
         _buildBootId.setRawValue(value.boot_id);
         _buildProfileId.setRawValue(value.profile_id);
