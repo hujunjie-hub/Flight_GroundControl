@@ -44,9 +44,10 @@ SetupPage {
         return Number.isFinite(value) ? String(Math.trunc(value)) : qsTr("无效")
     }
 
-    function _text(name) {
+    function _timestamp(name) {
         const raw = _fact(name)
-        return raw === null || raw === undefined || raw === "" ? qsTr("未上报") : String(raw)
+        return raw === null || raw === undefined || raw === ""
+               ? qsTr("未上报") : String(raw) + " μs"
     }
 
     function _enum(name, labels) {
@@ -154,6 +155,10 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("Failsafe"); valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")]) }
                     VehicleSummaryRow { labelText: qsTr("任务状态"); valueText: root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]) }
                     VehicleSummaryRow {
+                        labelText: qsTr("Boot / Profile ID")
+                        valueText: root._integer("opBootId") + " / " + root._integer("opProfileId")
+                    }
+                    VehicleSummaryRow {
                         labelText: qsTr("Authority / Directive Epoch")
                         valueText: root._integer("authorityEpoch") + " / " + root._integer("directiveEpoch")
                     }
@@ -165,6 +170,7 @@ SetupPage {
                         labelText: qsTr("请求 ID / 原因码")
                         valueText: root._integer("requestId") + " / " + root._integer("operationReasonCode")
                     }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("opTimeBootUs") }
                 }
 
                 StatusCard {
@@ -176,6 +182,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("速度标准差"); valueText: root._number("velocityStdMps", 3, " m/s") }
                     VehicleSummaryRow { labelText: qsTr("航向标准差"); valueText: root._number("headingStdRad", 3, " rad") }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("navigationAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("navTimeBootUs") }
                 }
 
                 StatusCard {
@@ -186,6 +193,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("处理动作"); valueText: root._integer("sensorAction") }
                     VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("sensorReasonCode") }
                     VehicleSummaryRow { labelText: qsTr("Gap / Reject"); valueText: root._integer("sensorGapCount") + " / " + root._integer("sensorRejectCount") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("sensorTimeBootUs") }
                 }
 
                 StatusCard {
@@ -197,6 +205,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("可控 DOF"); valueText: root._mask("controllableDofMask") }
                     VehicleSummaryRow { labelText: qsTr("降级 DOF"); valueText: root._mask("degradedDofMask") }
                     VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("controlReasonCode") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("controlTimeBootUs") }
                 }
 
                 StatusCard {
@@ -208,6 +217,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("饱和执行器"); valueText: root._mask("actuatorSaturatedMask") }
                     VehicleSummaryRow { labelText: qsTr("输出策略"); valueText: root._integer("actuatorOutputPolicyId") }
                     VehicleSummaryRow { labelText: qsTr("反馈能力"); valueText: root._integer("actuatorFeedbackCapability") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("actuatorTimeBootUs") }
                 }
 
                 StatusCard {
@@ -219,6 +229,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("链路质量"); valueText: root._maskBit("linkValidityMask", 9) ? root._permillePercent("linkQualityPermille") : qsTr("无效") }
                     VehicleSummaryRow { labelText: qsTr("丢包率"); valueText: root._maskBit("linkValidityMask", 10) ? root._lossPercent("linkPacketLossPpm") : qsTr("无效") }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("linkAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("linkTimeBootUs") }
                 }
 
                 StatusCard {
@@ -240,6 +251,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
                     VehicleSummaryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
                     VehicleSummaryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("storageTimeBootUs") }
                 }
 
                 StatusCard {
@@ -255,6 +267,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
                     VehicleSummaryRow { labelText: qsTr("Deadline Miss"); valueText: root._integer("resourceDeadlineMissCount") }
                     VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._validValue("resourceAxiFreeBytes", "resourceValidityMask", 3, 0, " B") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("resourceTimeBootUs") }
                 }
 
                 StatusCard {
@@ -270,6 +283,7 @@ SetupPage {
                     }
                     VehicleSummaryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("Time Epoch"); valueText: root._integer("timeEpoch") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("timeStatusTimeBootUs") }
                 }
 
                 StatusCard {
@@ -281,6 +295,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("原因命名空间"); valueText: root._enum("eventReasonNamespace", [qsTr("通用"), qsTr("制导"), qsTr("控制"), qsTr("传感器一致性")]) }
                     VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("eventReasonCode") }
                     VehicleSummaryRow { labelText: qsTr("本地接收序号"); valueText: root._integer("eventSequence") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("eventTimeBootUs") }
                 }
 
                 StatusCard {
@@ -291,6 +306,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("模式掩码"); valueText: root._mask("prearmModeMask") }
                     VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("prearmReasonCode") }
                     VehicleSummaryRow { labelText: qsTr("恢复条件"); valueText: root._enum("prearmRecoveryCondition", [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]) }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("prearmTimeBootUs") }
                 }
 
                 StatusCard {
@@ -312,6 +328,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("接收机 Failsafe"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
                     VehicleSummaryRow { labelText: qsTr("输入年龄"); valueText: root._number("rcAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("rcTimeBootUs") }
                 }
 
                 StatusCard {
@@ -325,6 +342,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("Profile SHA-256"); valueText: root._hashPrefix("profileSha256") }
                     VehicleSummaryRow { labelText: qsTr("ABI SHA-256"); valueText: root._hashPrefix("abiSha256") }
                     VehicleSummaryRow { labelText: qsTr("源码提交"); valueText: root._sourceCommitDisplay() }
+                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间"); valueText: root._timestamp("buildTimeBootUs") }
                 }
             }
         }
