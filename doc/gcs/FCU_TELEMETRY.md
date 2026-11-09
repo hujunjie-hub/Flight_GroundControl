@@ -49,7 +49,10 @@ vehicle.flightTelemetry.recentEvents
 ```
 
 The list properties return the latest accepted record for each instance/check,
-ordered by their numeric key. Facts are intentionally flat within this group. Each message family has an
+ordered by their numeric key. Sensor, link and resource list entries also expose
+`receiveAgeMs`, a per-instance monotonic ground-station receipt age; this avoids
+one active sensor/link/task masking another instance that has stopped updating.
+Facts are intentionally flat within this group. Each message family has an
 `<family>Available` boolean and its own `<family>TimeBootUs`,
 `<family>BootId`, and `<family>ProfileId` facts where present. Consumers
 must check the availability flag before displaying a value. Availability means
@@ -63,12 +66,15 @@ and navigation measurements, also honor their transmitted `linkAgeUs` and
 monotonic ground-station receive age for all 13 message families (`-1` means no
 valid message received in the current boot). The QML page refreshes this display
 twice per second. This is host-side packet receipt age, not FCU sample age.
-The current publisher schedule supports a 1.0 s freshness limit for the 10 Hz
-operation/navigation/actuator/pre-arm/time families and a 5.5 s limit for the
-11-slot rotating diagnostic families. These are display freshness limits, not
-flight-safety decisions; a delayed or dropped frame is shown as telemetry
-timeout, never as an unhealthy sensor or failed flight prerequisite. Events
-are asynchronous and are not subject to a stale threshold.
+The current publisher schedule supports a 1.0 s family freshness limit for
+the 10 Hz operation/navigation/actuator/pre-arm/time families and a 5.5 s
+family/per-instance limit for the 11-slot rotating diagnostic families. Sensor,
+link and resource lists use per-instance ages for their timeout indication;
+the family age only says that at least one instance was received recently.
+These are display freshness limits, not flight-safety decisions; a delayed or
+dropped frame is shown as telemetry timeout, never as an unhealthy sensor or
+failed flight prerequisite. Events are asynchronous and are not subject to a
+stale threshold.
 
 The group accepts only messages from the connected vehicle's system and
 autopilot component IDs. The GCS dialect currently targets FCU schema 6.0 and
