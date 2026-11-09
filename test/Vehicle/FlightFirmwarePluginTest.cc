@@ -225,8 +225,12 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     event.event_id = 1236;
     mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
     dispatch(message); // Distinct events may share a publication timestamp.
+    event.event_id = 1235;
     mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
-    dispatch(message); // Duplicate of the second same-timestamp event is suppressed.
+    dispatch(message); // Duplicate of an earlier same-timestamp event is suppressed.
+    event.event_id = 1236;
+    mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
+    dispatch(message); // Duplicate of the latest same-timestamp event is suppressed.
     event.event_id = 1234;
     event.time_boot_us = 191;
     mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
