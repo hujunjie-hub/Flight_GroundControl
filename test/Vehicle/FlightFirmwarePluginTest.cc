@@ -317,6 +317,11 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
+    const QVariantList recentEvents = telemetry.recentEvents();
+    QCOMPARE(recentEvents.size(), 4);
+    QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("eventId")).toUInt(), 1236U);
+    QCOMPARE(recentEvents.at(1).toMap().value(QStringLiteral("eventId")).toUInt(), 1235U);
+    QCOMPARE(recentEvents.at(2).toMap().value(QStringLiteral("timeBootUs")).toULongLong(), 191ULL);
 
     // A new FCU boot invalidates cached facts from the previous boot.
     operation.boot_id = bootId + 1;
@@ -327,6 +332,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
+    QCOMPARE(telemetry.recentEvents().size(), 0);
 
     // A delayed packet from the previous boot cannot repopulate the cache.
     navigation.time_boot_us = 999;
