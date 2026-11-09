@@ -135,13 +135,17 @@ per-vehicle FactGroup path. These tests do not call
 
 The fixture verifies:
 
-- A valid FCU operation frame reaches the Vehicle FactGroup through the wire parser.
+- All 13 FCU message families reach the per-Vehicle FactGroup through the
+  serialized MAVLink wire parser.
 - A corrupted MAVLink checksum is rejected before Vehicle dispatch.
 - Wrong system/component IDs, reserved enum values and out-of-order samples do
   not overwrite the last accepted telemetry.
 - Two simultaneously connected generic FCUs retain independent telemetry caches.
 - Disconnect/reconnect creates a fresh Vehicle telemetry state before new
   samples are accepted.
+
+The unit fixture also pins the generated dialect's message IDs, payload
+lengths and CRC_EXTRA values with compile-time assertions.
 
 Run the focused tests from a configured Debug build with:
 
