@@ -310,6 +310,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("timeQuality"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventId"))->rawValue().toUInt(), 1236U);
     QCOMPARE(telemetry.getFact(QStringLiteral("prearmCheckState"))->rawValue().toUInt(), 2U);
+    QCOMPARE(telemetry.prearmChecks().size(), 1);
+    QCOMPARE(telemetry.prearmChecks().first().toMap().value(QStringLiteral("checkId")).toUInt(), 5U);
     QCOMPARE(telemetry.getFact(QStringLiteral("rcRollNorm"))->rawValue().toFloat(), 0.25F);
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("coreParametersSha256"))->rawValue().toString().size(), 64);
@@ -335,6 +337,39 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString(), QString());
     QVERIFY(!telemetry.getFact(QStringLiteral("sourceCommitValid"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString(), QString());
+    // Pre-arm checks are accumulated within an epoch, then atomically replaced
+    // by the next epoch. A delayed older epoch must not roll the list backwards.
+    prearm.time_boot_us = 201;
+    prearm.check_id = 7;
+    prearm.check_state = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 2);
+
+    prearm.time_boot_us = 202;
+    prearm.check_epoch = 11;
+    prearm.check_id = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 1);
+    QCOMPARE(telemetry.prearmChecks().first().toMap().value(QStringLiteral("checkId")).toUInt(), 1U);
+
+    prearm.time_boot_us = 203;
+    prearm.check_epoch = 10;
+    prearm.check_id = 2;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 1);
+
+    prearm.time_boot_us = 204;
+    prearm.check_epoch = 11;
+    prearm.check_id = 2;
+    prearm.check_state = 3;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 2);
+    QCOMPARE(telemetry.prearmChecks().last().toMap().value(QStringLiteral("checkId")).toUInt(), 2U);
+
     const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
     QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
     QVERIFY(receiveAges.value(QStringLiteral("event")).toLongLong() >= 0);
@@ -367,6 +402,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
     QCOMPARE(telemetry.recentEvents().size(), 0);
+    QCOMPARE(telemetry.prearmChecks().size(), 0);
     QVERIFY(telemetry.familyReceiveAgeMs().value(QStringLiteral("operation")).toLongLong() >= 0);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("navigation")).toLongLong(), -1LL);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("event")).toLongLong(), -1LL);
