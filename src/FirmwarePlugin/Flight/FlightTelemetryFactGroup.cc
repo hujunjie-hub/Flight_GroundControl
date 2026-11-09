@@ -197,30 +197,45 @@ QVariantList FlightTelemetryFactGroup::prearmChecks() const
 
 QVariantList FlightTelemetryFactGroup::sensorHealthStatuses() const
 {
+    const qint64 nowMs = _receiveClock.elapsed();
     QVariantList statuses;
     statuses.reserve(_sensorHealthByInstance.size());
     for (auto it = _sensorHealthByInstance.cbegin(); it != _sensorHealthByInstance.cend(); ++it) {
-        statuses.append(it.value());
+        QVariantMap status = it.value();
+        const qint64 receivedAtMs = status.take(QStringLiteral("receiveElapsedMs")).toLongLong();
+        status.insert(QStringLiteral("receiveAgeMs"),
+                      receivedAtMs < 0 ? -1 : qMax<qint64>(0, nowMs - receivedAtMs));
+        statuses.append(status);
     }
     return statuses;
 }
 
 QVariantList FlightTelemetryFactGroup::linkStatuses() const
 {
+    const qint64 nowMs = _receiveClock.elapsed();
     QVariantList statuses;
     statuses.reserve(_linkStatusesByInstance.size());
     for (auto it = _linkStatusesByInstance.cbegin(); it != _linkStatusesByInstance.cend(); ++it) {
-        statuses.append(it.value());
+        QVariantMap status = it.value();
+        const qint64 receivedAtMs = status.take(QStringLiteral("receiveElapsedMs")).toLongLong();
+        status.insert(QStringLiteral("receiveAgeMs"),
+                      receivedAtMs < 0 ? -1 : qMax<qint64>(0, nowMs - receivedAtMs));
+        statuses.append(status);
     }
     return statuses;
 }
 
 QVariantList FlightTelemetryFactGroup::resourceStatuses() const
 {
+    const qint64 nowMs = _receiveClock.elapsed();
     QVariantList statuses;
     statuses.reserve(_resourceStatusesByTask.size());
     for (auto it = _resourceStatusesByTask.cbegin(); it != _resourceStatusesByTask.cend(); ++it) {
-        statuses.append(it.value());
+        QVariantMap status = it.value();
+        const qint64 receivedAtMs = status.take(QStringLiteral("receiveElapsedMs")).toLongLong();
+        status.insert(QStringLiteral("receiveAgeMs"),
+                      receivedAtMs < 0 ? -1 : qMax<qint64>(0, nowMs - receivedAtMs));
+        statuses.append(status);
     }
     return statuses;
 }
@@ -507,6 +522,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         sensorStatus.insert(QStringLiteral("gapCount"), value.gap_count);
         sensorStatus.insert(QStringLiteral("rejectCount"), value.reject_count);
         sensorStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        sensorStatus.insert(QStringLiteral("receiveElapsedMs"), _receiveClock.elapsed());
         _sensorHealthByInstance.insert(value.sensor_instance_id, sensorStatus);
         emit sensorHealthStatusesChanged();
 
@@ -607,6 +623,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         linkStatus.insert(QStringLiteral("rssiDbm"), value.rssi_dbm);
         linkStatus.insert(QStringLiteral("linkQualityPermille"), value.link_quality_permille);
         linkStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        linkStatus.insert(QStringLiteral("receiveElapsedMs"), _receiveClock.elapsed());
         _linkStatusesByInstance.insert(value.link_instance_id, linkStatus);
         emit linkStatusesChanged();
 
@@ -679,6 +696,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         resourceStatus.insert(QStringLiteral("axiFreeBytes"), value.axi_free_bytes);
         resourceStatus.insert(QStringLiteral("cpuLoadPermille"), value.cpu_load_permille);
         resourceStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        resourceStatus.insert(QStringLiteral("receiveElapsedMs"), _receiveClock.elapsed());
         _resourceStatusesByTask.insert(value.task_id, resourceStatus);
         emit resourceStatusesChanged();
 
