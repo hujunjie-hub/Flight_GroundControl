@@ -107,6 +107,13 @@ with the corresponding bit rather than interpreting a zero as a valid value.
 
 ## Deliberate limitations
 
+- Decoder coverage does not imply every field is currently populated by the
+  firmware publisher. The current Flight sender reports the actuator readiness
+  pre-arm item (check ID 5), emits the ABI digest kind (3), and leaves some
+  storage/resource/link measurements invalid through their validity masks.
+  The GCS preserves these states and must show unavailable/unknown rather than
+  interpreting zero as a healthy measurement. Extend the firmware publisher
+  only when the corresponding source evidence is available.
 - `FCU_EVENT` currently exposes the latest event plus an incrementing
   `eventSequence`; a persistent event-history ListModel and acknowledgement
   workflow are a separate UI task.
