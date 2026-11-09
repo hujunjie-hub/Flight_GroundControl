@@ -54,9 +54,15 @@ src/
 
 ## Build & Test Scope (Mandatory)
 
-**This repository's active validation target is Windows x64 MSVC 2022 Release only.**
-Do not build, configure, run tests, package, or otherwise validate any other operating
-system, architecture, compiler, or build configuration.
+**The only active product build/test/package target is Windows x64 MSVC 2022 Release.**
+Do not run Linux x64, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows Debug, or other
+platform/configuration product builds, CMake configure steps, Unit/Integration test suites,
+package generation, or executable/install verification.
+
+Platform-independent repository checks (for example actionlint, formatting/lint, Python
+CI-script tests, documentation, CodeQL, and PR metadata checks) may use Ubuntu-hosted
+runners. These checks must not configure, build, test, or package the Linux QGroundControl
+product.
 
 In particular, do not run Linux, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows
 Debug, or other non-Windows-x64-Release build/test jobs. Do not spend time fixing or
