@@ -1,8 +1,11 @@
 #pragma once
 
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QHash>
 #include <QtCore/QQueue>
 #include <QtCore/QSet>
 #include <QtCore/QVariantList>
+#include <QtCore/QVariantMap>
 
 #include "Fact.h"
 #include "FactGroup.h"
@@ -18,13 +21,16 @@ class FlightTelemetryFactGroup final : public FactGroup
     Q_OBJECT
 public:
     Q_PROPERTY(QVariantList recentEvents READ recentEvents NOTIFY recentEventsChanged)
+    Q_PROPERTY(QVariantMap familyReceiveAgeMs READ familyReceiveAgeMs NOTIFY familyReceiveAgeMsChanged)
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
     QVariantList recentEvents() const;
+    QVariantMap familyReceiveAgeMs() const;
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
     void recentEventsChanged();
+    void familyReceiveAgeMsChanged();
 
 private:
     Fact _opTimeBootUs{0, QStringLiteral("opTimeBootUs"), FactMetaData::valueTypeUint64, this};
@@ -201,7 +207,10 @@ private:
     void _activateBoot(quint64 bootId);
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
+    void _markFamilyReceived(const QString &family);
 
+    QElapsedTimer _receiveClock;
+    QHash<QString, qint64> _lastReceiveElapsedMs;
     quint64 _activeBootId = 0;
     quint64 _lastOperationTimeBootUs = 0;
     quint64 _lastNavigationTimeBootUs = 0;
