@@ -160,6 +160,13 @@ SetupPage {
                ? qsTr("未上报") : String(raw).substring(0, 16) + "…"
     }
 
+    function _eventSeverityLabel(severity) {
+        const labels = [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]
+        const value = Number(severity)
+        return Number.isInteger(value) && value >= 0 && value < labels.length
+               ? labels[value] : qsTr("未知")
+    }
+
     function _sourceCommitDisplay() {
         if (!_fact("buildInfoAvailable")) {
             return qsTr("未上报")
@@ -359,6 +366,38 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("原因码"); valueText: root._integer("eventReasonCode") }
                     VehicleSummaryRow { labelText: qsTr("本地接收序号"); valueText: root._integer("eventSequence") }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("eventTimeBootUs") }
+                }
+
+                StatusCard {
+                    title: qsTr("最近事件历史")
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.recentEvents.length === 0
+                        text: qsTr("当前启动周期内暂无事件")
+                    }
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.recentEvents.slice(0, 8) : []
+                        delegate: RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            QGCLabel {
+                                text: qsTr("#%1").arg(modelData.sequence)
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: qsTr("ID %1 · 来源 %2 · 原因 %3")
+                                      .arg(modelData.eventId)
+                                      .arg(modelData.sourceId)
+                                      .arg(modelData.reasonCode)
+                            }
+                            QGCLabel {
+                                text: root._eventSeverityLabel(modelData.severity)
+                            }
+                        }
+                    }
                 }
 
                 StatusCard {
