@@ -727,6 +727,12 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     // Matching profile at the same timestamp is accepted after the mismatch.
     navigation.profile_id = operation.profile_id;
+    navigation.capability_mask = 1U << 8; // Only capability bits 0..7 are defined.
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+
+    navigation.capability_mask = 1U << 7; // ACCELERATION is the highest defined capability bit.
     navigation.position_std_m = -0.1F;
     mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
     telemetry.handleMessage(&vehicle, message);
@@ -781,6 +787,28 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     mavlink_msg_fcu_control_status_encode(vehicle.id(), vehicle.compId(), &message, &control);
     telemetry.handleMessage(&vehicle, message);
     QCOMPARE(telemetry.getFact(QStringLiteral("controlTimeBootUs"))->rawValue().toULongLong(), 18ULL);
+
+    mavlink_fcu_actuator_status_t actuator{};
+    actuator.time_boot_us = 20;
+    actuator.profile_id = operation.profile_id;
+    actuator.boot_id = operation.boot_id;
+    actuator.available_mask = 1U << 4; // QUAD_X4 exposes motor bits 0..3 only.
+    mavlink_msg_fcu_actuator_status_encode(vehicle.id(), vehicle.compId(), &message, &actuator);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("actuatorAvailable"))->rawValue().toBool());
+
+    actuator.time_boot_us = 21;
+    actuator.available_mask = 0x0FU;
+    actuator.saturated_mask = 0x02U;
+    mavlink_msg_fcu_actuator_status_encode(vehicle.id(), vehicle.compId(), &message, &actuator);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("actuatorAvailable"))->rawValue().toBool());
+
+    actuator.time_boot_us = 22;
+    actuator.saturated_mask = 1U << 4;
+    mavlink_msg_fcu_actuator_status_encode(vehicle.id(), vehicle.compId(), &message, &actuator);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("actuatorTimeBootUs"))->rawValue().toULongLong(), 21ULL);
 
     mavlink_fcu_storage_status_t storage{};
     storage.time_boot_us = 20;
