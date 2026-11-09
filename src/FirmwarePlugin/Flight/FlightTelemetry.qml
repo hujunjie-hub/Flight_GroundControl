@@ -325,7 +325,7 @@ SetupPage {
                                    (root._maskBit("rcValidAxesMask", 3) ? root._number("rcThrottleNorm", 3, "") : qsTr("无效"))
                     }
                     VehicleSummaryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
-                    VehicleSummaryRow { labelText: qsTr("接收机 失效保护等级"); valueText: root._fact("rcReceiver失效保护等级") === null ? qsTr("未上报") : (root._fact("rcReceiver失效保护等级") ? qsTr("触发") : qsTr("未触发")) }
+                    VehicleSummaryRow { labelText: qsTr("接收机 失效保护等级"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
                     VehicleSummaryRow { labelText: qsTr("输入年龄"); valueText: root._number("rcAgeUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
