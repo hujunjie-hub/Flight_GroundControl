@@ -96,7 +96,7 @@ To install Qt:
    These features can be forcibly enabled/disabled by passing additional `-D` options to CMake (e.g. `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF`).
    :::
 
-   - **Video Streaming/GStreamer:** - installed by the dependency script above, or downloaded automatically at CMake configure time on Windows/macOS if not already present. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md) for details. Note: when cross-compiling for Windows ARM64 from an x64 host, disable video streaming with `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF` (this is what CI does) — the ARM64 GStreamer SDK installer cannot run on an x64 host, so the automatic download will fail.
+   - **Video Streaming/GStreamer:** - installed by the dependency script above, or downloaded automatically at CMake configure time on Windows/macOS if not already present. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/GStreamer/README.md) for details. Note: when cross-compiling for Windows ARM64 from an x64 host, disable video streaming with `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF` (this is what CI does) — the ARM64 GStreamer SDK installer cannot run on an x64 host, so the automatic download will fail.
    - **Windows Installer:** - building the Windows installer requires [NSIS](https://nsis.sourceforge.io/Download), which the dependency script above installs when run with `--nsis`.
 
 #### Install Visual Studio Compiler (Windows Only) {#vs}
