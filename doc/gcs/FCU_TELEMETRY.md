@@ -17,8 +17,10 @@ only authority for operational decisions.
 
 The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). It is a read-only
 view of operation, navigation, sensor health, control, actuator, link, storage,
-resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history. Each telemetry card shows its own
-message availability, local ground-station receive age and FCU boot-time publication timestamp. The page honors the
+resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history.
+Sensor health is shown per sensor instance, communication state per RC/GCS/Companion
+link instance, and resource measurements per task. Each telemetry card shows its own
+message availability and local ground-station receive age. The page honors the
 link/storage/resource validity masks and the RC valid-axis mask; it does not send commands
 or grant control authority.
 
@@ -34,9 +36,15 @@ Read a value using:
 
 ```qml
 vehicle.flightTelemetry.getFact("solverStatus").rawValue
+vehicle.flightTelemetry.sensorHealthStatuses
+vehicle.flightTelemetry.linkStatuses
+vehicle.flightTelemetry.resourceStatuses
+vehicle.flightTelemetry.prearmChecks
+vehicle.flightTelemetry.recentEvents
 ```
 
-Facts are intentionally flat within this group. Each message family has an
+The list properties return the latest accepted record for each instance/check,
+ordered by their numeric key. Facts are intentionally flat within this group. Each message family has an
 `<family>Available` boolean and its own `<family>TimeBootUs`,
 `<family>BootId`, and `<family>ProfileId` facts where present. Consumers
 must check the availability flag before displaying a value. Availability means
@@ -52,10 +60,16 @@ twice per second. This is host-side packet receipt age, not FCU sample age, and
 does not apply a hard-coded stale/healthy threshold.
 
 The group accepts only messages from the connected vehicle's system and
-autopilot component IDs. For periodic message families it rejects duplicate
-or older `time_boot_us` samples. It tracks one active `boot_id`; a new
-operation-status boot ID resets the family availability flags, digest values,
-and timestamp watermarks. The QML page gates every displayed fact on its family availability flag,
+autopilot component IDs. For single-instance periodic families it rejects duplicate or older
+`time_boot_us` samples. Sensor-health, link-status and resource-status use
+independent timestamp watermarks keyed by `sensor_instance_id`,
+`link_instance_id` and `task_id`; different instances may legitimately publish
+at the same timestamp. Sensor IDs are 1 IMU, 2 GNSS, 3 barometer and 4 magnetometer.
+Link IDs are 1 RC, 2 GCS, 3 Companion and 4 other (the first-version contract
+requires `link_instance_id == link_kind`). Resource records are bounded to 64
+task IDs. It tracks one active `boot_id`; a new operation-status boot ID resets
+the family availability flags, per-instance records, digest values and timestamp
+watermarks. The QML page gates every displayed fact on its family availability flag,
 so values left in the cache from the previous boot appear as 未上报 until a new family sample arrives.
 Event messages reject older publication timestamps and exact duplicate
 `(event_id, time_boot_us)` pairs. Repeated updates to the same event ID with a
@@ -156,6 +170,9 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   the set on a newer epoch or FCU reboot, and rejects delayed older epochs. The
   current firmware publisher reports only the actuator-readiness check (ID 5);
   the UI is ready to display additional checks when the publisher emits them.
+- Sensor/link/resource records are retained per instance. Resource task records
+  have a fixed 64-task cache limit; additional unseen task IDs are ignored until
+  the next FCU boot rather than allowing unbounded ground-station memory growth.
 - `FCU_BUILD_INFO` exposes each digest chunk separately. A release-verification
   workflow must compare these values with a trusted build manifest; a telemetry
   hash alone is not a signature or proof of provenance.
