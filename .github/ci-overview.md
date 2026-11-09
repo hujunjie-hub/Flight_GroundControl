@@ -5,15 +5,15 @@
 
 ## CI target
 
-**The active platform builds are Linux x64 (GCC) and Windows x64 (MSVC 2022).**
+**The only active product build target is Windows x64 (MSVC 2022) Release. Linux x64 product builds, tests, and AppImage packaging are disabled.**
 
-- Linux x64 Release and Windows x64 Release are the default builds.
-- Windows Debug is available only through manual workflow dispatch.
-- Linux uses the Ubuntu x64 runner and distro dependencies; Windows uses x64 Qt and GStreamer SDKs.
-- ARM64, macOS, iOS, Android, Docker, Flatpak, and VM build workflows are not part of this CI configuration.
+- Windows x64 MSVC 2022 Release is the only product build, test, and packaging target.
+- Windows Debug and Linux x64 product builds are disabled.
+- Windows uses the x64 Qt and MSVC GStreamer SDKs.
+- Linux x64, ARM64, macOS, iOS, Android, Docker, Flatpak, and VM product build workflows are not active in this CI configuration.
 - Non-build checks remain enabled: workflow linting, CI script tests, pre-commit, CodeQL, docs, Doxygen, link checks, and repository automation.
 
-This is a CI/build-target restriction. Shared QGroundControl source code and platform-specific source files are retained where required by the upstream codebase; their presence does not mean those platforms are built or packaged by this CI.
+Ubuntu-hosted runners remain in use for platform-independent repository checks and automation (for example actionlint, Python CI-script tests, documentation, CodeQL, PR metadata, and release orchestration); these jobs do not build or test the Linux QGroundControl product.\n\nThis is a CI/build-target restriction. Shared QGroundControl source code and platform-specific source files are retained where required by the upstream codebase; their presence does not mean those platforms are built or packaged by this CI.
 
 ## Contents
 
@@ -31,12 +31,12 @@ This is a CI/build-target restriction. Shared QGroundControl source code and pla
 
 \`\`\`text
 .github/
-├── workflows/                 # Linux/Windows x64 builds, quality checks, and repo automation
+├── workflows/                 # Windows x64 Release build, quality checks, and repo automation
 ├── actions/                   # Composite actions used by active workflows
 ├── scripts/                   # Python helpers invoked by workflows and actions
 │   ├── templates/             # Jinja2 templates
 │   └── tests/                 # pytest suite for scripts/
-├── build-config.json          # Linux/Windows x64 toolchain versions and settings
+├── build-config.json          # Windows x64 Release toolchain versions and settings
 ├── build-config.schema.json   # JSON Schema for build-config.json
 ├── dependabot.yml             # Dependabot config (GitHub Actions only)
 └── renovate.json              # Renovate config (npm, Python, pre-commit)
@@ -46,17 +46,17 @@ This is a CI/build-target restriction. Shared QGroundControl source code and pla
 
 | Workflow | Purpose |
 | --- | --- |
-| \`linux.yml\` | Linux x64 GCC Release build, unit/integration tests, and AppImage verification |
+| \`linux.yml\` | Disabled placeholder; no automatic trigger and its Linux build job is always skipped |
 | \`windows.yml\` | Windows x64 MSVC Release build, unit/integration tests, and installer verification |
-| \`_detect-changes.yml\` | Reusable Linux/Windows change detector; skips platform builds on unrelated PR changes |
-| \`build-results.yml\` | Aggregate Linux, Windows, and pre-commit results for a PR; save successful main-branch baselines |
+| \`_detect-changes.yml\` | Reusable change detector retained for shared CI tooling; the active product build is Windows only |
+| \`build-results.yml\` | Aggregate Windows and pre-commit results for a PR; save successful main-branch baselines |
 | \`pre-commit.yml\` | Linting and formatting checks |
 | \`ci-scripts.yml\` | actionlint and Python tests for CI scripts |
 | \`check-links.yml\` | Markdown link validation |
 | \`analysis.yml\` | Static analysis |
 | \`codeql.yml\` | CodeQL security scanning |
 | \`pr-checks.yml\` | PR validation checks |
-| \`release.yml\` | Release automation; waits for Linux and Windows x64 release builds |
+| \`release.yml\` | Release automation; waits for and publishes the Windows x64 installer only |
 | \`docs.yml\`, \`doxygen.yml\` | Documentation build and deployment |
 | \`cache-cleanup.yml\`, \`cache-cleanup-pr.yml\`, \`_cache-cleanup.yml\` | Cache maintenance |
 | \`crowdin.yml\`, \`lupdate.yml\` | Translation workflows |
@@ -65,26 +65,23 @@ This is a CI/build-target restriction. Shared QGroundControl source code and pla
 | \`px4-metadata.yml\` | PX4 metadata sync |
 | \`welcome.yml\` | New contributor welcome |
 
-There are no macOS, iOS, Android, Docker, Flatpak, or VM platform build workflows in the active workflow set.
+Linux x64, macOS, iOS, Android, Docker, Flatpak, and VM product build workflows are not active. Ubuntu-hosted runners remain for repository automation and platform-independent checks; they do not build or test the Linux QGroundControl product.
 
-## Linux and Windows x64 builds
+## Windows x64 Release build
 
-The Linux and Windows workflows use:
-
-- Linux: Ubuntu 24.04 x64, GCC, Linux Qt SDK, and distro-managed system dependencies.
-- Windows: Windows x64, MSVC 2022, x64 Qt SDK, and x64 MSVC GStreamer SDK.
-- Both use the shared CMake build actions and Release configuration by default; Windows Debug is a manual dispatch option.
+The active Windows workflow uses Windows x64, MSVC 2022, the x64 Qt SDK, and the x64 MSVC GStreamer SDK. It uses the shared CMake build actions and is locked to Release configuration; Debug is not an available CI target.
 
 The build pipeline performs:
 
-1. Platform-specific Linux/Windows change detection for pull requests.
-2. Build environment setup and dependency configuration.
-3. CMake configure and compilation.
-4. Unit and integration tests on both platforms.
-5. Linux executable and AppImage verification; Windows executable and installer verification.
-6. Release artifact attestation and upload when repository release credentials are configured.
+1. Windows-specific change detection for pull requests.
+2. Windows x64 Release build environment setup and dependency configuration.
+3. CMake Release configure and compilation.
+4. Unit and Integration test suites on Windows, with actual test counts recorded and zero-test runs rejected.
+5. Windows executable verification.
+6. Windows installer creation, clean installation, and installed-runtime verification.
+7. Windows installer attestation and upload when repository release credentials are configured.
 
-A skipped or cancelled test stage is not a passing validation result. The merge gate requires both Linux x64 and Windows x64 builds and their configured tests to pass.
+A skipped or cancelled test stage is not a passing validation result. The platform build gate requires the Windows x64 Release build, non-zero Unit and Integration test execution, executable verification, and installer verification to pass.
 
 ## Active composite actions
 
@@ -92,15 +89,15 @@ A skipped or cancelled test stage is not a passing validation result. The merge 
 | --- | --- |
 | \`build-config\` | Read toolchain versions from \`.github/build-config.json\` |
 | \`build-prerequisites\` | Shared prerequisites: build config, CMake, Python, and runner preparation |
-| \`build-setup\` | Prepare Linux x64 / Windows x64 build environments and Qt SDKs |
+| \`build-setup\` | Prepare the Windows x64 MSVC 2022 Release environment and Qt SDK |
 | \`cmake-configure\` | Configure QGroundControl with the CI options |
 | \`cmake-build\` | Build with consistent logging, timing, and compiler-cache settings |
-| \`cmake-install\` | Stage the Linux AppImage or Windows installer |
+| \`cmake-install\` | Stage the Windows installer in the active CI workflow |
 | \`run-unit-tests\` | Run CTest labels and generate test output |
 | \`test-report\` | Publish and upload JUnit / CTest results |
 | \`verify-executable\` | Boot-test the built or installed executable |
-| \`detect-changes\` | Detect Linux x64 / Windows x64 build-relevant file changes |
-| \`attest-and-upload\` | Attest and upload the Linux AppImage or Windows installer |
+| \`detect-changes\` | Detect Windows x64 build-relevant file changes for the active workflow |
+| \`attest-and-upload\` | Attest and upload the Windows installer |
 | \`attest-sbom\` | Generate SBOM and build provenance attestations |
 | \`gate-platform-workflows\` | Gate combined reports on the configured platform workflow set |
 | \`build-results-bootstrap\` | Sparse-checkout the scripts/actions used by build-results |
@@ -124,14 +121,14 @@ Python helpers in \`.github/scripts/\` are invoked by active workflows and compo
 | \`cmake_helper.py\` | CMake configure, build, and CTest helpers |
 | \`ccache_helper.py\` | Compiler-cache setup and reporting |
 | \`cpm_helper.py\` | CPM dependency fingerprint and source-cache setup |
-| \`collect_build_status.py\` | Collect Linux/Windows/pre-commit workflow status |
+| \`collect_build_status.py\` | Collect Windows/pre-commit workflow status |
 | \`collect_artifact_sizes.py\` | Collect artifact sizes for build reports |
 | \`generate_build_results_comment.py\` | Generate consolidated PR build-result comments |
 | \`check_baseline_ready.py\` | Verify baseline-cache update readiness |
 | \`precommit_results.py\` | Normalize pre-commit results |
 | \`attest_helper.py\`, \`generate_cpm_sbom.py\` | SBOM and artifact attestation helpers |
 | \`find_artifact.py\`, \`download_artifacts.py\` | Locate and download build artifacts |
-| \`verify_executable.py\` | Verify Linux and Windows executables / packages |
+| \`verify_executable.py\` | Verify the Windows executable and installed application package |
 | \`deploy_docs.py\` | Documentation deployment |
 | \`gh_cache_cleanup.py\` | GitHub Actions cache maintenance |
 | \`gh_pr_size_label.py\` | Maintain PR size labels |
@@ -144,13 +141,13 @@ Python helpers in \`.github/scripts/\` are invoked by active workflows and compo
 
 \`build-config.json\` is the source of truth for the supported CI toolchain:
 
-- \`build.platform_workflows\`: exactly \`Linux,Windows\`.
+- \`build.platform_workflows\`: exactly \`Windows\`.
 - Qt target and minimum versions.
 - CMake minimum version.
 - GStreamer default/minimum and Windows x64 SDK versions.
-- Linux/Windows plugin selections and the Windows x64 SDK SHA256 checksum.
+- Windows plugin selections and the Windows x64 SDK SHA256 checksum.
 
-Android and Apple SDK metadata are intentionally absent. \`cmake/BuildConfig.cmake\` treats non-Linux/Windows platform metadata as optional. The JSON Schema rejects additional platform build configuration keys.
+Android and Apple SDK metadata are intentionally absent. Platform-specific metadata not needed by the Windows build remains optional. The JSON Schema rejects additional platform build configuration keys.
 
 Read values via \`common.build_config.get_build_config_value()\`, \`tools/setup/read_config.py\`, or the \`build-config\` composite action.
 
@@ -167,7 +164,7 @@ Dependency updates are split between two bots:
 - **Shared helpers**: \`tools/common/gh_actions.py\` provides GitHub API pagination with a \`gh\` CLI fallback. Import as \`from common.gh_actions import ...\`.
 - **Bootstrap scripts**: \`install_dependencies_helper.py\` and \`ccache_helper.py\` use only the standard library because they may run before Python dependencies are installed.
 - **Outputs**: use \`common.gh_actions.write_github_output()\` for \`$GITHUB_OUTPUT\` writes.
-- **Platform scope**: keep automatic platform builds limited to Linux x64 and Windows x64 unless the project requirement and its schema/tests are explicitly changed.
+- **Platform scope**: keep automatic product builds and tests limited to Windows x64 MSVC 2022 Release unless the project requirement and its schema/tests are explicitly changed.
 
 ## Tests
 
