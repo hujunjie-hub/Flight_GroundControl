@@ -83,6 +83,14 @@ Vehicle object. This prevents a delayed OPERATION_STATUS packet from a prior
 boot from rolling the telemetry cache back to an old session. No ordering is
 assumed for the random 64-bit boot ID.
 
+All 13 telemetry families must carry a nonzero `profile_id`. The first
+accepted message in a boot session establishes the active profile; subsequent
+messages with a different profile are rejected before their timestamps or
+cached values are updated. A newly accepted boot session clears that profile
+baseline and establishes a new one. This prevents navigation, control, actuator
+and diagnostic snapshots from different product profiles being mixed in one
+Vehicle view.
+
 For single-instance periodic families it rejects duplicate or older
 `time_boot_us` samples. Sensor-health, link-status and resource-status use
 independent timestamp watermarks keyed by `sensor_instance_id`,
