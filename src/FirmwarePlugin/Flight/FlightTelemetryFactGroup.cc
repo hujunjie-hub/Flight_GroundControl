@@ -217,7 +217,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastResourceTimeBootUs = 0;
     _lastTimeStatusTimeBootUs = 0;
     _lastEventTimeBootUs = 0;
-    _lastEventId = 0;
+    _eventIdsAtLastTimestamp.clear();
     _lastPrearmTimeBootUs = 0;
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
@@ -474,15 +474,20 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (value.boot_id == 0 || value.time_boot_us == 0 || value.severity > 3 ||
             value.reason_namespace > 3 ||
             (_activeBootId != 0 && value.boot_id != _activeBootId) ||
-            value.time_boot_us < _lastEventTimeBootUs ||
-            (value.time_boot_us == _lastEventTimeBootUs && value.event_id == _lastEventId)) {
+            value.time_boot_us < _lastEventTimeBootUs) {
             return;
         }
         if (_activeBootId == 0) {
             _activeBootId = value.boot_id;
         }
-        _lastEventTimeBootUs = value.time_boot_us;
-        _lastEventId = value.event_id;
+        if (value.time_boot_us > _lastEventTimeBootUs) {
+            _lastEventTimeBootUs = value.time_boot_us;
+            _eventIdsAtLastTimestamp.clear();
+        }
+        if (_eventIdsAtLastTimestamp.contains(value.event_id)) {
+            return;
+        }
+        _eventIdsAtLastTimestamp.insert(value.event_id);
         _eventTimeBootUs.setRawValue(value.time_boot_us);
         _eventBootId.setRawValue(value.boot_id);
         _eventProfileId.setRawValue(value.profile_id);
