@@ -1,10 +1,9 @@
-#include "FlightTelemetryFactGroup.h"
-
-#include "Vehicle.h"
+#include <cmath>
 
 #include <QtCore/QByteArray>
 
-#include <cmath>
+#include "FlightTelemetryFactGroup.h"
+#include "Vehicle.h"
 
 FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     : FactGroup(0, parent)
