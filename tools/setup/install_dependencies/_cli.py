@@ -7,7 +7,7 @@ import sys
 
 from . import _common as _c
 from ._arch import install_arch
-from ._debian import install_debian
+from ._debian import install_debian, resolve_package_alternatives
 from ._fedora import install_fedora
 from ._macos import install_macos
 from ._packages import (
@@ -28,7 +28,8 @@ LINUX_PLATFORMS = ("debian", "fedora", "arch")
 def print_packages(platform: str, category: str | None = None) -> None:
     """Print packages as a single space-separated line (machine-readable)."""
     if platform == "debian":
-        print(" ".join(get_debian_packages(category)))
+        packages = resolve_package_alternatives(get_debian_packages(category))
+        print(" ".join(packages))
     elif platform == "fedora":
         print(" ".join(get_fedora_packages(category)))
     elif platform == "arch":
