@@ -14,9 +14,72 @@ SetupPage {
     readonly property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property var _telemetry: _vehicle ? _vehicle.flightTelemetry : null
 
+    function _availabilityForFact(name) {
+        if (name.endsWith("Available")) {
+            return ""
+        }
+        if (name.startsWith("op") ||
+                ["armState", "flightMode", "authority", "failsafeLevel", "missionState",
+                 "authorityEpoch", "directiveEpoch", "permitEpoch", "requestId",
+                 "requestSessionId", "operationReasonCode", "requestSourceId"].indexOf(name) >= 0) {
+            return "operationAvailable"
+        }
+        if (name.startsWith("nav") ||
+                ["originId", "navigationCapabilities", "positionStdM", "velocityStdMps",
+                 "headingStdRad", "navigationAgeUs", "navigationReasonCode"].indexOf(name) >= 0) {
+            return "navigationAvailable"
+        }
+        if (name.startsWith("sensor")) {
+            return "sensorHealthAvailable"
+        }
+        if (name.startsWith("control") ||
+                ["degradedDofMask", "solverStatus"].indexOf(name) >= 0) {
+            return "controlAvailable"
+        }
+        if (name.startsWith("actuator")) {
+            return "actuatorAvailable"
+        }
+        if (name.startsWith("link")) {
+            return "linkAvailable"
+        }
+        if (name.startsWith("storage") || ["sdState", "norState"].indexOf(name) >= 0) {
+            return "storageAvailable"
+        }
+        if (name.startsWith("resource")) {
+            return "resourceAvailable"
+        }
+        if (name.startsWith("timeStatus") ||
+                ["timeQuality", "timeDisciplineState", "utcValid", "utcUncertaintyUs",
+                 "eventUncertaintyUs", "timeEpoch", "sourceMappingEpoch"].indexOf(name) >= 0) {
+            return "timeAvailable"
+        }
+        if (name.startsWith("event")) {
+            return "eventAvailable"
+        }
+        if (name.startsWith("prearm")) {
+            return "prearmAvailable"
+        }
+        if (name.startsWith("rc")) {
+            return "rcInputAvailable"
+        }
+        if (name.startsWith("build") ||
+                ["firmwareSha256", "coreParametersSha256", "profileSha256", "abiSha256",
+                 "sourceCommit", "sourceCommitValid"].indexOf(name) >= 0) {
+            return "buildInfoAvailable"
+        }
+        return ""
+    }
+
     function _fact(name) {
         if (!_telemetry || !_telemetry.factExists(name)) {
             return null
+        }
+        const availabilityName = _availabilityForFact(name)
+        if (availabilityName) {
+            const availabilityFact = _telemetry.getFact(availabilityName)
+            if (!availabilityFact || !availabilityFact.rawValue) {
+                return null
+            }
         }
         const fact = _telemetry.getFact(name)
         return fact ? fact.rawValue : null
