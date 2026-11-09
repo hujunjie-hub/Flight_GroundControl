@@ -124,14 +124,17 @@ SetupPage {
                ? qsTr("未上报") : String(raw) + " μs"
     }
 
-    function _enum(name, labels) {
-        const raw = _fact(name)
+    function _enumValue(raw, labels) {
         if (raw === null || raw === undefined) {
             return qsTr("未上报")
         }
         const value = Number(raw)
         return Number.isInteger(value) && value >= 0 && value < labels.length
                ? labels[value] : qsTr("未知 (%1)").arg(value)
+    }
+
+    function _enum(name, labels) {
+        return _enumValue(_fact(name), labels)
     }
 
     function _mask(name) {
@@ -521,12 +524,41 @@ SetupPage {
                     title: qsTr("解锁前检查")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
-                    VehicleSummaryRow { labelText: qsTr("检查项"); valueText: root._enum("prearmCheckId", [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")]) }
-                    VehicleSummaryRow { labelText: qsTr("检查结果"); valueText: root._enum("prearmCheckState", [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")]) }
-                    VehicleSummaryRow { labelText: qsTr("模式掩码"); valueText: root._mask("prearmModeMask") }
-                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
-                    VehicleSummaryRow { labelText: qsTr("恢复条件"); valueText: root._enum("prearmRecoveryCondition", [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]) }
+                    VehicleSummaryRow { labelText: qsTr("检查代次"); valueText: root._integer("prearmCheckEpoch") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("已接收检查项")
+                        valueText: root._fact("prearmAvailable") && root._telemetry
+                                   ? String(root._telemetry.prearmChecks.length) + " / 15" : qsTr("未上报")
+                    }
+                    VehicleSummaryRow { labelText: qsTr("适用模式掩码"); valueText: root._mask("prearmModeMask") }
+                    VehicleSummaryRow { labelText: qsTr("最新检查原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.prearmChecks.length === 0
+                        text: qsTr("当前检查代次暂无逐项结果")
+                    }
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.prearmChecks : []
+                        delegate: RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 8
+                            QGCLabel {
+                                Layout.preferredWidth: 140
+                                text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
+                            }
+                            QGCLabel {
+                                Layout.preferredWidth: 56
+                                text: root._enumValue(modelData.checkState, [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")])
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                            }
+                        }
+                    }
                 }
 
                 StatusCard {
