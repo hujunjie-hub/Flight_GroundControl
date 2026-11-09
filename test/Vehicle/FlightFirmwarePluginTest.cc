@@ -320,6 +320,24 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("coreParametersSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("profileSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
+
+    // All digest chunks in one snapshot must carry identical build metadata.
+    mavlink_fcu_build_info_t inconsistentBuild{};
+    inconsistentBuild.time_boot_us = 220;
+    inconsistentBuild.boot_id = bootId;
+    inconsistentBuild.profile_id = operation.profile_id;
+    inconsistentBuild.product_revision = 999;
+    inconsistentBuild.port_revision = 21;
+    inconsistentBuild.schema_major = 6;
+    inconsistentBuild.schema_minor = 1;
+    inconsistentBuild.digest_kind = 0;
+    for (int i = 0; i < 32; ++i) inconsistentBuild.sha256[i] = static_cast<uint8_t>(i);
+    for (int i = 0; i < 20; ++i) inconsistentBuild.source_commit[i] = static_cast<uint8_t>(i + 1);
+    inconsistentBuild.source_commit_valid = 1;
+    mavlink_msg_fcu_build_info_encode(vehicle.id(), vehicle.compId(), &message, &inconsistentBuild);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("buildProductRevision"))->rawValue().toUInt(), 20U);
+    QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
     QCOMPARE(telemetry.sensorHealthStatuses().size(), 1);
