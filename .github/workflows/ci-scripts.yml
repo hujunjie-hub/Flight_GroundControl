@@ -17,6 +17,8 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'src/MAVLink/flight.xml'
+      - 'src/MAVLink/mavlink-flight-dialect.patch'
   push:
     branches:
       - master
@@ -36,6 +38,8 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'src/MAVLink/flight.xml'
+      - 'src/MAVLink/mavlink-flight-dialect.patch'
   workflow_dispatch:
 
 concurrency:
@@ -114,6 +118,8 @@ jobs:
             tools/simulation
             tools/translations
             deploy/docker
+            src/MAVLink/flight.xml
+            src/MAVLink/mavlink-flight-dialect.patch
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
