@@ -213,6 +213,9 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     event.severity = 2;
     mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
     dispatch(message);
+    event.time_boot_us = 191;
+    mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
+    dispatch(message); // Same event ID must not be surfaced twice.
 
     mavlink_fcu_prearm_status_t prearm{};
     prearm.time_boot_us = 200;
@@ -295,6 +298,22 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 1U);
+
+    // A new FCU boot invalidates cached facts from the previous boot.
+    operation.boot_id = bootId + 1;
+    operation.time_boot_us = 1;
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
+    dispatch(message);
+    QVERIFY(telemetry.getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
+    QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+    QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
+
+    // A delayed packet from the previous boot cannot repopulate the cache.
+    navigation.time_boot_us = 999;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    dispatch(message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
 }
 
 UT_REGISTER_TEST(FlightFirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)
