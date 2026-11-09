@@ -26,7 +26,6 @@ If you are using the stable release, see the [Stable V5.1 docs](https://docs.qgr
 
 - **[What's New](getting_started/whats_new.md)** — Changes since the last stable release.
 - **[Download & Install](getting_started/download_and_install.md)** — Get QGroundControl on your platform.
-- **[UI Overview](getting_started/ui_overview.md)** — A quick tour of the main views.
 - **[First Flight Guide](getting_started/quick_start.md)** — Connect, verify, and fly.
 
 ::: tip
