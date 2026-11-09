@@ -308,15 +308,13 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher"
 )
 
-# Flight custom build: the static Qt entrypoint cannot resolve __argc with this
-# MinGW runtime, so link as a console executable and keep the normal main().
-if(WIN32)
-    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE FALSE)
-endif()
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qgc_winmain.cpp")
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/qgc_winmain.cpp"
-    PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE COMPILE_OPTIONS "-fno-lto")
+# Flight's WinMain shim and GNU-specific flags are only valid for MinGW.
 if(MINGW)
+    # The static Qt entrypoint cannot resolve __argc with this MinGW runtime.
+    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE FALSE)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/qgc_winmain.cpp")
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/qgc_winmain.cpp"
+        PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE COMPILE_OPTIONS "-fno-lto")
     target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-Wl,--stack,16777216")
 endif()
 
