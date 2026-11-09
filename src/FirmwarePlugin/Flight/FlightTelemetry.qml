@@ -512,7 +512,7 @@ SetupPage {
                                 Layout.fillWidth: true
                                 QGCLabel {
                                     Layout.preferredWidth: 82
-                                    text: root._enumValue(modelData.sensorInstanceId, [qsTr("未知"), qsTr("IMU"), qsTr("GNSS"), qsTr("气压计"), qsTr("磁力计")])
+                                    text: qsTr("传感器实例 %1").arg(modelData.sensorInstanceId)
                                 }
                                 QGCLabel {
                                     Layout.fillWidth: true
