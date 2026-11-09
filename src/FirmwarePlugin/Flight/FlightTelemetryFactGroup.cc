@@ -289,14 +289,31 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     return true;
 }
 
-void FlightTelemetryFactGroup::_activateBoot(quint64 bootId)
+bool FlightTelemetryFactGroup::_activateBoot(quint64 bootId)
 {
-    if (bootId == 0 || bootId == _activeBootId) {
-        return;
+    if (bootId == 0) {
+        return false;
+    }
+    if (bootId == _activeBootId) {
+        return true;
+    }
+    // boot_id is a random session identifier, not an ordered counter. Keep a
+    // bounded retired set so a delayed OPERATION_STATUS from an earlier boot
+    // cannot roll the display cache back to a previous session.
+    if (_retiredBootIds.contains(bootId)) {
+        return false;
+    }
+    if (_activeBootId != 0) {
+        _retiredBootIds.insert(_activeBootId);
+        _retiredBootIdOrder.enqueue(_activeBootId);
+        while (_retiredBootIdOrder.size() > _retiredBootIdCapacity) {
+            _retiredBootIds.remove(_retiredBootIdOrder.dequeue());
+        }
     }
     _activeBootId = bootId;
     _resetMessageTimestamps();
     _resetTelemetryAvailability();
+    return true;
 }
 
 void FlightTelemetryFactGroup::_resetMessageTimestamps()
@@ -388,8 +405,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             value.mission_state > 5) {
             return;
         }
-        _activateBoot(value.boot_id);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastOperationTimeBootUs)) {
+        if (!_activateBoot(value.boot_id) ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastOperationTimeBootUs)) {
             return;
         }
         _markFamilyReceived(QStringLiteral("operation"));
@@ -478,7 +495,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_CONTROL_STATUS: {
         mavlink_fcu_control_status_t value{};
         mavlink_msg_fcu_control_status_decode(&message, &value);
+        constexpr quint32 validDofMask = 0x0FU;
         if (value.solver_status > 8 ||
+            (value.controllable_dof_mask & ~validDofMask) != 0 ||
+            (value.degraded_dof_mask & ~validDofMask) != 0 ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastControlTimeBootUs)) {
             return;
         }
@@ -524,8 +544,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_link_status_decode(&message, &value);
         const bool linkQualityValid = (value.validity_mask & (1U << 9)) != 0;
         const bool packetLossValid = (value.validity_mask & (1U << 10)) != 0;
+        constexpr quint32 validLinkMask = (1U << 8) | (1U << 9) | (1U << 10);
         if (value.link_kind < 1 || value.link_kind > 4 ||
             value.link_instance_id != value.link_kind || value.link_state > 5 ||
+            (value.validity_mask & ~validLinkMask) != 0 ||
             (linkQualityValid && value.link_quality_permille > 1000) ||
             (packetLossValid && value.packet_loss_ppm > 1000000U) ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.link_instance_id,
@@ -567,7 +589,11 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_STORAGE_STATUS: {
         mavlink_fcu_storage_status_t value{};
         mavlink_msg_fcu_storage_status_decode(&message, &value);
-        if (value.sd_state > 3 || value.nor_state > 3 ||
+        constexpr quint32 validStorageMask = 0x07U;
+        const bool sdStateValid = (value.validity_mask & (1U << 0)) != 0;
+        const bool norStateValid = (value.validity_mask & (1U << 1)) != 0;
+        if ((value.validity_mask & ~validStorageMask) != 0 ||
+            (sdStateValid && value.sd_state > 3) || (norStateValid && value.nor_state > 3) ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastStorageTimeBootUs)) {
             return;
         }
@@ -590,8 +616,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_RESOURCE_STATUS: {
         mavlink_fcu_resource_status_t value{};
         mavlink_msg_fcu_resource_status_decode(&message, &value);
+        constexpr quint32 validResourceMask = 0x0FU;
         const bool cpuLoadValid = (value.validity_mask & (1U << 2)) != 0;
-        if ((cpuLoadValid && value.cpu_load_permille > 1000) ||
+        if ((value.validity_mask & ~validResourceMask) != 0 ||
+            (cpuLoadValid && value.cpu_load_permille > 1000) ||
             (!_resourceStatusesByTask.contains(value.task_id) &&
              _resourceStatusesByTask.size() >= _resourceTaskCapacity) ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.task_id,
