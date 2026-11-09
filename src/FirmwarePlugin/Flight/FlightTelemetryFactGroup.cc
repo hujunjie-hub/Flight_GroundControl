@@ -569,6 +569,13 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             value.time_boot_us < _lastBuildInfoTimeBootUs) {
             return;
         }
+        if (value.source_commit_valid == 0) {
+            for (const uint8_t byte : value.source_commit) {
+                if (byte != 0) {
+                    return;
+                }
+            }
+        }
         if (_activeBootId == 0) {
             _activeBootId = value.boot_id;
         }
