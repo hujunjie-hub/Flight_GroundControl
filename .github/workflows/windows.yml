@@ -122,6 +122,7 @@ jobs:
           STEPS_GST_ROOT_OUTPUTS_GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
@@ -140,7 +141,7 @@ jobs:
 
       - name: Run Integration Tests (serial)
         id: integration_tests
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build

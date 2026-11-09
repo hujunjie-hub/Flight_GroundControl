@@ -49,6 +49,7 @@ runs:
         name: ${{ inputs.name }}
         path: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
         reporter: java-junit
+        path-replace-backslashes: true
         fail-on-error: false
 
     - name: Upload Test Results

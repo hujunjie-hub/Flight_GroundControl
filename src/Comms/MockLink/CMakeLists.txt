@@ -1,4 +1,7 @@
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+# MockLink is required by VehicleTest and other integration fixtures in all
+# configurations when QGC_BUILD_TESTING is enabled. Keep it in Debug builds
+# even when tests are disabled, preserving the developer Debug workflow.
+if(NOT _QGC_DEBUG_BUILD AND NOT QGC_BUILD_TESTING)
     return()
 endif()
 
