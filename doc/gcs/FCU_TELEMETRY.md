@@ -151,6 +151,11 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   duplicate event IDs at the same publication timestamp are suppressed;
   repeated updates with a newer timestamp remain visible. Acknowledgement and
   persistent cross-session history require a separate protocol/storage design.
+- `FCU_PREARM_STATUS` carries one check per message. The ground station
+  aggregates the latest result for each check ID within `check_epoch`, clears
+  the set on a newer epoch or FCU reboot, and rejects delayed older epochs. The
+  current firmware publisher reports only the actuator-readiness check (ID 5);
+  the UI is ready to display additional checks when the publisher emits them.
 - `FCU_BUILD_INFO` exposes each digest chunk separately. A release-verification
   workflow must compare these values with a trusted build manifest; a telemetry
   hash alone is not a signature or proof of provenance.
