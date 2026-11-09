@@ -221,8 +221,6 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastPrearmTimeBootUs = 0;
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
-    _recentEventIds.clear();
-    _recentEventOrder.clear();
     _lastBuildInfoDigestMask = 0;
     _eventSequenceValue = 0;
 }
