@@ -251,18 +251,55 @@ SetupPage {
         return _fact("sourceCommitValid") ? _hashPrefix("sourceCommit") : qsTr("未提供")
     }
 
-    function _maskState(maskName, bit) {
-        const raw = _fact(maskName)
-        if (raw === null || raw === undefined) {
+    function _rawMaskState(mask, bit) {
+        if (mask === null || mask === undefined) {
             return -1
         }
-        return (Number(raw) & (1 << bit)) !== 0 ? 1 : 0
+        return (Number(mask) & (1 << bit)) !== 0 ? 1 : 0
+    }
+
+    function _maskState(maskName, bit) {
+        return _rawMaskState(_fact(maskName), bit)
+    }
+
+    function _rawValidValue(raw, mask, bit, decimals, suffix) {
+        const state = _rawMaskState(mask, bit)
+        if (state < 0) {
+            return qsTr("未上报")
+        }
+        if (state === 0) {
+            return qsTr("无效")
+        }
+        const value = Number(raw)
+        return Number.isFinite(value) ? value.toFixed(decimals) + suffix : qsTr("无效")
+    }
+
+    function _rawValidPermillePercent(raw, mask, bit) {
+        const state = _rawMaskState(mask, bit)
+        if (state < 0) {
+            return qsTr("未上报")
+        }
+        if (state === 0) {
+            return qsTr("无效")
+        }
+        const value = Number(raw)
+        return Number.isFinite(value) ? (value / 10).toFixed(1) + " %" : qsTr("无效")
+    }
+
+    function _rawValidLossPercent(raw, mask, bit) {
+        const state = _rawMaskState(mask, bit)
+        if (state < 0) {
+            return qsTr("未上报")
+        }
+        if (state === 0) {
+            return qsTr("无效")
+        }
+        const value = Number(raw)
+        return Number.isFinite(value) ? (value / 10000).toFixed(2) + " %" : qsTr("无效")
     }
 
     function _validValue(name, maskName, bit, decimals, suffix) {
-        const state = _maskState(maskName, bit)
-        return state < 0 ? qsTr("未上报")
-                         : state === 1 ? _number(name, decimals, suffix) : qsTr("无效")
+        return _rawValidValue(_fact(name), _fact(maskName), bit, decimals, suffix)
     }
 
     function _validEnum(name, maskName, bit, labels) {
@@ -372,12 +409,44 @@ SetupPage {
                     title: qsTr("传感器健康")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("sensorHealthAvailable") }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("sensorHealth") }
-                    VehicleSummaryRow { labelText: qsTr("传感器实例"); valueText: root._integer("sensorInstanceId") }
-                    VehicleSummaryRow { labelText: qsTr("健康状态"); valueText: root._enum("sensorHealthState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")]) }
-                    VehicleSummaryRow { labelText: qsTr("处理动作"); valueText: root._integer("sensorAction") }
-                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("sensorReasonCode")) }
-                    VehicleSummaryRow { labelText: qsTr("间隙 / 拒绝计数"); valueText: root._integer("sensorGapCount") + " / " + root._integer("sensorRejectCount") }
-                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("sensorTimeBootUs") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("传感器实例")
+                        valueText: root._fact("sensorHealthAvailable") && root._telemetry
+                                   ? String(root._telemetry.sensorHealthStatuses.length) + " / 4" : qsTr("未上报")
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.sensorHealthStatuses.length === 0
+                        text: qsTr("暂无传感器状态")
+                    }
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.sensorHealthStatuses : []
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 3
+                            RowLayout {
+                                Layout.fillWidth: true
+                                QGCLabel {
+                                    Layout.preferredWidth: 82
+                                    text: root._enumValue(modelData.sensorInstanceId, [qsTr("未知"), qsTr("IMU"), qsTr("GNSS"), qsTr("气压计"), qsTr("磁力计")])
+                                }
+                                QGCLabel {
+                                    Layout.fillWidth: true
+                                    text: root._enumValue(modelData.healthState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")])
+                                }
+                                QGCLabel { text: qsTr("动作 %1").arg(modelData.action) }
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("原因：%1 · 间隙 %2 / 拒绝 %3")
+                                      .arg(root._reasonText(0, modelData.reasonCode))
+                                      .arg(modelData.gapCount)
+                                      .arg(modelData.rejectCount)
+                            }
+                        }
+                    }
                 }
 
                 StatusCard {
@@ -411,14 +480,47 @@ SetupPage {
                     title: qsTr("通信链路")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
-                    VehicleSummaryRow { labelText: qsTr("链路类型"); valueText: root._enum("linkKind", [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")]) }
-                    VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("linkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
-                    VehicleSummaryRow { labelText: qsTr("RSSI"); valueText: root._validValue("linkRssiDbm", "linkValidityMask", 8, 0, " dBm") }
-                    VehicleSummaryRow { labelText: qsTr("链路质量"); valueText: root._validPermillePercent("linkQualityPermille", "linkValidityMask", 9) }
-                    VehicleSummaryRow { labelText: qsTr("丢包率"); valueText: root._validLossPercent("linkPacketLossPpm", "linkValidityMask", 10) }
-                    VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("linkAgeUs", 0, " μs") }
-                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("linkReasonCode")) }
-                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("linkTimeBootUs") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("链路实例")
+                        valueText: root._fact("linkAvailable") && root._telemetry
+                                   ? String(root._telemetry.linkStatuses.length) + " / 4" : qsTr("未上报")
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.linkStatuses.length === 0
+                        text: qsTr("暂无链路状态")
+                    }
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.linkStatuses : []
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 3
+                            RowLayout {
+                                Layout.fillWidth: true
+                                QGCLabel {
+                                    Layout.preferredWidth: 72
+                                    text: root._enumValue(modelData.linkKind, [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")])
+                                }
+                                QGCLabel {
+                                    Layout.fillWidth: true
+                                    text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                                }
+                                QGCLabel {
+                                    text: root._reasonText(0, modelData.reasonCode)
+                                }
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · 年龄 %4 μs")
+                                      .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
+                                      .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
+                                      .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
+                                      .arg(modelData.ageUs)
+                            }
+                        }
+                    }
                 }
 
                 StatusCard {
@@ -445,16 +547,41 @@ SetupPage {
                     title: qsTr("实时资源")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("resource") }
-                    VehicleSummaryRow { labelText: qsTr("任务 ID"); valueText: root._integer("resourceTaskId") }
                     VehicleSummaryRow {
-                        labelText: qsTr("CPU")
-                        valueText: root._validPermillePercent("resourceCpuLoadPermille", "resourceValidityMask", 2)
+                        labelText: qsTr("任务实例")
+                        valueText: root._fact("resourceAvailable") && root._telemetry
+                                   ? String(root._telemetry.resourceStatuses.length) : qsTr("未上报")
                     }
-                    VehicleSummaryRow { labelText: qsTr("WCET"); valueText: root._validValue("resourceWcetUs", "resourceValidityMask", 0, 0, " μs") }
-                    VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
-                    VehicleSummaryRow { labelText: qsTr("截止期错过"); valueText: root._integer("resourceDeadlineMissCount") }
-                    VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._validValue("resourceAxiFreeBytes", "resourceValidityMask", 3, 0, " B") }
-                    VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("resourceTimeBootUs") }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.resourceStatuses.length === 0
+                        text: qsTr("暂无任务资源状态")
+                    }
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.resourceStatuses : []
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 3
+                            RowLayout {
+                                Layout.fillWidth: true
+                                QGCLabel { text: qsTr("任务 %1").arg(modelData.taskId) }
+                                QGCLabel {
+                                    Layout.fillWidth: true
+                                    text: qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
+                                }
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("WCET %1 · 栈 %2 · 截止期错过 %3 · AXI %4")
+                                      .arg(root._rawValidValue(modelData.wcetUs, modelData.validityMask, 0, 0, " μs"))
+                                      .arg(root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B"))
+                                      .arg(modelData.deadlineMissCount)
+                                      .arg(root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B"))
+                            }
+                        }
+                    }
                 }
 
                 StatusCard {
