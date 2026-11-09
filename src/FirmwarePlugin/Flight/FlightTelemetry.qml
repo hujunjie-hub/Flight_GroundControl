@@ -16,6 +16,12 @@ SetupPage {
     property int _ageRefreshTick: 0
     readonly property var _receiveAges: _ageRefreshTick >= 0 && _telemetry
                                         ? _telemetry.familyReceiveAgeMs : ({})
+    readonly property var _sensorStatuses: _ageRefreshTick >= 0 && _telemetry
+                                           ? _telemetry.sensorHealthStatuses : []
+    readonly property var _linkStatuses: _ageRefreshTick >= 0 && _telemetry
+                                         ? _telemetry.linkStatuses : []
+    readonly property var _resourceStatuses: _ageRefreshTick >= 0 && _telemetry
+                                             ? _telemetry.resourceStatuses : []
 
     function _availabilityForFact(name) {
         if (name.endsWith("Available")) {
@@ -96,8 +102,33 @@ SetupPage {
         return qsTr("%1 s 前").arg((ageMs / 1000).toFixed(1))
     }
 
+    function _familyFreshnessLimitMs(family) {
+        return ["operation", "navigation", "actuator", "prearm", "time"].indexOf(family) >= 0
+               ? 1000 : 5500
+    }
+
     function _familyStatus(name) {
-        return Boolean(_fact(name)) ? qsTr("已接收") : qsTr("等待遥测")
+        if (!Boolean(_fact(name))) {
+            return qsTr("等待遥测")
+        }
+        const family = name.substring(0, name.length - "Available".length)
+        if (family === "event") {
+            return qsTr("已接收")
+        }
+        const ageMs = Number(_receiveAges[family])
+        if (!Number.isFinite(ageMs) || ageMs < 0) {
+            return qsTr("等待遥测")
+        }
+        return ageMs > _familyFreshnessLimitMs(family) ? qsTr("数据超时") : qsTr("已接收")
+    }
+
+    function _instanceReceiveAgeText(ageMs) {
+        const age = Number(ageMs)
+        if (!Number.isFinite(age) || age < 0) {
+            return qsTr("未收到")
+        }
+        const ageText = qsTr("%1 s 前").arg((age / 1000).toFixed(1))
+        return age > 5500 ? qsTr("%1 · 数据超时").arg(ageText) : ageText
     }
 
     function _number(name, decimals, suffix) {
@@ -451,15 +482,15 @@ SetupPage {
                     VehicleSummaryRow {
                         labelText: qsTr("传感器实例")
                         valueText: root._fact("sensorHealthAvailable") && root._telemetry
-                                   ? String(root._telemetry.sensorHealthStatuses.length) + " / 4" : qsTr("未上报")
+                                   ? String(root._sensorStatuses.length) + " / 4" : qsTr("未上报")
                     }
                     QGCLabel {
                         Layout.fillWidth: true
-                        visible: !root._telemetry || root._telemetry.sensorHealthStatuses.length === 0
+                        visible: !root._telemetry || root._sensorStatuses.length === 0
                         text: qsTr("暂无传感器状态")
                     }
                     Repeater {
-                        model: root._telemetry ? root._telemetry.sensorHealthStatuses : []
+                        model: root._sensorStatuses
                         delegate: ColumnLayout {
                             required property var modelData
                             Layout.fillWidth: true
@@ -483,6 +514,10 @@ SetupPage {
                                       .arg(root._reasonText(0, modelData.reasonCode))
                                       .arg(modelData.gapCount)
                                       .arg(modelData.rejectCount)
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("地面站接收年龄：%1").arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                             }
                         }
                     }
@@ -522,15 +557,15 @@ SetupPage {
                     VehicleSummaryRow {
                         labelText: qsTr("链路实例")
                         valueText: root._fact("linkAvailable") && root._telemetry
-                                   ? String(root._telemetry.linkStatuses.length) + " / 4" : qsTr("未上报")
+                                   ? String(root._linkStatuses.length) : qsTr("未上报")
                     }
                     QGCLabel {
                         Layout.fillWidth: true
-                        visible: !root._telemetry || root._telemetry.linkStatuses.length === 0
+                        visible: !root._telemetry || root._linkStatuses.length === 0
                         text: qsTr("暂无链路状态")
                     }
                     Repeater {
-                        model: root._telemetry ? root._telemetry.linkStatuses : []
+                        model: root._linkStatuses
                         delegate: ColumnLayout {
                             required property var modelData
                             Layout.fillWidth: true
@@ -552,11 +587,15 @@ SetupPage {
                             QGCLabel {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · 年龄 %4 μs")
+                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · FCU 数据年龄 %4 μs")
                                       .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
                                       .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
                                       .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
                                       .arg(modelData.ageUs)
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("地面站接收年龄：%1").arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                             }
                         }
                     }
@@ -589,15 +628,15 @@ SetupPage {
                     VehicleSummaryRow {
                         labelText: qsTr("任务实例")
                         valueText: root._fact("resourceAvailable") && root._telemetry
-                                   ? String(root._telemetry.resourceStatuses.length) : qsTr("未上报")
+                                   ? String(root._resourceStatuses.length) : qsTr("未上报")
                     }
                     QGCLabel {
                         Layout.fillWidth: true
-                        visible: !root._telemetry || root._telemetry.resourceStatuses.length === 0
+                        visible: !root._telemetry || root._resourceStatuses.length === 0
                         text: qsTr("暂无任务资源状态")
                     }
                     Repeater {
-                        model: root._telemetry ? root._telemetry.resourceStatuses : []
+                        model: root._resourceStatuses
                         delegate: ColumnLayout {
                             required property var modelData
                             Layout.fillWidth: true
@@ -618,6 +657,10 @@ SetupPage {
                                       .arg(root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B"))
                                       .arg(modelData.deadlineMissCount)
                                       .arg(root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B"))
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("地面站接收年龄：%1").arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                             }
                         }
                     }
