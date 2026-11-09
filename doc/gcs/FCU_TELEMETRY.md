@@ -30,8 +30,13 @@ vehicle.flightTelemetry.getFact("solverStatus").rawValue
 Facts are intentionally flat within this group. Each message family has an
 `<family>Available` boolean and its own `<family>TimeBootUs`,
 `<family>BootId`, and `<family>ProfileId` facts where present. Consumers
-must check the availability flag before displaying a value. A zero value is
-not a substitute for checking validity.
+must check the availability flag before displaying a value. Availability means
+that at least one valid message in that family has been received during the
+current boot; it is not a freshness watchdog. A zero value is not a substitute
+for checking validity. For periodic data, compare each family timestamp with
+the latest `opTimeBootUs` (same boot) and apply a UI-side age threshold. For
+link and navigation measurements, also honor their transmitted `linkAgeUs` and
+`navigationAgeUs` fields.
 
 The group accepts only messages from the connected vehicle's system and
 autopilot component IDs. For periodic message families it rejects duplicate
