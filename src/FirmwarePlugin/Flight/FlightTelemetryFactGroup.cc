@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QVariantMap>
 
 #include "FlightTelemetryFactGroup.h"
 #include "Vehicle.h"
