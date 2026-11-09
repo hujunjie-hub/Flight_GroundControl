@@ -52,7 +52,7 @@ You **must install Qt as described below** instead of using pre-built packages f
 
 To install Qt:
 
-1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
+1. Download and run the [Qt Online Installer](https://www.qt.io/development/download-qt-installer-oss)
    - **Ubuntu:**
      - Set the downloaded file to executable using: `chmod +x`.
      - It may also be necessary to install _libxcb-cursor0_.
