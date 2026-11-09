@@ -295,7 +295,7 @@ void FlightTelemetryDispatchTest::_allFcuFamiliesTraverseVehicleDispatch()
                      qPrintable(QStringLiteral("No accepted wire message for %1").arg(factName)));
     }
 
-    QCOMPARE(telemetry->getFact(QStringLiteral("navPositionStdM"))->rawValue().toFloat(), 0.12F);
+    QCOMPARE(telemetry->getFact(QStringLiteral("positionStdM"))->rawValue().toFloat(), 0.12F);
     QCOMPARE(telemetry->getFact(QStringLiteral("sensorInstanceId"))->rawValue().toUInt(), 1U);
     QCOMPARE(telemetry->getFact(QStringLiteral("solverStatus"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry->getFact(QStringLiteral("actuatorPermitEpoch"))->rawValue().toUInt(), 11U);
