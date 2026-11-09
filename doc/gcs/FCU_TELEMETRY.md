@@ -56,8 +56,9 @@ must check the availability flag before displaying a value. Availability means
 that at least one valid message in that family has been received during the
 current boot; it is not a freshness watchdog. A zero value is not a substitute
 for checking validity. For periodic data, compare each family timestamp with
-the latest `opTimeBootUs` (same boot) and apply a UI-side age threshold. For
-link and navigation measurements, also honor their transmitted `linkAgeUs` and
+the latest `opTimeBootUs` (same boot); apply a UI-side age threshold only after
+the corresponding publisher frequency has been defined and measured. For link
+and navigation measurements, also honor their transmitted `linkAgeUs` and
 `navigationAgeUs` fields. The `familyReceiveAgeMs` property separately reports
 monotonic ground-station receive age for all 13 message families (`-1` means no
 valid message received in the current boot). The QML page refreshes this display
