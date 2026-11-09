@@ -375,8 +375,8 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("失效保护等级"); valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")]) }
                     VehicleSummaryRow { labelText: qsTr("任务状态"); valueText: root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]) }
                     VehicleSummaryRow {
-                        labelText: qsTr("启动 ID / 配置 ID")
-                        valueText: root._integer("opBootId") + " / " + root._integer("opProfileId")
+                        labelText: qsTr("启动 ID（HEX）/ 配置 ID")
+                        valueText: String(root._fact("opBootIdHex") || qsTr("未上报")) + " / " + root._integer("opProfileId")
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("控制权 / 指令代次")
