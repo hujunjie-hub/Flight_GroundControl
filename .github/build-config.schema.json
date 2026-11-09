@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "QGC Build Configuration",
-  "description": "Linux x64 GCC and Windows x64 MSVC build toolchain versions and settings for QGroundControl CI",
+  "description": "Windows x64 MSVC 2022 Release build toolchain versions and settings for QGroundControl CI",
   "type": "object",
   "required": [
     "qt",
@@ -52,8 +52,8 @@
         },
         "platform_workflows": {
           "type": "string",
-          "pattern": "^Linux,Windows$",
-          "description": "Comma-separated list of the active platform build workflows"
+          "pattern": "^Windows$",
+          "description": "Comma-separated list of the active platform build workflows; currently Windows only"
         }
       }
     },
