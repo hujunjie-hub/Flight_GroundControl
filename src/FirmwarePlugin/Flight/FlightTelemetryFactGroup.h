@@ -3,6 +3,7 @@
 #include "FactGroup.h"
 #include "Fact.h"
 #include "FactMetaData.h"
+#include "QGCMAVLink.h"
 
 /// Per-vehicle Flight FCU telemetry cache.
 ///
