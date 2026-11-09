@@ -9,8 +9,6 @@ SetupPage {
     pageComponent: pageComponent
     pageDescription: qsTr("当前 Flight 固件尚未接入 MAVLink Onboard Log 协议；地面站不会发送未支持的日志管理命令。")
 
-    readonly property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     Component {
         id: pageComponent
 
