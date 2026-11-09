@@ -67,6 +67,9 @@ def main() -> None:
     else:
         sdkmanager = "sdkmanager"
         gradlew = os.path.join(args.workspace, "android", "gradlew")
+        # Git checkouts may materialize the wrapper without its executable bit.
+        # Restore it here so both this probe and the later Android build can run it.
+        os.chmod(gradlew, os.stat(gradlew).st_mode | 0o111)
 
     run_with_retries([sdkmanager, "--update"])
     run_with_retries([gradlew, "--version"])
