@@ -715,7 +715,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_PREARM_STATUS: {
         mavlink_fcu_prearm_status_t value{};
         mavlink_msg_fcu_prearm_status_decode(&message, &value);
-        if (value.check_id > 14 || value.check_state > 3 || value.reason_namespace > 3 ||
+        if (value.check_epoch == 0 || value.check_id > 14 || value.check_state > 3 ||
+            value.reason_namespace > 3 ||
             value.recovery_condition > 4) {
             return;
         }
