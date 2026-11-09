@@ -183,7 +183,7 @@ private:
     Fact _sourceCommit{0, QStringLiteral("sourceCommit"), FactMetaData::valueTypeString, this};
     Fact _sourceCommitValid{0, QStringLiteral("sourceCommitValid"), FactMetaData::valueTypeBool, this};
 
-    bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs) const;
+    bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs);
     void _activateBoot(quint64 bootId);
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
