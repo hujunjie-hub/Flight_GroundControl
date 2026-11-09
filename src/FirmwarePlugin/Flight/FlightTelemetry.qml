@@ -91,8 +91,20 @@ SetupPage {
     }
 
     function _hashPrefix(name) {
-        const value = _text(name)
-        return value === qsTr("未上报") ? value : value.substring(0, 16) + "…"
+        const raw = _fact(name)
+        return raw === null || raw === undefined || raw === ""
+               ? qsTr("未上报") : String(raw).substring(0, 16) + "…"
+    }
+
+    function _sourceCommitDisplay() {
+        if (!_fact("buildInfoAvailable")) {
+            return qsTr("未上报")
+        }
+        return _fact("sourceCommitValid") ? _hashPrefix("sourceCommit") : qsTr("未提供")
+    }
+
+    function _validValue(name, maskName, bit, decimals, suffix) {
+        return _maskBit(maskName, bit) ? _number(name, decimals, suffix) : qsTr("无效")
     }
 
     Component {
@@ -141,17 +153,28 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("Authority"); valueText: root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]) }
                     VehicleSummaryRow { labelText: qsTr("Failsafe"); valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")]) }
                     VehicleSummaryRow { labelText: qsTr("任务状态"); valueText: root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]) }
-                    VehicleSummaryRow { labelText: qsTr("Authority / Permit Epoch"); valueText: root._integer("authorityEpoch") + " / " + root._integer("permitEpoch") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("Authority / Directive Epoch")
+                        valueText: root._integer("authorityEpoch") + " / " + root._integer("directiveEpoch")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("Permit Epoch")
+                        valueText: root._integer("permitEpoch")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("请求 ID / 原因码")
+                        valueText: root._integer("requestId") + " / " + root._integer("operationReasonCode")
+                    }
                 }
 
                 StatusCard {
                     title: qsTr("导航状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("navigationAvailable") }
-                    VehicleSummaryRow { labelText: qsTr("State / Origin"); valueText: root._integer("navStateEpoch") + " / " + root._integer("navOriginId") }
+                    VehicleSummaryRow { labelText: qsTr("State / Origin"); valueText: root._integer("navStateEpoch") + " / " + root._integer("originId") }
                     VehicleSummaryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
-                    VehicleSummaryRow { labelText: qsTr("位置标准差"); valueText: root._number("navPositionStdM", 3, " m") }
-                    VehicleSummaryRow { labelText: qsTr("速度标准差"); valueText: root._number("navVelocityStdMps", 3, " m/s") }
-                    VehicleSummaryRow { labelText: qsTr("航向标准差"); valueText: root._number("navHeadingStdRad", 3, " rad") }
+                    VehicleSummaryRow { labelText: qsTr("位置标准差"); valueText: root._number("positionStdM", 3, " m") }
+                    VehicleSummaryRow { labelText: qsTr("速度标准差"); valueText: root._number("velocityStdMps", 3, " m/s") }
+                    VehicleSummaryRow { labelText: qsTr("航向标准差"); valueText: root._number("headingStdRad", 3, " rad") }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("navigationAgeUs", 0, " μs") }
                 }
 
@@ -201,9 +224,19 @@ SetupPage {
                 StatusCard {
                     title: qsTr("存储状态")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
-                    VehicleSummaryRow { labelText: qsTr("SD"); valueText: root._enum("sdState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")]) }
-                    VehicleSummaryRow { labelText: qsTr("NOR"); valueText: root._enum("norState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")]) }
-                    VehicleSummaryRow { labelText: qsTr("剩余空间"); valueText: root._number("storageFreeKib", 0, " KiB") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("SD")
+                        valueText: root._maskBit("storageValidityMask", 0)
+                                   ? root._enum("sdState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                                   : qsTr("无效")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("NOR")
+                        valueText: root._maskBit("storageValidityMask", 1)
+                                   ? root._enum("norState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                                   : qsTr("无效")
+                    }
+                    VehicleSummaryRow { labelText: qsTr("剩余空间"); valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB") }
                     VehicleSummaryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
                     VehicleSummaryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
                     VehicleSummaryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
@@ -213,11 +246,15 @@ SetupPage {
                     title: qsTr("实时资源")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
                     VehicleSummaryRow { labelText: qsTr("任务 ID"); valueText: root._integer("resourceTaskId") }
-                    VehicleSummaryRow { labelText: qsTr("CPU"); valueText: root._permillePercent("resourceCpuLoadPermille") }
-                    VehicleSummaryRow { labelText: qsTr("WCET"); valueText: root._number("resourceWcetUs", 0, " μs") }
-                    VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._number("resourceStackFreeBytes", 0, " B") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("CPU")
+                        valueText: root._maskBit("resourceValidityMask", 2)
+                                   ? root._permillePercent("resourceCpuLoadPermille") : qsTr("无效")
+                    }
+                    VehicleSummaryRow { labelText: qsTr("WCET"); valueText: root._validValue("resourceWcetUs", "resourceValidityMask", 0, 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
                     VehicleSummaryRow { labelText: qsTr("Deadline Miss"); valueText: root._integer("resourceDeadlineMissCount") }
-                    VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._number("resourceAxiFreeBytes", 0, " B") }
+                    VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._validValue("resourceAxiFreeBytes", "resourceValidityMask", 3, 0, " B") }
                 }
 
                 StatusCard {
@@ -226,7 +263,11 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     VehicleSummaryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     VehicleSummaryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : (root._fact("utcValid") ? qsTr("是") : qsTr("否")) }
-                    VehicleSummaryRow { labelText: qsTr("UTC 不确定度"); valueText: root._number("utcUncertaintyUs", 0, " μs") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("UTC 不确定度")
+                        valueText: root._fact("utcValid")
+                                   ? root._number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
+                    }
                     VehicleSummaryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("Time Epoch"); valueText: root._integer("timeEpoch") }
                 }
@@ -255,8 +296,18 @@ SetupPage {
                 StatusCard {
                     title: qsTr("遥控输入")
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
-                    VehicleSummaryRow { labelText: qsTr("Roll / Pitch"); valueText: root._number("rcRollNorm", 3, "") + " / " + root._number("rcPitchNorm", 3, "") }
-                    VehicleSummaryRow { labelText: qsTr("Yaw / Throttle"); valueText: root._number("rcYawNorm", 3, "") + " / " + root._number("rcThrottleNorm", 3, "") }
+                    VehicleSummaryRow {
+                        labelText: qsTr("Roll / Pitch")
+                        valueText: (root._maskBit("rcValidAxesMask", 0) ? root._number("rcRollNorm", 3, "") : qsTr("无效"))
+                                   + " / " +
+                                   (root._maskBit("rcValidAxesMask", 1) ? root._number("rcPitchNorm", 3, "") : qsTr("无效"))
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("Yaw / Throttle")
+                        valueText: (root._maskBit("rcValidAxesMask", 2) ? root._number("rcYawNorm", 3, "") : qsTr("无效"))
+                                   + " / " +
+                                   (root._maskBit("rcValidAxesMask", 3) ? root._number("rcThrottleNorm", 3, "") : qsTr("无效"))
+                    }
                     VehicleSummaryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
                     VehicleSummaryRow { labelText: qsTr("接收机 Failsafe"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
@@ -270,8 +321,10 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("接口版本"); valueText: root._integer("buildPortRevision") }
                     VehicleSummaryRow { labelText: qsTr("Schema"); valueText: root._integer("buildSchemaMajor") + "." + root._integer("buildSchemaMinor") }
                     VehicleSummaryRow { labelText: qsTr("固件 SHA-256"); valueText: root._hashPrefix("firmwareSha256") }
+                    VehicleSummaryRow { labelText: qsTr("核心参数 SHA-256"); valueText: root._hashPrefix("coreParametersSha256") }
                     VehicleSummaryRow { labelText: qsTr("Profile SHA-256"); valueText: root._hashPrefix("profileSha256") }
-                    VehicleSummaryRow { labelText: qsTr("源码提交"); valueText: root._fact("sourceCommitValid") ? root._hashPrefix("sourceCommit") : qsTr("未提供") }
+                    VehicleSummaryRow { labelText: qsTr("ABI SHA-256"); valueText: root._hashPrefix("abiSha256") }
+                    VehicleSummaryRow { labelText: qsTr("源码提交"); valueText: root._sourceCommitDisplay() }
                 }
             }
         }
