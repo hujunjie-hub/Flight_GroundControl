@@ -6,7 +6,7 @@ on:
 jobs:
   linux-build:
     name: Linux x64 build disabled
-    if: false
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     steps:
       - name: Explain disabled target
