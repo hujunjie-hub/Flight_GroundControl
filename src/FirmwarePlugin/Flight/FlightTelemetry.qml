@@ -245,6 +245,9 @@ SetupPage {
     }
 
     function _schemaCompatibilityText() {
+        if (!_fact("buildInfoAvailable")) {
+            return qsTr("未收到版本")
+        }
         const majorRaw = _fact("buildSchemaMajor")
         const minorRaw = _fact("buildSchemaMinor")
         if (majorRaw === null || minorRaw === null) {
@@ -265,6 +268,9 @@ SetupPage {
     }
 
     function _profileCompatibilityText() {
+        if (!_fact("operationAvailable") || !_fact("buildInfoAvailable")) {
+            return qsTr("未验证")
+        }
         const operationProfile = _fact("opProfileId")
         const buildProfile = _fact("buildProfileId")
         if (operationProfile === null || buildProfile === null) {
