@@ -191,10 +191,12 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   repeated updates with a newer timestamp remain visible. Acknowledgement and
   persistent cross-session history require a separate protocol/storage design.
 - `FCU_PREARM_STATUS` carries one check per message. The ground station
-  aggregates the latest result for each check ID within `check_epoch`, clears
-  the set on a newer epoch or FCU reboot, and rejects delayed older epochs. The
-  current firmware publisher reports only the actuator-readiness check (ID 5);
-  the UI is ready to display additional checks when the publisher emits them.
+  aggregates the latest result for each check ID within `check_epoch`, permits
+  distinct check IDs to share one publication timestamp, and rejects duplicate
+  or older samples per check ID. It clears the set on a newer epoch or FCU reboot
+  and rejects delayed older epochs. The current firmware publisher reports only
+  the actuator-readiness check (ID 5); the UI is ready to display additional
+  checks when the publisher emits them.
 - Sensor/link/resource records are retained per instance. Resource task records
   have a fixed 64-task cache limit; additional unseen task IDs are ignored until
   the next FCU boot rather than allowing unbounded ground-station memory growth.
