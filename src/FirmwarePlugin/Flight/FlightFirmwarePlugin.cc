@@ -33,7 +33,6 @@ QStringList flightModeNames()
         FlightFirmwarePlugin::tr("Return"),
         FlightFirmwarePlugin::tr("Land"),
         FlightFirmwarePlugin::tr("Emergency Land"),
-        FlightFirmwarePlugin::tr("Takeoff"),
     };
 }
 
@@ -148,24 +147,24 @@ bool FlightFirmwarePlugin::supportsCameraSection(const Vehicle *) const
     return false;
 }
 
-bool FlightFirmwarePlugin::supportsMissionClear(const Vehicle *vehicle) const
+bool FlightFirmwarePlugin::supportsMissionClear(const Vehicle *) const
 {
-    return supportsSilPlanCommands(vehicle);
+    // MISSION_CLEAR_ALL has no mission_id or mission_epoch fields. The Flight FMS requires
+    // both to clear a committed mission, so advertising this standard action would be misleading.
+    return false;
 }
 
-bool FlightFirmwarePlugin::supportsGuidedAction(const Vehicle *vehicle, GuidedAction action) const
+bool FlightFirmwarePlugin::supportsGuidedAction(const Vehicle *, GuidedAction) const
 {
-    return action == SetHomeAction && supportsSilPlanCommands(vehicle);
+    // The current Flight FMS does not support QGC's coordinate-based Set Home action
+    // (MAV_CMD_DO_SET_HOME with param1=0). Keep the action hidden until that contract exists.
+    return false;
 }
 
-bool FlightFirmwarePlugin::setHomePosition(Vehicle *vehicle, const QGeoCoordinate &coordinate) const
+bool FlightFirmwarePlugin::setHomePosition(Vehicle *, const QGeoCoordinate &) const
 {
-    if (supportsSilPlanCommands(vehicle) && coordinate.isValid()) {
-        // FMT-SIM maps its flat ground plane to zero AMSL.
-        vehicle->sendMavCommandInt(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL,
-                                   true, 0, 0, 0, 0, coordinate.latitude(), coordinate.longitude(), 0);
-    }
-    return true;
+    // Do not report success for a Home command that the current FMS contract cannot accept.
+    return false;
 }
 
 QGeoCoordinate FlightFirmwarePlugin::resumeMissionTakeoffCoordinate(Vehicle *vehicle) const
@@ -236,7 +235,7 @@ bool FlightFirmwarePlugin::isGuidedMode(const Vehicle *vehicle) const
         return false;
     }
     const QString mode = vehicle->flightMode();
-    return mode == gotoFlightMode() || mode == takeOffFlightMode();
+    return mode == gotoFlightMode();
 }
 
 void FlightFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
