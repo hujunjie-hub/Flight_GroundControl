@@ -433,7 +433,6 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
                     VehicleSummaryRow { labelText: qsTr("截止期错过"); valueText: root._integer("resourceDeadlineMissCount") }
                     VehicleSummaryRow { labelText: qsTr("AXI 剩余"); valueText: root._validValue("resourceAxiFreeBytes", "resourceValidityMask", 3, 0, " B") }
-                    VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("resourceReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("resourceTimeBootUs") }
                 }
 
