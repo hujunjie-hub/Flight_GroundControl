@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 from ci_bootstrap import ensure_tools_dir
 
@@ -156,6 +157,18 @@ def _maybe_wrap_xvfb(cmd: list[str]) -> list[str]:
     return cmd
 
 
+def read_junit_test_count(junit_path: str) -> int:
+    """Return the number of tests recorded in a CTest JUnit report."""
+    try:
+        root = ET.parse(junit_path).getroot()
+    except (OSError, ET.ParseError) as exc:
+        raise ValueError(f"Unable to read CTest JUnit report {junit_path}: {exc}") from exc
+
+    if root.tag == "testsuites":
+        return sum(int(suite.attrib.get("tests", "0")) for suite in root.findall("testsuite"))
+    return int(root.attrib.get("tests", "0"))
+
+
 def cmd_ctest(args: argparse.Namespace) -> None:
     """Run CTest with standardized arguments and timing."""
     cmd = [
@@ -181,6 +194,19 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     exit_code = _run_with_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
     duration = int(time.monotonic() - start)
     gh_notice(f"Tests completed in {duration}s")
+    if exit_code == 0:
+        try:
+            test_count = read_junit_test_count(args.junit_output)
+        except ValueError as exc:
+            gh_error(str(exc))
+            sys.exit(1)
+        if test_count <= 0:
+            gh_error(
+                f"CTest completed without running any tests for labels "
+                f"include={args.include_labels!r}, exclude={args.exclude_labels!r}"
+            )
+            sys.exit(1)
+        gh_notice(f"CTest executed {test_count} tests")
     sys.exit(exit_code)
 
 

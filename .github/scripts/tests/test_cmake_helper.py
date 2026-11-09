@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from cmake_helper import detect_jobs, main, read_cache_var
+from cmake_helper import detect_jobs, main, read_cache_var, read_junit_test_count
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -124,3 +124,28 @@ class TestCmdCacheVar:
         with pytest.raises(SystemExit) as exc:
             main()
         assert exc.value.code == 1
+
+
+class TestReadJunitTestCount:
+    def test_reads_testsuite_count(self, tmp_path: Path) -> None:
+        report = tmp_path / "junit.xml"
+        report.write_text('<testsuite name="unit" tests="7" failures="0"/>')
+        assert read_junit_test_count(str(report)) == 7
+
+    def test_sums_testsuites_count(self, tmp_path: Path) -> None:
+        report = tmp_path / "junit.xml"
+        report.write_text(
+            '<testsuites tests="5"><testsuite tests="2"/><testsuite tests="3"/></testsuites>'
+        )
+        assert read_junit_test_count(str(report)) == 5
+
+    def test_zero_tests_is_zero(self, tmp_path: Path) -> None:
+        report = tmp_path / "junit.xml"
+        report.write_text('<testsuite name="(empty)" tests="0"/>')
+        assert read_junit_test_count(str(report)) == 0
+
+    def test_invalid_report_raises(self, tmp_path: Path) -> None:
+        report = tmp_path / "junit.xml"
+        report.write_text("<not-xml")
+        with pytest.raises(ValueError, match="Unable to read CTest JUnit report"):
+            read_junit_test_count(str(report))
