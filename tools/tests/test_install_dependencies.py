@@ -171,7 +171,7 @@ def test_print_debian_packages_keeps_resolver_diagnostics_on_stderr(monkeypatch,
     monkeypatch.setattr(_cli, "get_debian_packages", lambda category=None: packages)
     monkeypatch.setattr(
         "setup.install_dependencies._common.check_apt_package_available",
-        side_effect=lambda package: package == "libgstreamer-plugins-extra1.0-dev",
+        lambda package: package == "libgstreamer-plugins-extra1.0-dev",
     )
 
     _cli.print_packages("debian")
