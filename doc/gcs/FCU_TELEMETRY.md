@@ -127,8 +127,9 @@ hashes can be retained even when they share one snapshot timestamp. All chunks
 in a snapshot must agree on profile, product/port revision, schema and source
 commit. Mixed metadata is rejected. A newer snapshot timestamp clears every
 old digest and source-commit value before accepting the new snapshot, preventing
-hashes from different builds being mixed. Reserved enum values and invalid
-boolean/mask ranges are rejected rather than interpreted as healthy.
+hashes from different builds being mixed. Reserved enum values, navigation
+capability bits outside 0..7, actuator channel mask bits outside 0..3 and
+invalid boolean/validity-mask ranges are rejected rather than interpreted as healthy.
 
 ## Automated verification
 
