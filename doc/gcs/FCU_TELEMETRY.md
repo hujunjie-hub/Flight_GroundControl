@@ -17,8 +17,8 @@ only authority for operational decisions.
 
 The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). It is a read-only
 view of operation, navigation, sensor health, control, actuator, link, storage,
-resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history. Each card shows its own
-message availability and FCU boot-time publication timestamp. The page honors the
+resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history. Each telemetry card shows its own
+message availability, local ground-station receive age and FCU boot-time publication timestamp. The page honors the
 link/storage/resource validity masks and the RC valid-axis mask; it does not send commands
 or grant control authority.
 
@@ -45,7 +45,11 @@ current boot; it is not a freshness watchdog. A zero value is not a substitute
 for checking validity. For periodic data, compare each family timestamp with
 the latest `opTimeBootUs` (same boot) and apply a UI-side age threshold. For
 link and navigation measurements, also honor their transmitted `linkAgeUs` and
-`navigationAgeUs` fields.
+`navigationAgeUs` fields. The `familyReceiveAgeMs` property separately reports
+monotonic ground-station receive age for all 13 message families (`-1` means no
+valid message received in the current boot). The QML page refreshes this display
+twice per second. This is host-side packet receipt age, not FCU sample age, and
+does not apply a hard-coded stale/healthy threshold.
 
 The group accepts only messages from the connected vehicle's system and
 autopilot component IDs. For periodic message families it rejects duplicate
