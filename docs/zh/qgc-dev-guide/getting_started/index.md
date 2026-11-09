@@ -52,7 +52,7 @@ QGC 已通过指定 Qt 版本（{{ $frontmatter.qt_version }}）的全面测试�
 
 如何安装Qt：
 
-1. 下载并运行[Qt Online Installer](https://www.qt.io/download-qt-installer-oss)
+1. 下载并运行[Qt Online Installer](https://www.qt.io/development/download-qt-installer-oss)
    - **Ubuntu:**
      - 使用以下命令将下载的文件设置为可执行文件：`chmod + x`
      - It may also be necessary to install _libxcb-cursor0_.
