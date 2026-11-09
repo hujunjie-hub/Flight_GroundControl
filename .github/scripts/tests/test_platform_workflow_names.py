@@ -52,7 +52,7 @@ def test_linux_build_workflow_is_disabled() -> None:
     doc = yaml.safe_load(LINUX_YML.read_text(encoding="utf-8"))
     triggers = _workflow_on(doc)
     assert set(triggers) == {"workflow_dispatch"}
-    assert doc["jobs"]["linux-build"]["if"] is False
+    assert doc["jobs"]["linux-build"]["if"] == "github.event_name == 'pull_request'"
 
 
 def test_windows_workflow_is_release_only() -> None:
