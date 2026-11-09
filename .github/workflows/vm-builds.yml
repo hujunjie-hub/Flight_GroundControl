@@ -3,22 +3,9 @@ name: VM Builds
 # Full QGC builds inside the developer VM provisioners (deploy/multipass, deploy/vagrant)
 # to keep them from bit-rotting. Heavy nested-VM builds: scoped to those dirs + manual dispatch.
 
+# Non-target platform/packaging builds are manual-only during the Linux/Windows validation phase.
 on:
-  push:
-    branches:
-      - master
-      - 'Stable*'
-    paths:
-      - 'deploy/multipass/**'
-      - 'deploy/vagrant/**'
-      - '.github/workflows/vm-builds.yml'
-  pull_request:
-    paths:
-      - 'deploy/multipass/**'
-      - 'deploy/vagrant/**'
-      - '.github/workflows/vm-builds.yml'
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
