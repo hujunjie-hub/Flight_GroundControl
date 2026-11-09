@@ -5,6 +5,9 @@
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
 
+#include <QtCore/QQueue>
+#include <QtCore/QSet>
+
 /// Per-vehicle Flight FCU telemetry cache.
 ///
 /// Values are informational only. They never grant command authority and are not
@@ -202,7 +205,9 @@ private:
     quint64 _lastPrearmTimeBootUs = 0;
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
-    quint32 _lastEventId = 0;
-    quint8 _lastBuildInfoDigestKind = 0xFF;
+    QSet<quint32> _recentEventIds;
+    QQueue<quint32> _recentEventOrder;
+    static constexpr qsizetype _recentEventIdCapacity = 64;
+    quint8 _lastBuildInfoDigestMask = 0;
     quint32 _eventSequenceValue = 0;
 };
