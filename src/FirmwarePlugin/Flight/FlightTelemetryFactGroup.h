@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QSet>
+#include <QtCore/QVariantList>
 
 #include "Fact.h"
 #include "FactGroup.h"
@@ -15,7 +16,13 @@ class FlightTelemetryFactGroup final : public FactGroup
 {
     Q_OBJECT
 public:
+    Q_PROPERTY(QVariantList recentEvents READ recentEvents NOTIFY recentEventsChanged)
+
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
+    QVariantList recentEvents() const;
+
+signals:
+    void recentEventsChanged();
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 private:
@@ -206,6 +213,8 @@ private:
     quint64 _lastTimeStatusTimeBootUs = 0;
     quint64 _lastEventTimeBootUs = 0;
     QSet<quint32> _eventIdsAtLastTimestamp;
+    QVariantList _recentEvents;
+    static constexpr int _recentEventHistoryCapacity = 64;
     quint64 _lastPrearmTimeBootUs = 0;
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
