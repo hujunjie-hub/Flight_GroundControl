@@ -131,6 +131,19 @@ SetupPage {
         return age > 5500 ? qsTr("%1 · 数据超时").arg(ageText) : ageText
     }
 
+    function _ageUsText(value) {
+        const age = Number(value)
+        if (!Number.isFinite(age) || age < 0 || age >= 4294967295) {
+            return qsTr("未知")
+        }
+        return age.toFixed(0) + " μs"
+    }
+
+    function _ageUsFact(name) {
+        const raw = _fact(name)
+        return raw === null || raw === undefined ? qsTr("未上报") : _ageUsText(raw)
+    }
+
     function _number(name, decimals, suffix) {
         const raw = _fact(name)
         if (raw === null || raw === undefined || raw === "") {
@@ -470,7 +483,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("位置标准差"); valueText: root._number("positionStdM", 3, " m") }
                     VehicleSummaryRow { labelText: qsTr("速度标准差"); valueText: root._number("velocityStdMps", 3, " m/s") }
                     VehicleSummaryRow { labelText: qsTr("航向标准差"); valueText: root._number("headingStdRad", 3, " rad") }
-                    VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("navigationAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._ageUsFact("navigationAgeUs") }
                     VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("navTimeBootUs") }
                 }
@@ -555,7 +568,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
                     VehicleSummaryRow {
-                        labelText: qsTr("链路实例")
+                        labelText: qsTr("已上报链路实例")
                         valueText: root._fact("linkAvailable") && root._telemetry
                                    ? String(root._linkStatuses.length) : qsTr("未上报")
                     }
@@ -587,11 +600,11 @@ SetupPage {
                             QGCLabel {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · FCU 数据年龄 %4 μs")
+                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · FCU 数据年龄 %4")
                                       .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
                                       .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
                                       .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
-                                      .arg(modelData.ageUs)
+                                      .arg(root._ageUsText(modelData.ageUs))
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
@@ -790,7 +803,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
                     VehicleSummaryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
-                    VehicleSummaryRow { labelText: qsTr("输入年龄"); valueText: root._number("rcAgeUs", 0, " μs") }
+                    VehicleSummaryRow { labelText: qsTr("输入年龄"); valueText: root._ageUsFact("rcAgeUs") }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
                 }
 
