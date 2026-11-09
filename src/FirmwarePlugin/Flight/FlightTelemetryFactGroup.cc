@@ -217,6 +217,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
     _lastEventId = 0;
+    _lastBuildInfoDigestKind = 0xFF;
     _eventSequenceValue = 0;
 }
 
@@ -298,7 +299,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_SENSOR_HEALTH: {
         mavlink_fcu_sensor_health_t value{};
         mavlink_msg_fcu_sensor_health_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastSensorTimeBootUs)) {
+        if (value.health_state > 7 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastSensorTimeBootUs)) {
             return;
         }
         _sensorTimeBootUs.setRawValue(value.time_boot_us);
@@ -318,7 +320,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_CONTROL_STATUS: {
         mavlink_fcu_control_status_t value{};
         mavlink_msg_fcu_control_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastControlTimeBootUs)) {
+        if (value.solver_status > 8 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastControlTimeBootUs)) {
             return;
         }
         _controlTimeBootUs.setRawValue(value.time_boot_us);
@@ -359,7 +362,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_LINK_STATUS: {
         mavlink_fcu_link_status_t value{};
         mavlink_msg_fcu_link_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastLinkTimeBootUs)) {
+        if (value.link_kind < 1 || value.link_kind > 4 || value.link_state > 5 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastLinkTimeBootUs)) {
             return;
         }
         _linkTimeBootUs.setRawValue(value.time_boot_us);
@@ -381,7 +385,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_STORAGE_STATUS: {
         mavlink_fcu_storage_status_t value{};
         mavlink_msg_fcu_storage_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastStorageTimeBootUs)) {
+        if (value.sd_state > 3 || value.nor_state > 3 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastStorageTimeBootUs)) {
             return;
         }
         _storageTimeBootUs.setRawValue(value.time_boot_us);
@@ -422,7 +427,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_TIME_STATUS: {
         mavlink_fcu_time_status_t value{};
         mavlink_msg_fcu_time_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastTimeStatusTimeBootUs)) {
+        if (value.utc_valid > 1 || value.time_quality > 5 || value.discipline_state > 5 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastTimeStatusTimeBootUs)) {
             return;
         }
         _timeStatusTimeBootUs.setRawValue(value.time_boot_us);
@@ -474,7 +480,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_PREARM_STATUS: {
         mavlink_fcu_prearm_status_t value{};
         mavlink_msg_fcu_prearm_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
+        if (value.check_id > 14 || value.check_state > 3 || value.recovery_condition > 4 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastPrearmTimeBootUs)) {
             return;
         }
         _prearmTimeBootUs.setRawValue(value.time_boot_us);
@@ -495,7 +502,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_RC_INPUT_STATUS: {
         mavlink_fcu_rc_input_status_t value{};
         mavlink_msg_fcu_rc_input_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastRcInputTimeBootUs)) {
+        if (value.receiver_failsafe > 1 || value.link_state > 5 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastRcInputTimeBootUs)) {
             return;
         }
         _rcTimeBootUs.setRawValue(value.time_boot_us);
@@ -516,10 +524,16 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_BUILD_INFO: {
         mavlink_fcu_build_info_t value{};
         mavlink_msg_fcu_build_info_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastBuildInfoTimeBootUs) ||
-            value.digest_kind > 3 || value.source_commit_valid > 1) {
+        if (value.boot_id == 0 || value.time_boot_us == 0 || value.digest_kind > 3 ||
+            value.source_commit_valid > 1 ||
+            (_activeBootId != 0 && value.boot_id != _activeBootId) ||
+            value.time_boot_us < _lastBuildInfoTimeBootUs ||
+            (value.time_boot_us == _lastBuildInfoTimeBootUs &&
+             value.digest_kind == _lastBuildInfoDigestKind)) {
             return;
         }
+        _lastBuildInfoTimeBootUs = value.time_boot_us;
+        _lastBuildInfoDigestKind = value.digest_kind;
         _buildTimeBootUs.setRawValue(value.time_boot_us);
         _buildBootId.setRawValue(value.boot_id);
         _buildProfileId.setRawValue(value.profile_id);
