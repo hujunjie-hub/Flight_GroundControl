@@ -254,7 +254,7 @@ private:
     quint32 _prearmCheckEpochValue = 0;
     bool _hasPrearmCheckEpoch = false;
     static constexpr int _recentEventHistoryCapacity = 64;
-    quint64 _lastPrearmTimeBootUs = 0;
+    QHash<quint32, quint64> _lastPrearmTimeByCheckId;
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
     quint8 _lastBuildInfoDigestMask = 0;
