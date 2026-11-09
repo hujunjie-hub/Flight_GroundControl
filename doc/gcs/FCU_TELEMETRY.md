@@ -52,19 +52,19 @@ boolean/mask ranges are rejected rather than interpreted as healthy.
 
 | ID | Message | Availability fact | Main fields |
 |---:|---|---|---|
-| 43000 | `FCU_OPERATION_STATUS` | `operationAvailable` | arm/mode/authority/failsafe/mission state and authority/directive/permit epochs |
-| 43001 | `FCU_NAV_STATUS` | `navigationAvailable` | state epoch, origin, navigation capability mask, position/velocity/heading standard deviations, sample age |
-| 43002 | `FCU_SENSOR_HEALTH` | `sensorHealthAvailable` | sensor instance, policy epoch, health state, action, reason, gap/reject counts |
-| 43003 | `FCU_CONTROL_STATUS` | `controlAvailable` | control sequence, reference ID/epoch, controllable/degraded DOF masks, solve time, solver status, reason |
-| 43004 | `FCU_ACTUATOR_STATUS` | `actuatorAvailable` | control sequence, permit epoch, available/saturated masks, output policy, feedback capability, reason |
-| 43005 | `FCU_LINK_STATUS` | `linkAvailable` | link instance/kind/state, validity mask, packet loss, RSSI, quality, age, reason |
-| 43006 | `FCU_STORAGE_STATUS` | `storageAvailable` | validity mask, settings generation, event/log drops, free KiB, SD/NOR states, reason |
-| 43007 | `FCU_RESOURCE_STATUS` | `resourceAvailable` | validity mask, task ID, WCET, stack free, deadline misses, AXI free, CPU load |
-| 43008 | `FCU_TIME_STATUS` | `timeAvailable` | time epoch, source mapping epoch, UTC value/uncertainties, time quality, discipline state, UTC-valid |
-| 43009 | `FCU_EVENT` | `eventAvailable` | event ID, source, severity, reason namespace/code, authority/directive/permit epochs |
-| 43010 | `FCU_PREARM_STATUS` | `prearmAvailable` | check epoch, check ID/state, mode mask, evidence time, reason namespace/code, recovery condition |
-| 43011 | `FCU_RC_INPUT_STATUS` | `rcInputAvailable` | valid axes, normalized roll/pitch/yaw/throttle, sample age, receiver failsafe, link state |
-| 43012 | `FCU_BUILD_INFO` | `buildInfoAvailable` | profile/product/port/schema revisions, digest kind and SHA-256 chunk, optional source commit |
+| 43000 | `FCU_OPERATION_STATUS` | `operationAvailable` | arm/mode/authority/failsafe/mission; authority/directive/permit epochs |
+| 43001 | `FCU_NAV_STATUS` | `navigationAvailable` | state/origin, capabilities, position/velocity/heading accuracy, age |
+| 43002 | `FCU_SENSOR_HEALTH` | `sensorHealthAvailable` | sensor/policy IDs, health/action, reason, gap/reject counts |
+| 43003 | `FCU_CONTROL_STATUS` | `controlAvailable` | control/reference IDs, DOF masks, solve time/status, reason |
+| 43004 | `FCU_ACTUATOR_STATUS` | `actuatorAvailable` | control/permit epochs, availability/saturation masks, policy, feedback |
+| 43005 | `FCU_LINK_STATUS` | `linkAvailable` | link kind/state, validity, loss, RSSI/LQ, age, reason |
+| 43006 | `FCU_STORAGE_STATUS` | `storageAvailable` | validity, settings generation, event/log drops, free space, SD/NOR |
+| 43007 | `FCU_RESOURCE_STATUS` | `resourceAvailable` | validity, task, WCET, stack, deadline misses, AXI, CPU |
+| 43008 | `FCU_TIME_STATUS` | `timeAvailable` | time/source epochs, UTC, uncertainty, quality, discipline, validity |
+| 43009 | `FCU_EVENT` | `eventAvailable` | event/source IDs, severity, reason, authority/directive/permit epochs |
+| 43010 | `FCU_PREARM_STATUS` | `prearmAvailable` | check ID/state, mode mask, evidence time, reason, recovery |
+| 43011 | `FCU_RC_INPUT_STATUS` | `rcInputAvailable` | axis mask/values, sample age, receiver failsafe, link state |
+| 43012 | `FCU_BUILD_INFO` | `buildInfoAvailable` | product/port/schema revisions, digest type/hash, source commit |
 
 ## Fixed enum meanings
 
