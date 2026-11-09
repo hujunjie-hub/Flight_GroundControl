@@ -316,6 +316,8 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
     _lastBuildInfoDigestMask = 0;
+    _hasBuildSnapshotMetadata = false;
+    _buildSnapshotSourceCommit.clear();
     _eventSequenceValue = 0;
     _prearmCheckEpochValue = 0;
     _hasPrearmCheckEpoch = false;
@@ -817,9 +819,20 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (_activeBootId == 0) {
             _activeBootId = value.boot_id;
         }
+        const QByteArray sourceCommitBytes(
+            reinterpret_cast<const char *>(value.source_commit),
+            static_cast<qsizetype>(sizeof(value.source_commit)));
         if (value.time_boot_us > _lastBuildInfoTimeBootUs) {
             _lastBuildInfoTimeBootUs = value.time_boot_us;
             _lastBuildInfoDigestMask = 0;
+            _hasBuildSnapshotMetadata = true;
+            _buildSnapshotProfileId = value.profile_id;
+            _buildSnapshotProductRevision = value.product_revision;
+            _buildSnapshotPortRevision = value.port_revision;
+            _buildSnapshotSchemaMajor = value.schema_major;
+            _buildSnapshotSchemaMinor = value.schema_minor;
+            _buildSnapshotSourceCommitValid = value.source_commit_valid;
+            _buildSnapshotSourceCommit = sourceCommitBytes;
             // A new build-info snapshot must never be mixed with hashes from
             // the previous snapshot if one or more digest chunks are delayed.
             _firmwareSha256.setRawValue(QString());
@@ -828,6 +841,17 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             _abiSha256.setRawValue(QString());
             _sourceCommit.setRawValue(QString());
             _sourceCommitValid.setRawValue(false);
+        } else if (!_hasBuildSnapshotMetadata ||
+                   value.profile_id != _buildSnapshotProfileId ||
+                   value.product_revision != _buildSnapshotProductRevision ||
+                   value.port_revision != _buildSnapshotPortRevision ||
+                   value.schema_major != _buildSnapshotSchemaMajor ||
+                   value.schema_minor != _buildSnapshotSchemaMinor ||
+                   value.source_commit_valid != _buildSnapshotSourceCommitValid ||
+                   sourceCommitBytes != _buildSnapshotSourceCommit) {
+            // Chunks with one publication timestamp must describe one build
+            // snapshot. Reject mixed metadata instead of displaying a hybrid.
+            return;
         }
         const quint8 digestBit = static_cast<quint8>(1U << value.digest_kind);
         if ((_lastBuildInfoDigestMask & digestBit) != 0) {
@@ -857,9 +881,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
 
         _sourceCommitValid.setRawValue(value.source_commit_valid == 1);
         if (value.source_commit_valid == 1) {
-            const QByteArray commit(reinterpret_cast<const char *>(value.source_commit),
-                                    static_cast<qsizetype>(sizeof(value.source_commit)));
-            _sourceCommit.setRawValue(QString::fromLatin1(commit.toHex()));
+            _sourceCommit.setRawValue(QString::fromLatin1(sourceCommitBytes.toHex()));
         } else {
             _sourceCommit.setRawValue(QString());
         }
