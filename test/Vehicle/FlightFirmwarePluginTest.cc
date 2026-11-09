@@ -399,6 +399,10 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("buildSchemaMajor"))->rawValue().toUInt(), 6U);
     QCOMPARE(telemetry.getFact(QStringLiteral("buildSchemaMinor"))->rawValue().toUInt(), 0U);
     QCOMPARE(telemetry.getFact(QStringLiteral("sensorHealthState"))->rawValue().toUInt(), 4U);
+    QCOMPARE(telemetry.getFact(QStringLiteral("sensorInstanceId"))->rawValue().toUInt(), 2U);
+    QCOMPARE(telemetry.sensorHealthStatuses().size(), 1);
+    QCOMPARE(telemetry.sensorHealthStatuses().first().toMap()
+                 .value(QStringLiteral("sensorInstanceId")).toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("solverStatus"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("actuatorSaturatedMask"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("linkRssiDbm"))->rawValue().toInt(), -65);
