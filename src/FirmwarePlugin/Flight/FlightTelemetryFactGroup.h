@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QMap>
 #include <QtCore/QHash>
+#include <QtCore/QMap>
 #include <QtCore/QQueue>
 #include <QtCore/QSet>
 #include <QtCore/QVariantList>
