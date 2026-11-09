@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QMap>
 #include <QtCore/QHash>
 #include <QtCore/QQueue>
 #include <QtCore/QSet>
@@ -21,15 +22,18 @@ class FlightTelemetryFactGroup final : public FactGroup
     Q_OBJECT
 public:
     Q_PROPERTY(QVariantList recentEvents READ recentEvents NOTIFY recentEventsChanged)
+    Q_PROPERTY(QVariantList prearmChecks READ prearmChecks NOTIFY prearmChecksChanged)
     Q_PROPERTY(QVariantMap familyReceiveAgeMs READ familyReceiveAgeMs NOTIFY familyReceiveAgeMsChanged)
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
     QVariantList recentEvents() const;
+    QVariantList prearmChecks() const;
     QVariantMap familyReceiveAgeMs() const;
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
     void recentEventsChanged();
+    void prearmChecksChanged();
     void familyReceiveAgeMsChanged();
 
 private:
@@ -225,6 +229,9 @@ private:
     QSet<quint32> _eventIdsAtLastTimestamp;
     QQueue<quint32> _eventIdsAtLastTimestampOrder;
     QVariantList _recentEvents;
+    QMap<quint8, QVariantMap> _prearmChecksById;
+    quint32 _prearmCheckEpochValue = 0;
+    bool _hasPrearmCheckEpoch = false;
     static constexpr int _recentEventHistoryCapacity = 64;
     quint64 _lastPrearmTimeBootUs = 0;
     quint64 _lastRcInputTimeBootUs = 0;
