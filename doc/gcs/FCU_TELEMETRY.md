@@ -32,6 +32,11 @@ The per-vehicle FactGroup is exposed as:
 vehicle.flightTelemetry
 ```
 
+The 64-bit `opBootId` is also exposed as `opBootIdHex` (16-digit,
+zero-padded hexadecimal) for display. QML/JavaScript numbers cannot exactly
+represent every 64-bit integer, so do not format boot IDs through numeric
+conversion.
+
 Read a value using:
 
 ```qml
