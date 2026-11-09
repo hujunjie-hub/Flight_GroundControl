@@ -216,6 +216,14 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     event.time_boot_us = 191;
     mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
     dispatch(message); // Same event ID must not be surfaced twice.
+    event.event_id = 1235;
+    event.time_boot_us = 192;
+    mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
+    dispatch(message);
+    event.event_id = 1234;
+    event.time_boot_us = 193;
+    mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
+    dispatch(message); // A delayed duplicate is also suppressed.
 
     mavlink_fcu_prearm_status_t prearm{};
     prearm.time_boot_us = 200;
@@ -249,7 +257,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
 
     for (uint8_t digestKind = 0; digestKind < 4; ++digestKind) {
         mavlink_fcu_build_info_t build{};
-        build.time_boot_us = 220 + digestKind;
+        build.time_boot_us = 220;
         build.boot_id = bootId;
         build.profile_id = operation.profile_id;
         build.product_revision = 20;
@@ -289,7 +297,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("storageFreeKib"))->rawValue().toUInt(), 4096U);
     QCOMPARE(telemetry.getFact(QStringLiteral("resourceCpuLoadPermille"))->rawValue().toUInt(), 375U);
     QCOMPARE(telemetry.getFact(QStringLiteral("timeQuality"))->rawValue().toUInt(), 2U);
-    QCOMPARE(telemetry.getFact(QStringLiteral("eventId"))->rawValue().toUInt(), 1234U);
+    QCOMPARE(telemetry.getFact(QStringLiteral("eventId"))->rawValue().toUInt(), 1235U);
     QCOMPARE(telemetry.getFact(QStringLiteral("prearmCheckState"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("rcRollNorm"))->rawValue().toFloat(), 0.25F);
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString().size(), 64);
@@ -297,7 +305,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("profileSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
-    QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 1U);
+    QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 2U);
 
     // A new FCU boot invalidates cached facts from the previous boot.
     operation.boot_id = bootId + 1;
