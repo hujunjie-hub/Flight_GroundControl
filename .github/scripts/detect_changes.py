@@ -28,7 +28,8 @@ _COMMON_PATTERNS = [
     r"^test/",
     r"^\.github/actions/",
     r"^\.github/scripts/",
-    r"^\.github/build-config(?:\.schema)?\.json$",
+    r"^\.github/build-config\.json$",
+    r"^\.github/build-config\.schema\.json$",
 ]
 _WINDOWS_PATTERNS = [
     r"^tools/setup/.*windows",
