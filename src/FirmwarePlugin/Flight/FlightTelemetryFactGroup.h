@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QMap>
@@ -252,5 +253,13 @@ private:
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
     quint8 _lastBuildInfoDigestMask = 0;
+    bool _hasBuildSnapshotMetadata = false;
+    quint32 _buildSnapshotProfileId = 0;
+    quint32 _buildSnapshotProductRevision = 0;
+    quint32 _buildSnapshotPortRevision = 0;
+    quint16 _buildSnapshotSchemaMajor = 0;
+    quint16 _buildSnapshotSchemaMinor = 0;
+    quint8 _buildSnapshotSourceCommitValid = 0;
+    QByteArray _buildSnapshotSourceCommit;
     quint32 _eventSequenceValue = 0;
 };
