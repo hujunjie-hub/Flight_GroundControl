@@ -2,6 +2,7 @@
 
 #include "FirmwarePlugin.h"
 #include "QGCMAVLink.h"
+#include "FlightTelemetryFactGroup.h"
 
 /// Flight (FMT QUAD_X4) firmware plugin.
 ///
@@ -19,6 +20,7 @@ public:
     ~FlightFirmwarePlugin() override;
 
     bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const override;
+    FactGroup *createFactGroup(Vehicle *vehicle) const override;
     QList<MAV_CMD> supportedMissionCommands(QGCMAVLinkTypes::VehicleClass_t vehicleClass) const override;
     QString missionUploadError(const Vehicle *vehicle, const QList<MissionItem *> &items) const override;
     double defaultMissionAltitude(double configuredAltitude) const override;
