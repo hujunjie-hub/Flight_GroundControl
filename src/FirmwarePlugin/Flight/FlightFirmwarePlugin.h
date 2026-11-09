@@ -7,8 +7,9 @@
 ///
 /// The vehicle reports MAV_AUTOPILOT_GENERIC, but its custom_mode follows the
 /// FlightMode enum in middleware/model/fms/fms_contract/fms_contract.h:
-/// 0 NONE, 1 RATE, 2 ATTITUDE, 3 ALT_HOLD, 4 POS_HOLD, 5 AUTO_MISSION,
-/// 6 AUTO_RETURN, 7 AUTO_LAND, 8 EMERGENCY_LAND, 9 TAKEOFF (SIL only).
+/// 0 NONE, 1 MANUAL_RATE, 2 MANUAL_ATTITUDE, 3 ALT_HOLD, 4 POS_HOLD,
+/// 5 AUTO_MISSION, 6 AUTO_RETURN, 7 AUTO_LAND, 8 EMERGENCY_LAND.
+/// Takeoff is a tracked FMS action while the mode remains POS_HOLD; it is not a mode.
 class FlightFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
@@ -46,7 +47,7 @@ public:
     QString missionFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 5); }
     QString rtlFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 6); }
     QString landFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 7); }
-    QString takeOffFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 9); }
+    QString takeOffFlightMode() const override { return QString(); }
     QString stabilizedFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 2); }
     QString takeControlFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 4); }
     QString gotoFlightMode() const override { return flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 4); }
