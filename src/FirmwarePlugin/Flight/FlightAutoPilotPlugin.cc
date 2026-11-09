@@ -11,6 +11,8 @@ constexpr const char *kFlightModesQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightModesPage.qml";
 constexpr const char *kSafetyQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightSafety.qml";
+constexpr const char *kTelemetryQml =
+    "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightTelemetry.qml";
 constexpr const char *kGimbalQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightGimbal.qml";
 constexpr const char *kStorageQml =
@@ -43,6 +45,13 @@ const QVariantList &FlightAutoPilotPlugin::vehicleComponents()
             QStringLiteral("/qmlimages/SafetyComponentIcon.png"),
             QString::fromLatin1(kSafetyQml), this);
         _components.append(QVariant::fromValue(qobject_cast<VehicleComponent *>(_safetyComponent)));
+
+        _telemetryComponent = new FlightPlaceholderComponent(
+            _vehicle, this, tr("飞控诊断"),
+            tr("只读查看 FMS、导航、传感器、控制器、执行器和系统遥测。"),
+            QStringLiteral("/qmlimages/VehicleSummaryIcon.png"),
+            QString::fromLatin1(kTelemetryQml), this);
+        _components.append(QVariant::fromValue(qobject_cast<VehicleComponent *>(_telemetryComponent)));
 
         _gimbalComponent = new FlightPlaceholderComponent(
             _vehicle, this, tr("云台"), tr("云台与相机配置。"),
