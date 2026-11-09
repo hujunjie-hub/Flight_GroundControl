@@ -291,6 +291,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     time.utc_valid = 1;
     mavlink_msg_fcu_time_status_encode(vehicle.id(), vehicle.compId(), &message, &time);
     dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("timeStatusUnixTimeUs"))->rawValue().toULongLong(),
+             1790000000000ULL);
 
     mavlink_fcu_event_t event{};
     event.time_boot_us = 190;
@@ -343,6 +345,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     prearm.check_state = 2;
     mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
     dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("prearmEvidenceTimeUs"))->rawValue().toULongLong(),
+             199ULL);
 
     mavlink_fcu_rc_input_status_t rc{};
     rc.time_boot_us = 210;
@@ -607,6 +611,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     const QVariantList recentEvents = telemetry.recentEvents();
     QCOMPARE(static_cast<int>(recentEvents.size()), 4);
     QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("eventId")).toUInt(), 1236U);
+    QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("bootId")).toULongLong(), bootId);
+    QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("timeBootUs")).toULongLong(), 192ULL);
     QCOMPARE(recentEvents.at(1).toMap().value(QStringLiteral("eventId")).toUInt(), 1235U);
     QCOMPARE(recentEvents.at(2).toMap().value(QStringLiteral("timeBootUs")).toULongLong(), 191ULL);
 
