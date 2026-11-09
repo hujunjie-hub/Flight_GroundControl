@@ -12,4 +12,5 @@ private slots:
     void _takeoffIsNotAFlightMode();
     void _flightOperationTelemetryIsDecodedPerVehicle();
     void _flightTelemetryDecodesAllFcuMessages();
+    void _flightTelemetryRejectsInvalidStateAndAxisValues();
 };
