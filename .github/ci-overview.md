@@ -21,7 +21,7 @@ This is a CI/build-target restriction. Shared QGroundControl source code and pla
 
 - [Layout](#layout)
 - [Workflows](#workflows)
-- [Linux and Windows x64 builds](#linux-and-windows-x64-build)
+- [Windows x64 Release build](#windows-x64-release-build)
 - [Active composite actions](#active-composite-actions)
 - [CI scripts](#ci-scripts)
 - [Build configuration](#build-configuration)
@@ -110,7 +110,7 @@ A skipped or cancelled test stage is not a passing validation result. The platfo
 | \`cache\`, \`cache-cleanup\` | Build cache and cache maintenance |
 | \`coverage\`, \`size-analysis\` | Quality and binary-size reporting |
 | \`deploy-docs\` | Deploy documentation |
-| \`install-dependencies\`, \`qt-install\` | Install Linux system dependencies or Windows build dependencies and Qt |
+| \`install-dependencies\`, \`qt-install\` | Install dependencies and Qt for the selected toolchain; the active product build uses Windows only |
 
 ## CI scripts
 
