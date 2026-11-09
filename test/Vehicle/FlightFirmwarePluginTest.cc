@@ -302,6 +302,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(telemetry.getFact(QStringLiteral("rcInputAvailable"))->rawValue().toBool());
     QVERIFY(telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
 
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(),
+             QStringLiteral("1122334455667788"));
     QCOMPARE(telemetry.getFact(QStringLiteral("sensorHealthState"))->rawValue().toUInt(), 4U);
     QCOMPARE(telemetry.getFact(QStringLiteral("solverStatus"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("actuatorSaturatedMask"))->rawValue().toUInt(), 2U);
