@@ -19,7 +19,7 @@ def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tupl
     workspace = tmp_path / "workspace"
     android_dir = workspace / "android"
     android_dir.mkdir(parents=True)
-    (android_dir / "gradlew").write_text("#!/bin/sh\\n")
+    (android_dir / "gradlew").write_text("")
     gh_env = tmp_path / "gh_env"
     gh_env.write_text("")
     monkeypatch.setenv("ANDROID_SDK_ROOT", str(sdk_root))
