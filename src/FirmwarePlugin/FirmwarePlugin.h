@@ -385,6 +385,9 @@ public:
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*> *factGroups() { return nullptr; }
 
+    /// Creates an optional per-vehicle telemetry FactGroup. The returned object must be parented to vehicle.
+    virtual FactGroup *createFactGroup(Vehicle * /*vehicle*/) const { return nullptr; }
+
     /// Returns the data needed to do battery consumption calculations
     ///     @param[out] mAhBattery Battery milliamp-hours rating (0 for no battery data available)
     ///     @param[out] hoverAmps Current draw in amps during hover
