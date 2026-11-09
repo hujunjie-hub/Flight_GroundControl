@@ -559,6 +559,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     mavlink_fcu_operation_status_t operation{};
     operation.time_boot_us = 10;
     operation.boot_id = 7;
+    operation.profile_id = 0x00010001;
     operation.arm_state = 1;
     operation.flight_mode = 4;
     operation.authority = 1;
@@ -568,6 +569,16 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(telemetry.getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
 
+    operation.boot_id = 8;
+    operation.profile_id = 0; // An invalid profile must not activate a new FCU boot.
+    operation.time_boot_us = 11;
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), 7ULL);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 10ULL);
+
+    operation.boot_id = 7;
+    operation.profile_id = 0x00010001;
     operation.time_boot_us = 11;
     operation.flight_mode = 9; // Reserved FlightMode must not replace the last valid snapshot.
     mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
