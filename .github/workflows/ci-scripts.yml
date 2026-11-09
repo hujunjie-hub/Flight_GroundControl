@@ -120,6 +120,7 @@ jobs:
             deploy/docker
             src/MAVLink/flight.xml
             src/MAVLink/mavlink-flight-dialect.patch
+            src/Vehicle/FactGroups/VehicleGPSFactGroup.h
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
