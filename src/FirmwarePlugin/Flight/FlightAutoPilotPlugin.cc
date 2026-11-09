@@ -60,7 +60,7 @@ const QVariantList &FlightAutoPilotPlugin::vehicleComponents()
         _components.append(QVariant::fromValue(qobject_cast<VehicleComponent *>(_gimbalComponent)));
 
         _storageComponent = new FlightPlaceholderComponent(
-            _vehicle, this, tr("存储卡"), tr("SD 卡与板载事件记录。"),
+            _vehicle, this, tr("存储卡"), tr("查看板载存储信息；日志下载待固件协议接入。"),
             QStringLiteral("/qmlimages/FlightStorageIcon.png"),
             QString::fromLatin1(kStorageQml), this);
         _components.append(QVariant::fromValue(qobject_cast<VehicleComponent *>(_storageComponent)));
