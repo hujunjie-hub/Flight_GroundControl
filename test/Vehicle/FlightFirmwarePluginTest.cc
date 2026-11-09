@@ -311,7 +311,10 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("eventId"))->rawValue().toUInt(), 1236U);
     QCOMPARE(telemetry.getFact(QStringLiteral("prearmCheckState"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.prearmChecks().size(), 1);
-    QCOMPARE(telemetry.prearmChecks().first().toMap().value(QStringLiteral("checkId")).toUInt(), 5U);
+    const QVariantMap firstPrearmCheck = telemetry.prearmChecks().first().toMap();
+    QCOMPARE(firstPrearmCheck.value(QStringLiteral("checkId")).toUInt(), 5U);
+    QCOMPARE(firstPrearmCheck.value(QStringLiteral("reasonCode")).toUInt(), 19U);
+    QCOMPARE(firstPrearmCheck.value(QStringLiteral("recoveryCondition")).toUInt(), 1U);
     QCOMPARE(telemetry.getFact(QStringLiteral("rcRollNorm"))->rawValue().toFloat(), 0.25F);
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("coreParametersSha256"))->rawValue().toString().size(), 64);
@@ -369,6 +372,20 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     dispatch(message);
     QCOMPARE(telemetry.prearmChecks().size(), 2);
     QCOMPARE(telemetry.prearmChecks().last().toMap().value(QStringLiteral("checkId")).toUInt(), 2U);
+
+    // A later result for the same check replaces that check only.
+    prearm.time_boot_us = 205;
+    prearm.check_id = 1;
+    prearm.check_state = 2;
+    prearm.reason_code = 3;
+    prearm.recovery_condition = 2;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 2);
+    const QVariantMap updatedPrearmCheck = telemetry.prearmChecks().first().toMap();
+    QCOMPARE(updatedPrearmCheck.value(QStringLiteral("checkId")).toUInt(), 1U);
+    QCOMPARE(updatedPrearmCheck.value(QStringLiteral("checkState")).toUInt(), 2U);
+    QCOMPARE(updatedPrearmCheck.value(QStringLiteral("reasonCode")).toUInt(), 3U);
 
     const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
     QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
