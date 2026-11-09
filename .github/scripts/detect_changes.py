@@ -19,21 +19,21 @@ if TYPE_CHECKING:
 
 _COMMON_PATTERNS = [
     r"^src/",
-    r"^CMakeLists\\.txt$",
+    r"^CMakeLists\.txt$",
     r"^cmake/",
     r"^libs/",
     r"^resources/",
     r"^translations/",
-    r"^.*\\.qrc$",
+    r"^.*\.qrc$",
     r"^test/",
-    r"^\\.github/actions/",
-    r"^\\.github/scripts/",
-    r"^\\.github/build-config(?:\\.schema)?\\.json$",
+    r"^\.github/actions/",
+    r"^\.github/scripts/",
+    r"^\.github/build-config(?:\.schema)?\.json$",
 ]
 _WINDOWS_PATTERNS = [
     r"^tools/setup/.*windows",
     r"^deploy/windows/",
-    r"^\\.github/workflows/windows\\.yml$",
+    r"^\.github/workflows/windows\.yml$",
 ]
 
 
