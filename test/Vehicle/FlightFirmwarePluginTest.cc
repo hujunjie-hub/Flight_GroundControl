@@ -322,6 +322,38 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
+    QCOMPARE(telemetry.sensorHealthStatuses().size(), 1);
+    QCOMPARE(telemetry.linkStatuses().size(), 1);
+    QCOMPARE(telemetry.resourceStatuses().size(), 1);
+
+    // Distinct instances may publish at the same FCU timestamp and must not
+    // overwrite one another or be rejected by a family-global timestamp.
+    sensor.sensor_instance_id = 3;
+    sensor.health_state = 2;
+    mavlink_msg_fcu_sensor_health_encode(vehicle.id(), vehicle.compId(), &message, &sensor);
+    dispatch(message);
+    QCOMPARE(telemetry.sensorHealthStatuses().size(), 2);
+    QCOMPARE(telemetry.sensorHealthStatuses().last().toMap().value(QStringLiteral("sensorInstanceId")).toUInt(), 3U);
+
+    link.link_instance_id = 2;
+    link.link_kind = 2;
+    link.rssi_dbm = -70;
+    mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
+    dispatch(message);
+    QCOMPARE(telemetry.linkStatuses().size(), 2);
+    QCOMPARE(telemetry.linkStatuses().last().toMap().value(QStringLiteral("linkInstanceId")).toUInt(), 2U);
+
+    resource.task_id = 7;
+    mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
+    dispatch(message);
+    QCOMPARE(telemetry.resourceStatuses().size(), 2);
+    QCOMPARE(telemetry.resourceStatuses().last().toMap().value(QStringLiteral("taskId")).toUInt(), 7U);
+
+    // A duplicate sample for one instance is still rejected independently.
+    sensor.health_state = 6;
+    mavlink_msg_fcu_sensor_health_encode(vehicle.id(), vehicle.compId(), &message, &sensor);
+    dispatch(message);
+    QCOMPARE(telemetry.sensorHealthStatuses().last().toMap().value(QStringLiteral("healthState")).toUInt(), 2U);
 
     // A new build-info snapshot invalidates all hashes from the previous snapshot.
     mavlink_fcu_build_info_t nextBuild{};
@@ -420,6 +452,9 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
     QCOMPARE(telemetry.recentEvents().size(), 0);
     QCOMPARE(telemetry.prearmChecks().size(), 0);
+    QCOMPARE(telemetry.sensorHealthStatuses().size(), 0);
+    QCOMPARE(telemetry.linkStatuses().size(), 0);
+    QCOMPARE(telemetry.resourceStatuses().size(), 0);
     QVERIFY(telemetry.familyReceiveAgeMs().value(QStringLiteral("operation")).toLongLong() >= 0);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("navigation")).toLongLong(), -1LL);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("event")).toLongLong(), -1LL);
