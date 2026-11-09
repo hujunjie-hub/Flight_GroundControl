@@ -71,6 +71,13 @@ boolean/mask ranges are rejected rather than interpreted as healthy.
 The values below follow the Flight ICD and safety contract. Unknown/reserved
 values should be displayed as unknown, not silently mapped to healthy.
 
+- Arm state: 0 DISARMED, 1 ARMING, 2 ARMED, 3 DISARMING.
+- Flight mode: 0 NONE, 1 MANUAL_RATE, 2 MANUAL_ATTITUDE, 3 ALT_HOLD,
+  4 POS_HOLD, 5 AUTO_MISSION, 6 AUTO_RETURN, 7 AUTO_LAND, 8 EMERGENCY_LAND.
+- Authority: 0 NONE, 1 PILOT, 2 MISSION, 3 GCS_SUPERVISED.
+- Failsafe level: 0 NORMAL, 1 DEGRADED, 2 ACTION_REQUIRED, 3 TERMINAL.
+- Mission state: 0 IDLE, 1 LOADED, 2 RUNNING, 3 PAUSED, 4 ABORTED, 5 COMPLETED.
+
 - Sensor health state: 0 UNKNOWN, 1 INITIALIZING, 2 HEALTHY, 3 SUSPECT,
   4 DEGRADED, 5 QUARANTINED, 6 FAILED, 7 RECOVERY_PROBATION.
 - Solver status: 0 NOT_RUN, 1 SOLVED, 2 SOLVED_INACCURATE, 3 MAX_ITER,
@@ -100,7 +107,9 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   valid (same definitions as `ContractHeader.validity_flags`).
 - Storage validity: bit 0 SD, bit 1 NOR, bit 2 free-space value.
 - Resource validity: bit 0 WCET, bit 1 stack, bit 2 CPU, bit 3 AXI.
-- RC valid axes: bit 0 roll, bit 1 pitch, bit 2 yaw, bit 3 throttle.
+- RC valid axes: bit 0 roll, bit 1 pitch, bit 2 yaw, bit 3 throttle. Valid
+  roll/pitch/yaw values must be finite and in [-1, 1]; throttle must be finite
+  and in [0, 1].
 - Control DOF masks: bit 0 total thrust, bit 1 roll torque, bit 2 pitch torque,
   bit 3 yaw torque.
 - Navigation capability bits are the Flight navigation capability mask; do
