@@ -4,6 +4,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlightAutoPilotPlugin.h
         FlightFirmwarePlugin.cc
         FlightFirmwarePlugin.h
+        FlightTelemetryFactGroup.cc
+        FlightTelemetryFactGroup.h
         FlightFirmwarePluginFactory.cc
         FlightFirmwarePluginFactory.h
         FlightParameterMetaData.cc
