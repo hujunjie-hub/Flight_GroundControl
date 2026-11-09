@@ -51,8 +51,10 @@ The group accepts only messages from the connected vehicle's system and
 autopilot component IDs. For periodic message families it rejects duplicate
 or older `time_boot_us` samples. It tracks one active `boot_id`; a new
 operation-status boot ID resets the family availability flags, digest values,
-and timestamp watermarks. Event messages are deduplicated by event ID using a bounded recent-ID
-window. Build-info digest chunks are keyed by `digest_kind`; duplicate chunks
+and timestamp watermarks. Event messages reject older publication timestamps and exact duplicate
+`(event_id, time_boot_us)` pairs. Repeated updates to the same event ID with a
+newer timestamp remain valid, and distinct event IDs may share one publication
+timestamp. Build-info digest chunks are keyed by `digest_kind`; duplicate chunks
 at the same publication timestamp are rejected independently, so all four
 hashes can be retained even when they share one snapshot timestamp. Reserved enum values and invalid
 boolean/mask ranges are rejected rather than interpreted as healthy.
