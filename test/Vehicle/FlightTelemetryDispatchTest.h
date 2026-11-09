@@ -8,6 +8,7 @@ class FlightTelemetryDispatchTest : public CommsTest
 
 private slots:
     void _validFrameTraversesMavlinkParserAndVehicleDispatch();
+    void _allFcuFamiliesTraverseVehicleDispatch();
     void _invalidFramesAndSourcesDoNotUpdateTelemetry();
     void _telemetryIsIsolatedAcrossVehicles();
     void _telemetryStartsFreshAfterReconnect();
