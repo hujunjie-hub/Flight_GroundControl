@@ -387,6 +387,24 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(telemetry.getFact(QStringLiteral("rcInputAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("rcRollNorm"))->rawValue().toFloat(), 0.5F);
+
+    mavlink_fcu_build_info_t build{};
+    build.time_boot_us = 15;
+    build.boot_id = operation.boot_id;
+    build.digest_kind = 0;
+    build.source_commit_valid = 0;
+    build.source_commit[0] = 1; // Invalid flag requires an all-zero commit field.
+    mavlink_msg_fcu_build_info_encode(vehicle.id(), vehicle.compId(), &message, &build);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
+
+    build.time_boot_us = 16;
+    build.source_commit[0] = 0;
+    mavlink_msg_fcu_build_info_encode(vehicle.id(), vehicle.compId(), &message, &build);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
+    QVERIFY(!telemetry.getFact(QStringLiteral("sourceCommitValid"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString(), QString());
 }
 
 UT_REGISTER_TEST(FlightFirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)
