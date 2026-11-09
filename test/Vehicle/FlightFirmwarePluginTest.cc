@@ -318,10 +318,22 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
     const QVariantList recentEvents = telemetry.recentEvents();
-    QCOMPARE(recentEvents.size(), 4);
+    QCOMPARE(static_cast<int>(recentEvents.size()), 4);
     QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("eventId")).toUInt(), 1236U);
     QCOMPARE(recentEvents.at(1).toMap().value(QStringLiteral("eventId")).toUInt(), 1235U);
     QCOMPARE(recentEvents.at(2).toMap().value(QStringLiteral("timeBootUs")).toULongLong(), 191ULL);
+
+    // The recent-event history is bounded and retains the newest records.
+    for (quint32 index = 0; index < 70; ++index) {
+        event.event_id = 2000U + index;
+        event.time_boot_us = 300U + index;
+        mavlink_msg_fcu_event_encode(vehicle.id(), vehicle.compId(), &message, &event);
+        dispatch(message);
+    }
+    const QVariantList cappedEvents = telemetry.recentEvents();
+    QCOMPARE(static_cast<int>(cappedEvents.size()), 64);
+    QCOMPARE(cappedEvents.first().toMap().value(QStringLiteral("eventId")).toUInt(), 2069U);
+    QCOMPARE(cappedEvents.last().toMap().value(QStringLiteral("eventId")).toUInt(), 2006U);
 
     // A new FCU boot invalidates cached facts from the previous boot.
     operation.boot_id = bootId + 1;
