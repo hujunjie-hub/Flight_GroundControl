@@ -76,9 +76,11 @@ Event messages reject older publication timestamps and exact duplicate
 newer timestamp remain valid, and distinct event IDs may share one publication
 timestamp. Build-info digest chunks are keyed by `digest_kind`; duplicate chunks
 at the same publication timestamp are rejected independently, so all four
-hashes can be retained even when they share one snapshot timestamp. A newer
-snapshot timestamp clears every old digest and source-commit value before the
-new chunks are accepted, preventing hashes from different builds being mixed. Reserved enum values and invalid
+hashes can be retained even when they share one snapshot timestamp. All chunks
+in a snapshot must agree on profile, product/port revision, schema and source
+commit. Mixed metadata is rejected. A newer snapshot timestamp clears every
+old digest and source-commit value before accepting the new snapshot, preventing
+hashes from different builds being mixed. Reserved enum values and invalid
 boolean/mask ranges are rejected rather than interpreted as healthy.
 
 ## Message coverage
