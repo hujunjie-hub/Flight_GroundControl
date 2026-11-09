@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QQueue>
 #include <QtCore/QSet>
 #include <QtCore/QVariantList>
 
@@ -213,6 +214,7 @@ private:
     quint64 _lastTimeStatusTimeBootUs = 0;
     quint64 _lastEventTimeBootUs = 0;
     QSet<quint32> _eventIdsAtLastTimestamp;
+    QQueue<quint32> _eventIdsAtLastTimestampOrder;
     QVariantList _recentEvents;
     static constexpr int _recentEventHistoryCapacity = 64;
     quint64 _lastPrearmTimeBootUs = 0;
