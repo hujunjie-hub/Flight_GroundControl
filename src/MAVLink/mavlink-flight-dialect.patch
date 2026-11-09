@@ -1,0 +1,7 @@
+--- a/message_definitions/v1.0/all.xml
++++ b/message_definitions/v1.0/all.xml
+@@ -16,6 +16,7 @@
+   -->
+   <include>common.xml</include>
++  <include>flight.xml</include>
+   <include>development.xml</include>
