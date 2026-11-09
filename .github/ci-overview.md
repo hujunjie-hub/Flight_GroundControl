@@ -13,7 +13,9 @@
 - Linux x64, ARM64, macOS, iOS, Android, Docker, Flatpak, and VM product build workflows are not active in this CI configuration.
 - Non-build checks remain enabled: workflow linting, CI script tests, pre-commit, CodeQL, docs, Doxygen, link checks, and repository automation.
 
-Ubuntu-hosted runners remain in use for platform-independent repository checks and automation (for example actionlint, Python CI-script tests, documentation, CodeQL, PR metadata, and release orchestration); these jobs do not build or test the Linux QGroundControl product.\n\nThis is a CI/build-target restriction. Shared QGroundControl source code and platform-specific source files are retained where required by the upstream codebase; their presence does not mean those platforms are built or packaged by this CI.
+Ubuntu-hosted runners remain in use for platform-independent repository checks and automation (for example actionlint, Python CI-script tests, documentation, CodeQL, PR metadata, and release orchestration); these jobs do not build or test the Linux QGroundControl product.
+
+This is a CI/build-target restriction. Shared QGroundControl source code and platform-specific source files are retained where required by the upstream codebase; their presence does not mean those platforms are built or packaged by this CI.
 
 ## Contents
 
