@@ -105,9 +105,15 @@ For single-instance periodic families it rejects duplicate or older
 `time_boot_us` samples. Sensor-health, link-status and resource-status use
 independent timestamp watermarks keyed by `sensor_instance_id`,
 `link_instance_id` and `task_id`; different instances may legitimately publish
-at the same timestamp. Sensor IDs are 1 IMU, 2 GNSS, 3 barometer and 4 magnetometer.
+at the same timestamp. Sensor IDs in the Flight ICD are 1 IMU, 2 GNSS, 3 barometer and 4 magnetometer.
 Link IDs are 1 RC, 2 GCS, 3 Companion and 4 other (the first-version contract
-requires `link_instance_id == link_kind`). Resource records are bounded to 64
+requires `link_instance_id == link_kind`).
+
+**Known cross-repository mismatch:** the current Flight `task_sensor.c` health
+publisher enumerates its source array as IMU, MAG, BARO, GNSS and publishes
+`sensor_instance_id = index + 1`. GroundControl therefore displays the raw
+sensor instance ID instead of inferring a sensor name. The firmware publisher
+must be aligned with the ICD before named sensor labels are restored. Resource records are bounded to 64
 task IDs. It tracks one active `boot_id`; a new operation-status boot ID resets
 the family availability flags, per-instance records, digest values and timestamp
 watermarks. The QML page gates every displayed fact on its family availability flag,
