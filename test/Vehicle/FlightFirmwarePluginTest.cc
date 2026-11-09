@@ -531,6 +531,39 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
 
+    mavlink_fcu_link_status_t link{};
+    link.time_boot_us = 13;
+    link.boot_id = operation.boot_id;
+    link.link_kind = 1;
+    link.link_instance_id = 2; // First-version contract requires instance == kind.
+    link.link_state = 2;
+    mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("linkAvailable"))->rawValue().toBool());
+
+    link.time_boot_us = 14;
+    link.link_instance_id = 1;
+    mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("linkAvailable"))->rawValue().toBool());
+
+    mavlink_fcu_prearm_status_t prearm{};
+    prearm.time_boot_us = 15;
+    prearm.boot_id = operation.boot_id;
+    prearm.check_epoch = 0; // Zero is reserved; first valid epoch is nonzero.
+    prearm.check_id = 1;
+    prearm.check_state = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("prearmAvailable"))->rawValue().toBool());
+
+    prearm.time_boot_us = 16;
+    prearm.check_epoch = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("prearmAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("prearmCheckEpoch"))->rawValue().toUInt(), 1U);
+
     mavlink_fcu_rc_input_status_t rc{};
     rc.time_boot_us = 13;
     rc.boot_id = operation.boot_id;
