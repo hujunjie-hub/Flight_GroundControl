@@ -51,7 +51,8 @@ void FlightFirmwarePluginTest::_flightOperationTelemetryIsDecodedPerVehicle()
 
     QCOMPARE(telemetry.getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 1234567ULL);
     QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), 0x12345678ULL);
-    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(), QStringLiteral("0000000012345678"));
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(),
+             QStringLiteral("0000000012345678"));
     QCOMPARE(telemetry.getFact(QStringLiteral("authorityEpoch"))->rawValue().toUInt(), 7U);
     QCOMPARE(telemetry.getFact(QStringLiteral("armState"))->rawValue().toUInt(), 1U);
     QCOMPARE(telemetry.getFact(QStringLiteral("flightMode"))->rawValue().toUInt(), 4U);
