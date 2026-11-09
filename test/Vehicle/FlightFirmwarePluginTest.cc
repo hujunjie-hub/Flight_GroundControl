@@ -355,6 +355,17 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     dispatch(message);
     QCOMPARE(telemetry.sensorHealthStatuses().last().toMap().value(QStringLiteral("healthState")).toUInt(), 2U);
 
+    // Resource records are bounded even if a peer advertises arbitrary task IDs.
+    for (quint32 taskId = 8; taskId < 72; ++taskId) {
+        resource.task_id = taskId;
+        resource.time_boot_us = 300U + taskId;
+        mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
+        dispatch(message);
+    }
+    QCOMPARE(telemetry.resourceStatuses().size(), 64);
+    QCOMPARE(telemetry.resourceStatuses().first().toMap().value(QStringLiteral("taskId")).toUInt(), 6U);
+    QCOMPARE(telemetry.resourceStatuses().last().toMap().value(QStringLiteral("taskId")).toUInt(), 69U);
+
     // A new build-info snapshot invalidates all hashes from the previous snapshot.
     mavlink_fcu_build_info_t nextBuild{};
     nextBuild.time_boot_us = 221;
