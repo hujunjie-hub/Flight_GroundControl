@@ -658,6 +658,14 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         if (value.time_boot_us > _lastBuildInfoTimeBootUs) {
             _lastBuildInfoTimeBootUs = value.time_boot_us;
             _lastBuildInfoDigestMask = 0;
+            // A new build-info snapshot must never be mixed with hashes from
+            // the previous snapshot if one or more digest chunks are delayed.
+            _firmwareSha256.setRawValue(QString());
+            _coreParametersSha256.setRawValue(QString());
+            _profileSha256.setRawValue(QString());
+            _abiSha256.setRawValue(QString());
+            _sourceCommit.setRawValue(QString());
+            _sourceCommitValid.setRawValue(false);
         }
         const quint8 digestBit = static_cast<quint8>(1U << value.digest_kind);
         if ((_lastBuildInfoDigestMask & digestBit) != 0) {
