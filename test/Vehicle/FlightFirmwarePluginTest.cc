@@ -482,6 +482,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(), QString());
     QCOMPARE(telemetry.recentEvents().size(), 0);
     QCOMPARE(telemetry.prearmChecks().size(), 0);
     QCOMPARE(telemetry.sensorHealthStatuses().size(), 0);
