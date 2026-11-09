@@ -317,6 +317,24 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
+
+    // A new build-info snapshot invalidates all hashes from the previous snapshot.
+    mavlink_fcu_build_info_t nextBuild{};
+    nextBuild.time_boot_us = 221;
+    nextBuild.boot_id = bootId;
+    nextBuild.profile_id = operation.profile_id;
+    nextBuild.digest_kind = 0;
+    for (int i = 0; i < 32; ++i) {
+        nextBuild.sha256[i] = 0xA5;
+    }
+    mavlink_msg_fcu_build_info_encode(vehicle.id(), vehicle.compId(), &message, &nextBuild);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString().size(), 64);
+    QCOMPARE(telemetry.getFact(QStringLiteral("coreParametersSha256"))->rawValue().toString(), QString());
+    QCOMPARE(telemetry.getFact(QStringLiteral("profileSha256"))->rawValue().toString(), QString());
+    QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString(), QString());
+    QVERIFY(!telemetry.getFact(QStringLiteral("sourceCommitValid"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString(), QString());
     const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
     QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
     QVERIFY(receiveAges.value(QStringLiteral("event")).toLongLong() >= 0);
