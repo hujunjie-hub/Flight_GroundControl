@@ -221,7 +221,7 @@ private:
     bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs);
     bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint32 instanceId,
                                  QHash<quint32, quint64> &lastTimeByInstance);
-    void _activateBoot(quint64 bootId);
+    bool _activateBoot(quint64 bootId);
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
     void _markFamilyReceived(const QString &family);
@@ -229,6 +229,10 @@ private:
     QElapsedTimer _receiveClock;
     QHash<QString, qint64> _lastReceiveElapsedMs;
     quint64 _activeBootId = 0;
+    // Reject delayed packets from recently retired FCU boot sessions.
+    QSet<quint64> _retiredBootIds;
+    QQueue<quint64> _retiredBootIdOrder;
+    static constexpr int _retiredBootIdCapacity = 8;
     quint64 _lastOperationTimeBootUs = 0;
     quint64 _lastNavigationTimeBootUs = 0;
     QHash<quint32, quint64> _lastSensorTimeByInstance;
