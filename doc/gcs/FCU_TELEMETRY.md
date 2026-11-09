@@ -16,8 +16,8 @@ only authority for operational decisions.
 ## Ground station page
 
 The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). It is a read-only
-13-card view of operation, navigation, sensor health, control, actuator, link, storage,
-resource, time, event, pre-arm, RC input and build information. Each card shows its own
+view of operation, navigation, sensor health, control, actuator, link, storage,
+resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history. Each card shows its own
 message availability and FCU boot-time publication timestamp. The page honors the
 link/storage/resource validity masks and the RC valid-axis mask; it does not send commands
 or grant control authority.
@@ -137,9 +137,11 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   The GCS preserves these states and must show unavailable/unknown rather than
   interpreting zero as a healthy measurement. Extend the firmware publisher
   only when the corresponding source evidence is available.
-- `FCU_EVENT` currently exposes the latest event plus an incrementing
-  `eventSequence`; a persistent event-history ListModel and acknowledgement
-  workflow are a separate UI task.
+- `FCU_EVENT` exposes the latest event plus a per-boot, bounded history of the
+  most recent 64 accepted records. The UI displays the latest eight. Exact
+  duplicate event IDs at the same publication timestamp are suppressed;
+  repeated updates with a newer timestamp remain visible. Acknowledgement and
+  persistent cross-session history require a separate protocol/storage design.
 - `FCU_BUILD_INFO` exposes each digest chunk separately. A release-verification
   workflow must compare these values with a trusted build manifest; a telemetry
   hash alone is not a signature or proof of provenance.
