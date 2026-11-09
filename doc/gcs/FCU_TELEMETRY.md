@@ -62,10 +62,27 @@ link and navigation measurements, also honor their transmitted `linkAgeUs` and
 monotonic ground-station receive age for all 13 message families (`-1` means no
 valid message received in the current boot). The QML page refreshes this display
 twice per second. This is host-side packet receipt age, not FCU sample age, and
-does not apply a hard-coded stale/healthy threshold.
+does not apply a hard-coded stale/healthy threshold. The Flight ICD currently
+does not assign publish frequencies to these 13 private telemetry families;
+a stale alarm threshold must be configured only after the firmware publisher
+schedule is defined and measured. Until then the page reports age without
+claiming that a family is stale or healthy.
 
 The group accepts only messages from the connected vehicle's system and
-autopilot component IDs. For single-instance periodic families it rejects duplicate or older
+autopilot component IDs. The GCS dialect currently targets FCU schema 6.0 and
+QUAD_X4 profile 0x00010001. The diagnostics page labels exact 6.0 as compatible,
+a different major version as incompatible, and a different minor version as
+unverified; Profile is cross-checked between operation status and build info.
+These labels are informational UI diagnostics only and do not authorize,
+inhibit, or alter flight operations. Until build info arrives, compatibility is
+unknown.
+
+A bounded set of recently retired boot IDs is retained for the lifetime of the
+Vehicle object. This prevents a delayed OPERATION_STATUS packet from a prior
+boot from rolling the telemetry cache back to an old session. No ordering is
+assumed for the random 64-bit boot ID.
+
+For single-instance periodic families it rejects duplicate or older
 `time_boot_us` samples. Sensor-health, link-status and resource-status use
 independent timestamp watermarks keyed by `sensor_instance_id`,
 `link_instance_id` and `task_id`; different instances may legitimately publish
