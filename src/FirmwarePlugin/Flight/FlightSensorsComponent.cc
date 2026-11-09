@@ -4,7 +4,7 @@
 #include "VehicleLinkManager.h"
 
 namespace {
-bool canCalibrateVehicle(const Vehicle *vehicle)
+bool canCalibrateVehicle(Vehicle *vehicle)
 {
     return vehicle && !vehicle->armed() && !vehicle->flying() &&
            vehicle->vehicleLinkManager() &&
