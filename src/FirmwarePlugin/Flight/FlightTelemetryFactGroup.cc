@@ -466,7 +466,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_NAV_STATUS: {
         mavlink_fcu_nav_status_t value{};
         mavlink_msg_fcu_nav_status_decode(&message, &value);
-        if (!std::isfinite(value.position_std_m) || value.position_std_m < 0.0F ||
+        constexpr quint32 validNavigationCapabilityMask = 0xFFU; // bits 0..7
+        if ((value.capability_mask & ~validNavigationCapabilityMask) != 0 ||
+            !std::isfinite(value.position_std_m) || value.position_std_m < 0.0F ||
             !std::isfinite(value.velocity_std_mps) || value.velocity_std_mps < 0.0F ||
             !std::isfinite(value.heading_std_rad) || value.heading_std_rad < 0.0F ||
             !_acceptTelemetryProfile(value.boot_id, value.profile_id) ||
@@ -561,7 +563,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_ACTUATOR_STATUS: {
         mavlink_fcu_actuator_status_t value{};
         mavlink_msg_fcu_actuator_status_decode(&message, &value);
-        if (!_acceptTelemetryProfile(value.boot_id, value.profile_id) ||
+        constexpr quint32 validActuatorMask = 0x0FU; // QUAD_X4 motor channels 0..3
+        if ((value.available_mask & ~validActuatorMask) != 0 ||
+            (value.saturated_mask & ~validActuatorMask) != 0 ||
+            !_acceptTelemetryProfile(value.boot_id, value.profile_id) ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastActuatorTimeBootUs)) {
             return;
         }
