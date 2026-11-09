@@ -62,12 +62,13 @@ and navigation measurements, also honor their transmitted `linkAgeUs` and
 `navigationAgeUs` fields. The `familyReceiveAgeMs` property separately reports
 monotonic ground-station receive age for all 13 message families (`-1` means no
 valid message received in the current boot). The QML page refreshes this display
-twice per second. This is host-side packet receipt age, not FCU sample age, and
-does not apply a hard-coded stale/healthy threshold. The Flight ICD currently
-does not assign publish frequencies to these 13 private telemetry families;
-a stale alarm threshold must be configured only after the firmware publisher
-schedule is defined and measured. Until then the page reports age without
-claiming that a family is stale or healthy.
+twice per second. This is host-side packet receipt age, not FCU sample age.
+The current publisher schedule supports a 1.0 s freshness limit for the 10 Hz
+operation/navigation/actuator/pre-arm/time families and a 5.5 s limit for the
+11-slot rotating diagnostic families. These are display freshness limits, not
+flight-safety decisions; a delayed or dropped frame is shown as telemetry
+timeout, never as an unhealthy sensor or failed flight prerequisite. Events
+are asynchronous and are not subject to a stale threshold.
 
 The group accepts only messages from the connected vehicle's system and
 autopilot component IDs. The GCS dialect currently targets FCU schema 6.0 and
@@ -187,13 +188,23 @@ with the corresponding bit rather than interpreting a zero as a valid value.
 
 ## Deliberate limitations
 
-- Decoder coverage does not imply that the firmware currently publishes
-  these messages. At the Flight `main` revision checked for this GCS change,
-  `spec/contracts/FCU.xml` and the generated wire-layout header exist, but the
-  runtime telemetry-link and MAVLink frame modules contain no send call sites
-  for FCU message IDs 43000-43012. Until the firmware publisher is integrated,
-  the diagnostic page is expected to show "waiting telemetry". Do not interpret
+- The Flight runtime publisher is implemented in
+  `applications/tasks/communication/task_gcs.c`. `publish_flight_status()`
+  runs every 100 ms and publishes operation, navigation, actuator and pre-arm
+  status at 10 Hz; time status is also 10 Hz when both time services are
+  available. One rotating diagnostic is added per status cycle. With the
+  release ABI lock enabled, its 11 slots cover four sensor instances, control,
+  RC input, two link instances, resource, storage and build info; each slot is
+  therefore nominally published every 1.1 s. `FCU_EVENT` is event-driven.
+  The transmit queue can drop frames under load, so the GCS uses freshness
+  margins rather than assuming every scheduled frame arrives. Do not interpret
   silence or default zero values as healthy measurements.
+- Current publisher coverage is intentionally conservative: pre-arm reports
+  actuator readiness (check ID 5); build info reports the ABI digest (kind 3)
+  when the release ABI lock is enabled; link state/age and storage/resource
+  measurements without source evidence leave their validity bits clear. The
+  GCS preserves these states and must show unavailable/unknown rather than
+  interpreting zero as a healthy measurement.
 - `FCU_EVENT` exposes the latest event plus a per-boot, bounded history of the
   most recent 64 accepted records. The UI displays the latest eight. Exact
   duplicate event IDs at the same publication timestamp are suppressed;
@@ -203,8 +214,9 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   aggregates the latest result for each check ID within `check_epoch`, permits
   distinct check IDs to share one publication timestamp, and rejects duplicate
   or older samples per check ID. It clears the set on a newer epoch or FCU reboot
-  and rejects delayed older epochs. The UI supports the registered check IDs;
-  actual check coverage depends on the firmware publisher implementation.
+  and rejects delayed older epochs. The current firmware publisher reports only
+  the actuator-readiness check (ID 5); the UI is ready to display additional
+  checks when the publisher emits them.
 - Sensor/link/resource records are retained per instance. Resource task records
   have a fixed 64-task cache limit; additional unseen task IDs are ignored until
   the next FCU boot rather than allowing unbounded ground-station memory growth.
