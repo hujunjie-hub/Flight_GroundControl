@@ -142,11 +142,6 @@ SetupPage {
         return "0x" + (Number(raw) >>> 0).toString(16).toUpperCase()
     }
 
-    function _maskBit(maskName, bit) {
-        const raw = _fact(maskName)
-        return raw !== null && raw !== undefined && (Number(raw) & (1 << bit)) !== 0
-    }
-
     function _permillePercent(name) {
         const raw = _fact(name)
         if (raw === null || raw === undefined) {
@@ -253,8 +248,36 @@ SetupPage {
         return _fact("sourceCommitValid") ? _hashPrefix("sourceCommit") : qsTr("未提供")
     }
 
+    function _maskState(maskName, bit) {
+        const raw = _fact(maskName)
+        if (raw === null || raw === undefined) {
+            return -1
+        }
+        return (Number(raw) & (1 << bit)) !== 0 ? 1 : 0
+    }
+
     function _validValue(name, maskName, bit, decimals, suffix) {
-        return _maskBit(maskName, bit) ? _number(name, decimals, suffix) : qsTr("无效")
+        const state = _maskState(maskName, bit)
+        return state < 0 ? qsTr("未上报")
+                         : state === 1 ? _number(name, decimals, suffix) : qsTr("无效")
+    }
+
+    function _validEnum(name, maskName, bit, labels) {
+        const state = _maskState(maskName, bit)
+        return state < 0 ? qsTr("未上报")
+                         : state === 1 ? _enum(name, labels) : qsTr("无效")
+    }
+
+    function _validPermillePercent(name, maskName, bit) {
+        const state = _maskState(maskName, bit)
+        return state < 0 ? qsTr("未上报")
+                         : state === 1 ? _permillePercent(name) : qsTr("无效")
+    }
+
+    function _validLossPercent(name, maskName, bit) {
+        const state = _maskState(maskName, bit)
+        return state < 0 ? qsTr("未上报")
+                         : state === 1 ? _lossPercent(name) : qsTr("无效")
     }
 
     Timer {
@@ -387,9 +410,9 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
                     VehicleSummaryRow { labelText: qsTr("链路类型"); valueText: root._enum("linkKind", [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")]) }
                     VehicleSummaryRow { labelText: qsTr("链路状态"); valueText: root._enum("linkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
-                    VehicleSummaryRow { labelText: qsTr("RSSI"); valueText: root._maskBit("linkValidityMask", 8) ? root._number("linkRssiDbm", 0, " dBm") : qsTr("无效") }
-                    VehicleSummaryRow { labelText: qsTr("链路质量"); valueText: root._maskBit("linkValidityMask", 9) ? root._permillePercent("linkQualityPermille") : qsTr("无效") }
-                    VehicleSummaryRow { labelText: qsTr("丢包率"); valueText: root._maskBit("linkValidityMask", 10) ? root._lossPercent("linkPacketLossPpm") : qsTr("无效") }
+                    VehicleSummaryRow { labelText: qsTr("RSSI"); valueText: root._validValue("linkRssiDbm", "linkValidityMask", 8, 0, " dBm") }
+                    VehicleSummaryRow { labelText: qsTr("链路质量"); valueText: root._validPermillePercent("linkQualityPermille", "linkValidityMask", 9) }
+                    VehicleSummaryRow { labelText: qsTr("丢包率"); valueText: root._validLossPercent("linkPacketLossPpm", "linkValidityMask", 10) }
                     VehicleSummaryRow { labelText: qsTr("数据年龄"); valueText: root._number("linkAgeUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("linkReasonCode")) }
                     VehicleSummaryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("linkTimeBootUs") }
@@ -401,15 +424,11 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
                     VehicleSummaryRow {
                         labelText: qsTr("SD")
-                        valueText: root._maskBit("storageValidityMask", 0)
-                                   ? root._enum("sdState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
-                                   : qsTr("无效")
+                        valueText: root._validEnum("sdState", "storageValidityMask", 0, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("NOR")
-                        valueText: root._maskBit("storageValidityMask", 1)
-                                   ? root._enum("norState", [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
-                                   : qsTr("无效")
+                        valueText: root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
                     }
                     VehicleSummaryRow { labelText: qsTr("剩余空间"); valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB") }
                     VehicleSummaryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
@@ -426,8 +445,7 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("任务 ID"); valueText: root._integer("resourceTaskId") }
                     VehicleSummaryRow {
                         labelText: qsTr("CPU")
-                        valueText: root._maskBit("resourceValidityMask", 2)
-                                   ? root._permillePercent("resourceCpuLoadPermille") : qsTr("无效")
+                        valueText: root._validPermillePercent("resourceCpuLoadPermille", "resourceValidityMask", 2)
                     }
                     VehicleSummaryRow { labelText: qsTr("WCET"); valueText: root._validValue("resourceWcetUs", "resourceValidityMask", 0, 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("栈剩余"); valueText: root._validValue("resourceStackFreeBytes", "resourceValidityMask", 1, 0, " B") }
@@ -445,8 +463,9 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : (root._fact("utcValid") ? qsTr("是") : qsTr("否")) }
                     VehicleSummaryRow {
                         labelText: qsTr("UTC 不确定度")
-                        valueText: root._fact("utcValid")
-                                   ? root._number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
+                        valueText: root._fact("utcValid") === null ? qsTr("未上报")
+                                   : root._fact("utcValid")
+                                     ? root._number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
                     }
                     VehicleSummaryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     VehicleSummaryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
@@ -516,15 +535,15 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }
                     VehicleSummaryRow {
                         labelText: qsTr("横滚 / 俯仰")
-                        valueText: (root._maskBit("rcValidAxesMask", 0) ? root._number("rcRollNorm", 3, "") : qsTr("无效"))
+                        valueText: root._validValue("rcRollNorm", "rcValidAxesMask", 0, 3, "")
                                    + " / " +
-                                   (root._maskBit("rcValidAxesMask", 1) ? root._number("rcPitchNorm", 3, "") : qsTr("无效"))
+                                   root._validValue("rcPitchNorm", "rcValidAxesMask", 1, 3, "")
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("偏航 / 油门")
-                        valueText: (root._maskBit("rcValidAxesMask", 2) ? root._number("rcYawNorm", 3, "") : qsTr("无效"))
+                        valueText: root._validValue("rcYawNorm", "rcValidAxesMask", 2, 3, "")
                                    + " / " +
-                                   (root._maskBit("rcValidAxesMask", 3) ? root._number("rcThrottleNorm", 3, "") : qsTr("无效"))
+                                   root._validValue("rcThrottleNorm", "rcValidAxesMask", 3, 3, "")
                     }
                     VehicleSummaryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
                     VehicleSummaryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
