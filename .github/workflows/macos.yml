@@ -1,16 +1,7 @@
 name: MacOS
 
+# Non-target platform/packaging builds are manual-only during the Linux/Windows validation phase.
 on:
-  push:
-    branches:
-      - master
-      - 'Stable*'
-    tags:
-      - 'v*'
-    paths-ignore:
-      - 'docs/**'
-  pull_request:
-  merge_group:
   workflow_dispatch:
     inputs:
       build_type:
@@ -21,7 +12,6 @@ on:
         options:
           - Release
           - Debug
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
