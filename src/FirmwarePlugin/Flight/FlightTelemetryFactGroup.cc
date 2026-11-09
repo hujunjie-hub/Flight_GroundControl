@@ -194,6 +194,36 @@ QVariantList FlightTelemetryFactGroup::prearmChecks() const
     return checks;
 }
 
+QVariantList FlightTelemetryFactGroup::sensorHealthStatuses() const
+{
+    QVariantList statuses;
+    statuses.reserve(_sensorHealthByInstance.size());
+    for (auto it = _sensorHealthByInstance.cbegin(); it != _sensorHealthByInstance.cend(); ++it) {
+        statuses.append(it.value());
+    }
+    return statuses;
+}
+
+QVariantList FlightTelemetryFactGroup::linkStatuses() const
+{
+    QVariantList statuses;
+    statuses.reserve(_linkStatusesByInstance.size());
+    for (auto it = _linkStatusesByInstance.cbegin(); it != _linkStatusesByInstance.cend(); ++it) {
+        statuses.append(it.value());
+    }
+    return statuses;
+}
+
+QVariantList FlightTelemetryFactGroup::resourceStatuses() const
+{
+    QVariantList statuses;
+    statuses.reserve(_resourceStatusesByTask.size());
+    for (auto it = _resourceStatusesByTask.cbegin(); it != _resourceStatusesByTask.cend(); ++it) {
+        statuses.append(it.value());
+    }
+    return statuses;
+}
+
 QVariantMap FlightTelemetryFactGroup::familyReceiveAgeMs() const
 {
     const qint64 nowMs = _receiveClock.elapsed();
@@ -237,6 +267,27 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     return true;
 }
 
+bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
+    quint64 bootId, quint64 timeBootUs, quint32 instanceId,
+    QHash<quint32, quint64> &lastTimeByInstance)
+{
+    if (bootId == 0 || timeBootUs == 0) {
+        return false;
+    }
+    if (_activeBootId == 0) {
+        _activeBootId = bootId;
+    }
+    if (bootId != _activeBootId) {
+        return false;
+    }
+    const quint64 lastTimeBootUs = lastTimeByInstance.value(instanceId, 0);
+    if (timeBootUs <= lastTimeBootUs) {
+        return false;
+    }
+    lastTimeByInstance.insert(instanceId, timeBootUs);
+    return true;
+}
+
 void FlightTelemetryFactGroup::_activateBoot(quint64 bootId)
 {
     if (bootId == 0 || bootId == _activeBootId) {
@@ -251,12 +302,12 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
 {
     _lastOperationTimeBootUs = 0;
     _lastNavigationTimeBootUs = 0;
-    _lastSensorTimeBootUs = 0;
+    _lastSensorTimeByInstance.clear();
     _lastControlTimeBootUs = 0;
     _lastActuatorTimeBootUs = 0;
-    _lastLinkTimeBootUs = 0;
+    _lastLinkTimeByInstance.clear();
     _lastStorageTimeBootUs = 0;
-    _lastResourceTimeBootUs = 0;
+    _lastResourceTimeByTask.clear();
     _lastTimeStatusTimeBootUs = 0;
     _lastEventTimeBootUs = 0;
     _eventIdsAtLastTimestamp.clear();
@@ -294,6 +345,18 @@ void FlightTelemetryFactGroup::_resetTelemetryAvailability()
         emit prearmChecksChanged();
     }
     _prearmCheckEpoch.setRawValue(0);
+    if (!_sensorHealthByInstance.isEmpty()) {
+        _sensorHealthByInstance.clear();
+        emit sensorHealthStatusesChanged();
+    }
+    if (!_linkStatusesByInstance.isEmpty()) {
+        _linkStatusesByInstance.clear();
+        emit linkStatusesChanged();
+    }
+    if (!_resourceStatusesByTask.isEmpty()) {
+        _resourceStatusesByTask.clear();
+        emit resourceStatusesChanged();
+    }
     _rcInputAvailable.setRawValue(false);
     _buildInfoAvailable.setRawValue(false);
     _firmwareSha256.setRawValue(QString());
@@ -373,8 +436,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_SENSOR_HEALTH: {
         mavlink_fcu_sensor_health_t value{};
         mavlink_msg_fcu_sensor_health_decode(&message, &value);
-        if (value.health_state > 7 ||
-            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastSensorTimeBootUs)) {
+        if (value.sensor_instance_id < 1 || value.sensor_instance_id > 4 ||
+            value.health_state > 7 ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.sensor_instance_id,
+                                     _lastSensorTimeByInstance)) {
             return;
         }
         _markFamilyReceived(QStringLiteral("sensorHealth"));
@@ -388,6 +453,19 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _sensorRejectCount.setRawValue(value.reject_count);
         _sensorHealthState.setRawValue(value.health_state);
         _sensorAction.setRawValue(value.action);
+
+        QVariantMap sensorStatus;
+        sensorStatus.insert(QStringLiteral("sensorInstanceId"), value.sensor_instance_id);
+        sensorStatus.insert(QStringLiteral("policyEpoch"), value.policy_epoch);
+        sensorStatus.insert(QStringLiteral("healthState"), value.health_state);
+        sensorStatus.insert(QStringLiteral("action"), value.action);
+        sensorStatus.insert(QStringLiteral("reasonCode"), value.reason_code);
+        sensorStatus.insert(QStringLiteral("gapCount"), value.gap_count);
+        sensorStatus.insert(QStringLiteral("rejectCount"), value.reject_count);
+        sensorStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        _sensorHealthByInstance.insert(value.sensor_instance_id, sensorStatus);
+        emit sensorHealthStatusesChanged();
+
         _sensorHealthAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
         break;
@@ -441,10 +519,12 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_link_status_decode(&message, &value);
         const bool linkQualityValid = (value.validity_mask & (1U << 9)) != 0;
         const bool packetLossValid = (value.validity_mask & (1U << 10)) != 0;
-        if (value.link_kind < 1 || value.link_kind > 4 || value.link_state > 5 ||
+        if (value.link_kind < 1 || value.link_kind > 4 ||
+            value.link_instance_id != value.link_kind || value.link_state > 5 ||
             (linkQualityValid && value.link_quality_permille > 1000) ||
             (packetLossValid && value.packet_loss_ppm > 1000000U) ||
-            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastLinkTimeBootUs)) {
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.link_instance_id,
+                                     _lastLinkTimeByInstance)) {
             return;
         }
         _markFamilyReceived(QStringLiteral("link"));
@@ -460,6 +540,21 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _linkState.setRawValue(value.link_state);
         _linkRssiDbm.setRawValue(value.rssi_dbm);
         _linkQualityPermille.setRawValue(value.link_quality_permille);
+
+        QVariantMap linkStatus;
+        linkStatus.insert(QStringLiteral("linkInstanceId"), value.link_instance_id);
+        linkStatus.insert(QStringLiteral("linkKind"), value.link_kind);
+        linkStatus.insert(QStringLiteral("linkState"), value.link_state);
+        linkStatus.insert(QStringLiteral("validityMask"), value.validity_mask);
+        linkStatus.insert(QStringLiteral("packetLossPpm"), value.packet_loss_ppm);
+        linkStatus.insert(QStringLiteral("ageUs"), value.age_us);
+        linkStatus.insert(QStringLiteral("reasonCode"), value.reason_code);
+        linkStatus.insert(QStringLiteral("rssiDbm"), value.rssi_dbm);
+        linkStatus.insert(QStringLiteral("linkQualityPermille"), value.link_quality_permille);
+        linkStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        _linkStatusesByInstance.insert(value.link_instance_id, linkStatus);
+        emit linkStatusesChanged();
+
         _linkAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
         break;
@@ -492,7 +587,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_resource_status_decode(&message, &value);
         const bool cpuLoadValid = (value.validity_mask & (1U << 2)) != 0;
         if ((cpuLoadValid && value.cpu_load_permille > 1000) ||
-            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastResourceTimeBootUs)) {
+            (!_resourceStatusesByTask.contains(value.task_id) &&
+             _resourceStatusesByTask.size() >= _resourceTaskCapacity) ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.task_id,
+                                     _lastResourceTimeByTask)) {
             return;
         }
         _markFamilyReceived(QStringLiteral("resource"));
@@ -506,6 +604,19 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _resourceDeadlineMissCount.setRawValue(value.deadline_miss_count);
         _resourceAxiFreeBytes.setRawValue(value.axi_free_bytes);
         _resourceCpuLoadPermille.setRawValue(value.cpu_load_permille);
+
+        QVariantMap resourceStatus;
+        resourceStatus.insert(QStringLiteral("taskId"), value.task_id);
+        resourceStatus.insert(QStringLiteral("validityMask"), value.validity_mask);
+        resourceStatus.insert(QStringLiteral("wcetUs"), value.wcet_us);
+        resourceStatus.insert(QStringLiteral("stackFreeBytes"), value.stack_free_bytes);
+        resourceStatus.insert(QStringLiteral("deadlineMissCount"), value.deadline_miss_count);
+        resourceStatus.insert(QStringLiteral("axiFreeBytes"), value.axi_free_bytes);
+        resourceStatus.insert(QStringLiteral("cpuLoadPermille"), value.cpu_load_permille);
+        resourceStatus.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        _resourceStatusesByTask.insert(value.task_id, resourceStatus);
+        emit resourceStatusesChanged();
+
         _resourceAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
         break;
