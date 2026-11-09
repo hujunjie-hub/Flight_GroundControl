@@ -13,6 +13,15 @@ All values are informational telemetry. They do not grant control authority,
 approve arming, clear a failsafe, or authorize actuator output. FMS remains the
 only authority for operational decisions.
 
+## Ground station page
+
+The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). It is a read-only
+13-card view of operation, navigation, sensor health, control, actuator, link, storage,
+resource, time, event, pre-arm, RC input and build information. Each card shows its own
+message availability and FCU boot-time publication timestamp. The page honors the
+link/storage/resource validity masks and the RC valid-axis mask; it does not send commands
+or grant control authority.
+
 ## QML access
 
 The per-vehicle FactGroup is exposed as:
