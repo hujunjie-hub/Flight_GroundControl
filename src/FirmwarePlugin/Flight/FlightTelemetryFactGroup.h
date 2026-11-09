@@ -1,8 +1,5 @@
 #pragma once
 
-#include <QtCore/QQueue>
-#include <QtCore/QSet>
-
 #include "Fact.h"
 #include "FactGroup.h"
 #include "FactMetaData.h"
@@ -206,12 +203,10 @@ private:
     quint64 _lastResourceTimeBootUs = 0;
     quint64 _lastTimeStatusTimeBootUs = 0;
     quint64 _lastEventTimeBootUs = 0;
+    quint32 _lastEventId = 0;
     quint64 _lastPrearmTimeBootUs = 0;
     quint64 _lastRcInputTimeBootUs = 0;
     quint64 _lastBuildInfoTimeBootUs = 0;
-    QSet<quint32> _recentEventIds;
-    QQueue<quint32> _recentEventOrder;
-    static constexpr qsizetype _recentEventIdCapacity = 64;
     quint8 _lastBuildInfoDigestMask = 0;
     quint32 _eventSequenceValue = 0;
 };
