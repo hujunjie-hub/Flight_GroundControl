@@ -176,12 +176,15 @@ FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
 }
 
 bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
-    quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs) const
+    quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
 {
     if (bootId == 0 || timeBootUs == 0) {
         return false;
     }
-    if (_activeBootId != 0 && bootId != _activeBootId) {
+    if (_activeBootId == 0) {
+        _activeBootId = bootId;
+    }
+    if (bootId != _activeBootId) {
         return false;
     }
     if (timeBootUs <= lastTimeBootUs) {
@@ -451,9 +454,11 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_event_decode(&message, &value);
         if (value.boot_id == 0 || value.time_boot_us == 0 ||
             (_activeBootId != 0 && value.boot_id != _activeBootId) ||
-            value.time_boot_us < _lastEventTimeBootUs ||
-            (value.time_boot_us == _lastEventTimeBootUs && value.event_id == _lastEventId)) {
+            value.time_boot_us < _lastEventTimeBootUs || value.event_id == _lastEventId) {
             return;
+        }
+        if (_activeBootId == 0) {
+            _activeBootId = value.boot_id;
         }
         _lastEventTimeBootUs = value.time_boot_us;
         _lastEventId = value.event_id;
@@ -531,6 +536,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             (value.time_boot_us == _lastBuildInfoTimeBootUs &&
              value.digest_kind == _lastBuildInfoDigestKind)) {
             return;
+        }
+        if (_activeBootId == 0) {
+            _activeBootId = value.boot_id;
         }
         _lastBuildInfoTimeBootUs = value.time_boot_us;
         _lastBuildInfoDigestKind = value.digest_kind;
