@@ -19,10 +19,13 @@ The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). 
 view of operation, navigation, sensor health, control, actuator, link, storage,
 resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history.
 Sensor health is shown per sensor instance, communication state per RC/GCS/Companion
-link instance, and resource measurements per task. Each telemetry card shows its own
-message availability and local ground-station receive age. The page honors the
-link/storage/resource validity masks and the RC valid-axis mask; it does not send commands
-or grant control authority.
+link instance, and resource records are keyed by task ID. The current Flight publisher
+leaves `task_id` at zero and fills the deadline-miss count from the global
+`RuntimeStats` snapshot; the page labels that record as a system aggregate rather than
+a per-task measurement. Per-task resource reporting requires corresponding firmware
+publisher support. Each telemetry card shows its own message availability and local
+ground-station receive age. The page honors the link/storage/resource validity masks
+and the RC valid-axis mask; it does not send commands or grant control authority.
 
 ## QML access
 
@@ -223,9 +226,12 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   and rejects delayed older epochs. The current firmware publisher reports only
   the actuator-readiness check (ID 5); the UI is ready to display additional
   checks when the publisher emits them.
-- Sensor/link/resource records are retained per instance. Resource task records
-  have a fixed 64-task cache limit; additional unseen task IDs are ignored until
+- Sensor/link/resource records are retained per instance. Resource records
+  have a fixed 64-ID cache limit; additional unseen task IDs are ignored until
   the next FCU boot rather than allowing unbounded ground-station memory growth.
+  In the current Flight publisher, resource ID 0 represents the global runtime
+  statistics snapshot (only deadline misses are populated); nonzero per-task
+  records are not yet published.
 - `FCU_BUILD_INFO` exposes each digest chunk separately. A release-verification
   workflow must compare these values with a trusted build manifest; a telemetry
   hash alone is not a signature or proof of provenance.
