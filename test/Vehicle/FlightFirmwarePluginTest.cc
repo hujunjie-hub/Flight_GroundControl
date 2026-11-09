@@ -276,7 +276,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
         build.product_revision = 20;
         build.port_revision = 21;
         build.schema_major = 6;
-        build.schema_minor = 1;
+        build.schema_minor = 0;
         build.digest_kind = digestKind;
         for (int i = 0; i < 32; ++i) {
             build.sha256[i] = static_cast<uint8_t>(i + digestKind);
@@ -305,6 +305,8 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
 
     QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(),
              QStringLiteral("1122334455667788"));
+    QCOMPARE(telemetry.getFact(QStringLiteral("buildSchemaMajor"))->rawValue().toUInt(), 6U);
+    QCOMPARE(telemetry.getFact(QStringLiteral("buildSchemaMinor"))->rawValue().toUInt(), 0U);
     QCOMPARE(telemetry.getFact(QStringLiteral("sensorHealthState"))->rawValue().toUInt(), 4U);
     QCOMPARE(telemetry.getFact(QStringLiteral("solverStatus"))->rawValue().toUInt(), 2U);
     QCOMPARE(telemetry.getFact(QStringLiteral("actuatorSaturatedMask"))->rawValue().toUInt(), 2U);
@@ -333,7 +335,7 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     inconsistentBuild.product_revision = 999;
     inconsistentBuild.port_revision = 21;
     inconsistentBuild.schema_major = 6;
-    inconsistentBuild.schema_minor = 1;
+    inconsistentBuild.schema_minor = 1; // A different minor version cannot join a 6.0 snapshot.
     inconsistentBuild.digest_kind = 0;
     for (int i = 0; i < 32; ++i) inconsistentBuild.sha256[i] = static_cast<uint8_t>(i);
     for (int i = 0; i < 20; ++i) inconsistentBuild.source_commit[i] = static_cast<uint8_t>(i + 1);
