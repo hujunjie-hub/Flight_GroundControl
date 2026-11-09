@@ -1,8 +1,16 @@
 #include "FlightSensorsComponent.h"
 
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 namespace {
+bool canCalibrateVehicle(const Vehicle *vehicle)
+{
+    return vehicle && !vehicle->armed() && !vehicle->flying() &&
+           vehicle->vehicleLinkManager() &&
+           !vehicle->vehicleLinkManager()->communicationLost();
+}
+
 constexpr const char *kSensorsQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightSensors.qml";
 } // namespace
@@ -40,7 +48,7 @@ FlightSensorsComponent::FlightSensorsComponent(Vehicle *vehicle, AutoPilotPlugin
 
 void FlightSensorsComponent::startCalibration(int kind)
 {
-    if (!_vehicle || _vehicle->armed() || _calibrationState == 1 || kind < 1 || kind > 5)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState == 1 || kind < 1 || kind > 5)
         return;
 
     const bool needsAccel = kind == 3 || kind == 4;
@@ -56,7 +64,7 @@ void FlightSensorsComponent::startCalibration(int kind)
 
 void FlightSensorsComponent::calibrationAction(int action)
 {
-    if (!_vehicle || _vehicle->armed() || _calibrationState != 1 || _capturePending)
+    if (!canCalibrateVehicle(_vehicle) || _calibrationState != 1 || _capturePending)
         return;
 
     if ((action == 1 && _calibrationKind == 2 && _capturedFaces < 6) || action == 2) {
