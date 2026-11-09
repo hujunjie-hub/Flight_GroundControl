@@ -107,6 +107,8 @@ jobs:
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
+            .github/workflows/windows.yml
+            .github/workflows/release.yml
             tools/pyproject.toml
             tools/uv.lock
             tools/*.py
