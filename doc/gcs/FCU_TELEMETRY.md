@@ -124,6 +124,36 @@ old digest and source-commit value before accepting the new snapshot, preventing
 hashes from different builds being mixed. Reserved enum values and invalid
 boolean/mask ranges are rejected rather than interpreted as healthy.
 
+## Automated verification
+
+`FlightTelemetryDispatchTest` is an Integration/Vehicle test fixture. It uses
+`MockLink::respondWithMavlinkMessage()` to serialize FCU frames onto the mock
+link, then relies on the normal `bytesReceived` → MAVLink parser →
+`MAVLinkProtocol::messageReceived` → `Vehicle::_mavlinkMessageReceived` →
+per-vehicle FactGroup path. These tests do not call
+`FlightTelemetryFactGroup::handleMessage()` directly.
+
+The fixture verifies:
+
+- A valid FCU operation frame reaches the Vehicle FactGroup through the wire parser.
+- A corrupted MAVLink checksum is rejected before Vehicle dispatch.
+- Wrong system/component IDs, reserved enum values and out-of-order samples do
+  not overwrite the last accepted telemetry.
+- Two simultaneously connected generic FCUs retain independent telemetry caches.
+- Disconnect/reconnect creates a fresh Vehicle telemetry state before new
+  samples are accepted.
+
+Run the focused tests from a configured Debug build with:
+
+```sh
+ctest --test-dir build -R 'Flight(FirmwarePlugin|TelemetryDispatch)Test' --output-on-failure
+```
+
+These are host-side protocol/dispatch tests. They do not replace UDP SIL
+interoperability, packet-loss testing against a running Flight firmware build,
+or H723 hardware validation. A passing host test must never be presented as
+evidence that real-flight safety prerequisites have been met.
+
 ## Message coverage
 
 | ID | Message | Availability fact | Main fields |
