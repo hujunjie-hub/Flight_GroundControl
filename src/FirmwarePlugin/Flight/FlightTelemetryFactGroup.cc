@@ -330,6 +330,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
     _lastEventTimeBootUs = 0;
     _eventIdsAtLastTimestamp.clear();
     _eventIdsAtLastTimestampOrder.clear();
+    _lastPrearmTimeBootUs = 0;
     _lastPrearmTimeByCheckId.clear();
     _lastRcInputTimeBootUs = 0;
     _lastBuildInfoTimeBootUs = 0;
@@ -762,8 +763,15 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             newCheckEpoch = true;
         }
 
+        // Different check IDs in one snapshot may share a timestamp, but
+        // the family timestamp itself must never move backwards.
+        if (value.time_boot_us < _lastPrearmTimeBootUs) {
+            return;
+        }
+        QHash<quint32, quint64> prearmTimeByCheckId =
+            newCheckEpoch ? QHash<quint32, quint64>{} : _lastPrearmTimeByCheckId;
         if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, value.check_id,
-                                     _lastPrearmTimeByCheckId)) {
+                                     prearmTimeByCheckId)) {
             return;
         }
 
@@ -772,6 +780,8 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             _prearmCheckEpochValue = value.check_epoch;
             _hasPrearmCheckEpoch = true;
         }
+        _lastPrearmTimeBootUs = value.time_boot_us;
+        _lastPrearmTimeByCheckId.swap(prearmTimeByCheckId);
 
         _markFamilyReceived(QStringLiteral("prearm"));
         _prearmTimeBootUs.setRawValue(value.time_boot_us);
