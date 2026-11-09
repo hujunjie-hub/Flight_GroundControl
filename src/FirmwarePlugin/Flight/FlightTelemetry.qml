@@ -244,6 +244,39 @@ SetupPage {
                ? labels[value] : qsTr("未知")
     }
 
+    function _schemaCompatibilityText() {
+        const majorRaw = _fact("buildSchemaMajor")
+        const minorRaw = _fact("buildSchemaMinor")
+        if (majorRaw === null || minorRaw === null) {
+            return qsTr("未收到版本")
+        }
+        const major = Number(majorRaw)
+        const minor = Number(minorRaw)
+        if (!Number.isInteger(major) || !Number.isInteger(minor)) {
+            return qsTr("无效")
+        }
+        if (major !== 6) {
+            return qsTr("主版本不兼容：%1.%2").arg(major).arg(minor)
+        }
+        if (minor !== 0) {
+            return qsTr("次版本未验证：%1.%2").arg(major).arg(minor)
+        }
+        return qsTr("兼容：6.0")
+    }
+
+    function _profileCompatibilityText() {
+        const operationProfile = _fact("opProfileId")
+        const buildProfile = _fact("buildProfileId")
+        if (operationProfile === null || buildProfile === null) {
+            return qsTr("未验证")
+        }
+        if (Number(operationProfile) !== Number(buildProfile)) {
+            return qsTr("运行状态与构建信息不一致")
+        }
+        return Number(buildProfile) === 65537
+               ? qsTr("匹配 QUAD_X4") : qsTr("未知 Profile：%1").arg(buildProfile)
+    }
+
     function _sourceCommitDisplay() {
         if (!_fact("buildInfoAvailable")) {
             return qsTr("未上报")
@@ -719,6 +752,8 @@ SetupPage {
                     VehicleSummaryRow { labelText: qsTr("产品版本"); valueText: root._integer("buildProductRevision") }
                     VehicleSummaryRow { labelText: qsTr("接口版本"); valueText: root._integer("buildPortRevision") }
                     VehicleSummaryRow { labelText: qsTr("Schema"); valueText: root._integer("buildSchemaMajor") + "." + root._integer("buildSchemaMinor") }
+                    VehicleSummaryRow { labelText: qsTr("ICD 兼容性"); valueText: root._schemaCompatibilityText() }
+                    VehicleSummaryRow { labelText: qsTr("Profile 匹配"); valueText: root._profileCompatibilityText() }
                     VehicleSummaryRow { labelText: qsTr("固件 SHA-256"); valueText: root._hashPrefix("firmwareSha256") }
                     VehicleSummaryRow { labelText: qsTr("核心参数 SHA-256"); valueText: root._hashPrefix("coreParametersSha256") }
                     VehicleSummaryRow { labelText: qsTr("Profile SHA-256"); valueText: root._hashPrefix("profileSha256") }
