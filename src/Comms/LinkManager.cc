@@ -27,7 +27,7 @@
 #endif
 #endif
 
-#ifdef QT_DEBUG
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
 #include "MockLink.h"
 #endif
 
@@ -153,7 +153,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     case LinkConfiguration::TypeLogReplay:
         link = std::make_shared<LogReplayLink>(config);
         break;
-#ifdef QT_DEBUG
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
     case LinkConfiguration::TypeMock:
         link = std::make_shared<MockLink>(config);
         break;
@@ -414,7 +414,7 @@ void LinkManager::loadLinkConfigurationList()
             case LinkConfiguration::TypeLogReplay:
                 link = new LogReplayConfiguration(name);
                 break;
-#ifdef QT_DEBUG
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
             case LinkConfiguration::TypeMock:
                 link = new MockConfiguration(name);
                 break;
@@ -574,7 +574,7 @@ QStringList LinkManager::linkTypeStrings() const
     list += tr("UDP");
     list += tr("TCP");
     list += tr("Bluetooth");
-#ifdef QT_DEBUG
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
     list += tr("Mock Link");
 #endif
     list += tr("Log Replay");
