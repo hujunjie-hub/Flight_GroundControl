@@ -4,6 +4,8 @@
 
 #include <QtCore/QByteArray>
 
+#include <cmath>
+
 FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     : FactGroup(0, parent)
 {
@@ -260,7 +262,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_OPERATION_STATUS: {
         mavlink_fcu_operation_status_t value{};
         mavlink_msg_fcu_operation_status_decode(&message, &value);
-        if (value.boot_id == 0 || value.time_boot_us == 0) {
+        if (value.boot_id == 0 || value.time_boot_us == 0 || value.arm_state > 3 ||
+            value.flight_mode > 8 || value.authority > 3 || value.failsafe_level > 3 ||
+            value.mission_state > 5) {
             return;
         }
         _activateBoot(value.boot_id);
@@ -289,7 +293,10 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_NAV_STATUS: {
         mavlink_fcu_nav_status_t value{};
         mavlink_msg_fcu_nav_status_decode(&message, &value);
-        if (!_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastNavigationTimeBootUs)) {
+        if (!std::isfinite(value.position_std_m) || value.position_std_m < 0.0F ||
+            !std::isfinite(value.velocity_std_mps) || value.velocity_std_mps < 0.0F ||
+            !std::isfinite(value.heading_std_rad) || value.heading_std_rad < 0.0F ||
+            !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastNavigationTimeBootUs)) {
             return;
         }
         _navTimeBootUs.setRawValue(value.time_boot_us);
@@ -528,7 +535,14 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_RC_INPUT_STATUS: {
         mavlink_fcu_rc_input_status_t value{};
         mavlink_msg_fcu_rc_input_status_decode(&message, &value);
+        const auto validAxisValue = [](bool valid, float axis, float minimum, float maximum) {
+            return !valid || (std::isfinite(axis) && axis >= minimum && axis <= maximum);
+        };
         if (value.valid_axes_mask > 0x0F || value.receiver_failsafe > 1 || value.link_state > 5 ||
+            !validAxisValue((value.valid_axes_mask & (1U << 0)) != 0, value.roll_norm, -1.0F, 1.0F) ||
+            !validAxisValue((value.valid_axes_mask & (1U << 1)) != 0, value.pitch_norm, -1.0F, 1.0F) ||
+            !validAxisValue((value.valid_axes_mask & (1U << 2)) != 0, value.yaw_norm, -1.0F, 1.0F) ||
+            !validAxisValue((value.valid_axes_mask & (1U << 3)) != 0, value.throttle_norm, 0.0F, 1.0F) ||
             !_acceptTelemetryMessage(value.boot_id, value.time_boot_us, _lastRcInputTimeBootUs)) {
             return;
         }
