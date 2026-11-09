@@ -327,6 +327,7 @@ void FlightTelemetryFactGroup::_resetMessageTimestamps()
 void FlightTelemetryFactGroup::_resetTelemetryAvailability()
 {
     _operationAvailable.setRawValue(false);
+    _opBootIdHex.setRawValue(QString());
     _navigationAvailable.setRawValue(false);
     _sensorHealthAvailable.setRawValue(false);
     _controlAvailable.setRawValue(false);
