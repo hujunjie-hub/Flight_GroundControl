@@ -141,6 +141,18 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
     dispatch(message);
 
+    // A mismatched product profile must not consume the family timestamp.
+    navigation.time_boot_us = 111;
+    navigation.profile_id = operation.profile_id + 1;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("navTimeBootUs"))->rawValue().toULongLong(), 110ULL);
+
+    navigation.profile_id = operation.profile_id;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("navTimeBootUs"))->rawValue().toULongLong(), 111ULL);
+
     mavlink_fcu_sensor_health_t sensor{};
     sensor.time_boot_us = 120;
     sensor.boot_id = bootId;
@@ -559,11 +571,13 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     // A new FCU boot invalidates cached facts from the previous boot.
     const quint64 activeBootId = bootId + 1;
     operation.boot_id = activeBootId;
+    operation.profile_id = 0x00010002;
     operation.time_boot_us = 1;
     mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
     dispatch(message);
     QVERIFY(telemetry.getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), activeBootId);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opProfileId"))->rawValue().toUInt(), 0x00010002U);
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
@@ -585,11 +599,28 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), activeBootId);
     QCOMPARE(telemetry.getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 1ULL);
 
-    // A delayed packet from the previous boot cannot repopulate the cache.
-    navigation.time_boot_us = 999;
+    // A packet from the previous product profile cannot update the new session,
+    // and does not consume the timestamp needed by the matching profile.
+    navigation.boot_id = activeBootId;
+    navigation.time_boot_us = 2;
+    navigation.profile_id = 0x00010001;
     mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
     dispatch(message);
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+
+    navigation.profile_id = operation.profile_id;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    dispatch(message);
+    QVERIFY(telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("navTimeBootUs"))->rawValue().toULongLong(), 2ULL);
+
+    // A delayed packet from the previous boot cannot replace the new session.
+    navigation.boot_id = bootId;
+    navigation.profile_id = 0x00010001;
+    navigation.time_boot_us = 999;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("navTimeBootUs"))->rawValue().toULongLong(), 2ULL);
 }
 
 
@@ -632,15 +663,29 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     mavlink_fcu_nav_status_t navigation{};
     navigation.time_boot_us = 12;
     navigation.boot_id = operation.boot_id;
-    navigation.position_std_m = -0.1F;
+    navigation.profile_id = operation.profile_id + 1;
+    navigation.position_std_m = 0.1F;
     navigation.velocity_std_mps = 0.1F;
     navigation.heading_std_rad = 0.01F;
     mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
 
+    // Matching profile at the same timestamp is accepted after the mismatch.
+    navigation.profile_id = operation.profile_id;
+    navigation.position_std_m = -0.1F;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+
+    navigation.position_std_m = 0.1F;
+    mavlink_msg_fcu_nav_status_encode(vehicle.id(), vehicle.compId(), &message, &navigation);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
+
     mavlink_fcu_link_status_t link{};
     link.time_boot_us = 13;
+    link.profile_id = operation.profile_id;
     link.boot_id = operation.boot_id;
     link.link_kind = 1;
     link.link_instance_id = 2; // First-version contract requires instance == kind.
@@ -663,6 +708,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_control_status_t control{};
     control.time_boot_us = 17;
+    control.profile_id = operation.profile_id;
     control.boot_id = operation.boot_id;
     control.controllable_dof_mask = 1U << 4; // DOF bits 0..3 only.
     control.solver_status = 1;
@@ -684,6 +730,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_storage_status_t storage{};
     storage.time_boot_us = 20;
+    storage.profile_id = operation.profile_id;
     storage.boot_id = operation.boot_id;
     storage.validity_mask = 1U << 3; // Storage validity bits 0..2 only.
     storage.sd_state = 1;
@@ -706,6 +753,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_resource_status_t resource{};
     resource.time_boot_us = 23;
+    resource.profile_id = operation.profile_id;
     resource.boot_id = operation.boot_id;
     resource.task_id = 1;
     resource.validity_mask = 1U << 4; // Resource validity bits 0..3 only.
@@ -728,6 +776,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_prearm_status_t prearm{};
     prearm.time_boot_us = 15;
+    prearm.profile_id = operation.profile_id;
     prearm.boot_id = operation.boot_id;
     prearm.check_epoch = 0; // Zero is reserved; first valid epoch is nonzero.
     prearm.check_id = 1;
@@ -745,6 +794,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_rc_input_status_t rc{};
     rc.time_boot_us = 13;
+    rc.profile_id = operation.profile_id;
     rc.boot_id = operation.boot_id;
     rc.valid_axes_mask = 1U << 0;
     rc.roll_norm = 1.5F;
@@ -762,6 +812,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
 
     mavlink_fcu_build_info_t build{};
     build.time_boot_us = 15;
+    build.profile_id = operation.profile_id;
     build.boot_id = operation.boot_id;
     build.digest_kind = 0;
     build.source_commit_valid = 0;
