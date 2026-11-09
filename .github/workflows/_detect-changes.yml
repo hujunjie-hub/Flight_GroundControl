@@ -1,20 +1,30 @@
 name: Detect Changes
+
 on:
   workflow_call:
     inputs:
       platform:
-        description: 'Build platform (windows only)'
+        description: 'Build platform (linux or windows)'
         required: true
         type: string
     outputs:
       should_build:
-        description: 'Whether Windows x64 build should run'
+        description: 'Whether the requested platform build should run'
         value: ${{ jobs.detect.outputs.should_build }}
+      linux:
+        description: 'Whether Linux-relevant files changed'
+        value: ${{ jobs.detect.outputs.linux }}
       windows:
         description: 'Whether Windows-relevant files changed'
         value: ${{ jobs.detect.outputs.windows }}
+
+concurrency:
+  group: detect-changes-${{ inputs.platform }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 permissions:
   contents: read
+
 jobs:
   detect:
     name: Detect Changes
@@ -22,6 +32,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       should_build: ${{ steps.nonpr.outputs.should_build || steps.pr.outputs.should_build }}
+      linux: ${{ steps.nonpr.outputs.linux || steps.pr.outputs.linux }}
       windows: ${{ steps.nonpr.outputs.windows || steps.pr.outputs.windows }}
     steps:
       - name: Checkout passthrough script (non-PR)
@@ -40,35 +51,42 @@ jobs:
             tools/common/proc.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
+
       - name: Emit outputs (non-PR)
         if: github.event_name != 'pull_request'
         id: nonpr
         shell: bash
         run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --non-pr-passthrough
+
       - name: Harden Runner
         if: github.event_name == 'pull_request'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
       - name: Checkout repo
         if: github.event_name == 'pull_request'
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
+
       - name: Detect changes
         if: github.event_name == 'pull_request'
         id: detect
         uses: ./.github/actions/detect-changes
         with:
-          platform: windows
+          platform: ${{ inputs.platform }}
+
       - name: Compute outputs (PR)
         if: github.event_name == 'pull_request'
         id: pr
         shell: bash
         env:
           DETECT_ANY: ${{ steps.detect.outputs.any }}
+          DETECT_LINUX: ${{ steps.detect.outputs.linux }}
           DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
         run: |
           echo "should_build=${DETECT_ANY}" >> "$GITHUB_OUTPUT"
+          echo "linux=${DETECT_LINUX}" >> "$GITHUB_OUTPUT"
           echo "windows=${DETECT_WINDOWS}" >> "$GITHUB_OUTPUT"

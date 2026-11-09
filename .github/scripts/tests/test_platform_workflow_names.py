@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Detect drift between the Windows x64 build workflow and its consumers."""
+"""Detect drift between Linux/Windows platform workflows and their consumers."""
 
 from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING
 
-import pytest
 import yaml
 from _helpers import REPO_ROOT
 
@@ -19,7 +18,7 @@ RELEASE_YML = WORKFLOWS_DIR / "release.yml"
 BUILD_RESULTS_YML = WORKFLOWS_DIR / "build-results.yml"
 
 EXTRA_TRIGGERS: frozenset[str] = frozenset({"pre-commit"})
-PLATFORM_FILES: dict[str, str] = {"Windows": "windows.yml"}
+PLATFORM_FILES: dict[str, str] = {"Linux": "linux.yml", "Windows": "windows.yml"}
 
 
 def _workflow_name(path: Path) -> str:
@@ -34,11 +33,12 @@ def _platform_workflows() -> list[str]:
     return [name.strip() for name in raw.split(",") if name.strip()]
 
 
-def test_only_windows_x64_is_configured_for_platform_builds() -> None:
-    assert _platform_workflows() == ["Windows"]
-    assert sorted(_platform_workflows()) == sorted(PLATFORM_FILES)
-    workflow = WORKFLOWS_DIR / PLATFORM_FILES["Windows"]
-    assert _workflow_name(workflow) == "Windows"
+def test_configured_platforms_are_linux_and_windows() -> None:
+    configured = _platform_workflows()
+    assert configured == ["Linux", "Windows"]
+    assert sorted(configured) == sorted(PLATFORM_FILES)
+    for expected_name, filename in PLATFORM_FILES.items():
+        assert _workflow_name(WORKFLOWS_DIR / filename) == expected_name
 
 
 def test_build_results_trigger_matches_build_config() -> None:
@@ -53,6 +53,10 @@ def test_build_results_trigger_matches_build_config() -> None:
 def test_release_wait_for_builds_lists_match_platforms() -> None:
     doc = yaml.safe_load(RELEASE_YML.read_text(encoding="utf-8"))
     steps = doc["jobs"]["wait-for-builds"]["steps"]
-    names_block = next(step["with"]["workflow-names"] for step in steps if "workflow-names" in step.get("with", {}))
+    names_block = next(
+        step["with"]["workflow-names"]
+        for step in steps
+        if "workflow-names" in step.get("with", {})
+    )
     listed = {line.strip() for line in str(names_block).splitlines() if line.strip()}
     assert listed == set(_platform_workflows())

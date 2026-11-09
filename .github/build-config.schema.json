@@ -1,9 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "QGC Build Configuration",
-  "description": "Windows x64-only build toolchain versions and settings for QGroundControl CI",
+  "description": "Linux x64 GCC and Windows x64 MSVC build toolchain versions and settings for QGroundControl CI",
   "type": "object",
-  "required": ["qt", "build", "gstreamer"],
+  "required": [
+    "qt",
+    "build",
+    "gstreamer"
+  ],
   "properties": {
     "$schema": {
       "type": "string",
@@ -11,7 +15,10 @@
     },
     "qt": {
       "type": "object",
-      "required": ["version", "minimum_version"],
+      "required": [
+        "version",
+        "minimum_version"
+      ],
       "additionalProperties": false,
       "properties": {
         "version": {
@@ -32,7 +39,10 @@
     },
     "build": {
       "type": "object",
-      "required": ["cmake_minimum_version", "platform_workflows"],
+      "required": [
+        "cmake_minimum_version",
+        "platform_workflows"
+      ],
       "additionalProperties": false,
       "properties": {
         "cmake_minimum_version": {
@@ -42,33 +52,71 @@
         },
         "platform_workflows": {
           "type": "string",
-          "const": "Windows",
-          "description": "The only supported build workflow"
+          "pattern": "^Linux,Windows$",
+          "description": "Comma-separated list of the active platform build workflows"
         }
       }
     },
     "gstreamer": {
       "type": "object",
-      "required": ["version"],
+      "required": [
+        "version"
+      ],
       "additionalProperties": false,
       "properties": {
         "version": {
           "type": "object",
-          "required": ["default", "minimum", "windows"],
+          "required": [
+            "default",
+            "minimum",
+            "windows"
+          ],
           "additionalProperties": false,
           "properties": {
-            "default": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "minimum": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "windows": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+            "default": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "minimum": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "windows": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            }
           }
         },
         "plugins": {
           "type": "object",
-          "required": ["common", "windows"],
+          "required": [
+            "common",
+            "linux",
+            "windows"
+          ],
           "additionalProperties": false,
           "properties": {
-            "common": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
-            "windows": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } }
+            "common": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "windows": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "linux": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            }
           }
         },
         "checksums": {
@@ -77,9 +125,14 @@
           "patternProperties": {
             "^[0-9]+\\.[0-9]+\\.[0-9]+$": {
               "type": "object",
-              "required": ["windows_msvc_x64"],
+              "required": [
+                "windows_msvc_x64"
+              ],
               "properties": {
-                "windows_msvc_x64": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+                "windows_msvc_x64": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
               },
               "additionalProperties": false
             }

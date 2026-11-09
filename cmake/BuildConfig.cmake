@@ -20,9 +20,8 @@ function(qgc_config_get_value VAR_NAME JSON_KEY)
     set(${VAR_NAME} "${_value}" CACHE STRING "${JSON_KEY}" FORCE)
 endfunction()
 
-# Platform-specific metadata is optional. The supported CI build currently
-# targets Windows x64, so Android/Apple-only settings are intentionally absent
-# from build-config.json and resolve to empty values here.
+# Platform-specific metadata is optional. CI builds Linux x64 and Windows x64;
+# Android/Apple-only settings are intentionally absent and resolve to empty values.
 function(qgc_config_get_optional_value VAR_NAME JSON_KEY)
     string(REPLACE "." ";" _path "${JSON_KEY}")
     string(JSON _value ERROR_VARIABLE _err GET "${QGC_BUILD_CONFIG_CONTENT}" ${_path})
@@ -70,4 +69,4 @@ foreach(_gst_ver_var
     endif()
 endforeach()
 
-message(STATUS "BuildConfig: Qt ${QGC_CONFIG_QT_VERSION}, GStreamer ${QGC_CONFIG_GSTREAMER_VERSION} (Windows x64)")
+message(STATUS "BuildConfig: Qt ${QGC_CONFIG_QT_VERSION}, GStreamer ${QGC_CONFIG_GSTREAMER_VERSION} (Linux x64 + Windows x64 CI)")

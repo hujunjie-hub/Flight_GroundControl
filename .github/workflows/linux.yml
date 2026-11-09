@@ -1,0 +1,153 @@
+name: Linux
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: linux
+
+  build:
+    name: Linux x64 GCC Release
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      id-token: write
+      attestations: write
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+          testing: 'true'
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+
+      - name: Run Unit Tests (parallel)
+        id: unit_tests
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-unit.xml
+          ctest-output: test-output-linux-unit.txt
+          include-labels: 'Unit'
+          exclude-labels: 'Flaky|Network'
+          parallel: 'auto'
+
+      - name: Run Integration Tests (serial)
+        id: integration_tests
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-integration.xml
+          ctest-output: test-output-linux-integration.txt
+          include-labels: 'Integration'
+          exclude-labels: 'Flaky|Network'
+          parallel: '1'
+
+      - name: Report Test Results (unit)
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-report
+        with:
+          name: Linux x64 Unit Tests
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-unit.xml
+          output-file: test-output-linux-unit.txt
+          artifact-name: test-results-linux-unit
+          retention-days: 7
+
+      - name: Report Test Results (integration)
+        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-report
+        with:
+          name: Linux x64 Integration Tests
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-integration.xml
+          output-file: test-output-linux-integration.txt
+          artifact-name: test-results-linux-integration
+          retention-days: 7
+
+      - name: Verify Executable
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/Release/QGroundControl
+
+      - name: Create AppImage
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+
+      - name: Verify AppImage
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/QGroundControl-x86_64.AppImage
+          type: appimage
+
+      - name: Attest and Upload
+        uses: ./.github/actions/attest-and-upload
+        with:
+          artifact-name: QGroundControl-x86_64.AppImage
+          package-name: QGroundControl-x86_64
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}

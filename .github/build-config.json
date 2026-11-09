@@ -7,7 +7,7 @@
   },
   "build": {
     "cmake_minimum_version": "3.25",
-    "platform_workflows": "Windows"
+    "platform_workflows": "Linux,Windows"
   },
   "gstreamer": {
     "version": {
@@ -40,7 +40,19 @@
         "videoconvert",
         "videoscale"
       ],
-      "windows": ["d3d", "d3d11", "d3d12", "dav1d", "nvcodec"]
+      "windows": [
+        "d3d",
+        "d3d11",
+        "d3d12",
+        "dav1d",
+        "nvcodec"
+      ],
+      "linux": [
+        "nvcodec",
+        "qsv",
+        "va",
+        "vulkan"
+      ]
     },
     "checksums": {
       "1.28.4": {
