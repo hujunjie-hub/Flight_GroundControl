@@ -401,9 +401,9 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
     case MAVLINK_MSG_ID_FCU_OPERATION_STATUS: {
         mavlink_fcu_operation_status_t value{};
         mavlink_msg_fcu_operation_status_decode(&message, &value);
-        if (value.boot_id == 0 || value.time_boot_us == 0 || value.arm_state > 3 ||
-            value.flight_mode > 8 || value.authority > 3 || value.failsafe_level > 3 ||
-            value.mission_state > 5) {
+        if (value.boot_id == 0 || value.time_boot_us == 0 || value.profile_id == 0 ||
+            value.arm_state > 3 || value.flight_mode > 8 || value.authority > 3 ||
+            value.failsafe_level > 3 || value.mission_state > 5) {
             return;
         }
         if (!_activateBoot(value.boot_id) ||
