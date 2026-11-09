@@ -60,7 +60,7 @@ jobs:
           fi
 
   wait-for-builds:
-    name: Wait for Windows x64 Build
+    name: Wait for Linux x64 and Windows x64 Builds
     needs: semantic-release
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
@@ -68,16 +68,17 @@ jobs:
     permissions:
       actions: read
     steps:
-      - name: Wait for Windows x64 build
+      - name: Wait for Linux x64 and Windows x64 builds
         uses: int128/wait-for-workflows-action@v1
         with:
           workflow-names: |
+            Linux
             Windows
           timeout-minutes: 170
           poll-interval-minutes: 5
 
   upload-artifacts:
-    name: Upload Windows x64 Release Artifacts
+    name: Upload Linux x64 and Windows x64 Release Artifacts
     needs: [semantic-release, wait-for-builds]
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
@@ -105,15 +106,36 @@ jobs:
         with:
           script: |
             const tag = process.env.TAG_NAME;
-            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-              owner: context.repo.owner, repo: context.repo.repo,
-              workflow_id: 'windows.yml', event: 'push', per_page: 100
-            });
-            const successful = runs
-              .filter(run => run.status === 'completed' && run.conclusion === 'success' && run.head_branch === tag)
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            if (successful.length === 0) throw new Error(`No successful Windows x64 build found for ${tag}`);
-            core.setOutput('windows_run_id', String(successful[0].id));
+            for (const [platform, workflowFile] of [
+              ['linux', 'linux.yml'],
+              ['windows', 'windows.yml']
+            ]) {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowFile,
+                event: 'push',
+                per_page: 100
+              });
+              const successful = runs
+                .filter(run =>
+                  run.status === 'completed' &&
+                  run.conclusion === 'success' &&
+                  run.head_branch === tag
+                )
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+              if (successful.length === 0) {
+                throw new Error(`No successful ${platform} build found for ${tag}`);
+              }
+              core.setOutput(`${platform}_run_id`, String(successful[0].id));
+            }
+      - name: Download Linux x64 AppImage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: QGroundControl-x86_64
+          run-id: ${{ steps.build-runs.outputs.linux_run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts/linux
       - name: Download Windows x64 installer artifact
         uses: actions/download-artifact@v8
         with:
@@ -123,13 +145,22 @@ jobs:
           path: artifacts/windows
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
-      - name: Resolve Windows x64 artifact path
+      - name: Resolve Linux x64 and Windows x64 artifact paths
         id: paths
         shell: bash
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
             --build-dir artifacts \
             --match "exe=QGroundControl-installer-AMD64*.exe" \
+            --match "appimage=QGroundControl-x86_64.AppImage"
+      - name: Attest Linux x64 AppImage
+        id: attest-linux
+        if: steps.paths.outputs.appimage != ''
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ steps.paths.outputs.appimage }}
+          subject-name: linux-x64-appimage
+        continue-on-error: true
       - name: Generate source SBOM (SPDX)
         uses: anchore/sbom-action@v0
         with:
@@ -158,7 +189,9 @@ jobs:
           tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
             artifacts/**/*.exe
+            artifacts/**/*.AppImage
             sbom-source.spdx.json
             sbom-source.cdx.json
             ${{ steps.attest-windows.outputs.sbom-path }}
+            ${{ steps.attest-linux.outputs.sbom-path }}
           fail_on_unmatched_files: false

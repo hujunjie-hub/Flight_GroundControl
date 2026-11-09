@@ -1,15 +1,18 @@
 name: Detect Changes
-description: Detect source, test, and CI changes for Windows x64 builds
+description: Detect source, test, and CI changes for Linux x64 and Windows x64 builds
 
 inputs:
   platform:
-    description: "Build platform (windows only"
+    description: "Build platform (linux or windows)"
     required: true
 
 outputs:
   any:
     description: "Whether the requested platform build inputs changed"
     value: ${{ steps.check.outputs.any }}
+  linux:
+    description: "Whether Linux x64 build inputs changed"
+    value: ${{ steps.check.outputs.linux }}
   windows:
     description: "Whether Windows x64 build inputs changed"
     value: ${{ steps.check.outputs.windows }}
