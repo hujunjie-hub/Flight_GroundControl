@@ -805,7 +805,7 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     resource.time_boot_us = 23;
     resource.profile_id = operation.profile_id;
     resource.boot_id = operation.boot_id;
-    resource.task_id = 1;
+    resource.task_id = 0; // Current Flight publisher uses ID 0 for aggregate RuntimeStats.
     resource.validity_mask = 1U << 4; // Resource validity bits 0..3 only.
     mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
     telemetry.handleMessage(&vehicle, message);
@@ -817,6 +817,8 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(telemetry.getFact(QStringLiteral("resourceAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.resourceStatuses().size(), 1);
+    QCOMPARE(telemetry.resourceStatuses().first().toMap().value(QStringLiteral("taskId")).toUInt(), 0U);
 
     resource.time_boot_us = 25;
     resource.validity_mask = 1U << 4;
