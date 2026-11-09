@@ -4,6 +4,49 @@
 #include "Vehicle.h"
 #include "FlightTelemetryFactGroup.h"
 
+// These wire-layout values are generated from Flight's authoritative
+// spec/contracts/FCU.xml (Schema 6). A changed CRC or payload length is an
+// intentional ICD change and must be reviewed against the firmware generator.
+static_assert(MAVLINK_MSG_ID_FCU_OPERATION_STATUS == 43000);
+static_assert(MAVLINK_MSG_ID_FCU_OPERATION_STATUS_LEN == 51);
+static_assert(MAVLINK_MSG_ID_FCU_OPERATION_STATUS_CRC == 213);
+static_assert(MAVLINK_MSG_ID_FCU_NAV_STATUS == 43001);
+static_assert(MAVLINK_MSG_ID_FCU_NAV_STATUS_LEN == 52);
+static_assert(MAVLINK_MSG_ID_FCU_NAV_STATUS_CRC == 119);
+static_assert(MAVLINK_MSG_ID_FCU_SENSOR_HEALTH == 43002);
+static_assert(MAVLINK_MSG_ID_FCU_SENSOR_HEALTH_LEN == 44);
+static_assert(MAVLINK_MSG_ID_FCU_SENSOR_HEALTH_CRC == 121);
+static_assert(MAVLINK_MSG_ID_FCU_CONTROL_STATUS == 43003);
+static_assert(MAVLINK_MSG_ID_FCU_CONTROL_STATUS_LEN == 50);
+static_assert(MAVLINK_MSG_ID_FCU_CONTROL_STATUS_CRC == 255);
+static_assert(MAVLINK_MSG_ID_FCU_ACTUATOR_STATUS == 43004);
+static_assert(MAVLINK_MSG_ID_FCU_ACTUATOR_STATUS_LEN == 44);
+static_assert(MAVLINK_MSG_ID_FCU_ACTUATOR_STATUS_CRC == 42);
+static_assert(MAVLINK_MSG_ID_FCU_LINK_STATUS == 43005);
+static_assert(MAVLINK_MSG_ID_FCU_LINK_STATUS_LEN == 48);
+static_assert(MAVLINK_MSG_ID_FCU_LINK_STATUS_CRC == 144);
+static_assert(MAVLINK_MSG_ID_FCU_STORAGE_STATUS == 43006);
+static_assert(MAVLINK_MSG_ID_FCU_STORAGE_STATUS_LEN == 48);
+static_assert(MAVLINK_MSG_ID_FCU_STORAGE_STATUS_CRC == 162);
+static_assert(MAVLINK_MSG_ID_FCU_RESOURCE_STATUS == 43007);
+static_assert(MAVLINK_MSG_ID_FCU_RESOURCE_STATUS_LEN == 46);
+static_assert(MAVLINK_MSG_ID_FCU_RESOURCE_STATUS_CRC == 45);
+static_assert(MAVLINK_MSG_ID_FCU_TIME_STATUS == 43008);
+static_assert(MAVLINK_MSG_ID_FCU_TIME_STATUS_LEN == 49);
+static_assert(MAVLINK_MSG_ID_FCU_TIME_STATUS_CRC == 237);
+static_assert(MAVLINK_MSG_ID_FCU_EVENT == 43009);
+static_assert(MAVLINK_MSG_ID_FCU_EVENT_LEN == 45);
+static_assert(MAVLINK_MSG_ID_FCU_EVENT_CRC == 223);
+static_assert(MAVLINK_MSG_ID_FCU_PREARM_STATUS == 43010);
+static_assert(MAVLINK_MSG_ID_FCU_PREARM_STATUS_LEN == 47);
+static_assert(MAVLINK_MSG_ID_FCU_PREARM_STATUS_CRC == 201);
+static_assert(MAVLINK_MSG_ID_FCU_RC_INPUT_STATUS == 43011);
+static_assert(MAVLINK_MSG_ID_FCU_RC_INPUT_STATUS_LEN == 46);
+static_assert(MAVLINK_MSG_ID_FCU_RC_INPUT_STATUS_CRC == 113);
+static_assert(MAVLINK_MSG_ID_FCU_BUILD_INFO == 43012);
+static_assert(MAVLINK_MSG_ID_FCU_BUILD_INFO_LEN == 86);
+static_assert(MAVLINK_MSG_ID_FCU_BUILD_INFO_CRC == 182);
+
 void FlightFirmwarePluginTest::_missionClearIsNotAdvertised()
 {
     Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR);
