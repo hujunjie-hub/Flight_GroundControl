@@ -556,6 +556,7 @@ SetupPage {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                                 text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                                      + " · " + qsTr("恢复条件：%1").arg(root._enumValue(modelData.recoveryCondition, [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]))
                             }
                         }
                     }
