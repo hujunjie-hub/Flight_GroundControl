@@ -317,6 +317,10 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.getFact(QStringLiteral("abiSha256"))->rawValue().toString().size(), 64);
     QCOMPARE(telemetry.getFact(QStringLiteral("sourceCommit"))->rawValue().toString().size(), 40);
     QCOMPARE(telemetry.getFact(QStringLiteral("eventSequence"))->rawValue().toUInt(), 4U);
+    const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
+    QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
+    QVERIFY(receiveAges.value(QStringLiteral("event")).toLongLong() >= 0);
+
     const QVariantList recentEvents = telemetry.recentEvents();
     QCOMPARE(static_cast<int>(recentEvents.size()), 4);
     QCOMPARE(recentEvents.at(0).toMap().value(QStringLiteral("eventId")).toUInt(), 1236U);
@@ -345,6 +349,9 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
     QCOMPARE(telemetry.recentEvents().size(), 0);
+    QVERIFY(telemetry.familyReceiveAgeMs().value(QStringLiteral("operation")).toLongLong() >= 0);
+    QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("navigation")).toLongLong(), -1LL);
+    QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("event")).toLongLong(), -1LL);
 
     // A delayed packet from the previous boot cannot repopulate the cache.
     navigation.time_boot_us = 999;
