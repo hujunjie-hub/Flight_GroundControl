@@ -476,6 +476,21 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(telemetry.prearmChecks().size(), 4);
     QCOMPARE(telemetry.prearmChecks().at(2).toMap().value(QStringLiteral("checkState")).toUInt(), 1U);
 
+    // A new check epoch can reuse the same snapshot timestamp and check IDs.
+    prearm.check_epoch = 12;
+    prearm.check_id = 3;
+    prearm.check_state = 2;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 1);
+    QCOMPARE(telemetry.getFact(QStringLiteral("prearmCheckEpoch"))->rawValue().toUInt(), 12U);
+
+    prearm.check_id = 4;
+    prearm.check_state = 1;
+    mavlink_msg_fcu_prearm_status_encode(vehicle.id(), vehicle.compId(), &message, &prearm);
+    dispatch(message);
+    QCOMPARE(telemetry.prearmChecks().size(), 2);
+
     const QVariantMap receiveAges = telemetry.familyReceiveAgeMs();
     QVERIFY(receiveAges.value(QStringLiteral("operation")).toLongLong() >= 0);
     QVERIFY(receiveAges.value(QStringLiteral("event")).toLongLong() >= 0);
