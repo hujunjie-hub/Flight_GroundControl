@@ -5,7 +5,6 @@ import QGroundControl
 import QGroundControl.Controls
 
 SetupPage {
-    id: root
     pageComponent: pageComponent
     pageDescription: qsTr("当前 Flight 固件尚未接入 MAVLink Onboard Log 协议；地面站不会发送未支持的日志管理命令。")
 
