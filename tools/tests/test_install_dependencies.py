@@ -164,6 +164,23 @@ def test_print_debian_packages_resolves_package_alternatives(monkeypatch, capsys
     assert capsys.readouterr().out.strip() == "cmake libgstreamer-plugins-extra1.0-dev"
 
 
+def test_print_debian_packages_keeps_resolver_diagnostics_on_stderr(monkeypatch, capsys) -> None:
+    from setup.install_dependencies import _cli
+
+    packages = ["cmake", "libgstreamer-plugins-good1.0-dev"]
+    monkeypatch.setattr(_cli, "get_debian_packages", lambda category=None: packages)
+    monkeypatch.setattr(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda package: package == "libgstreamer-plugins-extra1.0-dev",
+    )
+
+    _cli.print_packages("debian")
+
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "cmake libgstreamer-plugins-extra1.0-dev"
+    assert "not available; using" in captured.err
+
+
 def test_get_macos_packages() -> None:
     pkgs = get_macos_packages()
     assert "cmake" in pkgs
