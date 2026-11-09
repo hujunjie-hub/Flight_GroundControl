@@ -176,6 +176,11 @@ FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     }
 }
 
+QVariantList FlightTelemetryFactGroup::recentEvents() const
+{
+    return _recentEvents;
+}
+
 bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
 {
@@ -237,6 +242,10 @@ void FlightTelemetryFactGroup::_resetTelemetryAvailability()
     _resourceAvailable.setRawValue(false);
     _timeAvailable.setRawValue(false);
     _eventAvailable.setRawValue(false);
+    if (!_recentEvents.isEmpty()) {
+        _recentEvents.clear();
+        emit recentEventsChanged();
+    }
     _prearmAvailable.setRawValue(false);
     _rcInputAvailable.setRawValue(false);
     _buildInfoAvailable.setRawValue(false);
@@ -504,6 +513,26 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             ++_eventSequenceValue;
         }
         _eventSequence.setRawValue(_eventSequenceValue);
+
+        QVariantMap eventRecord;
+        eventRecord.insert(QStringLiteral("sequence"), _eventSequenceValue);
+        eventRecord.insert(QStringLiteral("eventId"), value.event_id);
+        eventRecord.insert(QStringLiteral("bootId"), value.boot_id);
+        eventRecord.insert(QStringLiteral("profileId"), value.profile_id);
+        eventRecord.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        eventRecord.insert(QStringLiteral("sourceId"), value.source_id);
+        eventRecord.insert(QStringLiteral("reasonNamespace"), value.reason_namespace);
+        eventRecord.insert(QStringLiteral("reasonCode"), value.reason_code);
+        eventRecord.insert(QStringLiteral("severity"), value.severity);
+        eventRecord.insert(QStringLiteral("authorityEpoch"), value.authority_epoch);
+        eventRecord.insert(QStringLiteral("directiveEpoch"), value.directive_epoch);
+        eventRecord.insert(QStringLiteral("permitEpoch"), value.permit_epoch);
+        _recentEvents.prepend(eventRecord);
+        while (_recentEvents.size() > _recentEventHistoryCapacity) {
+            _recentEvents.removeLast();
+        }
+        emit recentEventsChanged();
+
         _eventAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
         break;
