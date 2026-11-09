@@ -20,10 +20,10 @@ public:
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
     QVariantList recentEvents() const;
+    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
     void recentEventsChanged();
-    void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 private:
     Fact _opTimeBootUs{0, QStringLiteral("opTimeBootUs"), FactMetaData::valueTypeUint64, this};
