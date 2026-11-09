@@ -475,11 +475,13 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QCOMPARE(cappedEvents.last().toMap().value(QStringLiteral("eventId")).toUInt(), 2006U);
 
     // A new FCU boot invalidates cached facts from the previous boot.
-    operation.boot_id = bootId + 1;
+    const quint64 activeBootId = bootId + 1;
+    operation.boot_id = activeBootId;
     operation.time_boot_us = 1;
     mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
     dispatch(message);
     QVERIFY(telemetry.getFact(QStringLiteral("operationAvailable"))->rawValue().toBool());
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), activeBootId);
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
@@ -492,6 +494,14 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(telemetry.familyReceiveAgeMs().value(QStringLiteral("operation")).toLongLong() >= 0);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("navigation")).toLongLong(), -1LL);
     QCOMPARE(telemetry.familyReceiveAgeMs().value(QStringLiteral("event")).toLongLong(), -1LL);
+
+    // A delayed OPERATION_STATUS from a retired boot must not roll the cache back.
+    operation.boot_id = bootId;
+    operation.time_boot_us = 2;
+    mavlink_msg_fcu_operation_status_encode(vehicle.id(), vehicle.compId(), &message, &operation);
+    dispatch(message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootId"))->rawValue().toULongLong(), activeBootId);
+    QCOMPARE(telemetry.getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 1ULL);
 
     // A delayed packet from the previous boot cannot repopulate the cache.
     navigation.time_boot_us = 999;
@@ -551,6 +561,77 @@ void FlightFirmwarePluginTest::_flightTelemetryRejectsInvalidStateAndAxisValues(
     mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
     telemetry.handleMessage(&vehicle, message);
     QVERIFY(telemetry.getFact(QStringLiteral("linkAvailable"))->rawValue().toBool());
+
+    link.time_boot_us = 15;
+    link.validity_mask = 1U; // Only validity bits 8, 9 and 10 are defined.
+    mavlink_msg_fcu_link_status_encode(vehicle.id(), vehicle.compId(), &message, &link);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("linkTimeBootUs"))->rawValue().toULongLong(), 14ULL);
+
+    mavlink_fcu_control_status_t control{};
+    control.time_boot_us = 17;
+    control.boot_id = operation.boot_id;
+    control.controllable_dof_mask = 1U << 4; // DOF bits 0..3 only.
+    control.solver_status = 1;
+    mavlink_msg_fcu_control_status_encode(vehicle.id(), vehicle.compId(), &message, &control);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("controlAvailable"))->rawValue().toBool());
+
+    control.time_boot_us = 18;
+    control.controllable_dof_mask = 1U << 3;
+    mavlink_msg_fcu_control_status_encode(vehicle.id(), vehicle.compId(), &message, &control);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("controlAvailable"))->rawValue().toBool());
+
+    control.time_boot_us = 19;
+    control.degraded_dof_mask = 1U << 4;
+    mavlink_msg_fcu_control_status_encode(vehicle.id(), vehicle.compId(), &message, &control);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("controlTimeBootUs"))->rawValue().toULongLong(), 18ULL);
+
+    mavlink_fcu_storage_status_t storage{};
+    storage.time_boot_us = 20;
+    storage.boot_id = operation.boot_id;
+    storage.validity_mask = 1U << 3; // Storage validity bits 0..2 only.
+    storage.sd_state = 1;
+    storage.nor_state = 1;
+    mavlink_msg_fcu_storage_status_encode(vehicle.id(), vehicle.compId(), &message, &storage);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("storageAvailable"))->rawValue().toBool());
+
+    storage.time_boot_us = 21;
+    storage.validity_mask = 0x07U;
+    mavlink_msg_fcu_storage_status_encode(vehicle.id(), vehicle.compId(), &message, &storage);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("storageAvailable"))->rawValue().toBool());
+
+    storage.time_boot_us = 22;
+    storage.validity_mask = 1U << 3;
+    mavlink_msg_fcu_storage_status_encode(vehicle.id(), vehicle.compId(), &message, &storage);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("storageTimeBootUs"))->rawValue().toULongLong(), 21ULL);
+
+    mavlink_fcu_resource_status_t resource{};
+    resource.time_boot_us = 23;
+    resource.boot_id = operation.boot_id;
+    resource.task_id = 1;
+    resource.validity_mask = 1U << 4; // Resource validity bits 0..3 only.
+    mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(!telemetry.getFact(QStringLiteral("resourceAvailable"))->rawValue().toBool());
+
+    resource.time_boot_us = 24;
+    resource.validity_mask = 0x0FU;
+    resource.cpu_load_permille = 1000;
+    mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
+    telemetry.handleMessage(&vehicle, message);
+    QVERIFY(telemetry.getFact(QStringLiteral("resourceAvailable"))->rawValue().toBool());
+
+    resource.time_boot_us = 25;
+    resource.validity_mask = 1U << 4;
+    mavlink_msg_fcu_resource_status_encode(vehicle.id(), vehicle.compId(), &message, &resource);
+    telemetry.handleMessage(&vehicle, message);
+    QCOMPARE(telemetry.getFact(QStringLiteral("resourceTimeBootUs"))->rawValue().toULongLong(), 24ULL);
 
     mavlink_fcu_prearm_status_t prearm{};
     prearm.time_boot_us = 15;
