@@ -187,13 +187,13 @@ with the corresponding bit rather than interpreting a zero as a valid value.
 
 ## Deliberate limitations
 
-- Decoder coverage does not imply every field is currently populated by the
-  firmware publisher. The current Flight sender reports the actuator readiness
-  pre-arm item (check ID 5), emits the ABI digest kind (3), and leaves some
-  storage/resource/link measurements invalid through their validity masks.
-  The GCS preserves these states and must show unavailable/unknown rather than
-  interpreting zero as a healthy measurement. Extend the firmware publisher
-  only when the corresponding source evidence is available.
+- Decoder coverage does not imply that the firmware currently publishes
+  these messages. At the Flight `main` revision checked for this GCS change,
+  `spec/contracts/FCU.xml` and the generated wire-layout header exist, but the
+  runtime telemetry-link and MAVLink frame modules contain no send call sites
+  for FCU message IDs 43000-43012. Until the firmware publisher is integrated,
+  the diagnostic page is expected to show "waiting telemetry". Do not interpret
+  silence or default zero values as healthy measurements.
 - `FCU_EVENT` exposes the latest event plus a per-boot, bounded history of the
   most recent 64 accepted records. The UI displays the latest eight. Exact
   duplicate event IDs at the same publication timestamp are suppressed;
@@ -203,9 +203,8 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   aggregates the latest result for each check ID within `check_epoch`, permits
   distinct check IDs to share one publication timestamp, and rejects duplicate
   or older samples per check ID. It clears the set on a newer epoch or FCU reboot
-  and rejects delayed older epochs. The current firmware publisher reports only
-  the actuator-readiness check (ID 5); the UI is ready to display additional
-  checks when the publisher emits them.
+  and rejects delayed older epochs. The UI supports the registered check IDs;
+  actual check coverage depends on the firmware publisher implementation.
 - Sensor/link/resource records are retained per instance. Resource task records
   have a fixed 64-task cache limit; additional unseen task IDs are ignored until
   the next FCU boot rather than allowing unbounded ground-station memory growth.
