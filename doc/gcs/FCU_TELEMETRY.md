@@ -107,7 +107,10 @@ values should be displayed as unknown, not silently mapped to healthy.
   4 DEGRADED, 5 INVALID. Local timebase discipline uses the same 0..5
   ordering: NOMINAL, ACQUIRING, LOCKED, HOLDOVER, DEGRADED, INVALID.
 - Event severity: 0 INFO, 1 WARNING, 2 ERROR, 3 CRITICAL. Reason namespace:
-  0 common, 1 Guidance, 2 Control, 3 SensorConsistency.
+  0 common, 1 Guidance, 2 Control, 3 SensorConsistency. Reason-code labels follow
+  the Flight ICD: common codes 0–25, Guidance 0x0601–0x060F, Control
+  0x0701–0x0705, and SensorConsistency 0–8. The UI displays unknown numeric
+  codes as unknown rather than guessing their meaning.
 - Pre-arm check state: 0 UNKNOWN, 1 PASS, 2 FAIL, 3 WARNING. Check IDs are
   fixed 0..14; bit positions in masks equal the check ID.
 - Build digest kind: 0 FIRMWARE, 1 CORE_PARAMETERS, 2 PROFILE, 3 ABI.
