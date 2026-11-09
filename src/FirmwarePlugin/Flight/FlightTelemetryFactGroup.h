@@ -49,7 +49,6 @@ signals:
 private:
     Fact _opTimeBootUs{0, QStringLiteral("opTimeBootUs"), FactMetaData::valueTypeUint64, this};
     Fact _opBootId{0, QStringLiteral("opBootId"), FactMetaData::valueTypeUint64, this};
-    Fact _opBootIdHex{0, QStringLiteral("opBootIdHex"), FactMetaData::valueTypeString, this};
     Fact _opProfileId{0, QStringLiteral("opProfileId"), FactMetaData::valueTypeUint32, this};
     Fact _authorityEpoch{0, QStringLiteral("authorityEpoch"), FactMetaData::valueTypeUint32, this};
     Fact _directiveEpoch{0, QStringLiteral("directiveEpoch"), FactMetaData::valueTypeUint32, this};
