@@ -4,6 +4,8 @@
 #include <cstring>
 #include <limits>
 
+#include <QtQml/QQmlEngine>
+
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
 #include "AppMessages.h"
@@ -80,6 +82,19 @@ Fact::~Fact()
 
 void Fact::_init()
 {
+    // A named Fact describes C++ data - a parameter, a setting, a FactGroup member - and is
+    // owned by the C++ object that created it. In most FactGroup subclasses it is a plain
+    // value member, i.e. a subobject of that object, so it has no QObject parent of its own.
+    // A parentless QObject handed to QML is adopted by the JavaScript engine as
+    // JavaScriptOwned and destroyed with deleteLater() when the wrapper is garbage collected.
+    // For a value member that is an invalid free of memory the owner still holds (FGC-0016),
+    // so pin C++ ownership before QML can ever see the Fact.
+    // Nameless Facts are the `Fact { }` placeholders QML instantiates itself; those must stay
+    // engine owned so that they are still garbage collected.
+    if (!_name.isEmpty()) {
+        QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    }
+
     (void) connect(this, &Fact::containerRawValueChanged, this, &Fact::_checkForRebootMessaging);
 }
 

@@ -5,6 +5,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QSet>
 #include <QtCore/QTextStream>
+#include <QtQml/QQmlEngine>
 
 #include "AutoPilotPlugin.h"
 #include "CompInfoParam.h"
@@ -68,6 +69,11 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
 
     // Ensure the cache directory exists
     (void) QDir().mkpath(parameterCacheDir().absolutePath());
+
+    // _defaultFact is a member of this object and is handed to QML by getParameter() when a
+    // parameter is missing. It is nameless, so Fact::_init() cannot recognise it as C++ data;
+    // pin ownership here so the JavaScript garbage collector never deletes it (FGC-0016).
+    QQmlEngine::setObjectOwnership(&_defaultFact, QQmlEngine::CppOwnership);
 }
 
 ParameterManager::~ParameterManager()
