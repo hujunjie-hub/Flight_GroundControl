@@ -724,6 +724,10 @@ void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "completeInit failed");
 
+    // Qt reports that it falls back to CPU conversion when no RHI backend exists (headless
+    // CI/offscreen). This test explicitly verifies that fallback, so the notice is expected.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+
     QVideoSink videoSink;
     QGCQVideoSinkController* controller = nullptr;
     const auto result = runPipelineThroughQVideoSink(videoSink, controller,
