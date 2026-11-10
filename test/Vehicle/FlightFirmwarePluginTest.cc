@@ -1,8 +1,8 @@
 #include "FlightFirmwarePluginTest.h"
 
-#include "FlightFirmwarePlugin.h"
+#include "FirmwarePlugin/Flight/FlightFirmwarePlugin.h"
 #include "Vehicle.h"
-#include "FlightTelemetryFactGroup.h"
+#include "FirmwarePlugin/Flight/FlightTelemetryFactGroup.h"
 
 #include <QtTest/QTest>
 
