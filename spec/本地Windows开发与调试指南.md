@@ -197,7 +197,12 @@ ctest --test-dir build-win-release -C Release -R "Flight(FirmwarePlugin|Telemetr
 
 正式完整验收必须调用仓库的 .github/scripts/cmake_helper.py ctest，与 Windows CI 使用同一个测试 helper。它会解析 JUnit，并在测试数量为 0 时返回失败；不要仅用裸 ctest 的退出码判定通过。
 
+运行测试前必须把 Qt bin 目录加入 PATH。QGroundControl.exe 动态链接 Qt，缺少该 PATH 时 ctest 会以 `0xC0000135`（STATUS_DLL_NOT_FOUND）启动失败，看起来像产品缺陷；Windows CI 由 `.github/actions/build-setup` 完成同样的设置。另外，`cmake_helper.py ctest` 在检测到 `bash` 时通过它执行 tee 管道，因此 PATH 中的 `bash` 必须是 Git Bash（例如 `D:\Git\bin`），不能在 `C:\Windows\System32` 中解析到 WSL 的 `bash.exe`，否则会用 Linux ctest 解析 `/mnt/...` 路径并把所有测试判为 Not Run。
+
 ```powershell
+$QtRoot = (Resolve-Path ".qt\Qt\6.11.1\msvc2022_64").Path
+$env:QT_ROOT_DIR = $QtRoot
+$env:PATH = (Join-Path $QtRoot "bin") + ";" + (Join-Path $GstRoot "bin") + ";" + $env:PATH
 $Jobs = [int](& $PythonExe -c "import os; print(os.cpu_count() or 2)")
 Push-Location build-win-release
 try {
