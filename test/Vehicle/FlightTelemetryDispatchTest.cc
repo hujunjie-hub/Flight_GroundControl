@@ -5,6 +5,7 @@
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
+#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
