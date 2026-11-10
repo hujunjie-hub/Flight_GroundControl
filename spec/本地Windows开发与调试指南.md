@@ -201,7 +201,7 @@ ctest --test-dir build-win-release -C Release -R "Flight(FirmwarePlugin|Telemetr
 $Jobs = [int](& $PythonExe -c "import os; print(os.cpu_count() or 2)")
 Push-Location build-win-release
 try {
-    & $PythonExe ..\.github\scripts\cmake_helper.py ctest --junit-output jjunit-results-windows-unit.xml --ctest-output ../work/validation/current/unit-ctest.log --jobs $Jobs --include-labels Unit --exclude-labels "Flaky|Network"
+    & $PythonExe ..\.github\scripts\cmake_helper.py ctest --junit-output junit-results-windows-unit.xml --ctest-output ../work/validation/current/unit-ctest.log --jobs $Jobs --include-labels Unit --exclude-labels "Flaky|Network"
     $UnitExit = $LASTEXITCODE
 
     & $PythonExe ..\.github\scripts\cmake_helper.py ctest --junit-output junit-results-windows-integration.xml --ctest-output ../work/validation/current/integration-ctest.log --jobs 1 --include-labels Integration --exclude-labels "Flaky|Network"
@@ -233,7 +233,7 @@ function Get-JUnitSummary([string]$Path) {
     if ($summary.failures -gt 0 -or $summary.errors -gt 0) { throw "JUnit report contains failures/errors: $Path" }
     [pscustomobject]$summary
 }
-$UnitSummary = Get-JUnitSummary "build-win-release\jjunit-results-windows-unit.xml"
+$UnitSummary = Get-JUnitSummary "build-win-release\junit-results-windows-unit.xml"
 $IntegrationSummary = Get-JUnitSummary "build-win-release\junit-results-windows-integration.xml"
 "Unit:"; $UnitSummary | Format-List
 "Integration:"; $IntegrationSummary | Format-List
@@ -243,7 +243,7 @@ $IntegrationSummary = Get-JUnitSummary "build-win-release\junit-results-windows-
 
 - Integration 使用串行执行，匹配 CI 的资源隔离策略。
 - Unit 并行数按 Python os.cpu_count() 自动解析，与 CI 的 parallel: auto 一致。
-- JUnit 文件名必须与 Windows workflow 一致：jjunit-results-windows-unit.xml、junit-results-windows-integration.xml。
+- JUnit 文件名必须与 Windows workflow 一致：junit-results-windows-unit.xml、junit-results-windows-integration.xml。
 - 两个 suite 的实际 tests 数量必须大于 0；failures/errors 必须为 0。
 - skipped 数量必须写入报告；任何未解释的 skip 都不能直接标记 PASS，必须核实是否为测试预期行为。
 - CTest 未发现测试、报告缺失/解析失败、测试步骤取消或退出码非零，均不得 PASS。

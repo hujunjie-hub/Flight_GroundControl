@@ -95,8 +95,6 @@ work/validation/
 │   ├── build.log
 │   ├── unit-ctest.log
 │   ├── integration-ctest.log
-│   ├── junit-results-windows-unit.xml
-│   ├── junit-results-windows-integration.xml
 │   └── LOCAL_VALIDATION_REPORT.md
 └── archives/
     ├── <RUN_ID>/
@@ -104,7 +102,7 @@ work/validation/
     └── <RUN_ID>.zip.sha256
 ```
 
-运行证据不提交 Git。每个问题引用发现它的 RUN_ID；修复后再生成新 RUN_ID 作为回归证据。把 ZIP 上传到对应 GitHub Issue；需要 ChatGPT 复核时，也可直接把 ZIP 上传到当前对话。
+Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚本会将其复制到本轮归档目录。运行证据不提交 Git。每个问题引用发现它的 RUN_ID；修复后再生成新 RUN_ID 作为回归证据。把 ZIP 上传到对应 GitHub Issue；需要 ChatGPT 复核时，也可直接把 ZIP 上传到当前对话。
 
 ## 8. 当前工作状态
 
