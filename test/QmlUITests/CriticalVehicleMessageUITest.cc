@@ -159,7 +159,7 @@ void CriticalVehicleMessageUITest::_testPopupDoesNotStealMAVLinkConsoleFocus()
     // the Flight runtime has no MAVLink shell (SERIAL_CONTROL), see QGCCorePlugin::analyzePages.
     // The popup-does-not-steal-focus behaviour is still covered by the other focus targets in this
     // fixture; this variant is only meaningful for a build that ships the console.
-    QSKIP("MAVLink Console page is not shipped by this Flight build");
+    QSKIP("NOT_APPLICABLE: the Flight dedicated build does not ship the MAVLink Console page (no SERIAL_CONTROL/shell in the Flight runtime; see QGCCorePlugin::analyzePages)");
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle* /*vehicle*/) {

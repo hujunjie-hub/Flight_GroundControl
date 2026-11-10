@@ -232,6 +232,19 @@ void LogManager::_replayEarlyEntries()
 // Log ingestion
 // ---------------------------------------------------------------------------
 
+void LogManager::deliverToSinks(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    auto* inst = s_instance.load(std::memory_order_acquire);
+    if (!inst) {
+        return;
+    }
+    // Same Qt Quick noise filter as msgHandler().
+    if (context.category && std::strncmp(context.category, "qt.quick", 8) == 0) {
+        return;
+    }
+    inst->log(type, context, msg);
+}
+
 void LogManager::log(QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
     LogEntry entry = buildEntry(type, context, message);

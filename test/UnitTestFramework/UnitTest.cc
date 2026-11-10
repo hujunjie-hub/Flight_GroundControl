@@ -714,6 +714,11 @@ static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context
     // Capture for unit‑test introspection
     LogManager::captureIfEnabled(type, context, msg);
 
+    // QTest owns the global handler while a test runs, so the product handler that feeds
+    // the in-app log model and disk sink is not in the chain. Forward explicitly so tests
+    // observe the same message pipeline as the application.
+    LogManager::deliverToSinks(type, context, msg);
+
     // Chain to QTest's handler for normal test output
     const QtMessageHandler handler = s_qtestHandler.load(std::memory_order_acquire);
     if (handler) {

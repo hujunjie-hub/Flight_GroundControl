@@ -148,9 +148,11 @@ function(add_qgc_test test_name)
         list(APPEND _test_command --onscreen)
     endif()
 
-    add_test(
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/qtest-results")
+
+add_test(
         NAME ${test_name}
-        COMMAND ${_test_command}
+        COMMAND ${_test_command} "--unittest-output" "${CMAKE_BINARY_DIR}/qtest-results/${test_name}.xml"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
