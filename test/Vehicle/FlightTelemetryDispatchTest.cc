@@ -10,6 +10,7 @@
 #include "VehicleLinkManager.h"
 
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -385,6 +386,11 @@ void FlightTelemetryDispatchTest::_invalidFramesAndSourcesDoNotUpdateTelemetry()
 
 void FlightTelemetryDispatchTest::_telemetryIsIsolatedAcrossVehicles()
 {
+
+    // Two vehicles connect in this test; QGCApplication reports each connection through
+    // an app message. Ignore exactly that message (category + pattern), not the log system.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Connected to Vehicle \\d+")));
     auto createGenericMockLink = [this](const QString &name) -> SharedLinkInterfacePtr {
         auto *configuration = new MockConfiguration(name);
         configuration->setDynamic(true);
@@ -450,6 +456,10 @@ void FlightTelemetryDispatchTest::_telemetryIsIsolatedAcrossVehicles()
 
 void FlightTelemetryDispatchTest::_telemetryStartsFreshAfterReconnect()
 {
+
+    // Disconnect/reconnect produces the same connection app message as the isolation test.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Connected to Vehicle \\d+")));
     Vehicle *vehicle = createMockLinkAndWaitForVehicle(
         QStringLiteral("Flight telemetry reconnect"), MAV_AUTOPILOT_GENERIC);
     QVERIFY(vehicle);

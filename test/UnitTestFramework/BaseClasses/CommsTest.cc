@@ -97,15 +97,30 @@ Vehicle* CommsTest::createMockLinkAndWaitForVehicle(const QString& name, MAV_AUT
 void CommsTest::disconnectAllLinks()
 {
     if (LinkManager::instance()->links().count() > 0) {
-        QSignalSpy spy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
         LinkManager::instance()->disconnectAll();
+    }
 
-        while ((MultiVehicleManager::instance()->vehicles()->count() > 0) ||
-               (MultiVehicleManager::instance()->activeVehicle() != nullptr)) {
-            if (!UnitTest::waitForSignal(spy, TestTimeout::mediumMs(), QStringLiteral("activeVehicleChanged"))) {
-                break;
-            }
-        }
+    // Release our own shared references before waiting: a test-held SharedLinkInterfacePtr
+    // keeps the link (and its vehicle) alive past the point where LinkManager reports no
+    // links, so the vehicle would otherwise be destroyed after the next test started.
+    _createdLinks.clear();
+
+    // Wait on the observable state rather than on a signal: disconnectAll() can emit
+    // activeVehicleChanged synchronously before a QSignalSpy::wait() starts, which left
+    // stale vehicles behind for the next test function.
+    const bool released = QTest::qWaitFor(
+        [] {
+            return (LinkManager::instance()->links().count() == 0) &&
+                   (MultiVehicleManager::instance()->vehicles()->count() == 0) &&
+                   (MultiVehicleManager::instance()->activeVehicle() == nullptr);
+        },
+        TestTimeout::longMs());
+
+    if (!released) {
+        qCWarning(CommsTestLog) << "disconnectAllLinks: state not released within timeout"
+                                << "links:" << LinkManager::instance()->links().count()
+                                << "vehicles:" << MultiVehicleManager::instance()->vehicles()->count()
+                                << "activeVehicle:" << (MultiVehicleManager::instance()->activeVehicle() != nullptr);
     }
 }
 
