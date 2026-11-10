@@ -164,6 +164,18 @@ jobs:
           artifact-name: test-results-windows-integration
           retention-days: 7
 
+      - name: Upload QtTest detail on failure
+        # The JUnit reports above aggregate at CTest level, so a failing test case only shows
+        # as "<class> Failed". The per-test QtTest XMLs carry the failing function, the exact
+        # assertion and the unexpected log messages, so keep them when a suite fails.
+        if: always() && !cancelled() && (steps.unit_tests.conclusion == 'failure' || steps.integration_tests.conclusion == 'failure')
+        uses: actions/upload-artifact@v7
+        with:
+          name: qtest-results-windows
+          path: ${{ runner.temp }}/build/qtest-results/*.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Verify Executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
