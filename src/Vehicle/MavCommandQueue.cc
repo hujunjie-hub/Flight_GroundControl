@@ -200,8 +200,10 @@ int MavCommandQueue::_ackTimeoutMSecs()
 bool MavCommandQueue::_shouldRetry(MAV_CMD command)
 {
     switch (command) {
-#ifdef QT_DEBUG
-    // These MockLink commands should be retried so we can create unit tests to test retry code
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
+    // These MockLink commands should be retried so we can create unit tests to test retry code.
+    // The test builds are Release-only for this product, so gate on QGC_UNITTEST_BUILD as well
+    // as QT_DEBUG; otherwise the retry state machine is untestable outside a Debug build.
     case MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED:
     case MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED:
     case MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED:
