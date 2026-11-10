@@ -74,6 +74,7 @@ $environment = [ordered]@{
     powershell_version = $PSVersionTable.PSVersion.ToString()
     cmake_version = Get-CommandVersion 'cmake' @('--version')
     ninja_version = Get-CommandVersion 'ninja' @('--version')
+    python_version = Get-CommandVersion 'py' @('-3', '--version')
     msvc_version = Get-CommandVersion 'cl' @('/Bv')
     qt_root_dir = $env:QT_ROOT_DIR
     gstreamer_root = $env:GSTREAMER_1_0_ROOT_MSVC_X86_64

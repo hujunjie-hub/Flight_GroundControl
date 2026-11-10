@@ -143,17 +143,18 @@ $QtRoot = (Resolve-Path ".qt\Qt\6.11.1\msvc2022_64").Path
 $env:QT_ROOT_DIR = $QtRoot
 $BuildDir = "build-win-release"
 New-Item -ItemType Directory -Force "work\validation\current" | Out-Null
-py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
+$PythonExe = (Resolve-Path ".venv\Scripts\python.exe").Path
+py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON "-DPython3_EXECUTABLE=$PythonExe" 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed" }
 ```
 
 配置后检查缓存：
 
 ```powershell
-Select-String -Path "$BuildDir\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAKE_GENERATOR:|CMAKE_CXX_COMPILER:|QGC_BUILD_TESTING:|GStreamer_ROOT_DIR:"
+Select-String -Path "$BuildDir\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAKE_GENERATOR:|CMAKE_CXX_COMPILER:|QGC_BUILD_TESTING:|Python3_EXECUTABLE:|GStreamer_ROOT_DIR:"
 ```
 
-必须确认 Generator 为 Ninja、C++ 编译器为 MSVC x64、Release 配置生效、`QGC_BUILD_TESTING=ON`，且 GStreamer 根目录有效。
+必须确认 Generator 为 Ninja、C++ 编译器为 MSVC x64、Release 配置生效、QGC_BUILD_TESTING=ON，Python3_EXECUTABLE 指向本仓库 .venv\\Scripts\\python.exe，且 GStreamer 根目录有效。这样本地 CMake 与 CI 使用相同的项目 Python 依赖环境。
 
 不要把已有 Debug build 目录直接复用为 Release；不要通过修改缓存变量掩盖错误。配置异常时创建新的 `build-win-release` 目录重新配置。
 
