@@ -2,12 +2,36 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLocale>
 #include <QtCore/QSet>
 
+#include "AppSettings.h"
+#include "Fact.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 #include "UnitTestTileGenerator.h"
 
 QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
+
+// Unit tests assert on English user-facing strings, and the Windows CI runner uses an
+// English locale. Pin the same language here so a developer machine set to another
+// language cannot change test outcomes. Tests that exercise localization switch the
+// language themselves and restore it.
+static void pinDeterministicTestLanguage()
+{
+    QGCApplication *const app = qgcApp();
+    SettingsManager *const settingsManager = SettingsManager::instance();
+    if (!app || !settingsManager) {
+        return;
+    }
+
+    Fact *const languageFact = settingsManager->appSettings()->qLocaleLanguage();
+    if (languageFact && languageFact->rawValue().toInt() != QLocale::English) {
+        languageFact->setRawValue(QLocale::English);
+        app->setLanguage();
+    }
+}
 
 // ============================================================================
 // Test Execution Functions
@@ -17,6 +41,9 @@ namespace QGCUnitTest {
 
 int runTests(const QStringList& unitTests, int iterations, const QString& outputFile, TestLabels labelFilter)
 {
+    // Match the English-locale CI baseline before any test asserts on UI text.
+    pinDeterministicTestLanguage();
+
     // Serve synthetic tiles on tile cache misses so no test ever hits the network
     UnitTestTileGenerator::install();
 
@@ -84,6 +111,9 @@ int runLightweightTests(const QStringList& unitTests, int iterations, const QStr
         qCWarning(UnitTestListLog) << "runLightweightTests called with no QCoreApplication instance";
         return -1;
     }
+
+    // Match the English-locale CI baseline before any test asserts on UI text.
+    pinDeterministicTestLanguage();
 
     // Serve synthetic tiles on tile cache misses so no test ever hits the network
     UnitTestTileGenerator::install();
@@ -233,7 +263,6 @@ int handleTestOptions(const QGCCommandLineParser::CommandLineParseResult& args)
 
         const int exitCode =
             runTests(args.unitTests, stressIterations, args.unitTestOutput.value_or(QString()), labelFilter);
-
         const qint64 elapsed = timer.elapsed();
         if (exitCode == 0) {
             qCInfo(UnitTestListLog).noquote() << QString("All %1 test(s) passed in %2 ms").arg(testCount).arg(elapsed);
