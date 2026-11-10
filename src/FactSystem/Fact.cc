@@ -940,7 +940,18 @@ bool Fact::volatileValue() const
 FactValueSliderListModel *Fact::valueSliderModel()
 {
     if (!_valueSliderModel) {
-        _valueSliderModel = new FactValueSliderListModel(*this);
+        // Two things are needed here; each one alone is wrong.
+        //  - Parenting it to the Fact ties its lifetime to the Fact it dereferences and removes
+        //    the leak (nothing deleted the model before). Parenting alone is not enough: the QML
+        //    engine still treats an object returned from a C++ method as JavaScriptOwned, so a
+        //    garbage collection would delete it behind the Fact's back and leave
+        //    _valueSliderModel dangling for every other consumer.
+        //  - Pinning C++ ownership keeps the engine from deleting it. Ownership alone is not
+        //    enough either: the model would then have no owner and leak, still outliving the
+        //    Fact whose reference it holds.
+        // QML consumers only borrow the single shared instance; the Fact owns it.
+        _valueSliderModel = new FactValueSliderListModel(*this, this);
+        QQmlEngine::setObjectOwnership(_valueSliderModel, QQmlEngine::CppOwnership);
     }
 
     return _valueSliderModel;
