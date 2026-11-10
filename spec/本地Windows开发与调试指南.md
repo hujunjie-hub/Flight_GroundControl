@@ -227,15 +227,20 @@ py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(
 
 ```powershell
 $Exe = (Resolve-Path "build-win-release\\Release\\QGroundControl.exe").Path
-py -3 .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60
+py -3 .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60 2>&1 | Tee-Object -FilePath "work\\validation\\current\\executable.log"
+if ($LASTEXITCODE -ne 0) { throw "Build executable verification failed" }
 ```
 
 生成安装产物：
 
 ```powershell
-cmake --install build-win-release --config Release
-$Installer = Get-ChildItem "build-win-release" -Filter "*installer*.exe" -File -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $Installer) { throw "Windows installer was not generated" }
+$InstallerBuildStart = Get-Date
+cmake --install build-win-release --config Release 2>&1 | Tee-Object -FilePath "work\\validation\\current\\installer-build.log"
+if ($LASTEXITCODE -ne 0) { throw "Windows installer generation failed" }
+$Installer = Get-ChildItem "build-win-release" -Filter "*installer*.exe" -File -Recurse |
+  Where-Object { $_.LastWriteTime -ge $InstallerBuildStart } |
+  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $Installer) { throw "No installer generated during this validation run" }
 Get-FileHash $Installer.FullName -Algorithm SHA256
 ```
 
