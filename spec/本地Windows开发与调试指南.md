@@ -140,6 +140,7 @@ gst-inspect-1.0 --version
 
 ```powershell
 $QtRoot = (Resolve-Path ".qt\\Qt\\6.11.1\\msvc2022_64").Path
+$env:QT_ROOT_DIR = $QtRoot
 $BuildDir = "build-win-release"
 New-Item -ItemType Directory -Force "work\\validation\\current" | Out-Null
 py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON 2>&1 | Tee-Object -FilePath "work\\validation\\current\\configure.log"
@@ -251,7 +252,16 @@ if (-not (Test-Path $InstalledExe)) { throw "Installed executable missing" }
 if (-not (Test-Path $PluginDir)) { throw "GStreamer plugin directory missing" }
 $PluginCount = (Get-ChildItem $PluginDir -Filter "*.dll" -File).Count
 if ($PluginCount -le 0) { throw "No GStreamer plugin DLLs installed" }
-py -3 .github/scripts/verify_executable.py --binary-path $InstalledExe --type exe --timeout 60
+$OriginalPath = $env:PATH
+try {
+    $GstBin = (Join-Path $GstRoot "bin").TrimEnd([char]92)
+    $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -and $_.TrimEnd([char]92) -ne $GstBin }) -join ';'
+    py -3 .github/scripts/verify_executable.py --binary-path $InstalledExe --type exe --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\installed-runtime.log"
+    if ($LASTEXITCODE -ne 0) { throw "Installed executable verification failed" }
+}
+finally {
+    $env:PATH = $OriginalPath
+}
 ```
 
 如果安装包生成目录或文件名与上述搜索模式不同，Agent 必须检查当前 CMake/CPack 输出并修正查找逻辑；不得随意选中旧安装包。安装目录必须是本轮新建的干净目录。

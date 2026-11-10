@@ -68,6 +68,12 @@ function Get-CommandVersion([string]$Name, [string[]]$Arguments) {
     return (($output | Select-Object -First 4) -join ' ').Trim()
 }
 
+$environment = [ordered]@{
+    environment = $environment
+}
+$environment | ConvertTo-Json -Depth 5 |
+    Set-Content -LiteralPath (Join-Path $runDirectory 'environment.json') -Encoding utf8
+
 $installerInfo = @()
 if (Test-Path $buildPath) {
     $installerInfo = @(Get-ChildItem -LiteralPath $buildPath -Filter '*installer*.exe' -File -Recurse |
