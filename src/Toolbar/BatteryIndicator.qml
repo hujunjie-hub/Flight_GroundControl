@@ -244,7 +244,9 @@ Item {
         spacing:        ScreenTools.defaultFontPixelWidth / 2
 
         Row {
-            anchors.verticalCenter: parent.verticalCenter
+            // This Row is a RowLayout child: anchoring it is undefined behavior and
+            // QML logs a warning on every instantiation (fixed per Qt's guidance).
+            Layout.alignment: Qt.AlignVCenter
             spacing: ScreenTools.defaultFontPixelWidth / 2
             visible: !_batteryAvailable
 
