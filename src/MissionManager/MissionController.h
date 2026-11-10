@@ -295,13 +295,14 @@ public:
     QGroundControlQmlGlobal::AltitudeFrame globalAltitudeFrameDefault(void);
     void setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame altFrame);
 
-    // Top-level group row indices in _visualItemsTree (must match _setupTreeModel order)
+    // Top-level group row indices in _visualItemsTree (must match _setupTreeModel order:
+    // Plan File, Defaults, Transform, Mission Items, GeoFence, Rally Points).
     static constexpr int kPlanFileGroupRow = 0;
     static constexpr int kDefaultsGroupRow = 1;
-    static constexpr int kMissionGroupRow  = 2;
-    static constexpr int kFenceGroupRow    = 3;
-    static constexpr int kRallyGroupRow    = 4;
-    static constexpr int kTransformGroupRow = 5;
+    static constexpr int kTransformGroupRow = 2;
+    static constexpr int kMissionGroupRow  = 3;
+    static constexpr int kFenceGroupRow    = 4;
+    static constexpr int kRallyGroupRow    = 5;
     static constexpr int kGroupCount       = 6;
 
 signals:
