@@ -1352,32 +1352,146 @@ void QGCCompressionTest::_testSpecialCharactersInPath()
 void QGCCompressionTest::_testUnicodePaths()
 {
     QTemporaryDir tempDir;
-    // Test paths with Unicode characters
-    // Create directory with Unicode name (Japanese, Chinese, emoji-like)
+    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+
+    // CJK + Greek in one directory name (the combination that exposed FGC-0010).
     const QString unicodeDir = tempDir.path() + QString::fromUtf8("/日本語_中文_αβγ");
     QVERIFY(QDir().mkpath(unicodeDir));
-    // Extract to Unicode directory
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     QVERIFY2(QGCCompression::extractArchive(zipResource, unicodeDir), "Failed to extract to Unicode path");
-    QVERIFY(QFile::exists(unicodeDir + "/manifest.json"));
-    // Verify content is intact
-    QFile extracted(unicodeDir + "/manifest.json");
-    QVERIFY(extracted.open(QIODevice::ReadOnly));
-    const QByteArray content = extracted.readAll();
-    QVERIFY(content.contains("\"name\""));
-    extracted.close();
-    // Test with accented Latin characters
+    QVERIFY2(QFile::exists(unicodeDir + "/manifest.json"), "Unicode destination is empty after extraction");
+    {
+        QFile extracted(unicodeDir + "/manifest.json");
+        QVERIFY(extracted.open(QIODevice::ReadOnly));
+        QVERIFY(extracted.readAll().contains("\"name\""));
+    }
+
+    // Accented Latin.
     const QString accentedDir = tempDir.path() + QString::fromUtf8("/café_naïve_résumé");
     QVERIFY(QDir().mkpath(accentedDir));
     QVERIFY(QGCCompression::extractArchive(zipResource, accentedDir));
     QVERIFY(QFile::exists(accentedDir + "/manifest.json"));
-    // Test with Cyrillic
+
+    // Cyrillic.
     const QString cyrillicDir = tempDir.path() + QString::fromUtf8("/Привет_мир");
     QVERIFY(QDir().mkpath(cyrillicDir));
     QVERIFY(QGCCompression::extractArchive(zipResource, cyrillicDir));
     QVERIFY(QFile::exists(cyrillicDir + "/manifest.json"));
+
+    // Mixed scripts in a single path.
+    const QString mixedDir = tempDir.path() + QString::fromUtf8("/混合_mixed_Ελληνικά_кириллица_1234");
+    QVERIFY(QDir().mkpath(mixedDir));
+    QVERIFY(QGCCompression::extractArchive(zipResource, mixedDir));
+    QVERIFY2(QFile::exists(mixedDir + "/manifest.json"), "Mixed-script destination is empty after extraction");
 }
 
+void QGCCompressionTest::_testUnicodeArchiveSourcePath()
+{
+    // The archive itself lives at a non-ASCII path: the Windows wide-character open path
+    // must be used, otherwise the reader cannot open it at all.
+    QTemporaryDir tempDir;
+    const QString unicodeFile = tempDir.path() + QString::fromUtf8("/архив_圧縮_α.zip");
+
+    QFile source(QStringLiteral(":/unittest/manifest.json.zip"));
+    QVERIFY(source.open(QIODevice::ReadOnly));
+    const QByteArray archiveData = source.readAll();
+    source.close();
+    QVERIFY(!archiveData.isEmpty());
+
+    QFile target(unicodeFile);
+    QVERIFY(target.open(QIODevice::WriteOnly));
+    QCOMPARE(target.write(archiveData), static_cast<qint64>(archiveData.size()));
+    target.close();
+    QVERIFY(QFile::exists(unicodeFile));
+
+    const QString outputDir = tempDir.path() + QString::fromUtf8("/распаковка_出力");
+    QVERIFY(QGCCompression::extractArchive(unicodeFile, outputDir));
+    QVERIFY(QFile::exists(outputDir + "/manifest.json"));
+}
+
+void QGCCompressionTest::_testExtractCreatesMissingDestination()
+{
+    QTemporaryDir tempDir;
+    const QString nestedDir = tempDir.path() + QString::fromUtf8("/未创建_χ新建/deeper/level");
+    QVERIFY(!QDir(nestedDir).exists());
+
+    QVERIFY(QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), nestedDir));
+    QVERIFY(QDir(nestedDir).exists());
+    QVERIFY(QFile::exists(nestedDir + "/manifest.json"));
+}
+
+void QGCCompressionTest::_testExtractOverwritesExistingFile()
+{
+    QTemporaryDir tempDir;
+    const QString outputDir = tempDir.path() + QString::fromUtf8("/覆盖_overwrite_α");
+    QVERIFY(QDir().mkpath(outputDir));
+
+    QFile stale(outputDir + "/manifest.json");
+    QVERIFY(stale.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    stale.write("stale-content");
+    stale.close();
+
+    QVERIFY(QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir));
+
+    QFile extracted(outputDir + "/manifest.json");
+    QVERIFY(extracted.open(QIODevice::ReadOnly));
+    const QByteArray content = extracted.readAll();
+    QVERIFY(!content.contains("stale-content"));
+    QVERIFY(content.contains("\"name\""));
+}
+
+void QGCCompressionTest::_testExtractTruncatedArchiveFails()
+{
+    // A truncated archive must report failure instead of silently returning success.
+    QTemporaryDir tempDir;
+    QFile source(QStringLiteral(":/unittest/manifest.json.zip"));
+    QVERIFY(source.open(QIODevice::ReadOnly));
+    QByteArray archiveData = source.readAll();
+    source.close();
+    QVERIFY(archiveData.size() > 32);
+    archiveData.truncate(archiveData.size() / 2);
+
+    const QString truncated = tempDir.path() + "/truncated.zip";
+    QFile out(truncated);
+    QVERIFY(out.open(QIODevice::WriteOnly));
+    QCOMPARE(out.write(archiveData), static_cast<qint64>(archiveData.size()));
+    out.close();
+
+    const QString outputDir = tempDir.path() + "/truncated_output";
+    // The truncation surfaces either while reading the entry data or when the header
+    // stream ends early; both paths must be reported as a failure.
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
+                     QRegularExpression("Failed to read data|Archive read ended before the end of the archive"));
+    QVERIFY2(!QGCCompression::extractArchive(truncated, outputDir),
+             "Truncated archive must not report a successful extraction");
+    verifyExpectedLogMessage();
+}
+
+void QGCCompressionTest::_testExtractDestinationIsFileFails()
+{
+    QTemporaryDir tempDir;
+    const QString filePath = tempDir.path() + QString::fromUtf8("/不是目录_α.txt");
+    QFile blocker(filePath);
+    QVERIFY(blocker.open(QIODevice::WriteOnly));
+    blocker.write("not a directory");
+    blocker.close();
+
+    QVERIFY2(!QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), filePath),
+             "Extraction into an existing file path must fail");
+}
+
+void QGCCompressionTest::_testExtractInvalidDestinationCharacterFails()
+{
+#ifdef Q_OS_WIN
+    // '|' is reserved on Windows: the path can never be created, so extraction must
+    // report failure rather than pretending to succeed.
+    QTemporaryDir tempDir;
+    const QString invalidDir = tempDir.path() + QStringLiteral("/bad|name/output");
+    QVERIFY2(!QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), invalidDir),
+             "Extraction to an uncreatable Windows path must fail");
+#else
+    QSKIP("Reserved-character paths are Windows-specific");
+#endif
+}
 // ============================================================================
 // Benchmarks
 // ============================================================================

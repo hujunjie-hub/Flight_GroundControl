@@ -77,6 +77,12 @@ private slots:
     void _testExtractArchiveToSymlinkedOutputPath();
     void _testSpecialCharactersInPath();
     void _testUnicodePaths();
+    void _testUnicodeArchiveSourcePath();
+    void _testExtractCreatesMissingDestination();
+    void _testExtractOverwritesExistingFile();
+    void _testExtractTruncatedArchiveFails();
+    void _testExtractDestinationIsFileFails();
+    void _testExtractInvalidDestinationCharacterFails();
 
     // Benchmarks (run with --benchmark flag)
     void _benchmarkExtractZip();
