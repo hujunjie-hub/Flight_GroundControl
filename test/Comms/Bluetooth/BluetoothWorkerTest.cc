@@ -32,6 +32,13 @@ void BluetoothWorkerTest::init()
                      QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
     ignoreLogMessage("qt.bluetooth", QtWarningMsg,
                      QRegularExpression(QStringLiteral("LE controller has invalid adapter")));
+    // Windows runners and developer machines with the radio switched off report this instead
+    // of an adapter error; the worker surfaces it verbatim. The state under test is the
+    // connect/disconnect bookkeeping, not the local radio state.
+    ignoreLogMessage("qt.bluetooth.windows", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth adapter powered off")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth adapter powered off")));
     ignoreLogMessage("qt.bluetooth.bluez", QtInfoMsg,
                      QRegularExpression(QStringLiteral("Missing CAP_NET_ADMIN")));
     ignoreLogMessage("qt.bluetooth.bluez", QtWarningMsg,

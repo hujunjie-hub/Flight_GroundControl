@@ -179,11 +179,21 @@ inline std::chrono::milliseconds longDuration()
     return std::chrono::milliseconds{isCI() ? 60000 : 30000};
 }
 
+/// Timeout for probing whether the host delivers an OS service at all (file change
+/// notifications, adapters, ...). Tests that turn a missing service into QSKIP must bound
+/// this well below the CTest per-test timeout (QGC_TEST_TIMEOUT_UNIT, 60 s), otherwise the
+/// probe is killed by CTest and reported as a timeout instead of a skip.
+inline std::chrono::milliseconds environmentDuration()
+{
+    return std::chrono::milliseconds{isCI() ? 15000 : 4000};
+}
+
 /// @name Legacy int-millisecond accessors (prefer the chrono versions above)
 /// @{
 inline int shortMs() { return static_cast<int>(shortDuration().count()); }
 inline int mediumMs() { return static_cast<int>(mediumDuration().count()); }
 inline int longMs() { return static_cast<int>(longDuration().count()); }
+inline int environmentMs() { return static_cast<int>(environmentDuration().count()); }
 /// @}
 
 /// Iteration count for stress tests.

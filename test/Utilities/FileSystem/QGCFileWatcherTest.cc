@@ -74,11 +74,11 @@ void QGCFileWatcherTest::_testWatchFileWithCallback()
     modifyFile.write("modified content");
     modifyFile.close();
 
-    if (!UnitTest::waitForSignal(fileChangedSpy, TestTimeout::longMs(), QStringLiteral("fileChanged"))) {
+    if (!UnitTest::waitForSignal(fileChangedSpy, TestTimeout::environmentMs(), QStringLiteral("fileChanged"))) {
         QSKIP("File change notifications were not delivered in this environment");
     }
     if (!UnitTest::waitForCondition([&callbackCalled]() { return callbackCalled; },
-                                    TestTimeout::longMs(),
+                                    TestTimeout::environmentMs(),
                                     QStringLiteral("file watcher callback"))) {
         QSKIP("File watcher callback was not delivered in this environment");
     }
@@ -151,7 +151,7 @@ void QGCFileWatcherTest::_testWatchDirectoryWithCallback()
     file.write("content");
     file.close();
 
-    if (!UnitTest::waitForSignal(directoryChangedSpy, TestTimeout::longMs(), QStringLiteral("directoryChanged"))) {
+    if (!UnitTest::waitForSignal(directoryChangedSpy, TestTimeout::environmentMs(), QStringLiteral("directoryChanged"))) {
         QSKIP("Directory change notifications were not delivered in this environment");
     }
     QVERIFY2(_pathsEquivalent(changedPath, tempDir.path()),
@@ -295,12 +295,12 @@ void QGCFileWatcherTest::_testWatchFilePersistent()
     recreated.close();
 
     if (!UnitTest::waitForCondition([&watcher, &filePath]() { return watcher.isWatchingFile(filePath); },
-                                    TestTimeout::longMs(),
+                                    TestTimeout::environmentMs(),
                                     QStringLiteral("persistent file watch restored"))) {
         QSKIP("Persistent file watch was not restored in this environment");
     }
     if (!UnitTest::waitForCondition([&callbackCount]() { return callbackCount > 0; },
-                                    TestTimeout::longMs(),
+                                    TestTimeout::environmentMs(),
                                     QStringLiteral("persistent callback"))) {
         QSKIP("Persistent callback was not delivered in this environment");
     }
