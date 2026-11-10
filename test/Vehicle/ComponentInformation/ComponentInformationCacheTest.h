@@ -16,6 +16,8 @@ private slots:
     void _basic_test();
     void _lru_test();
     void _multi_test();
+    void _orphanDataFileRemoved_test();
+    void _incompleteEntrySelfHeals_test();
 
 private:
     void _setup();

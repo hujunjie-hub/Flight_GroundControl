@@ -74,9 +74,16 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
     QFile data(dataFileName(fileTag));
     QFile fileToCache(fileName);
     if (meta.exists() || data.exists()) {
-        qCDebug(ComponentInformationCacheLog) << "Not inserting, entry already exists" << fileTag;
-        fileToCache.remove();
-        return data.fileName();
+        if (!meta.exists() || !data.exists()) {
+            // Incomplete entry: keep neither half, then store the file again below.
+            qCWarning(ComponentInformationCacheLog) << "Removing incomplete cache entry" << fileTag;
+            meta.remove();
+            data.remove();
+        } else {
+            qCDebug(ComponentInformationCacheLog) << "Not inserting, entry already exists" << fileTag;
+            fileToCache.remove();
+            return data.fileName();
+        }
     }
 
     // move the file to the cache location (fall back to copy+remove for cross-device)
@@ -168,6 +175,22 @@ void ComponentInformationCache::initializeDirectory()
             QFile::remove(path);
         }
     }
+
+    // A data file without metadata is an incomplete entry (crash between the data rename
+    // and the meta write, or an externally deleted meta). It can never be accessed and
+    // used to block insert() from storing the file again, so drop it before counting.
+    const QString cacheSuffix = QLatin1String(_cacheExtension);
+    QDirIterator orphanIt(_path.path(), {QStringLiteral("*") + cacheSuffix}, QDir::Files, QDirIterator::NoIteratorFlags);
+    while (orphanIt.hasNext()) {
+        const QString dataPath = orphanIt.next();
+        const QString metaPath =
+            dataPath.left(dataPath.length() - cacheSuffix.length()) + QLatin1String(_metaExtension);
+        if (!QFile::exists(metaPath)) {
+            qCWarning(ComponentInformationCacheLog) << "Removing orphan cache file without metadata" << dataPath;
+            QFile::remove(dataPath);
+        }
+    }
+
     _numFiles = _cachedFiles.size();
     removeOldEntries();
 }

@@ -62,6 +62,9 @@ void ComponentInformationCacheTest::_basic_test()
     QVERIFY(f.open(QFile::ReadOnly | QFile::Text));
     QTextStream in(&f);
     QVERIFY(in.readAll() == _tmpFiles[0].content);
+    // Close before cleanup: an open handle keeps the cache file alive on Windows and
+    // leaks a stale data-without-meta entry into the next test function.
+    f.close();
     _cleanup();
 }
 
@@ -104,6 +107,60 @@ void ComponentInformationCacheTest::_lru_test()
     _cleanup();
 }
 
+void ComponentInformationCacheTest::_orphanDataFileRemoved_test()
+{
+    // A data file without metadata can only be a leftover of an interrupted insert.
+    // It is inaccessible and must not block a later insert() for the same tag.
+    QVERIFY(QDir().mkpath(_cacheDir));
+    const QString orphanPath = _cacheDir + "/" + QStringLiteral("_tag_orphan_xy") + QStringLiteral(".cache");
+    QFile orphan(orphanPath);
+    QVERIFY(orphan.open(QIODevice::WriteOnly));
+    orphan.write("orphan");
+    orphan.close();
+
+    expectLogMessage("ComponentInformation.ComponentInformationCache", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Removing orphan cache file without metadata")));
+    ComponentInformationCache cache(_cacheDir, 10);
+    QVERIFY2(!QFile::exists(orphanPath), "Orphan cache data file must be removed on initialization");
+    verifyExpectedLogMessage();
+
+    _setup();
+    const QString cachedPath = cache.insert(QStringLiteral("_tag_orphan_xy"), _tmpFiles[0].path);
+    QVERIFY(!cachedPath.isEmpty());
+    QCOMPARE(cache.access(QStringLiteral("_tag_orphan_xy")), cachedPath);
+    QVERIFY(QFile::exists(cachedPath));
+    _cleanup();
+}
+
+void ComponentInformationCacheTest::_incompleteEntrySelfHeals_test()
+{
+    _setup();
+    ComponentInformationCache cache(_cacheDir, 10);
+    const QString tag = _tmpFiles[0].cacheTag;
+    const QString firstPath = cache.insert(tag, _tmpFiles[0].path);
+    QVERIFY(!firstPath.isEmpty());
+    QVERIFY(QFile::exists(firstPath));
+
+    // Simulate a torn write: the metadata disappears while the data stays.
+    QFile meta(_cacheDir + "/" + tag + QStringLiteral(".meta"));
+    QVERIFY(meta.exists());
+    QVERIFY(meta.remove());
+    QCOMPARE(cache.access(tag), QString());
+
+    // Re-inserting the same tag must repair the entry instead of reporting success
+    // while leaving it inaccessible.
+    expectLogMessage("ComponentInformation.ComponentInformationCache", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Removing incomplete cache entry")));
+    const QString repairedPath = cache.insert(tag, _tmpFiles[1].path);
+    verifyExpectedLogMessage();
+    QVERIFY(!repairedPath.isEmpty());
+    QCOMPARE(cache.access(tag), repairedPath);
+    QFile data(repairedPath);
+    QVERIFY(data.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(data.readAll()), _tmpFiles[1].content);
+    data.close();
+    _cleanup();
+}
 void ComponentInformationCacheTest::_multi_test()
 {
     _setup();
