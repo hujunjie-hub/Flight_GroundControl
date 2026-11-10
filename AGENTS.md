@@ -2,6 +2,10 @@
 
 Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundControl.
 
+## Flight_GroundControl Project Workflow (Mandatory)
+
+**Before changing code, read [`spec/README.md`](spec/README.md) and follow [`spec/AGENT-操作指南.md`](spec/AGENT-操作指南.md).** These documents define the local Windows-only workflow, acceptance gates, issue lifecycle, and evidence delivery. The only product build/test target is Windows x64 MSVC 2022 Release; PR #3 must remain Open / Draft unless the user explicitly authorizes a state change. Local validation evidence belongs under `work/validation/` and must not be committed.
+
 ## Quick References
 
 - [CODING_STYLE.md](CODING_STYLE.md) — Naming, formatting, C++20 features, QML style, logging
