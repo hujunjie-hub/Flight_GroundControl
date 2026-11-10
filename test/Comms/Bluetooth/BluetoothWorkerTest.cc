@@ -105,6 +105,13 @@ void BluetoothWorkerTest::_testWriteWhileDisconnectedEmitsError()
 
 void BluetoothWorkerTest::_testConnectWhileConnectedWarns()
 {
+    // No Bluetooth adapter on this host: the platform stack reports the missing device.
+    // The behaviour under test is the double-connect guard, so ignore exactly those platform
+    // notices instead of relaxing strict log mode.
+    ignoreLogMessage("qt.bluetooth.windows", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid/null remote device address")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothBleWorker", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("UnknownRemoteDeviceError")));
     BluetoothConfiguration config("TestBT_doubleConnect");
 
     // Use BLE worker — Classic would attempt a real socket

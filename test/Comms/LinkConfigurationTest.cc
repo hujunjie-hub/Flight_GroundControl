@@ -1,4 +1,5 @@
 #include "LinkConfigurationTest.h"
+#include <QtNetwork/QHostInfo>
 
 #include "LinkConfiguration.h"
 #include "TCPLink.h"
@@ -388,6 +389,12 @@ void LinkConfigurationTest::_testUdpSettingsRoundtrip()
 
 void LinkConfigurationTest::_testUdpHostnamePreservedWhenUnresolved()
 {
+    // Some networks (transparent proxies, captive DNS) resolve even the reserved
+    // .invalid TLD. The unresolved-host branch cannot be exercised there; skip with the
+    // reason instead of failing on an environment property.
+    if (!QHostInfo::fromName(QStringLiteral("drone.invalid")).addresses().isEmpty()) {
+        QSKIP("Local DNS resolver resolves the reserved .invalid name");
+    }
     ignoreLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression("Could not resolve host"));
     UDPConfiguration config(QStringLiteral("UDPUnresolved"));
     config.addHost(QStringLiteral("drone.invalid"), 14550);
