@@ -291,6 +291,51 @@ bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fracti
         return false; // waitForCondition already logged the timeout
     }
 
+    // Long panels (settings sections, vehicle config sidebar) place items below the
+    // offscreen viewport. Scroll enclosing Flickables so the click target is reachable,
+    // which is what a user does, instead of failing with an out-of-window point.
+    const auto isOutsideWindow = [&](const QPointF &point) {
+        return point.x() < 0 || point.x() >= _window->width()
+               || point.y() < 0 || point.y() >= _window->height();
+    };
+    if (guarded && isOutsideWindow(scenePoint())) {
+        bool scrolled = false;
+        for (QQuickItem *ancestor = guarded->parentItem(); ancestor; ancestor = ancestor->parentItem()) {
+            if (!ancestor->inherits("QQuickFlickable")) {
+                continue;
+            }
+            const QPointF posInViewport = guarded->mapToItem(
+                ancestor, QPointF(guarded->width() * fractionX, guarded->height() * fractionY));
+            const qreal viewportHeight = ancestor->height();
+            if (posInViewport.y() >= 0 && posInViewport.y() < viewportHeight) {
+                continue;
+            }
+            const qreal contentY = ancestor->property("contentY").toReal();
+            const qreal contentHeight = ancestor->property("contentHeight").toReal();
+            const qreal target = qBound(0.0, contentY + posInViewport.y() - viewportHeight / 2.0,
+                                        qMax(0.0, contentHeight - viewportHeight));
+            ancestor->setProperty("contentY", target);
+            scrolled = true;
+        }
+        if (scrolled) {
+            lastPos = QPointF(qQNaN(), qQNaN());
+            if (!waitForCondition(
+                    [&] {
+                        if (!guarded) {
+                            return false;
+                        }
+                        const QPointF pos = scenePoint();
+                        const bool stable = (pos == lastPos);
+                        lastPos = pos;
+                        return stable;
+                    },
+                    TestTimeout::shortMs(),
+                    QStringLiteral("%1 position settled after scroll").arg(objectName))) {
+                return false;
+            }
+        }
+    }
+
     // QTest::mouseClick warns and drops clicks outside the window (valid range is
     // 0..width-1 / 0..height-1); a centre exactly on the bottom edge is outside.
     // Fail loudly here instead of letting the dropped click surface as an

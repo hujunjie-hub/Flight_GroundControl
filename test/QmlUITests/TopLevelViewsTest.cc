@@ -363,7 +363,9 @@ void TopLevelViewsTest::_testVehicleConfigDividersNoVehicle()
     QVERIFY(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000));
 
     QQuickItem* const parametersButton = findItem(_rootItem, QStringLiteral("vehicleConfig_parametersButton"));
-    QQuickItem* const firmwareButton = findItem(_rootItem, QStringLiteral("vehicleConfig_firmwareButton"));
+    // The PX4-style firmware page requires a vehicle; the always-available entry is the
+    // Flight SWD firmware page, which keeps the firmware action reachable while disconnected.
+    QQuickItem* const firmwareButton = findItem(_rootItem, QStringLiteral("vehicleConfig_flightFirmwareButton"));
     QQuickItem* const summaryDivider = findItem(_rootItem, QStringLiteral("vehicleConfig_summaryDivider"));
     QQuickItem* const componentsDivider = findItem(_rootItem, QStringLiteral("vehicleConfig_componentsDivider"));
     QVERIFY(parametersButton);

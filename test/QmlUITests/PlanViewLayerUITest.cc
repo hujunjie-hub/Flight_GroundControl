@@ -194,7 +194,8 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // ------------------------------------------------------------------
     // 2.6 Layer switcher: expand choices and pick Mission
     // ------------------------------------------------------------------
-    QVERIFY2(clickButton(QLatin1String(kSwitcherActive)), "Failed to click layer switcher active button");
+    // The shipped switcher shows every layer choice directly; there is no separate
+    // collapsed active-layer button, so pick Mission straight from the choice row.
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("layerSwitcher_choice_missionGroup"), 2000),
              "Mission choice button did not appear");
     QVERIFY2(clickButton(QStringLiteral("layerSwitcher_choice_missionGroup")), "Failed to click Mission choice button");
