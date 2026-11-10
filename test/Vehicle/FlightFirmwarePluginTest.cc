@@ -641,7 +641,10 @@ void FlightFirmwarePluginTest::_flightTelemetryDecodesAllFcuMessages()
     QVERIFY(!telemetry.getFact(QStringLiteral("navigationAvailable"))->rawValue().toBool());
     QVERIFY(!telemetry.getFact(QStringLiteral("buildInfoAvailable"))->rawValue().toBool());
     QCOMPARE(telemetry.getFact(QStringLiteral("firmwareSha256"))->rawValue().toString(), QString());
-    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(), QString());
+    // The new boot's own OPERATION_STATUS repopulates opBootIdHex, so it must agree with
+    // opBootId above; only data from the *previous* boot is cleared.
+    QCOMPARE(telemetry.getFact(QStringLiteral("opBootIdHex"))->rawValue().toString(),
+             QString::number(activeBootId, 16).rightJustified(16, QLatin1Char('0')).toUpper());
     QCOMPARE(telemetry.recentEvents().size(), 0);
     QCOMPARE(telemetry.prearmChecks().size(), 0);
     QCOMPARE(telemetry.sensorHealthStatuses().size(), 0);
