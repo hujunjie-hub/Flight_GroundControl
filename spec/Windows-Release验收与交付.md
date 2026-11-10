@@ -129,7 +129,7 @@ MockLink 是必要的 host 集成测试，但不等同于真实 UDP SIL。专项
 - `LOCAL_VALIDATION_REPORT.md`
 - `configure.log`、`build.log`
 - `unit-ctest.log`、`integration-ctest.log`
-- `unit-results-windows-unit.xml`、`integration-results-windows-integration.xml`
+- `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`
 - 环境摘要、Git branch/HEAD/status
 - CMake 配置摘要
 - 可执行文件验证日志

@@ -46,8 +46,8 @@
 | Integration | Integration, exclude Flaky/Network, serial | | | | | | | |
 | Focused tests | | | | | | | | |
 
-- Unit JUnit：
-- Integration JUnit：
+- Unit JUnit：`build-win-release/junit-results-windows-unit.xml`
+- Integration JUnit：`build-win-release/junit-results-windows-integration.xml`
 - CTest 原始日志：
 - 测试二进制对应 commit：
 

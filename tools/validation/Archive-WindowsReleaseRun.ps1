@@ -39,7 +39,7 @@ New-Item -ItemType Directory -Force $runDirectory | Out-Null
 Get-ChildItem -LiteralPath $evidencePath -Force | Copy-Item -Destination $runDirectory -Recurse -Force
 
 # Copy standardized CTest XML reports from the build directory when present.
-foreach ($name in @('unit-results-windows-unit.xml', 'integration-results-windows-integration.xml')) {
+foreach ($name in @('junit-results-windows-unit.xml', 'junit-results-windows-integration.xml')) {
     $source = Join-Path $buildPath $name
     if (Test-Path $source) {
         Copy-Item -LiteralPath $source -Destination $runDirectory -Force

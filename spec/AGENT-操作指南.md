@@ -113,6 +113,8 @@ git pull --ff-only origin codex/phase2-fcu-telemetry
 - 测试验证可观察行为和协议契约，不只断言 mock 自身。
 - 对异步 MAVLink 路径使用信号/状态屏障，避免依赖固定 sleep。
 - 新增测试必须登记到正确 CMake target/label；不能只添加源文件而没有进入构建。
+- 正式完整 Unit/Integration 必须使用 `.github/scripts/cmake_helper.py ctest`；Unit 使用自动并行，Integration 串行，排除标签固定为 `Flaky|Network`。
+- JUnit 文件名固定为 `junit-results-windows-unit.xml` 和 `junit-results-windows-integration.xml`；每组实际执行数量必须大于 0，报告缺失或解析失败不得 PASS。
 
 ## 7. 问题发现和登记
 

@@ -95,8 +95,8 @@ work/validation/
 │   ├── build.log
 │   ├── unit-ctest.log
 │   ├── integration-ctest.log
-│   ├── unit-results-windows-unit.xml
-│   ├── integration-results-windows-integration.xml
+│   ├── junit-results-windows-unit.xml
+│   ├── junit-results-windows-integration.xml
 │   └── LOCAL_VALIDATION_REPORT.md
 └── archives/
     ├── <RUN_ID>/

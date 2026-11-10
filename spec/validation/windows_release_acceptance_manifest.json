@@ -213,5 +213,12 @@
   "known_contract_issue": "Flight sensor_instance_id publisher order currently conflicts with ICD registry; GroundControl must display raw IDs until the Flight publisher is corrected.",
   "safety_boundary": "Telemetry is diagnostic/read-only. It never authorizes ARM, FMS, Permit, failsafe clearance, or actuator output. Host/SIL does not prove H723 hardware or real-flight release.",
   "issue_workflow": "spec/quality/ISSUE_WORKFLOW.md",
-  "evidence_root": "work/validation/archives"
+  "evidence_root": "work/validation/archives",
+  "test_artifacts": {
+    "junit_unit": "junit-results-windows-unit.xml",
+    "junit_integration": "junit-results-windows-integration.xml",
+    "ctest_unit_log": "work/validation/current/unit-ctest.log",
+    "ctest_integration_log": "work/validation/current/integration-ctest.log",
+    "report_generator": ".github/scripts/cmake_helper.py ctest"
+  }
 }

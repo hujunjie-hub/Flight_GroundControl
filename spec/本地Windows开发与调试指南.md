@@ -62,6 +62,9 @@ git submodule update --init --recursive
 ```powershell
 py -3 --version
 py -3 tools/setup/install_python.py scripts,test,precommit
+if ($LASTEXITCODE -ne 0) { throw "Python tool environment setup failed" }
+$PythonExe = (Resolve-Path ".venv\Scripts\python.exe").Path
+& $PythonExe --version
 ```
 
 如果本机没有 `uv`，按脚本提示安装或使用 pip 回退方式。不要自行修改 `tools/uv.lock` 来绕过安装错误。
@@ -71,7 +74,8 @@ py -3 tools/setup/install_python.py scripts,test,precommit
 先检查是否已经安装 VS 2022 C++ x64 工具、GStreamer 和 NSIS。缺少时执行：
 
 ```powershell
-py -3 tools/setup/install_dependencies --platform windows --gstreamer-version 1.28.4 --msvc --nsis
+& $PythonExe tools/setup/install_dependencies --platform windows --gstreamer-version 1.28.4 --msvc --nsis
+if ($LASTEXITCODE -ne 0) { throw "Windows build dependencies setup failed" }
 ```
 
 如果已有合格 MSVC，可省略 `--msvc`，避免重复安装。脚本安装的 GStreamer 默认目录：
@@ -87,7 +91,8 @@ C:\gstreamer\1.0\msvc_x86_64
 ```powershell
 $QtModules = "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver"
 $AqtSource = "git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95"
-py -3 tools/setup/install_qt.py install --version 6.11.1 --host windows --target desktop --arch win64_msvc2022_64 --outdir .qt/Qt --modules $QtModules --aqt-source $AqtSource
+& $PythonExe tools/setup/install_qt.py install --version 6.11.1 --host windows --target desktop --arch win64_msvc2022_64 --outdir .qt/Qt --modules $QtModules --aqt-source $AqtSource
+if ($LASTEXITCODE -ne 0) { throw "Qt MSVC x64 installation failed" }
 ```
 
 Qt 根目录应为：
@@ -113,7 +118,7 @@ Get-Command cl.exe
 cl /Bv
 cmake --version
 ninja --version
-py -3 --version
+& $PythonExe --version
 ```
 
 要求：
@@ -143,8 +148,7 @@ $QtRoot = (Resolve-Path ".qt\Qt\6.11.1\msvc2022_64").Path
 $env:QT_ROOT_DIR = $QtRoot
 $BuildDir = "build-win-release"
 New-Item -ItemType Directory -Force "work\validation\current" | Out-Null
-$PythonExe = (Resolve-Path ".venv\Scripts\python.exe").Path
-py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON "-DPython3_EXECUTABLE=$PythonExe" 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
+& $PythonExe tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON "-DPython3_EXECUTABLE=$PythonExe" 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed" }
 ```
 
@@ -161,8 +165,7 @@ Select-String -Path "$BuildDir\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAKE
 ## 6. 增量编译和完整编译
 
 ```powershell
-$Jobs = [Math]::Max(1, [Environment]::ProcessorCount - 1)
-cmake --build build-win-release --config Release --parallel $Jobs 2>&1 | Tee-Object -FilePath "work\validation\current\build.log"
+cmake --build build-win-release --config Release --parallel 2>&1 | Tee-Object -FilePath "work\validation\current\build.log"
 if ($LASTEXITCODE -ne 0) { throw "Windows Release build failed" }
 ```
 
@@ -192,43 +195,66 @@ ctest --test-dir build-win-release -C Release -R "Flight(FirmwarePlugin|Telemetr
 
 ## 8. 完整 Unit / Integration 测试
 
-必须分别执行 Unit 和 Integration。与 CI 一致，默认排除 `Flaky` 和 `Network` 标签：
+正式完整验收必须调用仓库的 .github/scripts/cmake_helper.py ctest，与 Windows CI 使用同一个测试 helper。它会解析 JUnit，并在测试数量为 0 时返回失败；不要仅用裸 ctest 的退出码判定通过。
 
 ```powershell
-$Jobs = [Math]::Max(1, [Environment]::ProcessorCount - 1)
+$Jobs = [int](& $PythonExe -c "import os; print(os.cpu_count() or 2)")
 Push-Location build-win-release
-ctest -C Release -L Unit -LE "Flaky|Network" --output-on-failure --parallel $Jobs --output-junit unit-results-windows-unit.xml 2>&1 | Tee-Object -FilePath "..\work\validation\current\unit-ctest.log"
-$UnitExit = $LASTEXITCODE
-ctest -C Release -L Integration -LE "Flaky|Network" --output-on-failure --parallel 1 --output-junit integration-results-windows-integration.xml 2>&1 | Tee-Object -FilePath "..\work\validation\current\integration-ctest.log"
-$IntegrationExit = $LASTEXITCODE
-Pop-Location
+try {
+    & $PythonExe ..\.github\scripts\cmake_helper.py ctest --junit-output jjunit-results-windows-unit.xml --ctest-output ../work/validation/current/unit-ctest.log --jobs $Jobs --include-labels Unit --exclude-labels "Flaky|Network"
+    $UnitExit = $LASTEXITCODE
+
+    & $PythonExe ..\.github\scripts\cmake_helper.py ctest --junit-output junit-results-windows-integration.xml --ctest-output ../work/validation/current/integration-ctest.log --jobs 1 --include-labels Integration --exclude-labels "Flaky|Network"
+    $IntegrationExit = $LASTEXITCODE
+}
+finally {
+    Pop-Location
+}
 if ($UnitExit -ne 0) { throw "Unit tests failed: exit=$UnitExit" }
 if ($IntegrationExit -ne 0) { throw "Integration tests failed: exit=$IntegrationExit" }
+```
+
+检查 JUnit 实际数量并写入报告：
+
+```powershell
+function Get-JUnitSummary([string]$Path) {
+    if (-not (Test-Path $Path)) { throw "JUnit report missing: $Path" }
+    [xml]$report = Get-Content -LiteralPath $Path -Raw
+    $suites = @($report.SelectNodes("//testsuite"))
+    if ($suites.Count -eq 0) { throw "JUnit report contains no testsuite: $Path" }
+    $summary = [ordered]@{ tests = 0; failures = 0; errors = 0; skipped = 0 }
+    foreach ($suite in $suites) {
+        $summary.tests += [int]$suite.GetAttribute("tests")
+        $summary.failures += [int]$suite.GetAttribute("failures")
+        $summary.errors += [int]$suite.GetAttribute("errors")
+        $summary.skipped += [int]$suite.GetAttribute("skipped")
+    }
+    if ($summary.tests -le 0) { throw "JUnit report executed zero tests: $Path" }
+    if ($summary.failures -gt 0 -or $summary.errors -gt 0) { throw "JUnit report contains failures/errors: $Path" }
+    [pscustomobject]$summary
+}
+$UnitSummary = Get-JUnitSummary "build-win-release\jjunit-results-windows-unit.xml"
+$IntegrationSummary = Get-JUnitSummary "build-win-release\junit-results-windows-integration.xml"
+"Unit:"; $UnitSummary | Format-List
+"Integration:"; $IntegrationSummary | Format-List
 ```
 
 注意：
 
 - Integration 使用串行执行，匹配 CI 的资源隔离策略。
-- 必须检查两个 JUnit XML 文件存在且有效。
-- 两个 suite 的实际 tests 数量必须大于 0。
-- failures、errors、unexpected skips、CTest 未发现测试、报告缺失均不得 PASS。
-- 报告的 tests/failures/errors/skipped 数量要写入验收报告。
-- `Network` 标签不在标准 CI Unit/Integration 计数中；若本轮涉及网络/UDP 专项验证，按验收矩阵单独执行并单独记录，不能把排除项描述成已覆盖。
-
-用 Python 读取 JUnit 测试数：
-
-```powershell
-py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\unit-results-windows-unit.xml"
-py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\integration-results-windows-integration.xml"
-```
-
+- Unit 并行数按 Python os.cpu_count() 自动解析，与 CI 的 parallel: auto 一致。
+- JUnit 文件名必须与 Windows workflow 一致：jjunit-results-windows-unit.xml、junit-results-windows-integration.xml。
+- 两个 suite 的实际 tests 数量必须大于 0；failures/errors 必须为 0。
+- skipped 数量必须写入报告；任何未解释的 skip 都不能直接标记 PASS，必须核实是否为测试预期行为。
+- CTest 未发现测试、报告缺失/解析失败、测试步骤取消或退出码非零，均不得 PASS。
+- Network 标签不在标准 CI Unit/Integration 计数中；若本轮涉及网络/UDP 专项验证，按验收矩阵单独执行并单独记录，不能把排除项描述成已覆盖。
 ## 9. 可执行文件和 Installer 验证
 
 检查 Release 可执行文件：
 
 ```powershell
 $Exe = (Resolve-Path "build-win-release\Release\QGroundControl.exe").Path
-py -3 .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\executable.log"
+& $PythonExe .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\executable.log"
 if ($LASTEXITCODE -ne 0) { throw "Build executable verification failed" }
 ```
 
@@ -262,7 +288,7 @@ $OriginalPath = $env:PATH
 try {
     $GstBin = (Join-Path $GstRoot "bin").TrimEnd([char]92)
     $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -and $_.TrimEnd([char]92) -ne $GstBin }) -join ';'
-    py -3 .github/scripts/verify_executable.py --binary-path $InstalledExe --type exe --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\installed-runtime.log"
+    & $PythonExe .github/scripts/verify_executable.py --binary-path $InstalledExe --type exe --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\installed-runtime.log"
     if ($LASTEXITCODE -ne 0) { throw "Installed executable verification failed" }
 }
 finally {
