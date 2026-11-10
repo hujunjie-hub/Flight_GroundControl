@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location $repoRoot
 
 $evidencePath = Join-Path $repoRoot $EvidenceDirectory
@@ -69,7 +69,14 @@ function Get-CommandVersion([string]$Name, [string[]]$Arguments) {
 }
 
 $environment = [ordered]@{
-    environment = $environment
+    os_version = [System.Environment]::OSVersion.VersionString
+    os_architecture = $env:PROCESSOR_ARCHITECTURE
+    powershell_version = $PSVersionTable.PSVersion.ToString()
+    cmake_version = Get-CommandVersion 'cmake' @('--version')
+    ninja_version = Get-CommandVersion 'ninja' @('--version')
+    msvc_version = Get-CommandVersion 'cl' @('/Bv')
+    qt_root_dir = $env:QT_ROOT_DIR
+    gstreamer_root = $env:GSTREAMER_1_0_ROOT_MSVC_X86_64
 }
 $environment | ConvertTo-Json -Depth 5 |
     Set-Content -LiteralPath (Join-Path $runDirectory 'environment.json') -Encoding utf8
@@ -112,14 +119,7 @@ $manifest = [ordered]@{
     branch = Get-GitValue @('branch', '--show-current')
     commit = Get-GitValue @('rev-parse', 'HEAD')
     working_tree_status = Get-GitValue @('status', '--short')
-    os_version = [System.Environment]::OSVersion.VersionString
-    os_architecture = $env:PROCESSOR_ARCHITECTURE
-    powershell_version = $PSVersionTable.PSVersion.ToString()
-    cmake_version = Get-CommandVersion 'cmake' @('--version')
-    ninja_version = Get-CommandVersion 'ninja' @('--version')
-    msvc_version = Get-CommandVersion 'cl' @('/Bv')
-    qt_root_dir = $env:QT_ROOT_DIR
-    gstreamer_root = $env:GSTREAMER_1_0_ROOT_MSVC_X86_64
+    environment = $environment
     installer_candidates = $installerInfo
     evidence_file_hashes = $fileHashes
     note = 'This script packages evidence only. Result is supplied by the operator and is not independently validated by this script.'

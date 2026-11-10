@@ -77,7 +77,7 @@ py -3 tools/setup/install_dependencies --platform windows --gstreamer-version 1.
 如果已有合格 MSVC，可省略 `--msvc`，避免重复安装。脚本安装的 GStreamer 默认目录：
 
 ```text
-C:\\gstreamer\\1.0\\msvc_x86_64
+C:\gstreamer\1.0\msvc_x86_64
 ```
 
 ### 3.3 安装 Qt
@@ -126,8 +126,8 @@ py -3 --version
 配置 GStreamer 环境：
 
 ```powershell
-$GstRoot = "C:\\gstreamer\\1.0\\msvc_x86_64"
-if (-not (Test-Path (Join-Path $GstRoot "bin\\gst-inspect-1.0.exe"))) { throw "GStreamer SDK not found: $GstRoot" }
+$GstRoot = "C:\gstreamer\1.0\msvc_x86_64"
+if (-not (Test-Path (Join-Path $GstRoot "bin\gst-inspect-1.0.exe"))) { throw "GStreamer SDK not found: $GstRoot" }
 $env:GSTREAMER_1_0_ROOT_MSVC_X86_64 = $GstRoot
 $env:GSTREAMER_1_0_ROOT_X86_64 = $GstRoot
 $env:Path = (Join-Path $GstRoot "bin") + ";" + $env:Path
@@ -139,18 +139,18 @@ gst-inspect-1.0 --version
 使用独立构建目录，避免与其他历史配置混用：
 
 ```powershell
-$QtRoot = (Resolve-Path ".qt\\Qt\\6.11.1\\msvc2022_64").Path
+$QtRoot = (Resolve-Path ".qt\Qt\6.11.1\msvc2022_64").Path
 $env:QT_ROOT_DIR = $QtRoot
 $BuildDir = "build-win-release"
-New-Item -ItemType Directory -Force "work\\validation\\current" | Out-Null
-py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON 2>&1 | Tee-Object -FilePath "work\\validation\\current\\configure.log"
+New-Item -ItemType Directory -Force "work\validation\current" | Out-Null
+py -3 tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
 if ($LASTEXITCODE -ne 0) { throw "CMake configure failed" }
 ```
 
 配置后检查缓存：
 
 ```powershell
-Select-String -Path "$BuildDir\\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAKE_GENERATOR:|CMAKE_CXX_COMPILER:|QGC_BUILD_TESTING:|GStreamer_ROOT_DIR:"
+Select-String -Path "$BuildDir\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAKE_GENERATOR:|CMAKE_CXX_COMPILER:|QGC_BUILD_TESTING:|GStreamer_ROOT_DIR:"
 ```
 
 必须确认 Generator 为 Ninja、C++ 编译器为 MSVC x64、Release 配置生效、`QGC_BUILD_TESTING=ON`，且 GStreamer 根目录有效。
@@ -161,7 +161,7 @@ Select-String -Path "$BuildDir\\CMakeCache.txt" -Pattern "CMAKE_BUILD_TYPE:|CMAK
 
 ```powershell
 $Jobs = [Math]::Max(1, [Environment]::ProcessorCount - 1)
-cmake --build build-win-release --config Release --parallel $Jobs 2>&1 | Tee-Object -FilePath "work\\validation\\current\\build.log"
+cmake --build build-win-release --config Release --parallel $Jobs 2>&1 | Tee-Object -FilePath "work\validation\current\build.log"
 if ($LASTEXITCODE -ne 0) { throw "Windows Release build failed" }
 ```
 
@@ -196,9 +196,9 @@ ctest --test-dir build-win-release -C Release -R "Flight(FirmwarePlugin|Telemetr
 ```powershell
 $Jobs = [Math]::Max(1, [Environment]::ProcessorCount - 1)
 Push-Location build-win-release
-ctest -C Release -L Unit -LE "Flaky|Network" --output-on-failure --parallel $Jobs --output-junit unit-results-windows-unit.xml 2>&1 | Tee-Object -FilePath "..\\work\\validation\\current\\unit-ctest.log"
+ctest -C Release -L Unit -LE "Flaky|Network" --output-on-failure --parallel $Jobs --output-junit unit-results-windows-unit.xml 2>&1 | Tee-Object -FilePath "..\work\validation\current\unit-ctest.log"
 $UnitExit = $LASTEXITCODE
-ctest -C Release -L Integration -LE "Flaky|Network" --output-on-failure --parallel 1 --output-junit integration-results-windows-integration.xml 2>&1 | Tee-Object -FilePath "..\\work\\validation\\current\\integration-ctest.log"
+ctest -C Release -L Integration -LE "Flaky|Network" --output-on-failure --parallel 1 --output-junit integration-results-windows-integration.xml 2>&1 | Tee-Object -FilePath "..\work\validation\current\integration-ctest.log"
 $IntegrationExit = $LASTEXITCODE
 Pop-Location
 if ($UnitExit -ne 0) { throw "Unit tests failed: exit=$UnitExit" }
@@ -217,8 +217,8 @@ if ($IntegrationExit -ne 0) { throw "Integration tests failed: exit=$Integration
 用 Python 读取 JUnit 测试数：
 
 ```powershell
-py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\\unit-results-windows-unit.xml"
-py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\\integration-results-windows-integration.xml"
+py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\unit-results-windows-unit.xml"
+py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(); ss=[r] if r.tag=='testsuite' else r.findall('testsuite'); print({'tests':sum(int(s.get('tests','0')) for s in ss),'failures':sum(int(s.get('failures','0')) for s in ss),'errors':sum(int(s.get('errors','0')) for s in ss),'skipped':sum(int(s.get('skipped','0')) for s in ss)})" "build-win-release\integration-results-windows-integration.xml"
 ```
 
 ## 9. 可执行文件和 Installer 验证
@@ -226,8 +226,8 @@ py -3 -c "import xml.etree.ElementTree as E,sys; r=E.parse(sys.argv[1]).getroot(
 检查 Release 可执行文件：
 
 ```powershell
-$Exe = (Resolve-Path "build-win-release\\Release\\QGroundControl.exe").Path
-py -3 .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60 2>&1 | Tee-Object -FilePath "work\\validation\\current\\executable.log"
+$Exe = (Resolve-Path "build-win-release\Release\QGroundControl.exe").Path
+py -3 .github/scripts/verify_executable.py --binary-path $Exe --type exe --build-dir "build-win-release" --timeout 60 2>&1 | Tee-Object -FilePath "work\validation\current\executable.log"
 if ($LASTEXITCODE -ne 0) { throw "Build executable verification failed" }
 ```
 
@@ -235,7 +235,7 @@ if ($LASTEXITCODE -ne 0) { throw "Build executable verification failed" }
 
 ```powershell
 $InstallerBuildStart = Get-Date
-cmake --install build-win-release --config Release 2>&1 | Tee-Object -FilePath "work\\validation\\current\\installer-build.log"
+cmake --install build-win-release --config Release 2>&1 | Tee-Object -FilePath "work\validation\current\installer-build.log"
 if ($LASTEXITCODE -ne 0) { throw "Windows installer generation failed" }
 $Installer = Get-ChildItem "build-win-release" -Filter "*installer*.exe" -File -Recurse |
   Where-Object { $_.LastWriteTime -ge $InstallerBuildStart } |
@@ -247,12 +247,12 @@ Get-FileHash $Installer.FullName -Algorithm SHA256
 在干净临时目录静默安装：
 
 ```powershell
-$InstallDir = Join-Path (Resolve-Path ".").Path "build-win-release\\qgc-install-test"
+$InstallDir = Join-Path (Resolve-Path ".").Path "build-win-release\qgc-install-test"
 if (Test-Path $InstallDir) { Remove-Item $InstallDir -Recurse -Force }
 $Install = Start-Process -FilePath $Installer.FullName -ArgumentList @("/S", "/D=$InstallDir") -Wait -PassThru -NoNewWindow
 if ($Install.ExitCode -ne 0) { throw "Installer returned exit code $($Install.ExitCode)" }
-$InstalledExe = Join-Path $InstallDir "bin\\QGroundControl.exe"
-$PluginDir = Join-Path $InstallDir "lib\\gstreamer-1.0"
+$InstalledExe = Join-Path $InstallDir "bin\QGroundControl.exe"
+$PluginDir = Join-Path $InstallDir "lib\gstreamer-1.0"
 if (-not (Test-Path $InstalledExe)) { throw "Installed executable missing" }
 if (-not (Test-Path $PluginDir)) { throw "GStreamer plugin directory missing" }
 $PluginCount = (Get-ChildItem $PluginDir -Filter "*.dll" -File).Count
