@@ -1315,7 +1315,11 @@ void QGCCompressionTest::_testExtractArchiveToSymlinkedOutputPath()
     }
 
     QFileInfo symlinkInfo(symlinkOutputDir);
-    QVERIFY(symlinkInfo.isSymLink());
+    if (!symlinkInfo.isSymLink()) {
+        // Windows QFile::link() creates a .lnk shortcut instead of a symlink unless the
+        // process holds SeCreateSymbolicLinkPrivilege, so the scenario cannot be set up.
+        QSKIP(qPrintable(QStringLiteral("Directory symlinks are not supported in this environment")));
+    }
     QVERIFY(QGCCompression::extractArchive(zipResource, symlinkOutputDir));
     QVERIFY(QFile::exists(realOutputDir + "/manifest.json"));
     QVERIFY(QFile::exists(symlinkOutputDir + "/manifest.json"));

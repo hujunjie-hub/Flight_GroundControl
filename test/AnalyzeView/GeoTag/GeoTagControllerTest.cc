@@ -82,7 +82,9 @@ void GeoTagControllerTest::_propertyAccessorsTest()
     QVERIFY(!controller->imageDirectory().isEmpty());
     QVERIFY(!controller->saveDirectory().isEmpty());
 
-    QCOMPARE(QDir::cleanPath(controller->logFile()), QDir::cleanPath(ulogPath));
+    // QUrl::toLocalFile() may normalize the Windows drive letter, so compare
+    // case-insensitively on platforms with case-insensitive filesystems.
+    QCOMPARE(QString::compare(QDir::cleanPath(controller->logFile()), QDir::cleanPath(ulogPath), Qt::CaseInsensitive), 0);
     QCOMPARE(QDir::cleanPath(controller->imageDirectory()), QDir::cleanPath(imageDirPath));
     QCOMPARE(QDir::cleanPath(controller->saveDirectory()), QDir::cleanPath(taggedDirPath));
     QCOMPARE(controller->progress(), 0.0);
