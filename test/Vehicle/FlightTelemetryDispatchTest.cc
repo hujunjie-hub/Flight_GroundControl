@@ -1,6 +1,6 @@
 #include "FlightTelemetryDispatchTest.h"
 
-#include "FlightTelemetryFactGroup.h"
+#include "FirmwarePlugin/Flight/FlightTelemetryFactGroup.h"
 #include "LinkManager.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
@@ -9,6 +9,7 @@
 #include "VehicleLinkManager.h"
 
 #include <QtCore/QPointer>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 namespace {
@@ -330,6 +331,8 @@ void FlightTelemetryDispatchTest::_invalidFramesAndSourcesDoNotUpdateTelemetry()
     QVERIFY(operationTime);
     QVERIFY(armState);
 
+    QSignalSpy operationTimeChanges(operationTime, &Fact::rawValueChanged);
+
     // A frame with a corrupted MAVLink checksum must be rejected by the parser.
     mavlink_message_t badCrc = operationStatusMessage(
         static_cast<uint8_t>(vehicle->id()),
@@ -337,16 +340,16 @@ void FlightTelemetryDispatchTest::_invalidFramesAndSourcesDoNotUpdateTelemetry()
         0xAABBCCDDEEFF0011ULL, 100, 1);
     badCrc.checksum ^= 0xFFFFU;
     mockLink->respondWithMavlinkMessage(badCrc);
-    QTest::qWait(50);
-    QVERIFY(!operationAvailable->rawValue().toBool());
-    QCOMPARE(operationTime->rawValue().toULongLong(), 0ULL);
 
-    // Establish a valid baseline through the same wire path.
+    // A following valid frame acts as an asynchronous barrier. Exactly one
+    // Fact update proves the invalid frame did not enter Vehicle dispatch.
     mockLink->respondWithMavlinkMessage(operationStatusMessage(
         static_cast<uint8_t>(vehicle->id()),
         static_cast<uint8_t>(vehicle->compId()),
         0xAABBCCDDEEFF0011ULL, 200, 1));
-    QTRY_COMPARE(operationTime->rawValue().toULongLong(), 200ULL);
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 200ULL, 5000);
+    QCOMPARE(operationTimeChanges.count(), 1);
+    operationTimeChanges.clear();
 
     const uint8_t wrongSystemId = static_cast<uint8_t>((vehicle->id() % 255) + 1);
     mockLink->respondWithMavlinkMessage(operationStatusMessage(
@@ -368,9 +371,14 @@ void FlightTelemetryDispatchTest::_invalidFramesAndSourcesDoNotUpdateTelemetry()
         static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
         0xAABBCCDDEEFF0011ULL, 199, 0));
 
-    QTest::qWait(100);
+    // The final valid frame is a barrier for all preceding invalid inputs.
+    // Exactly one update must be observed: the barrier frame itself.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0xAABBCCDDEEFF0011ULL, 600, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 600ULL, 5000);
+    QCOMPARE(operationTimeChanges.count(), 1);
     QVERIFY(operationAvailable->rawValue().toBool());
-    QCOMPARE(operationTime->rawValue().toULongLong(), 200ULL);
     QCOMPARE(armState->rawValue().toUInt(), 1U);
 }
 
