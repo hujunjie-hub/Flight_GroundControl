@@ -239,6 +239,15 @@ void MultiVehicleManager::_setActiveVehiclePhase2(Vehicle *vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
 
+    // The delayed activation can fire after the vehicle was removed again (a fast
+    // connect/disconnect). Activating it then would leave _activeVehicle pointing at a
+    // Vehicle that is about to be deleted; the deletion phase already picks the correct
+    // replacement, so drop the stale request.
+    if (vehicle && !_vehicles->contains(vehicle)) {
+        qCDebug(MultiVehicleManagerLog) << "Dropping activation for a vehicle that is no longer present" << vehicle;
+        return;
+    }
+
     _setActiveVehicle(vehicle);
 
     if (_activeVehicle) {
