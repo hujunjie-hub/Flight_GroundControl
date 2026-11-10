@@ -428,4 +428,22 @@ void QGCCacheWorkerTest::_testStopWhileProcessing()
     QVERIFY(!worker.isRunning());
 }
 
+/// A stop() that arrives after start() but before the thread body runs must not be lost.
+/// run() used to clear the stop flag on entry, so a stop request issued in that window was
+/// dropped, the worker loop never exited and QGCMapEngine::shutdown() blocked in wait()
+/// forever: unit test binaries then sat idle after all tests passed until CTest killed them
+/// with a 60 s timeout (FGC-0028).
+void QGCCacheWorkerTest::_testStopBeforeStart()
+{
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("stop_before_start.db"));
+
+    worker.stop();   // requested while the thread has not run its body yet
+    worker.start();  // run() must observe the pending stop and return immediately
+    QVERIFY2(worker.wait(TestTimeout::mediumMs()),
+             "worker thread never exited: run() dropped a stop() that arrived before it started");
+    QVERIFY(!worker.isRunning());
+}
+
 UT_REGISTER_TEST(QGCCacheWorkerTest, TestLabel::Unit)

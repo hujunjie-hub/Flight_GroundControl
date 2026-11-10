@@ -66,6 +66,11 @@ bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
     if (isRunning()) {
         _waitc.wakeAll();
     } else {
+        // Clear the stop flag here, where a run is initiated, and never inside run(): a stop()
+        // that arrives between start() and the thread body would otherwise be lost, the loop
+        // would never exit and QGCMapEngine::shutdown() would block in wait() forever
+        // (FGC-0028: the process hangs after the tests pass until CTest kills it).
+        _stopRequested = false;
         start(QThread::NormalPriority);
     }
 
@@ -74,7 +79,6 @@ bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
 
 void QGCCacheWorker::run()
 {
-    _stopRequested = false;
     _database = std::make_unique<QGCTileCacheDatabase>(_databasePath);
 
     if (!_database->init()) {
