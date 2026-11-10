@@ -282,9 +282,10 @@ QString toLocalPath(const QString &urlOrPath)
         return urlOrPath;
     }
 
-    // Check if it's a URL (handles qrc:// -> :/ conversion)
+    // Check if it's a URL (handles qrc:// -> :/ conversion). A single-letter scheme is a
+    // Windows drive letter ("C:/dir/file"), not a URL scheme, so keep it as a plain path.
     QUrl url(urlOrPath);
-    if (url.isValid() && !url.scheme().isEmpty()) {
+    if (url.isValid() && url.scheme().length() > 1) {
         return toLocalPath(url);
     }
 
@@ -340,9 +341,10 @@ bool isLocalPath(const QString &urlOrPath)
         return true;
     }
 
-    // Check if it looks like a URL
+    // Check if it looks like a URL. A single-letter scheme is a Windows drive letter
+    // ("C:/dir/file"), which is a local filesystem path rather than a URL scheme.
     QUrl url(urlOrPath);
-    if (url.isValid() && !url.scheme().isEmpty()) {
+    if (url.isValid() && url.scheme().length() > 1) {
         const QString scheme = url.scheme().toLower();
         return scheme == QLatin1String("file") ||
                scheme == QLatin1String("qrc");
