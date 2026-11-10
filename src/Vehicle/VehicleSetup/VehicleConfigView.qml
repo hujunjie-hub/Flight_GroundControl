@@ -485,7 +485,7 @@ Rectangle {
                     objectName: "vehicleConfig_summaryDivider"
                     visible:    summaryButton.visible &&
                                 (vehicleConfigView._anyComponentVisible() || opticalFlowButton.visible ||
-                                 parametersButton.visible || firmwareButton.visible)
+                                 parametersButton.visible || firmwareButton.visible || flightFirmwareButton.visible)
                 }
 
                 // Vehicle component tree
@@ -635,7 +635,9 @@ Rectangle {
                 ConfigButton {
                     id:                 parametersButton
                     objectName:         "vehicleConfig_parametersButton"
-                    visible:            vehicleConfigView._searchQuery.trim() === ""
+                    // Without a vehicle there is no parameter set to show; advertising the page
+                    // leaves a dead entry and a dangling divider in the sidebar.
+                    visible:            _activeVehicle && vehicleConfigView._searchQuery.trim() === ""
                     text:               qsTr("Parameters")
                     Layout.fillWidth:   true
                     icon.source:        "/qmlimages/subMenuButtonImage.png"
