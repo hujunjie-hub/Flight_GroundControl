@@ -116,9 +116,11 @@ GStreamer 1.28.4、i5-12400（6C/12T）、31.3 GB RAM。
   E（QtConcurrent+QFutureWatcher+缓存+写路径）在不同线程数下的差分。
 - 工具：`tools/validation/fgc0029-asan-probe/`（独立 CMake 工程，编译**未修改的生产源码**
   `ExifParser.cc`/`ExifUtility.cc` + libexif，全部 `/fsanitize=address`）。
-- 运行（ASan）：`a` 12 线程 × 20000 × 4 轮、`c` 12 线程 × 2000 × 4 轮、`e` 12 线程 × 5 轮、
-  以及 prelim（`c`/`d` 12 线程 × 100、`e` 12 线程 × 5）。
-- 结果：全部通过，**0 份 ASan 报告**。
+- 运行（ASan，全部通过，0 份 ASan 报告）：
+  - prelim：`c` 12 线程 × 100 次、`d` 12 线程 × 100 次、`e` 12 线程 × 5 轮；
+  - 矩阵：`a` 与 `c` 各 2 轮（`a` 12 线程 × 20000 = 48 万次 `QDateTime::fromString`；
+    `c` 12 线程 × 2000 = 4.8 万次 `readTime`）。
+- 说明：原计划 4 轮，实际执行 2 轮后因单次运行过慢（`a` 单轮 72–136 s）停止，**记录真实完成数量**。
 - 结论：**单进程内的 12 线程不足以稳定复现**；需要的并发压力是“多进程 × 多线程”
   （与 E-03/E-10 的差异吻合）。探针保留作为回归工具。
 - 证据：`asan-runs-qt/probe-matrix.csv`、`asan-probe-prelim.log`。
