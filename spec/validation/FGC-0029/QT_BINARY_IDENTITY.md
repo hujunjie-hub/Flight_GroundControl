@@ -29,8 +29,11 @@ image version 6.11
 subsystem version 6.00
 ```
 
-`linker version 14.39` = Qt 官方用 MSVC 2022（VS 17.10 工具链）构建，与本机用于构建
-QGroundControl 的 MSVC 14.44 不同，这是**预期**的（官方二进制不会用我们的编译器）。
+`linker version 14.39` 对应 **MSVC 19.39 / Visual Studio 2022 17.9**。这是 Qt 官方构建所用
+工具链的标识，**不能**据此推断本机 Agent 或本仓库使用的编译器版本——本仓库用
+**MSVC 14.44.35207**（独立记录见下），二者不同属预期（官方二进制不会用我们的编译器）。
+
+> R18 曾把 14.39 写成 "VS 17.10"，R19 更正为 **VS 17.9（MSVC 19.39）**。
 
 ## 3. 符号（PDB）情况
 
@@ -54,3 +57,37 @@ QGroundControl 的 MSVC 14.44 不同，这是**预期**的（官方二进制不�
 
 结论：**被分析的 DLL 就是官方 Qt 6.11.1（msvc2022_64）**，与引用的 v6.11.1 源码版本一致；
 栈解析精度受"无 Qt 私有 PDB"限制，已在分析中逐帧标注置信度。
+
+## 5. 原始输出（R19 采集，未加工）
+
+```text
+PS> Get-Item .qt\Qt\6.11.1\msvc2022_64\bin\Qt6Core.dll | Select-Object FullName,Length,LastWriteTime
+FullName : E:\Flight\Flight_GroundControl_test\Flight_GroundControl\.qt\Qt\6.11.1\msvc2022_64\bin\Qt6Core.dll
+Length   : 10480440
+LastWriteTime : 2026/5/8 0:09:34
+
+PS> (Get-Item ...\Qt6Core.dll).VersionInfo | Select-Object FileVersion,ProductVersion,FileDescription,CompanyName
+FileVersion     : 6.11.1.0
+ProductVersion  : 6.11.1.0
+FileDescription : C++ Application Development Framework
+CompanyName     : The Qt Company Ltd.
+
+PS> Get-FileHash ...\Qt6Core.dll -Algorithm SHA256
+FAE4778A42E93ADC82B831C879C886A05147E9CC26760808D21116BE5547259B
+
+PS> Get-AuthenticodeSignature ...\Qt6Core.dll
+Status : Valid
+Signer : CN=The QT Company Oy, O=The QT Company Oy, L=Espoo, S=Uusimaa, C=FI,
+         SERIALNUMBER=2637805-2, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.3=FI
+
+PS> dumpbin /headers ...\Qt6Core.dll | Select-String "linker version|machine|image version"
+machine (x64)
+linker version 14.39
+image version 6.11
+```
+
+本机编译器（与 Qt DLL 无关，独立记录）：
+
+```text
+MSVC 14.44.35207（VS 2022 BuildTools），cl.exe 19.44.35229
+```

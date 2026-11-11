@@ -103,11 +103,15 @@ find_package(Qt6 REQUIRED COMPONENTS Core Concurrent Gui Positioning)
 # ----------------------------------------------------------------------------
 add_executable(fgc0029_asan_probe
     main.cpp
+    exifparser_legacy.cpp
+    spy_systemlocale.cpp
     "${QGC_SOURCE_DIR}/src/AnalyzeView/GeoTag/ExifParser.cc"
     "${QGC_SOURCE_DIR}/src/Utilities/Parsing/Exif/ExifUtility.cc"
 )
 
 target_include_directories(fgc0029_asan_probe PRIVATE
+    "${Qt6Core_DIR}/../../../include/QtCore/6.11.1"
+    "${Qt6Core_DIR}/../../../include/QtCore/6.11.1/QtCore"
     "${QGC_SOURCE_DIR}/src"
     "${QGC_SOURCE_DIR}/src/AnalyzeView/GeoTag"
     "${QGC_SOURCE_DIR}/src/Utilities/Parsing/Exif"

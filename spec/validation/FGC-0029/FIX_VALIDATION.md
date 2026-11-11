@@ -104,3 +104,23 @@ tests=13 failures=0 errors=0
 - Application Verifier、PageHeap、ETW **均未执行**（需要管理员权限，本会话审批被禁用）。
 - 没有用加锁、降并发、吞异常或跳过测试来“修复”问题。
 - 未修改 `main`，未强制推送，未合并 PR，未删除任何历史实验。
+
+## 10. R19 补充：统一条件差分矩阵
+
+R18 的四臂负载不同（A 100000、B 1000、C 500、D 20000/2000 次每线程），不能直接横向比较。
+R19 在**相同条件**下重跑（12 线程/进程、16 进程/轮、15 轮、**每线程 1000 次迭代**、
+同一 ASan 构建、同一 Qt DLL、同一 EXIF 输入），C 臂改用测试专用的
+`ExifParserLegacy`（8117cfe 原文副本，生产代码未改）：
+
+| 臂 | 内容 | 完成 | 超时 | ASan 报告 |
+|---|---|---:|---:|---:|
+| A | `QLocale::system()` | 240 | 0 | 0 |
+| B | `QDateTime::fromString()` | 240 | 0 | **1** |
+| C | `ExifParserLegacy::readTime` | 240 | 0 | **2** |
+| D | `ExifParser::readTime`（修复后） | 240 | 0 | 0 |
+
+运行时 QueryType 捕获（2 线程 × 1000 次）：`zeroDigit` 查询次数 A=**0**、B=**40040**、
+C=**40040**、D=**0**。即 `QLocale::system()` 本身不触发 `ZeroDigit`，`QDateTime::fromString`
+每次触发约 20 次，修复后完全为 0。
+
+详见 `EXPERIMENT_LEDGER.md` E-28/E-29 与 `ASAN_STACK_ANALYSIS.md` §2。

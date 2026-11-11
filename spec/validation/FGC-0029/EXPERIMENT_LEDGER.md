@@ -133,6 +133,11 @@ GStreamer 1.28.4、i5-12400（6C/12T）、31.3 GB RAM。
 
 ## E-10 ASan 16 并发 × 15 轮（**关键证据**）
 
+> **SUPERSEDED（R18/R19）**：本实验的"双重释放"事实仍然成立，但当时给出的**结论**——
+> "根因位于 `QLocale::system()` 的进程级共享状态"——已被 R19 的 `.pdata` 函数边界分析推翻：
+> 两份报告的栈帧 RVA 实际落在**未导出内部函数**中，不是 `QLocale::system`。当前结论见
+> E-26（函数边界映射）、E-27（源码审计）与 `ROOT_CAUSE_ANALYSIS.md`。原始记录保留不变。
+
 - 命令：`Invoke-Fgc0029Stress.ps1 -Tag asan-run2 -Exe build-win-asan-geotag/... -Rounds 15 -Instances 16 -Asan`
 - 运行：240；失败：2；**报告率 0.83%**。
 - 失败明细：
@@ -147,6 +152,12 @@ GStreamer 1.28.4、i5-12400（6C/12T）、31.3 GB RAM。
   根因位于 `QLocale::system()` 的进程级共享状态。
 
 ## E-11 Qt 6.11.1 源码核对
+
+> **SUPERSEDED（R18/R19）**：本节依据 `QLocale::system()` 的源码推断"每次调用都写共享静态对象"，
+> 但 R18 复核发现 `systemData()` 有 `QBasicMutex systemDataMutex`；R19 进一步用 `.pdata` 证明
+> 崩溃栈并不经过 `QLocale::system()`，而是经过 `QLocale::toString(qlonglong)` →
+> `QLocaleData::zeroDigit()` → `systemLocaleString()` → `query(ZeroDigit)` →
+> `QSystemLocalePrivate::zeroDigit()`。当前审计见 `QT_LOCALE_SOURCE_AUDIT.md` 与 E-27。
 
 - 假设：`QDateTime::fromString` 会无锁写进程级 locale 全局。
 - 方法：拉取 `qtbase` v6.11.1 的 `qdatetimeparser_p.h`、`qlocale.cpp`、`qdatetime.cpp`、`qfuturewatcher.cpp`。
@@ -279,3 +290,105 @@ R18 起环境不变（Windows x64 / MSVC 14.44 / Qt 6.11.1 / Ninja / ASan 同构
 
 - 结论：**CI 通过**（本轮不重复跑测试）。
 
+
+---
+
+# R19（最终闭环轮）追加实验
+
+R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射、审计与实验口径补齐。
+
+| 编号 | 内容 |
+|---|---|
+| E-25 | 基线与修复保留核验（HEAD `d29628a`、`8295dc0`、`parseExifTimestamp`） |
+| E-26 | PE `.pdata` 函数边界映射（推翻 R18 两处"最近导出符号"结论） |
+| E-27 | Qt 6.11.1 Windows locale 源码审计（字段/锁/生命周期/QueryType） |
+| E-28 | 统一条件 A/B/C/D 差分矩阵（1000 迭代/线程、16 进程 × 15 轮） |
+| E-29 | 运行时 QueryType 捕获（派生 `QSystemLocale`，不修改 Qt） |
+| E-30 | Check Links：PX4 链接指向 `https://px4.io/software/getting-started/` |
+| E-31 | Windows CI 追溯（Run 43044586589 / 上一轮 43007829317） |
+
+## E-25 基线与修复保留
+
+- 结果：HEAD `d29628abcb46697d6bfc351eafb72fb15cb0d9e6`；origin 同步；工作区 clean；
+  `8295dc0` 在历史；`parseExifTimestamp()` 存在并被 `readTime()` 调用；
+  `QDateTime::fromString` 仅出现在注释里。
+- 结论：**通过**。
+
+## E-26 `.pdata` 函数边界映射
+
+- 工具：`work/validation/fgc0029-r19/pe_funcs.py`（解析 PE 异常目录，13642 个函数、7290 个导出起点）。
+- 关键结果：
+
+| RVA | R18 的"最近导出符号" | R19 `.pdata` 事实 |
+|---|---|---|
+| `0x16D7B1` | `QLocale::system+0x3B1` | **未导出内部函数** `[0x16D700,0x16D8FB)`；`QLocale::system` 只有 16 字节（`[0x16D400,0x16D410)`） |
+| `0x26C89E`/`0x26C8F8` | `QSystemLocale::query+0x468E/+0x46E8` | **未导出内部函数** `[0x26C840,0x26C94B)`；`query` 真实区间 `[0x268210,0x268D18)` |
+| `0x2686A2` | `query+0x492` | 正确 |
+| `0x111F12` | `QVariant::~QVariant+0x42` | 正确 |
+| `0x1707A8` | `QLocale::toString` 邻域 | 正确：`QLocale::toString(qlonglong)` `[0x170770,0x1707B2)` |
+
+- 结论：R18 的两处命名**撤回**；函数边界以 `.pdata` 为准，名称仅在函数起点等于导出时给出。
+
+## E-27 Qt 源码审计
+
+- 源码：本地稀疏克隆 `qtbase` **v6.11.1**（commit `59c81a3c2247b821b9b84b4eb8d939b77e07e276`）。
+- 覆盖：`QSystemLocalePrivate` 四个字段（`lcid`/`zero`/`substitutionType`/`sizes`）的读写函数、
+  `update()`/`zeroDigit()`/`substitution()`/`groupingSizes()`/`substituteDigits()`、
+  `query()` 的 `ZeroDigit`/`Grouping`/`LocaleChanged` 分支、`Q_GLOBAL_STATIC` 与 `_systemLocale`
+  的初始化/析构、`systemDataMutex` 的 A/B/C 三路径。
+- 结论：`zero`/`substitutionType`/`sizes` 在 `query()` 路径上**无锁**读写；`systemDataMutex`
+  只覆盖 `systemData()` 刷新与 `update()`。详见 `QT_LOCALE_SOURCE_AUDIT.md`。
+
+## E-28 统一 A/B/C/D 差分矩阵
+
+- 脚本：`work/validation/fgc0029-r19/Invoke-Fgc0029ProbeMatrix.ps1`（R18 的脚本未随 ZIP 交付，本轮补齐）。
+- 统一条件：同一 ASan 构建、同一 Qt 6.11.1 DLL、同一 EXIF 输入、12 线程/进程、
+  16 进程/轮、15 轮、**每线程 1000 次迭代**（四臂完全相同）。
+- C 臂：`tools/validation/fgc0029-asan-probe/exifparser_legacy.cpp`（8117cfe 原文的**测试专用副本**，
+  生产 `ExifParser` 未修改）。
+- 计划：4 臂 × 240 = **960 次进程运行**；实际：**960 次完成，0 次超时**。
+
+| 臂 | 内容 | 完成 | 超时 | 非零退出 | ASan 报告 | 用时 |
+|---|---|---:|---:|---:|---:|---:|
+| A | `QLocale::system()` | 240 | 0 | 0 | **0** | 3.5 s |
+| B | `QDateTime::fromString()` | 240 | 0 | 1 | **1**（`a-r12-i10.err`） | 314.5 s |
+| C | `ExifParserLegacy::readTime` | 240 | 0 | 2 | **2**（`legacy-r10-i08.err`、`legacy-r11-i10.err`） | 656.8 s |
+| D | `ExifParser::readTime`（修复后） | 240 | 0 | 0 | **0** | 414.9 s |
+
+- R18 的 15 次超时记录保留（E-21），原因记为 **TIMEOUT_CAUSE_UNKNOWN**；R19 统一条件后未再出现超时。
+- 阴性结果（A、D）只表示"该矩阵未复现"，不推断绝对安全。
+
+## E-29 运行时 QueryType 捕获
+
+- 方法：诊断程序派生 `QSystemLocale`（`query()` 为 public virtual；构造函数安装为进程级
+  system locale），按 `QueryType` 计数后转调基类。**未修改 Qt DLL、未替换 Qt 版本。**
+- 结果（2 线程 × 1000 次）：
+
+| 臂 | ZeroDigit | Grouping | GroupSeparator | 其它 |
+|---|---:|---:|---:|---|
+| A `QLocale::system()` | **0** | 0 | 0 | LanguageId/TerritoryId/ScriptId/LocaleChanged 各 1 |
+| B `QDateTime::fromString()` | **40040** | 16016 | 16016 | 同上各 1 |
+| C legacy `readTime` | **40040** | 16016 | 16016 | 同上各 1 |
+| D 修复后 `readTime` | **0** | 0 | 0 | 无任何查询 |
+
+- 结论：`QDateTime::fromString` 每次调用触发 ≈20 次 `ZeroDigit`；`QLocale::system()` **不触发**；
+  修复后**零查询**。直接排除 R17 的 `QLocale::system` 假设。
+
+## E-30 Check Links
+
+- 变更：`docs/en/qgc-user-guide/setup_view/firmware.md` →
+  `https://px4.io/software/getting-started/`（独立提交 `f2aef81`）。
+- 本地 lychee v0.22.0：该 URL 返回 **404**（与 `https://px4.io/` 相同）。
+- 直连验证：DoH 解析 `px4.io` → `151.101.66.159`，`curl --resolve` 直连
+  `/software/getting-started/` 仍为 **404**，响应体是 Flywheel "this is not the site" 占位页。
+- 结论：链接已按要求改为官方页面；**本机与 harness 网络均观察到上游 404**，无法在本会话证明
+  可访问。GitHub runner 的 Check Links 为权威判定。
+- 证据：`work/validation/fgc0029-r19/check-links-firmware.log`。
+
+## E-31 Windows CI 追溯
+
+- 上一轮（R17 提交，HEAD `885d06a`）：Run **43007829317** —— Unit 198/198、Integration 70/70
+  （含 `FlightTelemetryDispatchTest`）、Release/Installer/安装后验证通过。
+- 本轮（R18 HEAD `d29628a`）：Run **43044586589** —— 独立验收时仍在 Build 阶段；本会话无
+  `gh`/API 访问权限，**未能读取结果**，不作"通过"声明。
+- R19 提交后还需对最新 HEAD 的 Windows Release CI 再做一次确认（本会话同样无法读取）。

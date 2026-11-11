@@ -23,6 +23,8 @@
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
+#include "exifparser_legacy.h"
+#include "spy_systemlocale.h"
 #include "GeoTagData.h"
 #include "QGCLoggingCategory.h"
 
@@ -65,6 +67,7 @@ struct Options {
     int iterations = 100;
     QString image;
     bool verbose = false;
+    bool spy = false;
 };
 
 struct Result {
@@ -202,28 +205,18 @@ void runModeQSystemLocale(const Options &opt)
 }
 
 // ---------------------------------------------------------------------------
-// legacy: byte-for-byte replication of the pre-fix readTime() body
-//         (commit 8117cfe ExifParser::readTime, kept only as a diagnostic control)
+// legacy: the pre-fix readTime() from commit 8117cfe, compiled from a test-only
+//         copy (exifparser_legacy.cpp). This is the C arm of the differential
+//         experiment; production ExifParser is never modified.
 // ---------------------------------------------------------------------------
 
 void runModeLegacy(const Options &opt, const QByteArray &image)
 {
     runThreads(opt, [&opt, &image](int) {
         for (int i = 0; i < opt.iterations; ++i) {
-            ExifData *data = ExifUtility::loadFromBuffer(image);
-            if (!data) {
-                reportFailure("legacy: loadFromBuffer returned null");
-                continue;
-            }
-            const QString text = ExifUtility::readString(data, EXIF_TAG_DATE_TIME_DIGITIZED, EXIF_IFD_EXIF);
-            exif_data_unref(data);
-            if (text.isEmpty()) {
-                reportFailure("legacy: empty DateTimeDigitized");
-                continue;
-            }
-            const QDateTime dt = QDateTime::fromString(text, QStringLiteral("yyyy:MM:dd HH:mm:ss"));
+            const QDateTime dt = ExifParserLegacy::readTime(image);
             if (!dt.isValid()) {
-                reportFailure("legacy: QDateTime::fromString returned an invalid datetime");
+                reportFailure("legacy: readTime returned an invalid datetime");
                 continue;
             }
             g_ok.fetch_add(1, std::memory_order_relaxed);
@@ -403,6 +396,8 @@ int main(int argc, char *argv[])
             opt.iterations = arg.mid(13).toInt();
         } else if (arg.startsWith(QStringLiteral("--image="))) {
             opt.image = arg.mid(8);
+        } else if (arg == QStringLiteral("--spy")) {
+            opt.spy = true;
         } else if (arg == QStringLiteral("--verbose")) {
             opt.verbose = true;
         }
@@ -440,6 +435,10 @@ int main(int argc, char *argv[])
     QElapsedTimer timer;
     timer.start();
 
+    if (opt.spy) {
+        SpyLocale::install();
+    }
+
     if (opt.mode == QStringLiteral("a")) {
         runModeA(opt);
     } else if (opt.mode == QStringLiteral("b")) {
@@ -464,6 +463,10 @@ int main(int argc, char *argv[])
     std::printf("[probe] done ok=%lld fail=%lld elapsed_ms=%lld\n",
                 ok, fail, static_cast<long long>(timer.elapsed()));
     std::fflush(stdout);
+
+    if (opt.spy) {
+        SpyLocale::printHistogram();
+    }
 
     return fail == 0 ? 0 : 1;
 }
