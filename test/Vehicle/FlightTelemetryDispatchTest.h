@@ -30,4 +30,13 @@ private slots:
     void _reconnectResumesFreshnessOnNewEpoch();
     void _mockLinkDropsFramesDeterministically();
     void _mockLinkDelaysFramesWithoutLosingThem();
+    void _staleNotifyFiresWhenDeadlinePasses();
+    void _staleNotifyIsEmittedOnlyOnce();
+    void _freshFrameNotifiesImmediately();
+    void _thresholdChangeReschedulesDeadline();
+    void _multipleFamiliesGoStaleInOneNotification();
+    void _staleNotificationDoesNotDisturbFreshFamily();
+    void _disconnectedVehicleStillNotifiesStale();
+    void _qmlBindingObservesStaleTransition();
+    void _destroyedGroupStopsStaleTimer();
 };

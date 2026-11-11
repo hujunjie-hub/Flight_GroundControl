@@ -6,10 +6,24 @@
 #include "FlightTelemetryFactGroup.h"
 #include "Vehicle.h"
 
+FlightTelemetryFactGroup::~FlightTelemetryFactGroup()
+{
+    // The timer must not fire into a half-destroyed object.
+    _staleTimer.stop();
+}
+
+
 FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     : FactGroup(0, parent)
 {
     _receiveClock.start();
+
+    // Single shot: one timer serves every family, armed only for the nearest deadline.
+    _staleTimer.setSingleShot(true);
+    (void) connect(&_staleTimer, &QTimer::timeout, this, [this]() {
+        _notifyIfStaleSetChanged();
+        _rescheduleStaleDeadline();
+    });
 
     for (Fact *fact : {
         &_opTimeBootUs,
@@ -269,12 +283,65 @@ QVariantMap FlightTelemetryFactGroup::familyStale() const
     }
     return stale;
 }
+void FlightTelemetryFactGroup::setFamilyStaleThresholdMs(int ms)
+{
+    const int clamped = qMax(0, ms);
+    if (clamped == _familyStaleThresholdMs) {
+        return;
+    }
+    _familyStaleThresholdMs = clamped;
+    emit familyReceiveAgeMsChanged();
+    _rescheduleStaleDeadline();
+}
+
 void FlightTelemetryFactGroup::_markFamilyReceived(const QString &family)
 {
     _lastReceiveElapsedMs.insert(family, _receiveClock.elapsed());
     emit familyReceiveAgeMsChanged();
+    // A family that was stale becomes fresh immediately, so re-arm the single staleness timer.
+    _rescheduleStaleDeadline();
 }
 
+void FlightTelemetryFactGroup::_rescheduleStaleDeadline()
+{
+    // One timer for every family: arm only the nearest deadline (the smallest positive
+    // remaining time until a currently-fresh family crosses the threshold). Families that are
+    // already stale, or that were never received, contribute no deadline.
+    qint64 nearestDelayMs = -1;
+    const qint64 nowMs = _receiveClock.elapsed();
+    for (auto it = _lastReceiveElapsedMs.cbegin(); it != _lastReceiveElapsedMs.cend(); ++it) {
+        const qint64 ageMs = nowMs - it.value();
+        if (ageMs > _familyStaleThresholdMs) {
+            continue; // already stale
+        }
+        const qint64 remainingMs = _familyStaleThresholdMs - ageMs;
+        if (nearestDelayMs < 0 || remainingMs < nearestDelayMs) {
+            nearestDelayMs = remainingMs;
+        }
+    }
+
+    if (nearestDelayMs < 0) {
+        _staleTimer.stop();
+        return;
+    }
+    // +1 ms so the callback runs strictly after the deadline, never on the boundary.
+    _staleTimer.start(static_cast<int>(qMin<qint64>(nearestDelayMs + 1, _familyStaleThresholdMs + 1)));
+}
+
+void FlightTelemetryFactGroup::_notifyIfStaleSetChanged()
+{
+    QSet<QString> currentlyStale;
+    const qint64 nowMs = _receiveClock.elapsed();
+    for (auto it = _lastReceiveElapsedMs.cbegin(); it != _lastReceiveElapsedMs.cend(); ++it) {
+        if ((nowMs - it.value()) > _familyStaleThresholdMs) {
+            currentlyStale.insert(it.key());
+        }
+    }
+    if (currentlyStale != _lastNotifiedStaleFamilies) {
+        _lastNotifiedStaleFamilies = currentlyStale;
+        emit familyReceiveAgeMsChanged();
+    }
+}
 bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
 {
@@ -414,6 +481,8 @@ void FlightTelemetryFactGroup::_resetTelemetryAvailability()
     _timeAvailable.setRawValue(false);
     _eventAvailable.setRawValue(false);
     _lastReceiveElapsedMs.clear();
+    _lastNotifiedStaleFamilies.clear();
+    _staleTimer.stop();
     emit familyReceiveAgeMsChanged();
     if (!_recentEvents.isEmpty()) {
         _recentEvents.clear();

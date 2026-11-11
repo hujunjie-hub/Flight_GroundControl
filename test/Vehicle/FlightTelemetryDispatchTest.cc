@@ -12,6 +12,8 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
 #include <QtTest/QTest>
 
 namespace {
@@ -1071,4 +1073,298 @@ void FlightTelemetryDispatchTest::_mockLinkDelaysFramesWithoutLosingThem()
     QVERIFY(mockLink->injectedSequence() >= 1);
 
     mockLink->clearFaultInjection();
+}
+
+// FGC-0036: staleness must arrive as a Q_PROPERTY notification, not only as a getter value.
+// Every test below asserts on the notify signal (QSignalSpy) or on a real QML binding, so a
+// regression that stops arming the timer fails here even though familyStale() still computes.
+
+void FlightTelemetryDispatchTest::_staleNotifyFiresWhenDeadlinePasses()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify deadline"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(300);
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    QVERIFY(staleNotifies.isValid());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6161616161616161ULL, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    // The acceptance criterion: no polling of the getter - the notify must arrive by itself.
+    staleNotifies.clear();
+    QVERIFY2(staleNotifies.wait(TestTimeout::longMs()),
+             "no familyReceiveAgeMsChanged notification arrived when the stale deadline passed");
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
+}
+
+void FlightTelemetryDispatchTest::_staleNotifyIsEmittedOnlyOnce()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify once"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(200);
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6262626262626262ULL, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    staleNotifies.clear();
+    QVERIFY(staleNotifies.wait(TestTimeout::longMs()));
+    QCOMPARE(staleNotifies.count(), 1);
+
+    // Nothing else changes afterwards, so no further notification may be emitted.
+    QVERIFY(!staleNotifies.wait(TestTimeout::shortMs()));
+    QCOMPARE(staleNotifies.count(), 1);
+}
+
+void FlightTelemetryDispatchTest::_freshFrameNotifiesImmediately()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify recovery"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(200);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x6363636363636363ULL;
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::longMs());
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    staleNotifies.clear();
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 2000, 2));
+
+    // Recovery must be signalled right away (not at the next deadline). The signal proves the
+    // notification; the state check then allows the queued message dispatch to complete.
+    // The frame may be dispatched synchronously inside respondWithMavlinkMessage(), in which case
+    // the notification is already recorded and wait() would block for a second, unrelated one.
+    if (staleNotifies.isEmpty()) {
+        QVERIFY(staleNotifies.wait(TestTimeout::mediumMs()));
+    }
+    QVERIFY(staleNotifies.count() >= 1);
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+}
+
+void FlightTelemetryDispatchTest::_thresholdChangeReschedulesDeadline()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify threshold"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(60000);
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6464646464646464ULL, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    staleNotifies.clear();
+
+    // Shortening the threshold must re-arm the timer with the new deadline.
+    telemetry->setFamilyStaleThresholdMs(150);
+    QVERIFY2(staleNotifies.wait(TestTimeout::longMs()),
+             "changing the threshold did not re-arm the staleness timer");
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
+}
+
+void FlightTelemetryDispatchTest::_multipleFamiliesGoStaleInOneNotification()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify multi"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(250);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x6565656565656565ULL;
+
+    // Both families are received back to back, so their deadlines are ~equal and both become
+    // stale within the same timer expiry.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, boot, 1010, 8));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("navigation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    staleNotifies.clear();
+    QVERIFY(staleNotifies.wait(TestTimeout::longMs()));
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("navigation")).toBool());
+}
+
+void FlightTelemetryDispatchTest::_staleNotificationDoesNotDisturbFreshFamily()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify isolation"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(400);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x6666666666666666ULL;
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, boot, 1010, 8));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("navigation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    // Keep operation fresh across the navigation deadline.
+    bool keptFresh = true;
+    for (int i = 0; i < 6; ++i) {
+        mockLink->respondWithMavlinkMessage(
+            operationStatusMessage(sysId, compId, boot, 2000 + static_cast<uint64_t>(i) * 100, 1));
+        QTest::qWait(0);
+        if (telemetry->familyStale().value(QStringLiteral("operation")).toBool()) {
+            keptFresh = false;
+            break;
+        }
+    }
+    QVERIFY(keptFresh);
+}
+
+void FlightTelemetryDispatchTest::_disconnectedVehicleStillNotifiesStale()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify disconnect"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    QPointer<FlightTelemetryFactGroup> guard(telemetryFor(vehicle));
+    QVERIFY(guard);
+    guard->setFamilyStaleThresholdMs(300);
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6767676767676767ULL, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(!guard->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    QSignalSpy staleNotifies(guard.data(), &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    staleNotifies.clear();
+    sharedLink->disconnect();
+
+    // Whether or not the Vehicle is torn down, the group must not stay silently "fresh".
+    QTRY_VERIFY_WITH_TIMEOUT(!guard || guard->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::longMs());
+}
+
+void FlightTelemetryDispatchTest::_qmlBindingObservesStaleTransition()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale QML binding"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(300);
+
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.setData(R"(
+import QtQuick
+QtObject {
+    property var telemetry
+    // Real binding: re-evaluates only when the notify signal fires.
+    property bool operationStale: telemetry ? telemetry.familyStale["operation"] : true
+}
+)", QUrl(QStringLiteral("qrc:/unittest/StaleBinding.qml")));
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    QScopedPointer<QObject> probe(component.create());
+    QVERIFY(probe);
+    probe->setProperty("telemetry", QVariant::fromValue<QObject *>(telemetry));
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6868686868686868ULL, 1000, 1));
+
+    // FRESH in QML ...
+    QTRY_COMPARE_WITH_TIMEOUT(probe->property("operationStale").toBool(), false, TestTimeout::mediumMs());
+    // ... then STALE, driven only by the timestamp notification.
+    QTRY_COMPARE_WITH_TIMEOUT(probe->property("operationStale").toBool(), true, TestTimeout::longMs());
+}
+
+void FlightTelemetryDispatchTest::_destroyedGroupStopsStaleTimer()
+{
+    // Arm a deadline, then destroy the owner while the timer is pending: no crash, no callback.
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Stale notify teardown"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(300);
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6969696969696969ULL, 1000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    QPointer<FlightTelemetryFactGroup> guard(telemetry);
+    {
+        // Dropping the vehicle destroys the fact group while the stale deadline is still armed.
+        sharedLink->disconnect();
+        QTRY_VERIFY_WITH_TIMEOUT(!guard, TestTimeout::longMs());
+    }
+    QVERIFY(!guard);
+    // Pending events must not resurrect anything; reaching here without a crash is the assertion.
+    QCoreApplication::processEvents();
 }

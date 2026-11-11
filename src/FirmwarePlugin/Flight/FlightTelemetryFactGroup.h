@@ -6,6 +6,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QQueue>
 #include <QtCore/QSet>
+#include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
 
@@ -34,6 +35,7 @@ public:
     Q_PROPERTY(QVariantMap familyStale READ familyStale NOTIFY familyReceiveAgeMsChanged)
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
+    ~FlightTelemetryFactGroup() override;
     QVariantList recentEvents() const;
     QVariantList prearmChecks() const;
     QVariantList sensorHealthStatuses() const;
@@ -46,7 +48,7 @@ public:
     /// without waiting seconds; production keeps the default.
     static constexpr int kDefaultFamilyStaleThresholdMs = 3000;
     int familyStaleThresholdMs() const { return _familyStaleThresholdMs; }
-    void setFamilyStaleThresholdMs(int ms) { _familyStaleThresholdMs = qMax(0, ms); emit familyReceiveAgeMsChanged(); }
+    void setFamilyStaleThresholdMs(int ms);
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
@@ -238,9 +240,18 @@ private:
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
     void _markFamilyReceived(const QString &family);
+    /// Recomputes the nearest stale deadline and arms the single staleness timer.
+    void _rescheduleStaleDeadline();
+    /// Emits familyReceiveAgeMsChanged only when the set of stale families actually changed.
+    void _notifyIfStaleSetChanged();
 
     QElapsedTimer _receiveClock;
     int _familyStaleThresholdMs = kDefaultFamilyStaleThresholdMs;
+    /// One timer serves every family (never one timer per family): only the nearest deadline is
+    /// armed, and on expiry all families are re-evaluated. Single-shot, so an idle vehicle arms
+    /// nothing and there is no polling.
+    QTimer _staleTimer;
+    QSet<QString> _lastNotifiedStaleFamilies;
     QHash<QString, qint64> _lastReceiveElapsedMs;
     quint64 _activeBootId = 0;
     quint32 _activeProfileId = 0;
