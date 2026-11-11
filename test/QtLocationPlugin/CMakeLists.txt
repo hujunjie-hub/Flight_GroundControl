@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MapProviderTest.h
         QGCMapEngineManagerArchiveTest.cc
         QGCMapEngineManagerArchiveTest.h
+        QGCMapEngineShutdownTest.cc
+        QGCMapEngineShutdownTest.h
         QGCCachedTileSetTest.cc
         QGCCachedTileSetTest.h
         QGCCacheWorkerTest.cc
@@ -27,6 +29,7 @@ add_qgc_test(MapProviderTest LABELS Unit)
 add_qgc_test(QGCCacheWorkerTest LABELS Unit)
 add_qgc_test(QGCCachedTileSetTest LABELS Unit)
 add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCMapEngineShutdownTest LABELS Unit RESOURCE_LOCK TempFiles)
 add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
 add_qgc_test(QGCTileSetTest LABELS Unit)
 add_qgc_test(UrlFactoryTest LABELS Unit)

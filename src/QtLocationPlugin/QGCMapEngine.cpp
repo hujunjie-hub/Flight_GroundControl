@@ -13,6 +13,12 @@
 
 QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
 
+namespace {
+/// Upper bound for stopping the cache worker during shutdown (FGC-0035). Long enough for a
+/// database operation to finish, short enough that a stuck worker cannot hang process exit.
+constexpr int kWorkerShutdownTimeoutMs = 5000;
+} // namespace
+
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
 
 QGCMapEngine *getQGCMapEngine()
@@ -49,8 +55,26 @@ void QGCMapEngine::shutdown()
     if (m_worker) {
         (void) disconnect(m_worker);
         m_worker->stop();
-        (void) m_worker->wait();
-        delete m_worker;
+
+        // Bounded wait (FGC-0035). The worker may be inside a SQLite call it cannot abandon, so
+        // an unbounded wait() can hang the process forever - including in a static destructor,
+        // where nothing can recover. The contract is: shutdown gives the worker
+        // kWorkerShutdownTimeoutMs to finish, then reports it and stops owning the thread.
+        if (m_worker->wait(kWorkerShutdownTimeoutMs)) {
+            delete m_worker;
+        } else {
+            // Deliberately do NOT delete the worker: it is still running and may still be using
+            // the database. Detach it from this engine as well - QObject::~QObject would
+            // otherwise delete the child and ~QGCCacheWorker's own wait() would block process
+            // exit forever (that is exactly the FGC-0035 hang). The thread deletes itself when
+            // it finally finishes; at process exit the OS reclaims it.
+            qCWarning(QGCMapEngineLog)
+                << "cache worker did not stop within" << kWorkerShutdownTimeoutMs
+                << "ms; detaching it and deleting it when the thread finishes";
+            QGCCacheWorker *const orphan = m_worker;
+            orphan->setParent(nullptr);
+            (void) connect(orphan, &QThread::finished, orphan, &QObject::deleteLater);
+        }
         m_worker = nullptr;
     }
     m_initialized = false;
