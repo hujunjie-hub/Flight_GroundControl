@@ -506,3 +506,256 @@ void FlightTelemetryDispatchTest::_telemetryStartsFreshAfterReconnect()
 }
 
 UT_REGISTER_TEST(FlightTelemetryDispatchTest, TestLabel::Integration, TestLabel::Vehicle)
+
+// Appended to FlightTelemetryDispatchTest.cc (FGC-0031 timestamp contract).
+// Every case drives real MAVLink bytes through MockLink -> MAVLinkProtocol -> Vehicle ->
+// FlightTelemetryFactGroup; no Fact is written directly.
+// Negative assertions use QSignalSpy::wait() (no fixed qWait) so "no update happened" is
+// proven rather than merely observed.
+
+namespace {
+
+mavlink_message_t navigationStatusMessage(uint8_t systemId, uint8_t componentId,
+                                          uint64_t bootId, uint64_t timeBootUs,
+                                          uint32_t stateEpoch)
+{
+    mavlink_fcu_nav_status_t payload{};
+    payload.time_boot_us = timeBootUs;
+    payload.boot_id = bootId;
+    payload.profile_id = 0x00010001;
+    payload.state_epoch = stateEpoch;
+    payload.origin_id = 12;
+    payload.capability_mask = 0x7F;
+
+    mavlink_message_t message{};
+    mavlink_msg_fcu_nav_status_encode(systemId, componentId, &message, &payload);
+    return message;
+}
+
+} // namespace
+
+void FlightTelemetryDispatchTest::_freshFrameStillUpdates()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry fresh frames"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *operationAvailable = telemetry->getFact(QStringLiteral("operationAvailable"));
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    Fact *armState = telemetry->getFact(QStringLiteral("armState"));
+    QVERIFY(operationAvailable && operationTime && armState);
+
+    QSignalSpy timeChanges(operationTime, &Fact::rawValueChanged);
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x1111222233334444ULL, 1000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 1000ULL, TestTimeout::mediumMs());
+    QVERIFY(operationAvailable->rawValue().toBool());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x1111222233334444ULL, 2000, 2));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 2000ULL, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(armState->rawValue().toUInt(), 2U, TestTimeout::mediumMs());
+
+    QCOMPARE(timeChanges.count(), 2);
+}
+
+void FlightTelemetryDispatchTest::_equalTimestampIsIdempotent()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry duplicate frames"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    Fact *armState = telemetry->getFact(QStringLiteral("armState"));
+    QVERIFY(operationTime && armState);
+
+    QSignalSpy timeChanges(operationTime, &Fact::rawValueChanged);
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x2222333344445555ULL, 5000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 5000ULL, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(armState->rawValue().toUInt(), 1U, TestTimeout::mediumMs());
+
+    // Same (boot, timestamp), different payload: a duplicate, not an update.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x2222333344445555ULL, 5000, 2));
+
+    QVERIFY(!timeChanges.wait(TestTimeout::shortMs()));
+    QCOMPARE(operationTime->rawValue().toULongLong(), 5000ULL);
+    QCOMPARE(armState->rawValue().toUInt(), 1U);
+    QCOMPARE(timeChanges.count(), 1);
+}
+
+void FlightTelemetryDispatchTest::_staleOperationFrameDoesNotOverwrite()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry stale operation"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *operationAvailable = telemetry->getFact(QStringLiteral("operationAvailable"));
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    Fact *armState = telemetry->getFact(QStringLiteral("armState"));
+    QVERIFY(operationAvailable && operationTime && armState);
+
+    QSignalSpy timeChanges(operationTime, &Fact::rawValueChanged);
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x3333444455556666ULL, 2000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 2000ULL, TestTimeout::mediumMs());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, 0x3333444455556666ULL, 1000, 2));
+
+    QVERIFY(!timeChanges.wait(TestTimeout::shortMs()));
+    QCOMPARE(operationTime->rawValue().toULongLong(), 2000ULL);
+    QCOMPARE(armState->rawValue().toUInt(), 1U);
+    QCOMPARE(timeChanges.count(), 1);
+    QVERIFY(operationAvailable->rawValue().toBool());
+}
+
+void FlightTelemetryDispatchTest::_staleNavigationFrameDoesNotOverwrite()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry stale navigation"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *navigationAvailable = telemetry->getFact(QStringLiteral("navigationAvailable"));
+    Fact *navigationTime = telemetry->getFact(QStringLiteral("navTimeBootUs"));
+    QVERIFY(navigationAvailable && navigationTime);
+
+    QSignalSpy timeChanges(navigationTime, &Fact::rawValueChanged);
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, 0x4444555566667777ULL, 2000, 8));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 2000ULL, TestTimeout::mediumMs());
+    QVERIFY(navigationAvailable->rawValue().toBool());
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, 0x4444555566667777ULL, 1000, 9));
+
+    QVERIFY(!timeChanges.wait(TestTimeout::shortMs()));
+    QCOMPARE(navigationTime->rawValue().toULongLong(), 2000ULL);
+    QCOMPARE(timeChanges.count(), 1);
+}
+
+void FlightTelemetryDispatchTest::_newBootIdResetsWatermark()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry new boot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *navigationTime = telemetry->getFact(QStringLiteral("navTimeBootUs"));
+    QVERIFY(navigationTime);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, 0x5555666677778888ULL, 5000, 8));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 5000ULL, TestTimeout::mediumMs());
+
+    // A confirmed new boot epoch sets a fresh baseline, so a smaller timestamp is valid again.
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, 0x6666777788889999ULL, 100, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 100ULL, TestTimeout::mediumMs());
+}
+
+void FlightTelemetryDispatchTest::_delayedOldBootFrameIsRejected()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry retired boot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *navigationTime = telemetry->getFact(QStringLiteral("navTimeBootUs"));
+    QVERIFY(navigationTime);
+
+    QSignalSpy timeChanges(navigationTime, &Fact::rawValueChanged);
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t bootA = 0x777788889999AAAAULL;
+    const uint64_t bootB = 0x88889999AAAABBBBULL;
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, bootA, 5000, 8));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 5000ULL, TestTimeout::mediumMs());
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, bootB, 100, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 100ULL, TestTimeout::mediumMs());
+
+    // Delayed frame from the retired boot: a much larger timestamp must still be rejected,
+    // otherwise the cache would roll back to a previous FCU session.
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, bootA, 9000, 8));
+
+    QVERIFY(!timeChanges.wait(TestTimeout::shortMs()));
+    QCOMPARE(navigationTime->rawValue().toULongLong(), 100ULL);
+}
+
+void FlightTelemetryDispatchTest::_unknownBootIdDoesNotResetWatermark()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry unknown boot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *navigationTime = telemetry->getFact(QStringLiteral("navTimeBootUs"));
+    QVERIFY(navigationTime);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t knownBoot = 0x9999AAAABBBBCCCCULL;
+
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, knownBoot, 5000, 8));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 5000ULL, TestTimeout::mediumMs());
+
+    // boot_id 0 means "unknown epoch": it must neither be treated as a reboot nor bypass the
+    // watermark, so this older frame is dropped and the known epoch stays intact.
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, 0, 100, 1));
+    QTest::qWait(0); // let the dispatch queue drain without a fixed delay
+
+    QCOMPARE(navigationTime->rawValue().toULongLong(), 5000ULL);
+
+    // The known epoch still works, proving the watermark was not reset.
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, knownBoot, 6000, 9));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 6000ULL, TestTimeout::mediumMs());
+}
+// MockLink's component-metadata request legitimately fails for vehicles that carry no metadata
+// (the same precise suppression used by InitialConnectTest/ParameterManagerTest). Declared in
+// initTestCase so every dispatch test is deterministic; the match is exact, not a category-
+// wide mute.
+void FlightTelemetryDispatchTest::initTestCase()
+{
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine",
+                     QtWarningMsg, QRegularExpression(QStringLiteral("failed to load metadata")));
+}

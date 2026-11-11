@@ -272,9 +272,14 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     }
     if (_activeBootId == 0) {
         _activeBootId = bootId;
-    }
-    if (bootId != _activeBootId) {
-        return false;
+    } else if (bootId != _activeBootId) {
+        // A confirmed different boot_id starts a new epoch for every family, not only for the
+        // message type that happens to carry _activateBoot(). A boot that was already retired is
+        // rejected inside _activateBoot, which is what keeps delayed frames from an older session
+        // out (FGC-0031 rules 4, 5 and 7).
+        if (!_activateBoot(bootId)) {
+            return false;
+        }
     }
     if (timeBootUs <= lastTimeBootUs) {
         return false;
@@ -292,9 +297,14 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     }
     if (_activeBootId == 0) {
         _activeBootId = bootId;
-    }
-    if (bootId != _activeBootId) {
-        return false;
+    } else if (bootId != _activeBootId) {
+        // A confirmed different boot_id starts a new epoch for every family, not only for the
+        // message type that happens to carry _activateBoot(). A boot that was already retired is
+        // rejected inside _activateBoot, which is what keeps delayed frames from an older session
+        // out (FGC-0031 rules 4, 5 and 7).
+        if (!_activateBoot(bootId)) {
+            return false;
+        }
     }
     const quint64 lastTimeBootUs = lastTimeByInstance.value(instanceId, 0);
     if (timeBootUs <= lastTimeBootUs) {
@@ -306,9 +316,16 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
 
 bool FlightTelemetryFactGroup::_acceptTelemetryProfile(quint64 bootId, quint32 profileId) const
 {
-    return bootId != 0 && profileId != 0 &&
-           (_activeBootId == 0 || bootId == _activeBootId) &&
-           (_activeProfileId == 0 || profileId == _activeProfileId);
+    if (bootId == 0 || profileId == 0) {
+        return false;
+    }
+    if (_activeBootId != 0 && bootId != _activeBootId) {
+        // A different boot is a candidate new epoch. The epoch switch itself happens in
+        // _acceptTelemetryMessage() -> _activateBoot(); here only a retired (older) boot is
+        // rejected, which is what keeps delayed frames from a previous session out.
+        return !_retiredBootIds.contains(bootId);
+    }
+    return _activeProfileId == 0 || profileId == _activeProfileId;
 }
 
 void FlightTelemetryFactGroup::_commitTelemetryProfile(quint32 profileId)
