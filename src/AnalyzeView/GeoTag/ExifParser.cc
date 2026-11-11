@@ -37,16 +37,24 @@ bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetyp
 
 /// Parses the fixed EXIF timestamp format `yyyy:MM:dd HH:mm:ss` (CIPA DC-008).
 ///
-/// Deliberately does not use QDateTime::fromString(): that API constructs a QDateTimeParser
-/// whose constructor calls QLocale::system() (QDateTimeParser's defaultLocale member
-/// initializer). QLocale::system() mutates process-global locale data (a function-local
-/// 'static QLocalePrivate' plus the shared QLocaleData/QSystemLocale singletons) without any
-/// synchronisation, so concurrent callers corrupt each other's locale strings. ExifParser::
-/// readTime() runs on every QtConcurrent EXIF worker thread, which made that race free the
-/// same QString buffer twice and abort the process with STATUS_HEAP_CORRUPTION (FGC-0029).
-/// The EXIF timestamp is locale independent by specification, so a fixed-format reader is both
-/// correct and reentrant. Leading zeroes are mandated by the specification but not emitted by
-/// every camera, so one or two digits are accepted for all fields but the year.
+/// Deliberately does not use QDateTime::fromString().
+///
+/// FGC-0029: readTime() runs on every QtConcurrent EXIF worker thread, and it aborted with
+/// STATUS_HEAP_CORRUPTION (double free) through that call. AddressSanitizer showed a
+/// one-character QString owned by Qt's process-wide system-locale cache
+/// (QSystemLocalePrivate::zeroDigit) being allocated on one worker thread and freed on another,
+/// with every stack frame inside QLocale/QDateTimeParser. The defect is therefore reachable from
+/// QDateTime::fromString() alone and is not caused by the caller's data.
+///
+/// Which Qt object owns that cross-thread lifetime is NOT established: the crash is rare, and the
+/// only mutex in the area (systemData()) does not compile into an obviously unsynchronised
+/// write. Treat this as "Qt date/time parsing is not safe to call from many threads here" and not
+/// as a confirmed Qt bug with a named field.
+///
+/// EXIF timestamps are locale independent by specification, so a fixed-format reader is both the
+/// correct behaviour and it removes the dependency on that shared Qt locale state entirely.
+/// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
+/// two digits are accepted for all fields but the year.
 QDateTime parseExifTimestamp(QStringView text)
 {
     int year = 0;
