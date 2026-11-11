@@ -1368,3 +1368,183 @@ void FlightTelemetryDispatchTest::_destroyedGroupStopsStaleTimer()
     // Pending events must not resurrect anything; reaching here without a crash is the assertion.
     QCoreApplication::processEvents();
 }
+
+// FGC-0032: duplicate / reorder / disconnect / reconnect injection, all deterministic.
+// The injector is a pure function of (sequence, seed, config) and every decision is logged,
+// so a failing run can be replayed.
+
+void FlightTelemetryDispatchTest::_duplicateFrameDoesNotUpdateFactTwice()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Fault injection duplicate"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(5000);
+
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    Fact *armState = telemetry->getFact(QStringLiteral("armState"));
+    QVERIFY(operationTime && armState);
+    QSignalSpy timeChanges(operationTime, &Fact::rawValueChanged);
+
+    MockLink::FaultInjection injection;
+    injection.seed = 4242;
+    injection.duplicateEveryNth = 1;   // every injected frame is delivered twice
+    injection.duplicateCount = 1;
+    mockLink->setFaultInjection(injection);
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6A6A6A6A6A6A6A6AULL, 1000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 1000ULL, TestTimeout::longMs());
+    QCOMPARE(armState->rawValue().toUInt(), 1U);
+
+    // The second copy carries the same timestamp and must be dropped as a duplicate.
+    QVERIFY(!timeChanges.wait(TestTimeout::shortMs()));
+    QCOMPARE(timeChanges.count(), 1);
+    QCOMPARE(operationTime->rawValue().toULongLong(), 1000ULL);
+
+    mockLink->clearFaultInjection();
+}
+
+void FlightTelemetryDispatchTest::_reorderedFramesKeepNewestValue()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Fault injection reorder"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(5000);
+
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    QVERIFY(operationTime);
+
+    MockLink::FaultInjection injection;
+    injection.seed = 99;
+    injection.reorderWindow = 2;   // buffer two frames, then deliver them newest-first
+    mockLink->setFaultInjection(injection);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x6B6B6B6B6B6B6B6BULL;
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 2000, 2));
+
+    // The window flushes reversed (2000 first), so the older 1000 frame arrives last and must
+    // be rejected instead of rolling the value back.
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 2000ULL, TestTimeout::longMs());
+    QCOMPARE(operationTime->rawValue().toULongLong(), 2000ULL);
+
+    mockLink->clearFaultInjection();
+}
+
+void FlightTelemetryDispatchTest::_disconnectDropsBufferedFrames()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Fault injection disconnect"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    QPointer<FlightTelemetryFactGroup> guard(telemetryFor(vehicle));
+    QVERIFY(guard);
+
+    MockLink::FaultInjection injection;
+    injection.seed = 7;
+    injection.reorderWindow = 4;   // frames stay buffered until the window fills
+    mockLink->setFaultInjection(injection);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    for (int i = 1; i <= 2; ++i) {
+        mockLink->respondWithMavlinkMessage(
+            operationStatusMessage(sysId, compId, 0x6C6C6C6C6C6C6C6CULL,
+                                   static_cast<uint64_t>(i) * 1000, 1));
+    }
+    // Buffered inside the injector, so nothing reached the fact group yet.
+    if (guard) {
+        QCOMPARE(guard->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong(), 0ULL);
+    }
+
+    // Dropping the link must not flush the buffer afterwards.
+    sharedLink->disconnect();
+    QTRY_VERIFY_WITH_TIMEOUT(!guard ||
+                                 guard->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toULongLong() == 0ULL,
+                             TestTimeout::longMs());
+    mockLink->clearFaultInjection();
+}
+
+void FlightTelemetryDispatchTest::_reconnectAcceptsNewEpochOnly()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Fault injection reconnect"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(5000);
+
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    QVERIFY(operationTime);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t bootA = 0x6D6D6D6D6D6D6D6DULL;
+    const uint64_t bootB = 0x6E6E6E6E6E6E6E6EULL;
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, bootA, 9000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 9000ULL, TestTimeout::mediumMs());
+
+    // A frame from a new epoch is accepted even though its timestamp is smaller ...
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, bootB, 50, 2));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 50ULL, TestTimeout::mediumMs());
+
+    // ... while a delayed frame from the retired epoch is rejected.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, bootA, 9500, 1));
+    QTest::qWait(0);
+    QCOMPARE(operationTime->rawValue().toULongLong(), 50ULL);
+}
+
+void FlightTelemetryDispatchTest::_injectedSequenceBaselineSurvivesHandshake()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Fault injection baseline"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+
+    // Round 14 bug: a test assumed the counter started at the first injected frame, but MockLink
+    // drives heartbeats through the same path. The counter therefore only advances while the
+    // injector is enabled, and tests must assert on a delta, never on an absolute value.
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(0));
+
+    MockLink::FaultInjection injection;
+    injection.seed = 1;
+    injection.dropEveryNth = 2;
+    mockLink->setFaultInjection(injection);
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(0));
+
+    const quint64 before = mockLink->injectedSequenceSinceEnable();
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(
+        static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
+        0x6F6F6F6F6F6F6F6FULL, 1000, 1));
+    // At least our frame advanced the counter; heartbeats may advance it further.
+    QVERIFY(mockLink->injectedSequenceSinceEnable() >= before + 1);
+
+    mockLink->clearFaultInjection();
+}

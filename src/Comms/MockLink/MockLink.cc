@@ -1062,6 +1062,19 @@ void MockLink::_sendDistanceSensors()
     }
 }
 
+void MockLink::setFaultInjection(const FaultInjection &config)
+{
+    _faultInjection = config;
+    _injectSequenceBase = _injectSequence;
+    _reorderBuffer.clear();
+}
+
+void MockLink::clearFaultInjection()
+{
+    _faultInjection = FaultInjection{};
+    _reorderBuffer.clear();
+}
+
 void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
 {
     if (!_commLost) {
@@ -1069,7 +1082,10 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
         const int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
         const QByteArray bytes(reinterpret_cast<char*>(buffer), cBuffer);
 
-        if (_faultInjection.dropEveryNth > 0 || (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0)) {
+        const bool injectionActive = _faultInjection.dropEveryNth > 0 ||
+                                     (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0) ||
+                                     _faultInjection.duplicateEveryNth > 0 || _faultInjection.reorderWindow > 0;
+        if (injectionActive) {
             const quint64 sequence = ++_injectSequence;
             if (_faultInjection.dropEveryNth > 0 &&
                 (sequence % static_cast<quint64>(_faultInjection.dropEveryNth)) == 0) {
@@ -1077,13 +1093,52 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
                                      << "seed" << _faultInjection.seed;
                 return;
             }
+            if (_faultInjection.reorderWindow > 0) {
+                // Buffer deterministically and flush the window in reverse order.
+                _reorderBuffer.append(bytes);
+                qCDebug(MockLinkLog) << "fault injection: buffer sequence" << sequence
+                                     << "seed" << _faultInjection.seed
+                                     << "buffered" << _reorderBuffer.size();
+                if (_reorderBuffer.size() >= _faultInjection.reorderWindow) {
+                    for (int i = _reorderBuffer.size() - 1; i >= 0; --i) {
+                        qCDebug(MockLinkLog) << "fault injection: flush index" << i << "seed" << _faultInjection.seed;
+                        emit bytesReceived(this, _reorderBuffer.at(i));
+                    }
+                    _reorderBuffer.clear();
+                }
+                return;
+            }
+            const auto deliver = [this](const QByteArray &payload, const char *why, quint64 sequence) {
+                const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
+                const bool duplicate = _faultInjection.duplicateEveryNth > 0 &&
+                                       (sequence % static_cast<quint64>(_faultInjection.duplicateEveryNth)) == 0;
+                const int total = duplicate ? copies : 1;
+                for (int c = 0; c < total; ++c) {
+                    qCDebug(MockLinkLog) << "fault injection:" << why << "sequence" << sequence
+                                         << "copy" << c << "seed" << _faultInjection.seed;
+                    emit bytesReceived(this, payload);
+                }
+            };
             if (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0 &&
                 (sequence % static_cast<quint64>(_faultInjection.delayEveryNth)) == 0) {
                 qCDebug(MockLinkLog) << "fault injection: delay sequence" << sequence
                                      << "by" << _faultInjection.delayMs << "ms seed" << _faultInjection.seed;
-                QTimer::singleShot(_faultInjection.delayMs, this, [this, bytes]() { emit bytesReceived(this, bytes); });
+                const QByteArray payload = bytes;
+                QTimer::singleShot(_faultInjection.delayMs, this, [this, payload, sequence]() {
+                    const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
+                    const bool duplicate = _faultInjection.duplicateEveryNth > 0 &&
+                                           (sequence % static_cast<quint64>(_faultInjection.duplicateEveryNth)) == 0;
+                    const int total = duplicate ? copies : 1;
+                    for (int c = 0; c < total; ++c) {
+                        qCDebug(MockLinkLog) << "fault injection: delayed delivery sequence" << sequence
+                                             << "copy" << c;
+                        emit bytesReceived(this, payload);
+                    }
+                });
                 return;
             }
+            deliver(bytes, "deliver", sequence);
+            return;
         }
 
         emit bytesReceived(this, bytes);

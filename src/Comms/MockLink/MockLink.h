@@ -64,14 +64,21 @@ public:
     struct FaultInjection
     {
         quint32 seed = 0;
-        int dropEveryNth = 0;   ///< 0 disables dropping
-        int delayEveryNth = 0;  ///< 0 disables delaying
+        int dropEveryNth = 0;        ///< 0 disables dropping
+        int delayEveryNth = 0;       ///< 0 disables delaying
         int delayMs = 0;
+        int duplicateEveryNth = 0;   ///< 0 disables duplicating
+        int duplicateCount = 1;      ///< extra copies delivered per duplicated frame
+        int reorderWindow = 0;       ///< 0 disables; otherwise buffer this many frames and flush reversed
     };
 
-    void setFaultInjection(const FaultInjection &config) { _faultInjection = config; }
-    void clearFaultInjection() { _faultInjection = FaultInjection{}; }
+    void setFaultInjection(const FaultInjection &config);
+    void clearFaultInjection();
     FaultInjection faultInjection() const { return _faultInjection; }
+    /// Sequence number of the last frame since the injector was last enabled. This is what tests
+    /// must assert on: the handshake consumes sequence numbers before the injector is enabled, so
+    /// an absolute counter never starts at a value a test can predict (round 14 bug).
+    quint64 injectedSequenceSinceEnable() const { return _injectSequence - _injectSequenceBase; }
     quint64 injectedSequence() const { return _injectSequence; }
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 
@@ -257,6 +264,8 @@ private slots:
 private:
     FaultInjection _faultInjection;
     quint64 _injectSequence = 0;
+    quint64 _injectSequenceBase = 0;
+    QVector<QByteArray> _reorderBuffer;
 
     typedef struct {
         const char *name;

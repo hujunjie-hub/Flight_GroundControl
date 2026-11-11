@@ -39,4 +39,9 @@ private slots:
     void _disconnectedVehicleStillNotifiesStale();
     void _qmlBindingObservesStaleTransition();
     void _destroyedGroupStopsStaleTimer();
+    void _duplicateFrameDoesNotUpdateFactTwice();
+    void _reorderedFramesKeepNewestValue();
+    void _disconnectDropsBufferedFrames();
+    void _reconnectAcceptsNewEpochOnly();
+    void _injectedSequenceBaselineSurvivesHandshake();
 };
