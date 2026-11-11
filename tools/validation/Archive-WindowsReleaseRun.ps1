@@ -8,6 +8,12 @@ param(
     [ValidateSet('PASS', 'FAIL', 'PARTIAL', 'NOT_RUN', 'UNVERIFIED')]
     [string]$Result,
 
+    # Archive naming is <yyyyMMdd>-R<round> (e.g. 20261111-R14). The date comes from the
+    # RUN_ID's UTC day so the name and the run always agree. Omit -Round to fall back to
+    # the RUN_ID itself (only needed for archives created before the round-based naming).
+    [ValidateRange(1, 999)]
+    [int]$Round = 0,
+
     [string]$EvidenceDirectory = 'work/validation/current',
     [string]$BuildDirectory = 'build-win-release'
 )
@@ -16,12 +22,18 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location $repoRoot
 
+$archiveName = if ($Round -gt 0) {
+    '{0}-R{1:D2}' -f $RunId.Substring(0, 8), $Round
+} else {
+    $RunId
+}
+
 $evidencePath = Join-Path $repoRoot $EvidenceDirectory
 $buildPath = Join-Path $repoRoot $BuildDirectory
 $archiveRoot = Join-Path $repoRoot 'work/validation/archives'
-$runDirectory = Join-Path $archiveRoot $RunId
-$zipPath = Join-Path $archiveRoot "$RunId.zip"
-$hashPath = Join-Path $archiveRoot "$RunId.zip.sha256"
+$runDirectory = Join-Path $archiveRoot $archiveName
+$zipPath = Join-Path $archiveRoot "$archiveName.zip"
+$hashPath = Join-Path $archiveRoot "$archiveName.zip.sha256"
 
 foreach ($path in @($runDirectory, $zipPath, $hashPath)) {
     if (Test-Path $path) {
@@ -213,6 +225,8 @@ $fileHashes = @(
 $manifest = [ordered]@{
     schema = 'flight-groundcontrol-local-run/1.0'
     run_id = $RunId
+    round = $Round
+    archive_name = $archiveName
     result_entered_by_agent = $Result
     archive_created_utc = [DateTime]::UtcNow.ToString('o')
     repository_root = $repoRoot
