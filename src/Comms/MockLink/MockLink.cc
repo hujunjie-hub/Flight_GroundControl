@@ -1100,9 +1100,17 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
                                      << "seed" << _faultInjection.seed
                                      << "buffered" << _reorderBuffer.size();
                 if (_reorderBuffer.size() >= _faultInjection.reorderWindow) {
+                    // Reversed flush; duplication still applies so a combined reorder+duplicate
+                    // scenario exercises both faults in one pass.
+                    const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
+                    const bool duplicate = _faultInjection.duplicateEveryNth > 0;
                     for (int i = _reorderBuffer.size() - 1; i >= 0; --i) {
-                        qCDebug(MockLinkLog) << "fault injection: flush index" << i << "seed" << _faultInjection.seed;
-                        emit bytesReceived(this, _reorderBuffer.at(i));
+                        const int total = duplicate ? copies : 1;
+                        for (int c = 0; c < total; ++c) {
+                            qCDebug(MockLinkLog) << "fault injection: flush index" << i << "copy" << c
+                                                 << "seed" << _faultInjection.seed;
+                            emit bytesReceived(this, _reorderBuffer.at(i));
+                        }
                     }
                     _reorderBuffer.clear();
                 }

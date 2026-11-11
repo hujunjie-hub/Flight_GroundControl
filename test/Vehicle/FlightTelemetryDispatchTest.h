@@ -44,4 +44,11 @@ private slots:
     void _disconnectDropsBufferedFrames();
     void _reconnectAcceptsNewEpochOnly();
     void _injectedSequenceBaselineSurvivesHandshake();
+    void _scenarioADelayReorderDuplicate();
+    void _scenarioBDropDisconnectReconnect();
+    void _scenarioCOldEpochDelayedPlusNewEpoch();
+    void _scenarioDMultipleFamiliesExpireTogether();
+    void _buildInfoChunksCompleteInAnyOrder();
+    void _buildInfoDuplicateChunkIsIdempotent();
+    void _buildInfoNewSnapshotClearsPreviousHashes();
 };

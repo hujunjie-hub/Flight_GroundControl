@@ -1548,3 +1548,280 @@ void FlightTelemetryDispatchTest::_injectedSequenceBaselineSurvivesHandshake()
 
     mockLink->clearFaultInjection();
 }
+
+// R16: combination fault scenarios (A-D) and BUILD_INFO chunk coverage.
+// Every case drives real MAVLink bytes; the injector decisions are deterministic per seed.
+
+namespace {
+
+mavlink_fcu_build_info_t buildInfoPayload(uint64_t bootId, uint64_t timeBootUs, uint8_t digestKind,
+                                          uint8_t shaByte, uint32_t productRevision)
+{
+    mavlink_fcu_build_info_t payload{};
+    payload.time_boot_us = timeBootUs;
+    payload.boot_id = bootId;
+    payload.profile_id = 0x00010001;
+    payload.product_revision = productRevision;
+    payload.port_revision = 7;
+    payload.schema_major = 1;
+    payload.schema_minor = 2;
+    payload.source_commit_valid = 1;
+    for (int i = 0; i < 20; ++i) {
+        payload.source_commit[i] = static_cast<uint8_t>('a' + (i % 6));
+    }
+    payload.digest_kind = digestKind;
+    for (int i = 0; i < 32; ++i) {
+        payload.sha256[i] = static_cast<uint8_t>(shaByte + i);
+    }
+    return payload;
+}
+
+mavlink_message_t buildInfoMessage(uint8_t sysId, uint8_t compId, const mavlink_fcu_build_info_t &payload)
+{
+    mavlink_message_t message{};
+    mavlink_msg_fcu_build_info_encode(sysId, compId, &message, &payload);
+    return message;
+}
+
+} // namespace
+
+void FlightTelemetryDispatchTest::_scenarioADelayReorderDuplicate()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Scenario A"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(5000);
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    QVERIFY(operationTime);
+
+    // Scenario A: delay + reverse order + duplicate copies of every flushed frame.
+    MockLink::FaultInjection injection;
+    injection.seed = 1001;
+    injection.reorderWindow = 3;
+    injection.duplicateEveryNth = 1;
+    injection.duplicateCount = 1;
+    mockLink->setFaultInjection(injection);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7100000000000001ULL;
+    for (int i = 1; i <= 3; ++i) {
+        mockLink->respondWithMavlinkMessage(
+            operationStatusMessage(sysId, compId, boot, static_cast<uint64_t>(i) * 1000, 1));
+    }
+
+    // Order delivered: 3000, 3000, 2000, 2000, 1000, 1000. The newest value must win and the
+    // duplicates/older frames must not roll it back.
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 3000ULL, TestTimeout::longMs());
+    QCOMPARE(operationTime->rawValue().toULongLong(), 3000ULL);
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool() == false);
+    mockLink->clearFaultInjection();
+}
+
+void FlightTelemetryDispatchTest::_scenarioBDropDisconnectReconnect()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Scenario B"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    QPointer<FlightTelemetryFactGroup> guard(telemetryFor(vehicle));
+    QVERIFY(guard);
+
+    MockLink::FaultInjection injection;
+    injection.seed = 2002;
+    injection.dropEveryNth = 2;
+    mockLink->setFaultInjection(injection);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7200000000000001ULL;
+    for (int i = 1; i <= 4; ++i) {
+        mockLink->respondWithMavlinkMessage(
+            operationStatusMessage(sysId, compId, boot, static_cast<uint64_t>(i) * 1000, 1));
+    }
+    const qint64 beforeDisconnect =
+        guard ? guard->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toLongLong() : -1;
+
+    sharedLink->disconnect();
+    QTRY_VERIFY_WITH_TIMEOUT(
+        !guard || guard->getFact(QStringLiteral("opTimeBootUs"))->rawValue().toLongLong() == beforeDisconnect,
+        TestTimeout::longMs());
+    mockLink->clearFaultInjection();
+}
+
+void FlightTelemetryDispatchTest::_scenarioCOldEpochDelayedPlusNewEpoch()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Scenario C"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(5000);
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    QVERIFY(operationTime);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t oldEpoch = 0x7300000000000001ULL;
+    const uint64_t newEpoch = 0x7300000000000002ULL;
+
+    // Scenario C: the old epoch frame arrives, the new epoch takes over, and the old epoch frame
+    // is then re-delivered late (the shape of a delayed packet on the wire).
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, oldEpoch, 9000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 9000ULL, TestTimeout::mediumMs());
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, newEpoch, 100, 2));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 100ULL, TestTimeout::mediumMs());
+
+    // The late old-epoch frame must be rejected even though its timestamp is larger.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, oldEpoch, 9500, 1));
+    QTest::qWait(0);
+    QCOMPARE(operationTime->rawValue().toULongLong(), 100ULL);
+}
+
+void FlightTelemetryDispatchTest::_scenarioDMultipleFamiliesExpireTogether()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Scenario D"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    telemetry->setFamilyStaleThresholdMs(250);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7400000000000001ULL;
+
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
+    mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, boot, 1000, 8));
+    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
+                             TestTimeout::mediumMs());
+
+    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
+    staleNotifies.clear();
+    QVERIFY(staleNotifies.wait(TestTimeout::longMs()));
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
+    QVERIFY(telemetry->familyStale().value(QStringLiteral("navigation")).toBool());
+}
+
+void FlightTelemetryDispatchTest::_buildInfoChunksCompleteInAnyOrder()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("BuildInfo chunks"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7500000000000001ULL;
+    const uint64_t ts = 5000;
+
+    // Digest kinds are mavlink enum values; send them newest-last in a shuffled order.
+    const QVector<uint8_t> order = {2, 0, 3, 1};
+    for (uint8_t kind : order) {
+        mockLink->respondWithMavlinkMessage(
+            buildInfoMessage(sysId, compId, buildInfoPayload(boot, ts, kind, static_cast<uint8_t>(0x10 * (kind + 1)), 42)));
+    }
+
+    Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
+    Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
+    Fact *profileSha = telemetry->getFact(QStringLiteral("profileSha256"));
+    Fact *abiSha = telemetry->getFact(QStringLiteral("abiSha256"));
+    QVERIFY(firmwareSha && coreParamsSha && profileSha && abiSha);
+
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    QVERIFY(!coreParamsSha->rawValue().toString().isEmpty());
+    QVERIFY(!profileSha->rawValue().toString().isEmpty());
+    QVERIFY(!abiSha->rawValue().toString().isEmpty());
+}
+
+void FlightTelemetryDispatchTest::_buildInfoDuplicateChunkIsIdempotent()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("BuildInfo duplicate"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7500000000000002ULL;
+
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, 6000, 0, 0x20, 42)));
+    Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
+    QVERIFY(firmwareSha);
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    const QString first = firmwareSha->rawValue().toString();
+
+    // Same digest kind again with a different payload: the digest mask must reject it.
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, 6000, 0, 0x99, 42)));
+    QTest::qWait(0);
+    QCOMPARE(firmwareSha->rawValue().toString(), first);
+}
+
+void FlightTelemetryDispatchTest::_buildInfoNewSnapshotClearsPreviousHashes()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("BuildInfo snapshot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7500000000000003ULL;
+
+    for (uint8_t kind = 0; kind < 4; ++kind) {
+        mockLink->respondWithMavlinkMessage(
+            buildInfoMessage(sysId, compId, buildInfoPayload(boot, 7000, kind, 0x30, 42)));
+    }
+    Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
+    QVERIFY(firmwareSha);
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+
+    Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
+    Fact *profileSha = telemetry->getFact(QStringLiteral("profileSha256"));
+    Fact *abiSha = telemetry->getFact(QStringLiteral("abiSha256"));
+    QVERIFY(coreParamsSha && profileSha && abiSha);
+
+    // A newer publication timestamp starts a new snapshot: chunk 0 repopulates firmwareSha, while
+    // the previous snapshot's other hashes must be cleared instead of being mixed in.
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, 8000, 0, 0x40, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(coreParamsSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    QVERIFY(profileSha->rawValue().toString().isEmpty());
+    QVERIFY(abiSha->rawValue().toString().isEmpty());
+    QVERIFY(!firmwareSha->rawValue().toString().isEmpty());
+}
