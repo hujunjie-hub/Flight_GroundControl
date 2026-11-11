@@ -1,7 +1,9 @@
 #include "ExifParserTest.h"
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <cstring>
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
@@ -230,6 +232,137 @@ void ExifParserTest::_writePreservesExistingDataTest()
     // Verify original timestamp is preserved
     const QDateTime timeAfterWrite = ExifParser::readTime(buffer);
     QCOMPARE(timeAfterWrite, originalTime);
+}
+
+namespace {
+
+/// Replaces the raw DateTimeDigitized tag value of a JPEG with \a value so that
+/// readTime() sees an arbitrary (including malformed) EXIF timestamp string.
+bool setDateTimeDigitizedValue(QByteArray& buffer, const QByteArray& value)
+{
+    if (value.size() > 19) {
+        return false;
+    }
+
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
+    if (!data) {
+        return false;
+    }
+
+    bool ok = false;
+    ExifEntry* entry = ExifUtility::initTag(data, EXIF_IFD_EXIF, EXIF_TAG_DATE_TIME_DIGITIZED);
+    if (entry && entry->data && (entry->size >= 20)) {
+        memset(entry->data, 0, entry->size);
+        memcpy(entry->data, value.constData(), static_cast<size_t>(value.size()));
+        ok = ExifUtility::saveToBuffer(data, buffer);
+    }
+
+    exif_data_unref(data);
+    return ok;
+}
+
+QByteArray loadTemplateJpeg()
+{
+    QFile file(":/unittest/DSCN0010.jpg");
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+    const QByteArray buffer = file.readAll();
+    file.close();
+    return buffer;
+}
+
+}  // namespace
+
+void ExifParserTest::_readTimeFormatTest()
+{
+    const QByteArray templateJpeg = loadTemplateJpeg();
+    QVERIFY(!templateJpeg.isEmpty());
+
+    // The empty tag value exercises the "no timestamp" warning path.
+    ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg, QRegularExpression("DateTimeDigitized tag not found"));
+
+    const auto readInjected = [&templateJpeg](const QByteArray& tagValue) {
+        QByteArray buffer = templateJpeg;
+        if (!setDateTimeDigitizedValue(buffer, tagValue)) {
+            return QDateTime();
+        }
+        return ExifParser::readTime(buffer);
+    };
+
+    // Specification-conforming value.
+    {
+        const QDateTime parsed = readInjected("2024:05:06 07:08:09");
+        QVERIFY(parsed.isValid());
+        QCOMPARE(parsed, QDateTime(QDate(2024, 5, 6), QTime(7, 8, 9)));
+    }
+
+    // Cameras that omit leading zeroes must still be understood.
+    {
+        const QDateTime parsed = readInjected("2024:5:6 7:8:9");
+        QVERIFY(parsed.isValid());
+        QCOMPARE(parsed, QDateTime(QDate(2024, 5, 6), QTime(7, 8, 9)));
+    }
+
+    // Leap day is only valid in a leap year.
+    {
+        const QDateTime leapDay = readInjected("2024:02:29 12:00:00");
+        QVERIFY(leapDay.isValid());
+        QCOMPARE(leapDay, QDateTime(QDate(2024, 2, 29), QTime(12, 0, 0)));
+
+        QVERIFY(!readInjected("2023:02:29 12:00:00").isValid());
+    }
+
+    // Out-of-range and malformed values must be rejected instead of guessing.
+    const QByteArray invalidValues[] = {
+        "2024:13:06 07:08:09",   // month out of range
+        "2024:00:06 07:08:09",   // month zero
+        "2024:05:32 07:08:09",   // day out of range
+        "2024:05:06 24:08:09",   // hour out of range
+        "2024:05:06 07:60:09",   // minute out of range
+        "2024:05:06 07:08:60",   // second out of range
+        "2024:05:06 07:08",      // truncated
+        "2024:05:06T07:08:09",   // wrong date/time separator
+        "2024-05-06 07:08:09",   // wrong date separator
+        "2024:05:06 07:08:09x",  // trailing garbage
+        "24:05:06 07:08:09",     // two digit year
+        ":2024:05:06 07:08:09",  // leading separator
+        "",                      // empty value
+    };
+    for (const QByteArray& value : invalidValues) {
+        QVERIFY2(!readInjected(value).isValid(), value.constData());
+    }
+}
+
+void ExifParserTest::_readTimeConcurrentTest()
+{
+    // FGC-0029 regression: readTime() runs on every QtConcurrent EXIF worker thread.
+    // It used to build a QDateTimeParser (via QDateTime::fromString), whose constructor
+    // calls the process-global, unsynchronised QLocale::system(); concurrent workers then
+    // freed the same locale string twice and died with STATUS_HEAP_CORRUPTION.
+    const QByteArray imageBuffer = loadTemplateJpeg();
+    QVERIFY(!imageBuffer.isEmpty());
+
+    const QDateTime expected = ExifParser::readTime(imageBuffer);
+    QVERIFY(expected.isValid());
+
+    constexpr int kThreads = 12;
+    constexpr int kIterations = 200;
+
+    QList<int> work;
+    work.reserve(kThreads * kIterations);
+    for (int i = 0; i < (kThreads * kIterations); ++i) {
+        work.append(i);
+    }
+
+    const QList<qint64> results = QtConcurrent::blockingMapped(
+        work, [&imageBuffer](int) { return ExifParser::readTime(imageBuffer).toSecsSinceEpoch(); });
+
+    QCOMPARE(results.count(), work.count());
+    const qint64 expectedSeconds = expected.toSecsSinceEpoch();
+    for (qsizetype i = 0; i < results.count(); ++i) {
+        QCOMPARE(results.at(i), expectedSeconds);
+    }
 }
 
 UT_REGISTER_TEST(ExifParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

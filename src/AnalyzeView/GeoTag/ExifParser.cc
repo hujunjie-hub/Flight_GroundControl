@@ -1,18 +1,103 @@
 #include "ExifParser.h"
+
+#include <QtCore/QByteArray>
+#include <QtCore/QDate>
+#include <QtCore/QDateTime>
+#include <QtCore/QTime>
+
 #include "ExifUtility.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QByteArray>
-#include <QtCore/QDateTime>
-
 QGC_LOGGING_CATEGORY(ExifParserLog, "AnalyzeView.ExifParser")
 
-namespace ExifParser
-{
+namespace {
 
-QDateTime readTime(const QByteArray &buffer)
+/// Reads between \a minDigits and \a maxDigits ASCII digits starting at \a pos.
+bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetype maxDigits, int& value)
 {
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    const qsizetype start = pos;
+    int result = 0;
+
+    while ((pos < text.size()) && ((pos - start) < maxDigits)) {
+        const char16_t digit = text.at(pos).unicode();
+        if ((digit < u'0') || (digit > u'9')) {
+            break;
+        }
+        result = (result * 10) + static_cast<int>(digit - u'0');
+        ++pos;
+    }
+
+    if ((pos - start) < minDigits) {
+        return false;
+    }
+
+    value = result;
+    return true;
+}
+
+/// Parses the fixed EXIF timestamp format `yyyy:MM:dd HH:mm:ss` (CIPA DC-008).
+///
+/// Deliberately does not use QDateTime::fromString(): that API constructs a QDateTimeParser
+/// whose constructor calls QLocale::system() (QDateTimeParser's defaultLocale member
+/// initializer). QLocale::system() mutates process-global locale data (a function-local
+/// 'static QLocalePrivate' plus the shared QLocaleData/QSystemLocale singletons) without any
+/// synchronisation, so concurrent callers corrupt each other's locale strings. ExifParser::
+/// readTime() runs on every QtConcurrent EXIF worker thread, which made that race free the
+/// same QString buffer twice and abort the process with STATUS_HEAP_CORRUPTION (FGC-0029).
+/// The EXIF timestamp is locale independent by specification, so a fixed-format reader is both
+/// correct and reentrant. Leading zeroes are mandated by the specification but not emitted by
+/// every camera, so one or two digits are accepted for all fields but the year.
+QDateTime parseExifTimestamp(QStringView text)
+{
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    int hour = 0;
+    int minute = 0;
+    int second = 0;
+
+    qsizetype pos = 0;
+    if (!readDecimal(text, pos, 4, 4, year) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+        return QDateTime();
+    }
+    ++pos;
+    if (!readDecimal(text, pos, 1, 2, month) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+        return QDateTime();
+    }
+    ++pos;
+    if (!readDecimal(text, pos, 1, 2, day) || (pos >= text.size()) || (text.at(pos).unicode() != u' ')) {
+        return QDateTime();
+    }
+    ++pos;
+    if (!readDecimal(text, pos, 1, 2, hour) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+        return QDateTime();
+    }
+    ++pos;
+    if (!readDecimal(text, pos, 1, 2, minute) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+        return QDateTime();
+    }
+    ++pos;
+    if (!readDecimal(text, pos, 1, 2, second) || (pos != text.size())) {
+        return QDateTime();
+    }
+
+    const QDate date(year, month, day);
+    const QTime time(hour, minute, second);
+    if (!date.isValid() || !time.isValid()) {
+        return QDateTime();
+    }
+
+    // EXIF carries no time zone; keep the historical local-time interpretation.
+    return QDateTime(date, time);
+}
+
+}  // namespace
+
+namespace ExifParser {
+
+QDateTime readTime(const QByteArray& buffer)
+{
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     if (!data) {
         qCWarning(ExifParserLog) << "Failed to parse EXIF data";
         return QDateTime();
@@ -26,12 +111,12 @@ QDateTime readTime(const QByteArray &buffer)
         return QDateTime();
     }
 
-    return QDateTime::fromString(dateTimeDigitized, QStringLiteral("yyyy:MM:dd HH:mm:ss"));
+    return parseExifTimestamp(dateTimeDigitized);
 }
 
-bool write(QByteArray &buffer, const GeoTagData &geotag)
+bool write(QByteArray& buffer, const GeoTagData& geotag)
 {
-    ExifData *data = ExifUtility::loadFromBuffer(buffer);
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
     if (!data) {
         data = ExifUtility::createNew();
         if (!data) {
@@ -44,7 +129,7 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
 
     // Helper to get existing or create new GPS entry
     auto getOrCreateEntry = [&](ExifTag tag, ExifFormat format, unsigned long components) -> ExifEntry* {
-        ExifEntry *entry = exif_content_get_entry(data->ifd[EXIF_IFD_GPS], tag);
+        ExifEntry* entry = exif_content_get_entry(data->ifd[EXIF_IFD_GPS], tag);
         if (!entry) {
             entry = ExifUtility::createTag(data, EXIF_IFD_GPS, tag, format, components);
         }
@@ -52,7 +137,7 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
     };
 
     // GPS Version ID (2.3.0.0)
-    ExifEntry *versionEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID), EXIF_FORMAT_BYTE, 4);
+    ExifEntry* versionEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID), EXIF_FORMAT_BYTE, 4);
     if (versionEntry && versionEntry->data) {
         versionEntry->data[0] = 2;
         versionEntry->data[1] = 3;
@@ -61,24 +146,24 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
     }
 
     // Latitude
-    ExifEntry *latRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF), EXIF_FORMAT_ASCII, 2);
+    ExifEntry* latRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF), EXIF_FORMAT_ASCII, 2);
     ExifUtility::writeGpsRef(latRefEntry, geotag.coordinate.latitude() >= 0 ? 'N' : 'S');
 
-    ExifEntry *latEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE), EXIF_FORMAT_RATIONAL, 3);
+    ExifEntry* latEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE), EXIF_FORMAT_RATIONAL, 3);
     ExifUtility::writeGpsCoordinate(latEntry, order, geotag.coordinate.latitude());
 
     // Longitude
-    ExifEntry *lonRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF), EXIF_FORMAT_ASCII, 2);
+    ExifEntry* lonRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE_REF), EXIF_FORMAT_ASCII, 2);
     ExifUtility::writeGpsRef(lonRefEntry, geotag.coordinate.longitude() >= 0 ? 'E' : 'W');
 
-    ExifEntry *lonEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
+    ExifEntry* lonEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
     ExifUtility::writeGpsCoordinate(lonEntry, order, geotag.coordinate.longitude());
 
     // Altitude
-    ExifEntry *altRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_BYTE, 1);
+    ExifEntry* altRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_BYTE, 1);
     ExifUtility::writeGpsAltRef(altRefEntry, geotag.coordinate.altitude() < 0 ? 1 : 0);
 
-    ExifEntry *altEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_RATIONAL, 1);
+    ExifEntry* altEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_RATIONAL, 1);
     ExifUtility::writeRational(altEntry, order, geotag.coordinate.altitude(), 100);
 
     // Save back to buffer
@@ -88,4 +173,4 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
     return success;
 }
 
-} // namespace ExifParser
+}  // namespace ExifParser

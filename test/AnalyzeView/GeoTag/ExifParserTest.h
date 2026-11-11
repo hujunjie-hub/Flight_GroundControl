@@ -10,6 +10,8 @@ private slots:
     void _readTimeTest();
     void _readTimeEmptyBufferTest();
     void _readTimeInvalidJpegTest();
+    void _readTimeFormatTest();
+    void _readTimeConcurrentTest();
     void _writeTest();
     void _writeEmptyBufferTest();
     void _writeAndReadBackTest();
