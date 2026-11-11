@@ -225,3 +225,62 @@ public virtual，构造函数会把实例安装为进程级 system locale），�
 - 两个线程进入 `zeroDigit()` 的**精确交错**（谁先读 `zero.isEmpty()`、谁先赋值、谁先释放旧值）
   没有运行时证据；ASan 只给出"分配/首释/再释"三处快照。
 - 因此"首次破坏引用计数的操作"仍属推断；严格表述见 `ROOT_CAUSE_ANALYSIS.md` §3。
+
+---
+
+## 9. 日期解析完整调用链（R20 补充，静态源码推导）
+
+本节按 R20 要求逐步展开"日期解析取数字"的调用链，并**逐步标注实际行为**。
+必须强调：**这条链没有被 ASan 捕获**（ASan 捕获的是 §6 的格式化路径），且**在
+`QDateTime::fromString()` 中它并不查询 `ZeroDigit`**——见 §9.3 的实证。
+
+### 9.1 逐步展开
+
+| # | 函数 | 源码位置 | 输入 → 输出 | 调用关系 | 涉及系统 locale？ | 持 `systemDataMutex`？ |
+|---:|---|---|---|---|---|---|
+| 1 | `QDateTimeParser::parseSection` | `qdatetimeparser.cpp:782` | (`QDateTime` current, int sectionIndex, int offset) → `ParsedSection{state, value, used}` | 由 `QDateTimeParser::parse()` 对每个 section 调用 | 仅通过 `locale()`（见 #3） | 否 |
+| 2 | `QDateTimeParser::parseSection` 内取数字串 | `qdatetimeparser.cpp:888`（`digitsStr = sectionTextRef.left(digitCount(...))`）；`:880` 注释说明为何显式拒绝 `+/-` | section 文本 → 纯数字 `QStringView` | 同上 | 否 | 否 |
+| 3 | `const QLocale loc = locale();` | `qdatetimeparser.cpp:893`；`locale()` 定义于 `qdatetimeparser_p.h:227` | → `defaultLocale` 的副本 | `QDateTime::fromString` 在 `qdatetime.cpp:6040` 调用了 `dt.setDefaultLocale(QLocale::c())` | **否——是 C locale** | 否 |
+| 4 | `QLocale::toUInt(QStringView, bool*)` | `qlocale.cpp:2065-2068`；调用点 `qdatetimeparser.cpp:901` | `digitsStr` → `uint` + `ok` | `toIntegral_helper<uint>(d, s, ok)` | 否（d 为 C locale 的 private） | 否 |
+| 5 | `toIntegral_helper<T>` | `qlocale.cpp:1585-1600`（`stringToUnsLongLong` 调用在 `:1593`） | (`QLocalePrivate*`, `QStringView`, `bool*`) → `T` | `d->m_data->stringToUnsLongLong(str, 10, d->m_numberOptions)` | 否 | 否 |
+| 6 | `QLocaleData::stringToUnsLongLong` | `qlocale.cpp:4917-4925`（`:4921`） | (`QStringView`, base=10, options) → `QSimpleParsedNumber<quint64>` | `numberToCLocale(str, options, IntegerMode, &buff)` → `bytearrayToUnsLongLong` | 否 | 否 |
+| 7 | `QLocaleData::numberToCLocale` | `qlocale.cpp:4632-4638`（`:4638`） | (`QStringView`, options, mode, `CharBuff*`) → bool | `NumericTokenizer tokens(s, NumericData(this, mode), mode);` | 取决于 `this` | 否 |
+| 8 | `QLocaleData::NumericData::NumericData` | `qlocale.cpp:4391-4430`；`getString` lambda `:4412-4414`；`setZero(getString(ZeroDigit))` `:4429` | (`const QLocaleData*`, mode) → `NumericData` | 成员初始化 `:4392 grouping(data->groupSizes()), isC(data == c())`；`:4396-4397` **`if (isC) return;`** | **仅当 `data == &systemLocaleData`** | 否 |
+| 9 | `systemLocaleString` → `QSystemLocale::query(ZeroDigit)` | `qlocale.cpp:1048-1065`（`:1055`）；`qlocale.cpp:1100-1111`（`zeroUcs` 直查，`:1104`） | `QueryType` → `QVariant` | `systemLocale()->query(type)` | 是 | **否** |
+| 10 | `QSystemLocalePrivate::zeroDigit()` | `qlocale_win.cpp`；二进制 `[0x26C840,0x26C94B)` | → `QVariant(QString)`，并写共享 `zero` | 见 §6 | 是 | **否** |
+
+### 9.2 锁与共享状态
+
+- 第 1–7 步都不接触 `systemDataMutex`；第 8 步的 `getString` 与第 9 步的 `query` 也不加锁。
+- 第 10 步写 `zero` 时无锁；`update()` 的 `zero.resize(0)` 只在 `systemData()` 的锁内执行（§4）。
+- 因此**如果**该链走到第 8–10 步，它与 §6 的格式化路径共享同一个 `zero` 字段与同一类无同步访问。
+
+### 9.3 实证：这条链在 `QDateTime::fromString()` 中不会查 `ZeroDigit`
+
+`QDateTime::fromString(...)`（`qdatetime.cpp:6033-6052`）：
+
+```cpp
+QDateTimeParser dt(QMetaType::QDateTime, QDateTimeParser::FromString, cal);  // ctor: defaultLocale(QLocale::system())
+dt.setDefaultLocale(QLocale::c());                                          // :6040 —— 立刻换成 C locale
+if (dt.parseFormat(format) && (dt.fromString(string, &datetime, baseYear) || ...))
+```
+
+- 于是 `locale()`（第 3 步）返回 **C locale**，其 `m_data` 是 `locale_data[0]`；
+  第 8 步的 `isC = (data == c())` 为 **true**，构造函数在 `:4396-4397` 立即返回，
+  **不会执行 `:4429 setZero(getString(ZeroDigit))`**。
+- `parseSection` 的修正分支（`qdatetimeparser.cpp:1449-1459`，唯一使用 `loc.toString(day)` 的地方）
+  在 `:1450` 对 `context == FromString` **直接返回 `StateNode()`**，因此解析路径也不会触发数字格式化。
+
+**结论**：R20 要求的这条"日期解析 → `NumericData` → `ZeroDigit`"链在源码上确实存在，
+但对 `QDateTime::fromString()` 而言它在第 8 步就被 C-locale 短路，**不是** ASan 捕获的栈，
+也**不是**运行时观测到的 `ZeroDigit` 查询来源。
+
+### 9.4 仍开放：观测到的查询来自哪里
+
+- 实测（R19 spy，`--mode=a`）：`QDateTime::fromString` 首次调用触发 60 次 `ZeroDigit` 查询，
+  之后每次 +20；`Grouping` 首次 24，之后每次 +8。
+- ASan 栈显示同一条路径里存在 `QLocale::toString(qlonglong)`（导出，`[0x170770)`）→
+  `[0x167300)` → `[0x167180)` → `[0x16D700)` → `query(ZeroDigit)`。
+- 即：**查询确实来自"数字格式化"一侧**，但 `QDateTime::fromString()` 内部究竟是哪一个
+  `QLocale` 实例（system 数据）调用了它，尚未定位；这属于"未证实"项，
+  不影响既有结论（共享 `zero` 字段被无同步读写；修复移除了整条 `QDateTime::fromString` 依赖）。

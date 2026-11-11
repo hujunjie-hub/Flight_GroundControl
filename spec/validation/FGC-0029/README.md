@@ -52,7 +52,7 @@ spec/validation/FGC-0029/
     ROOT_CAUSE_ANALYSIS.md                 ← R18 修订版根因分析（分级结论）
     ROOT_CAUSE_ANALYSIS-R17-superseded.md  ← 被取代的 R17 原文（保留证据，含错误假设）
     ROOT_CAUSE_ANALYSIS-R18-superseded.md  ← 被取代的 R18 原文（保留证据）
-    ASAN_STACK_ANALYSIS.md                 ← 五份报告逐帧解析（.pdata 区间/反汇编/置信度）+ 运行时 QueryType 捕获
+    ASAN_STACK_ANALYSIS.md                 ← 六份报告逐帧解析（.pdata 区间/反汇编/置信度）+ 运行时 QueryType 捕获
     QT_LOCALE_SOURCE_AUDIT.md              ← QSystemLocalePrivate 字段/锁/生命周期与三条 ZeroDigit 路径
     QT_BINARY_IDENTITY.md                  ← Qt 6.11.1 二进制身份与符号可得性
     OWNERSHIP_AUDIT.md                     ← 对象所有权与异步生命周期审计
@@ -112,8 +112,9 @@ FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）按�
 
 ## 9. R19 关键补充
 
-- 三栈改为 **PE `.pdata` 函数边界**定界；R18 的 `QLocale::system+0x3B1` 与
+- 六份 ASan 报告全部登记；三栈改为 **PE `.pdata` 函数边界**定界；R18 的 `QLocale::system+0x3B1` 与
   `query+0x468E` 两处命名**已撤回**（内部函数不命名）。
 - 运行时 QueryType 捕获：`ZeroDigit` 查询次数 A=0、B=40040、C=40040、D=0
   → `QLocale::system()` 不是竞态入口；`QDateTime::fromString` 经数字本地化路径触发。
 - 统一矩阵：960 次进程运行全部完成、0 超时；ASan 报告 A=0/B=1/C=2/D=0。
+

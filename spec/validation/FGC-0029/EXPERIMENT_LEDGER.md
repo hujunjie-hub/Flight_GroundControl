@@ -392,3 +392,50 @@ R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射�
 - 本轮（R18 HEAD `d29628a`）：Run **43044586589** —— 独立验收时仍在 Build 阶段；本会话无
   `gh`/API 访问权限，**未能读取结果**，不作"通过"声明。
 - R19 提交后还需对最新 HEAD 的 Windows Release CI 再做一次确认（本会话同样无法读取）。
+
+---
+
+# R20（独立验收缺口收敛轮）
+
+| 编号 | 内容 |
+|---|---|
+| E-32 | 六份 ASan 报告登记补齐 + 证据表述统一 |
+| E-33 | Check Links：改用 PX4 官方文档链接并通过本地 lychee |
+| E-34 | Windows CI 读取尝试与结论（本会话不可读） |
+
+## E-32 六份报告登记与表述统一
+
+- 事实：R19 归档含 **6** 份 ASan 报告，但 R19 的 `ASAN_STACK_ANALYSIS.md` 只登记了 5 份。
+- 补齐：`legacy-r11-i10.err`（PID 17796，double-free `0x1196b9fa5590`，20 字节，出错/分配线程 **T1**，
+  第一次释放线程 **T2**）已加入三栈表；其逐帧 RVA 序列与 `legacy-r10-i08.err` 一致，但线程与地址不同。
+- 表述修正：把"首次非法操作已定位"改为"ASan 确认了双重释放；首次破坏引用计数的操作仍未证实"；
+  增加"两条路径必须分开"的说明（格式化路径=ASan 捕获；解析路径=源码静态推导且在 C locale 下短路）。
+- 文档同步：`README.md`（5→6）、`ROOT_CAUSE_ANALYSIS.md`（六份表 + 边界说明）、
+  `ASAN_STACK_ANALYSIS.md`（六份 + §0.1 两路径）、`QT_LOCALE_SOURCE_AUDIT.md`（§9 解析链）、
+  `QT_BINARY_IDENTITY.md`（标题改为 R19 基线资料）、R19 报告（COMMIT-IDS 路径改为 `11-fix/`）。
+- 结论：**通过**（六份全部登记，表述与证据一致）。
+
+## E-33 Check Links
+
+- 第一步（按 R20 要求）：在当前环境对 R19 链接 `https://px4.io/software/getting-started/` 重跑
+  lychee v0.22.0 → **404**（日志 `check-links-step1-px4page.log`），失败确认。
+- 第二步：改用 PX4 官方文档 `https://docs.px4.io/main/en/`（显式验证 HTTP **200**，1,077,711 字节），
+  重跑 lychee → **0 errors**（`check-links-step2-px4docs.log`；该 URL 命中 `.lychee.toml` 的
+  exclude 规则，因此计为 Excluded 而非抓取通过——已如实记录）。
+- 提交：独立提交（不混入根因）。
+- 结论：本地验证通过；GitHub Check Links 的新 Run 结果本会话不可读（见 E-34）。
+
+## E-34 Windows CI / Check Links Run 读取尝试
+
+- 目标 Run：`43055558314`（Windows, HEAD `60bf6e0`）、`43055557952`（Check Links, HEAD `60bf6e0`）。
+- 尝试与结果：
+
+| 方式 | 结果 |
+|---|---|
+| `gh run view` | `gh` 未安装 |
+| REST API `api.github.com/.../actions/runs/<id>` | **HTTP 403 rate limit exceeded**（两个 ID 均如此） |
+| `github.com/.../actions/runs/<id>` HTML | HTTP 200 但为前端壳，无 job 状态/结论 |
+| `github.com/.../commit/<sha>` HTML | HTTP 200，文本中不含 check-run 结论（仅 diff 内容命中关键词） |
+
+- 结论：**本会话无法读取 CI 结果**，不作任何"通过"声明；需在有 GitHub 凭证的环境补录
+  （记录 Build/Unit/Integration/Installer/安装后验证与 Artifact 名称、SHA256）。

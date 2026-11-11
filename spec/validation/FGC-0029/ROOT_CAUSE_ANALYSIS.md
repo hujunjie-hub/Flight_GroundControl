@@ -13,7 +13,7 @@
 
 ## 1. 事实（ASan 直接观测）
 
-三份独立报告，逐帧 RVA 完全一致（见 `ASAN_STACK_ANALYSIS.md`）：
+**六份**独立报告，逐帧 RVA 完全一致（见 `ASAN_STACK_ANALYSIS.md`）：
 
 | 报告 | 触发程序 | 出错线程 | 分配线程 | 第一次释放线程 |
 |---|---|---|---|---|
@@ -22,8 +22,9 @@
 | `a-r5-i1.err`（R18） | 仅 `QDateTime::fromString()` | T12 | T12 | **T2** |
 | `a-r12-i10.err`（R19） | 仅 `QDateTime::fromString()` | — | — | 另一线程 |
 | `legacy-r10-i08.err`（R19） | `ExifParserLegacy::readTime`（8117cfe 原文） | T9 | T9 | **T8** |
+| `legacy-r11-i10.err`（R19） | `ExifParserLegacy::readTime`（8117cfe 原文） | T1 | T1 | **T2** |
 
-**事实 1**：同一个 **20 字节**内存块（`[0x…, 0x…+0x14)`）被**两个不同线程**先后 `free`，
+**事实 1（六份报告一致）**：同一个 **20 字节**内存块（`[0x…, 0x…+0x14)`）被**两个不同线程**先后 `free`，
 第二次 `free` 被 ASan 判定为 double-free，与产品态 `0xC0000374 / BlockNotBusy_DOUBLE_FREE` 同源。
 
 **事实 2**：分配栈 = `malloc` ← `QArrayData::allocate2` ← `QString::QString(QChar const*, qsizetype)`
@@ -37,8 +38,18 @@
 ← `QDateTime::fromString`。
 
 **事实 5**：三条线程的分配/释放都发生在同一个 20 字节块上，且该块由 `[0x26C840)` 分配与首次释放。
+**边界（必须与事实 1–5 一起读）**：ASan 记录的是"第一次被观测到的 free"与"第二次 free"，
+**不是**"最早破坏引用计数的那个操作"。谁在什么时刻把引用计数改坏、两线程的精确交错，仍未证实；
+`zero` 字段的无同步读-改-写是高度相关的候选根因（见 §3、§5）。
 
 ## 2. 源码 + 反汇编确认（可复核的调用链）
+
+> **两条路径必须分开**：ASan 六份报告捕获的是**格式化**路径
+> （`QLocale::toString(qlonglong)` → `longLongToString` → `zeroDigit` → `systemLocaleString` → `query(ZeroDigit)`）；
+> **解析**路径（`QDateTimeParser::parseSection` → `toUInt` → `NumericData` → `query(ZeroDigit)`）是
+> 源码静态推导，且在 `QDateTime::fromString()` 中因 `setDefaultLocale(QLocale::c())` 与
+> `NumericData` 的 C-locale 短路而不会查询 `ZeroDigit`（详见 `QT_LOCALE_SOURCE_AUDIT.md` §9）。
+
 
 ### 2.1 内部函数身份（`.pdata` 边界 + 调用指令，不用"最近导出符号"）
 
@@ -153,3 +164,5 @@ Qt 6.11.1 DLL、同一 EXIF 输入。阴性结果只表示"该矩阵未复现"�
 1. Qt 内部首个破坏引用计数的操作（需能在崩溃瞬间观察锁/引用计数的工具，或上游确认）。
 2. Windows CI（新 HEAD）与 Check Links 的最终结果（见 `LOCAL_VALIDATION_REPORT.md`）。
 3. FGC-0037 独立跟踪，`GPSVersionID` 长度缺口单独立项。
+
+

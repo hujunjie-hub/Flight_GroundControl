@@ -1,4 +1,4 @@
-# FGC-0029 R18 — Qt 二进制身份核验
+# FGC-0029 — Qt 二进制身份（R19 基线资料，R20 沿用）
 
 目的：确认 R17/R18 的 ASan 调用栈与 `ROOT_CAUSE_ANALYSIS.md` 引用的 Qt 源码是**同一版本**，
 并且被分析的 DLL 是 Qt 官方二进制（而不是本机自行编译或第三方替换的版本）。
@@ -91,3 +91,4 @@ image version 6.11
 ```text
 MSVC 14.44.35207（VS 2022 BuildTools），cl.exe 19.44.35229
 ```
+
