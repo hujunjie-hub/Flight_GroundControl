@@ -221,6 +221,12 @@ R18 起环境不变（Windows x64 / MSVC 14.44 / Qt 6.11.1 / Ninja / ASan 同构
 
 ## E-19 ASan 三栈重解析
 
+> **SUPERSEDED（R21）**：本节把"首次非法操作"表述为已定位，属于过度陈述。正确表述是：
+> ASan 确认了**双重释放**（同一 20 字节 QString 块被两个不同线程先后释放），但**首次破坏引用计数的操作**
+> 仍未证实；`zero` 字段的无同步读-改-写是高度相关候选根因，不是已证实结论。
+> 当前结论见 `ROOT_CAUSE_ANALYSIS.md`（四级证据划分）与 E-35。
+
+
 - 输入：`r11-i15.err`、`r13-i10.err`（R17）与 `a-r5-i1.err`（R18 新增）。
 - 方法：`dumpbin /exports` 建立导出区间 → 计算每帧 RVA → 取区间端点 → 反汇编交叉验证。
 - 结果：三份报告逐帧 RVA 完全相同；分配在 `QString(QChar*,1)`（20 字节），
@@ -452,6 +458,40 @@ R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射�
 | 历史 `43055558314`（Windows @ `60bf6e0`） | **cancelled**（非 failure） | `Build` 步骤 16:43:36Z 被下一次 push 的 concurrency 取消 |
 | 历史 `43055557952`（Check Links @ `60bf6e0`） | failure | `Check links` 步骤失败（px4.io 404） |
 
-- 结论：**最新 HEAD 的 Windows Release CI 与 Check Links 均已通过**；R18/R19 期间没有已完成的
-  Windows CI（被取消），这一点已在 R20 报告中更正。
+- 结论（**限定到 HEAD `89e2914`**）：该 HEAD 的 Windows Release CI 与 Check Links 均已通过；
+  R18/R19 期间没有已完成的 Windows CI（`43055558314` 被 concurrency 取消），这一点已在 R20 报告中更正。
+  该结论**不适用于**后续纯文档 HEAD（`36ff8d9` 及 R21 HEAD）：它们的 CI 结果单独记录于 R21 交付的
+  `CI-RESULT-R21.md`，不得用 `89e2914` 的结果替代。
 
+
+
+---
+
+# R21（最终文档一致性轮）
+
+本轮**只改文档**：不修改 `src/`，不重跑 R17 压力测试与 R19 差分矩阵，不重新研究 Qt 内部函数。
+
+| 编号 | 内容 |
+|---|---|
+| E-35 | 文档一致性修复（README / FIX_VALIDATION / ROOT_CAUSE / ASAN_STACK / 本台账） |
+| E-36 | R21 最终 HEAD 的 CI 验证（结果写入交付 ZIP 的 `CI-RESULT-R21.md`，不再为写结果额外提交） |
+
+## E-35 文档一致性修复
+
+| 文件 | 修改 |
+|---|---|
+| `README.md` | 更新到 R21 状态：六份报告、CI/Check Links 状态、`validated_code_head` 与 `final_head` 区分、提交链；删除"首次非法操作已定位"的勾选，改为"ASan 已证明 double-free，首次破坏引用计数的操作仍未证实"；Qt 内部原因表述为**高度相关的候选** |
+| `FIX_VALIDATION.md` | §7 判读改为部分达成；删除"只有并发路径会同时进入 `QLocale::system()`"的旧解释，替换为 R19 运行时 QueryType 数据（A=0、B=40040、C=40040、D=0）；§8 按 HEAD 分别列出 CI 结论并区分 `validated_code_head` / `final_head` |
+| `ROOT_CAUSE_ANALYSIS.md` | 补齐 `a-r12-i10.err` 线程/地址（T11/T11/**T10**、`0x11d2eeea9220`、20 B）；把"三条线程"改为"每份报告一对 worker 线程"；明确六份报告是**六次独立复现**、各有独立堆地址，**不共享同一物理块** |
+| `ASAN_STACK_ANALYSIS.md` | §0.1 增加限定：解析路径是**一般非 C locale 情形**的源码推导；`QDateTime::fromString()` 设置 C locale 后在 `NumericData` 短路、不查 `ZeroDigit`；不得写成 ASan 捕获路径。六份报告三栈与 RVA 原始证据保留 |
+| `EXPERIMENT_LEDGER.md` | E-10/E-11 保留 SUPERSEDED；**E-19 新增 SUPERSEDED**（"首次非法操作已定位"属过度陈述）；E-34 结论限定到 `89e2914`，并注明不适用于后续纯文档 HEAD |
+
+- 历史数据未重写、失败实验未删除。
+
+## E-36 R21 最终 HEAD 的 CI 验证
+
+- 流程：文档修改**一次性提交** → 取得 R21 HEAD → 等待该 HEAD 的 Windows / Check Links / pre-commit。
+- 结果写入交付 ZIP 的 `CI-RESULT-R21.md`；**不再为把 CI 结果写回 Git 而追加提交**，以免反复触发新 CI。
+- 记录项：Build、Unit 实际数量、Integration 实际数量、`FlightTelemetryDispatchTest`、Installer 生成、
+  安装后可执行文件验证、Check Links、pre-commit、Artifact 名称与 SHA256。
+- 结论以 `CI-RESULT-R21.md` 为准；在读到明确 `success` 之前，仓库文档不声称 R21 HEAD 的 CI 已通过。

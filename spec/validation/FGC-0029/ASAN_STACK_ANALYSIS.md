@@ -29,10 +29,17 @@
 | 路径 | 是否被 ASan 直接捕获 | 证据 |
 |---|---|---|
 | **格式化路径**（数字转字符串补零/本地化）：`QLocale::toString(qlonglong)` → `QLocaleData::longLongToString` → `QLocaleData::zeroDigit` → `systemLocaleString` → `query(ZeroDigit)` → `QSystemLocalePrivate::zeroDigit` | **是**（六份报告的栈就是它） | 本文帧表 + 调用指令 |
-| **解析路径**（日期解析取数字）：`QDateTimeParser::parseSection` → `locale().toUInt()` → `QLocale::toUInt` → `toIntegral_helper<uint>` → `QLocaleData::stringToUnsLongLong` → `numberToCLocale` → `NumericTokenizer`/`NumericData` → `getString(ZeroDigit)` → `query(ZeroDigit)` | **否**（仅为源码静态推导） | `QT_LOCALE_SOURCE_AUDIT.md` §3.4 |
+| **解析路径**（日期解析取数字，**一般非 C locale 情形**下的源码推导）：`QDateTimeParser::parseSection` → `locale().toUInt()` → `QLocale::toUInt` → `toIntegral_helper<uint>` → `QLocaleData::stringToUnsLongLong` → `numberToCLocale` → `NumericTokenizer`/`NumericData` → `getString(ZeroDigit)` → `query(ZeroDigit)` | **否**（源码静态推导，且**不是** ASan 捕获的栈） | `QT_LOCALE_SOURCE_AUDIT.md` §9 |
 
-两条路径都会在**不持** `systemDataMutex` 的情况下查询 `ZeroDigit`。但**不得**把解析路径描述成
+两条路径在**不持** `systemDataMutex` 这一点上相同；但**不得**把解析路径描述成
 "ASan 已捕获的调用栈"。
+
+> **重要限定（R21）**：`QDateTime::fromString()` 在 `qdatetime.cpp:6040` 调用
+> `dt.setDefaultLocale(QLocale::c())`，解析器随后使用 **C locale**；
+> `QLocaleData::NumericData` 在 `qlocale.cpp:4396-4397` 对 C locale 直接返回，不会执行
+> `:4429 setZero(getString(ZeroDigit))`。因此这条解析路径在 `QDateTime::fromString()` 中
+> **在 `NumericData` 阶段短路，不会查询 `ZeroDigit`**；它是"一般非 C locale 情况下"的源码推导，
+> 既不是 ASan 实际捕获的路径，也不是运行时观测到的查询来源。
 
 ## 0.2 符号解析方法与置信度
 
@@ -748,3 +755,4 @@
 | `0x111F12` | `QVariant::~QVariant+0x42` | 正确 |
 | 报告数量 | R19 文档只列 5 份 | **R20 补齐第 6 份**（`legacy-r11-i10.err`） |
 | 路径表述 | 未区分格式化/解析 | R20 起严格区分（§0.1） |
+

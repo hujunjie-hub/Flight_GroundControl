@@ -85,19 +85,46 @@ tests=13 failures=0 errors=0
 
 | 标准 | 结果 |
 |---|---|
-| 找到首次非法操作 | ✅ ASan：同一 20 字节 QString 块被两个不同 worker 线程先后释放 |
-| 修复原因能解释历史现象 | ✅ 只有并发路径会同时进入 `QLocale::system()`；libexif 单读、单线程解析都不触发 |
+| 找到首次非法操作 | ⚠️ **部分**：ASan 已确认同一 20 字节 QString 数据块被两个不同线程先后释放（分配 → 第一次释放 → 第二次释放）；**首次破坏引用计数的具体操作仍未证实** |
+| 修复原因能解释历史现象 | ✅ 见下方"R21 更正"：`QLocale::system()` 本身不查询 `ZeroDigit`；触发点是 `QDateTime::fromString()` 所走的数字格式化路径 |
 | 有最小回归测试 | ✅ 2 个新用例（确定性 + 并发） |
 | 原始 Release 复现测试稳定通过 | ✅ 320 次运行 0 失败（含 24 并发加压与最终产物复跑） |
 | ASan 专项通过 | ✅ 320 次运行 0 报告（含与修复前完全相同的 240 次矩阵） |
-| Unit / Integration | ✅ Unit 199/199 ×3；Integration 72/72 |
-| Windows Release CI | ⏳ 见第 8 节（本会话无法读取） |
+| Unit / Integration | ✅ Unit 199/199 ×3；Integration 72/72（本地）；CI 为 198/198、70/70 |
+| Windows Release CI | ✅ 见第 8 节（已按 HEAD 区分） |
 | 独立验收 | ⏳ 待外部复核 |
+
+**R21 更正（替换 R17/R18 的旧解释）**——"只有并发路径会同时进入 `QLocale::system()`"这句话是错的，
+依据 R19 的运行时 QueryType 捕获（2 线程 × 1000 次）：
+
+| 臂 | 内容 | `ZeroDigit` 查询次数 |
+|---|---|---:|
+| A | 仅 `QLocale::system()` | **0** |
+| B | 仅 `QDateTime::fromString()` | **40040** |
+| C | `ExifParserLegacy::readTime`（8117cfe 原文） | **40040** |
+| D | 修复后 `ExifParser::readTime` | **0** |
+
+即：`QLocale::system()` 不触发 `ZeroDigit`；触发来自 `QDateTime::fromString()` 内部的
+**数字格式化**路径（ASan 栈：`QLocale::toString(qlonglong)` → `longLongToString` →
+`zeroDigit` → `systemLocaleString` → `query(ZeroDigit)`）。该格式化调用在
+`QDateTime::fromString()` 内的**精确调用者仍未定位**。
 
 ## 8. Windows Release CI
 
-推送本分支后由 CI 触发；本会话无 `gh` CLI 且未认证 API 被限流，**未能从命令行读取 run 结果**，
-因此不在此处声明 CI 通过。run 链接与结论需在下一次可访问 GitHub 的会话补录。
+CI 结论按 **HEAD** 区分，不得把某个 HEAD 的结果当作另一个 HEAD 的结果：
+
+| HEAD | 性质 | Run | 结论 |
+|---|---|---|---|
+| `885d06a` | R17 代码 | 43007829317 | success（Unit 198/198、Integration 70/70、Installer/安装后验证通过）——仅历史证据 |
+| `60bf6e0` | R19 代码 | 43055558314 | **cancelled**（Build 被下一次 push 的 concurrency 取消），不是 failure |
+| `60bf6e0` | R19 Check Links | 43055557952 | failure（px4.io 404） |
+| `89e2914` | R20 已验证代码 HEAD | 43061078850 | **success**：Unit 198/198、Integration 70/70（含 `FlightTelemetryDispatchTest` 19.92 s）、Verify Executable / Create Installer / Install and verify installer / Verify installed executable 全 success |
+| `89e2914` | R20 Check Links | 43061078592 | **success**（Errors = 0） |
+| `36ff8d9` | R20 文档 HEAD | 43068906803 | 见 R21 交付的 `CI-RESULT-R21.md`（该 HEAD 只含文档改动） |
+| R21 文档 HEAD | R21 | 见 R21 交付的 `CI-RESULT-R21.md` | 以该文件记录为准 |
+
+`validated_code_head`（产品源码未变，`src/` 自 `54713e5` 起未修改）与 `final_head`（含文档提交）
+必须分开表述：二进制与测试结论归属 `validated_code_head`，文档修订归属 `final_head`。
 
 ## 9. 未做 / 明确声明
 

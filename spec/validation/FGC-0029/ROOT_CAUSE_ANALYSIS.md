@@ -20,12 +20,12 @@
 | `r11-i15.err`（R17） | `GeoTagControllerTest` → `ExifParser::readTime` | T4 | T4 | **T14** |
 | `r13-i10.err`（R17） | 同上 | T12 | T12 | **T4** |
 | `a-r5-i1.err`（R18） | 仅 `QDateTime::fromString()` | T12 | T12 | **T2** |
-| `a-r12-i10.err`（R19） | 仅 `QDateTime::fromString()` | — | — | 另一线程 |
+| `a-r12-i10.err`（R19） | 仅 `QDateTime::fromString()` | T11 | T11 | **T10** |
 | `legacy-r10-i08.err`（R19） | `ExifParserLegacy::readTime`（8117cfe 原文） | T9 | T9 | **T8** |
 | `legacy-r11-i10.err`（R19） | `ExifParserLegacy::readTime`（8117cfe 原文） | T1 | T1 | **T2** |
 
-**事实 1（六份报告一致）**：同一个 **20 字节**内存块（`[0x…, 0x…+0x14)`）被**两个不同线程**先后 `free`，
-第二次 `free` 被 ASan 判定为 double-free，与产品态 `0xC0000374 / BlockNotBusy_DOUBLE_FREE` 同源。
+**事实 1（每份报告各自成立）**：在**每一次独立复现**中，一个 **20 字节**内存块（`[base, base+0x14)`）被**两个不同的 worker 线程**先后 `free`，第二次 `free` 被 ASan 判定为 double-free，与产品态 `0xC0000374 / BlockNotBusy_DOUBLE_FREE` 同源。
+六份报告是**六次独立复现**：每份报告里的分配、第一次释放、第二次释放都针对该报告自己的 20 字节块，**六份报告不共享同一物理地址**（地址分别为 `0x12ad9c41ceb0`、`0x11d4518e56b0`、`0x12106faa6220`、`0x11d2eeea9220`、`0x12d0ac6a7fc0`、`0x1196b9fa5590`），线程编号也各自独立。
 
 **事实 2**：分配栈 = `malloc` ← `QArrayData::allocate2` ← `QString::QString(QChar const*, qsizetype)`
 ← 内部函数 `[0x26C840,0x26C94B)` ← `QSystemLocale::query` ← 内部函数 `[0x16D700,0x16D8FB)`
@@ -37,7 +37,7 @@
 **事实 4**：第二次释放栈 = `free` ← `QVariant::~QVariant+0x42` ← 内部函数 `[0x16D700)` ← …
 ← `QDateTime::fromString`。
 
-**事实 5**：三条线程的分配/释放都发生在同一个 20 字节块上，且该块由 `[0x26C840)` 分配与首次释放。
+**事实 5**：每份报告涉及**两个 worker 线程**——分配与第二次释放发生在同一线程（"所有者"），第一次释放发生在另一个线程；三者都落在同一个 20 字节块上，且该块由 `[0x26C840)` 分配并首次释放。
 **边界（必须与事实 1–5 一起读）**：ASan 记录的是"第一次被观测到的 free"与"第二次 free"，
 **不是**"最早破坏引用计数的那个操作"。谁在什么时刻把引用计数改坏、两线程的精确交错，仍未证实；
 `zero` 字段的无同步读-改-写是高度相关的候选根因（见 §3、§5）。
