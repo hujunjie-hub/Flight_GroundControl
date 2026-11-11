@@ -3,6 +3,11 @@ name: Linux (disabled)
 on:
   workflow_dispatch:
 
+# Least privilege for the GITHUB_TOKEN: this workflow only checks out nothing and echoes a
+# notice, so no write scopes are needed (CodeQL actions/missing-workflow-permissions).
+permissions:
+  contents: read
+
 jobs:
   linux-build:
     name: Linux x64 build disabled

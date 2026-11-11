@@ -69,7 +69,7 @@ jobs:
       actions: read
     steps:
       - name: Wait for Windows x64 Release build
-        uses: int128/wait-for-workflows-action@v1
+        uses: int128/wait-for-workflows-action@ae18a458a41aec584ea98530f9d6962f4836edfb # v1
         with:
           workflow-names: |
             Windows
