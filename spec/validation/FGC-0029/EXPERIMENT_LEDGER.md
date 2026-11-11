@@ -173,3 +173,108 @@ GStreamer 1.28.4、i5-12400（6C/12T）、31.3 GB RAM。
 ## E-16 Windows Release CI
 
 见 `FIX_VALIDATION.md`。
+
+---
+
+# R18（FGC-0029 最终核验轮）追加实验
+
+R18 起环境不变（Windows x64 / MSVC 14.44 / Qt 6.11.1 / Ninja / ASan 同构建）。
+本轮不重复 R17 已完成的 640 次修复后压力测试（§7 要求）。
+
+| 编号 | 内容 |
+|---|---|
+| E-17 | 保留性检查：HEAD、8295dc0、`parseExifTimestamp`、无 `QDateTime::fromString` |
+| E-18 | Qt 二进制身份核验 |
+| E-19 | ASan 报告三栈重解析（导出表区间 + RVA + 反汇编） |
+| E-20 | 反汇编定位分配点与第一次释放点 |
+| E-21 | 差分实验 A/B/C/D（16 进程 × 15 轮，ASan） |
+| E-22 | `ExifParser.cc` 根因注释收敛（不改行为） |
+| E-23 | Check Links：`http://px4.io/` → `https://px4.io/`（独立提交） |
+| E-24 | Windows CI 证据登记（Run 43007829317） |
+
+## E-17 保留性检查
+
+- 假设：R17 修复仍在原位，未被回退。
+- 命令：`git rev-parse HEAD`；`git log --oneline`；`Select-String parseExifTimestamp|QDateTime::fromString`
+- 结果：HEAD `885d06ae...`；`8295dc0` 在历史中；`parseExifTimestamp` 存在且被 `readTime()` 调用；
+  文件内 `QDateTime::fromString` 仅出现在注释中（非调用）。
+- 结论：**通过**。
+
+## E-18 Qt 二进制身份
+
+- 命令：`Get-Item .VersionInfo`、`Get-FileHash`、`Get-AuthenticodeSignature`、`dumpbin /headers`
+- 结果：Qt6Core.dll 6.11.1.0 / 10,480,440 B / SHA256 `FAE4778A…259B` / 签名 Valid
+  （The Qt Company Oy）/ PE linker 14.39；Qt6Concurrent、Qt6Test 同版本同签名。
+  Kit 内**无 Qt PDB**。
+- 结论：**官方 Qt 6.11.1 msvc2022_64，与 v6.11.1 源码一致**（详见 `QT_BINARY_IDENTITY.md`）。
+
+## E-19 ASan 三栈重解析
+
+- 输入：`r11-i15.err`、`r13-i10.err`（R17）与 `a-r5-i1.err`（R18 新增）。
+- 方法：`dumpbin /exports` 建立导出区间 → 计算每帧 RVA → 取区间端点 → 反汇编交叉验证。
+- 结果：三份报告逐帧 RVA 完全相同；分配在 `QString(QChar*,1)`（20 字节），
+  第一次释放为同一赋值的旧值释放，第二次释放为 `QVariant::~QVariant+0x42`。
+- 结论：详见 `ASAN_STACK_ANALYSIS.md`。**首次非法操作 = 同一 20 字节块被两个 worker 先后释放**。
+
+## E-20 分配点/释放点反汇编
+
+- 命令：cdb 对 `dump-32020` 反汇编 `0x26c8xx`（`QArrayData::allocate2`、`QString::QString`、
+  `QVariant::~QVariant`）。
+- 结果：`GetLocaleInfoW(..., LOCALE_SNATIVEDIGITS, digits, 11)` → `QString(digits,1)` →
+  写入 `[rdi+8]` → `lock xadd` 旧值 → `QArrayData::deallocate`；
+  `allocSize = capacity*2 + 0x12`（1 字符 = 20 字节）。
+- 结论：对象为 `QSystemLocalePrivate::zero`。**高置信度**（源码逐条对应）。
+
+## E-21 差分实验 A/B/C/D
+
+- 工具：`tools/validation/fgc0029-asan-probe`（新增 `qlocale`、`legacy` 两个模式），
+  脚本 `work/validation/fgc0029-r18/Invoke-Fgc0029ProbeMatrix.ps1`。
+- 矩阵：每模式 **16 进程并发 × 15 轮**，每进程 12 线程。
+- 结果：
+
+| 模式 | 内容 | 运行 | ASan 报告 | 备注 |
+|---|---|---:|---:|---|
+| A `qlocale` | 仅 `QLocale::system()` | 240 | 0 | 阴性 |
+| B `a` | 仅 `QDateTime::fromString()` | 240 | **1** | `a-r5-i1.err` |
+| C `legacy` | 修复前 `readTime()` 原样 | 240 | 0 | 阴性 |
+| D `c` | 修复后 `readTime()` | 240 | 0 | 225 完成 + 15 次 300 s 超时（`-999`，外部链接任务抢占 CPU） |
+
+- 结论：**B 单独即可复现同一缺陷**；A 单独不复现。阴性结果不作"绝对安全"推断。
+
+## E-22 根因注释收敛
+
+- 变更：`ExifParser.cc` 中 `parseExifTimestamp()` 文档注释改为"已定位对象与调用路径，
+  Qt 内部归属未证实"，删除"`QLocale::system()` 无锁修改"的断言。
+- 行为：无变化（纯注释）；重建后 `ExifParserTest` 13/13。
+- 结论：与 `ROOT_CAUSE_ANALYSIS.md`（R18）一致。
+
+## E-23 Check Links
+
+- 变更：`docs/en/qgc-user-guide/setup_view/firmware.md`：
+  `http://px4.io/` → `https://px4.io/`（独立提交 `cdd97ea`，不混入根因修复）。
+- 本地复跑：lychee **v0.22.0**（与 CI 同版本，SHA256 校验通过），命令
+  `lychee --config .lychee.toml --no-progress --format markdown <file>`。
+- 结果：文件内 3 条链接；`airframe.md` 200；`http://ardupilot.com/` 200（重定向到
+  `https://ardupilot.org/`）；`https://px4.io/` **TLS handshake failed**。
+- 原因核查：
+  - 本机 DNS 把 `px4.io` 解析到 `198.18.0.195`（fake-ip 段，代理拦截），导致 TLS 失败；
+  - 用 DoH 取真实地址（`151.101.66.159`）并 `curl --resolve` 直连，`https://px4.io/` 返回
+    **HTTP 404**（`Server: Flywheel/5.1.0`），`/docs/`、`/px4-autopilot/`、`/about/` 同为 404。
+- 结论：链接已按要求改为官方 HTTPS 地址；**本机无法证明其当前可达**——上游站点此刻自身返回 404
+  （托管方 Flywheel 的占位/故障页），与本次修改无关。CI（GitHub runner，真实 DNS）为权威判定。
+  完整日志：`work/validation/fgc0029-r18/check-links-firmware.log`。
+
+## E-24 Windows CI
+
+- Run：**43007829317**（由 R17 提交触发）。
+- 结果（由项目维护者确认，本会话无 `gh`/API 访问权限，未重复执行）：
+
+| 项 | 结果 |
+|---|---|
+| Unit | 198/198 |
+| Integration | 70/70（含 `FlightTelemetryDispatchTest`，已执行并通过） |
+| Windows Release 构建 | 通过 |
+| Installer 生成 | 通过 |
+| 安装后可执行文件验证 | 通过 |
+
+- 结论：**CI 通过**（本轮不重复跑测试）。
