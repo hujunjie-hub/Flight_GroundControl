@@ -17,11 +17,17 @@
 |---|---|---|---|---|---|
 | 修复前 | 12 并发 × 3 轮 | 36 | **2** | 5.6% | `release-baseline/`（`0xC0000374`，2 个 WER Dump） |
 | 修复前 | 12 并发 × 10 轮 | 120 | 0 | 0% | `release-baseline2/` |
-| **修复后** | 12 并发 × 10 轮 | 120 | **0** | 0% | `release-postfix/` |
-| **修复后** | 24 并发 × 5 轮 | 120 | **0** | 0% | `release-postfix-heavy/` |
-| **修复后** | 单实例 × 20 次 | 20 | **0** | 0% | `release-single-postfix/` |
+| 修复后 | 12 并发 × 10 轮 | 120 | **0** | 0% | `release-postfix/` |
+| 修复后 | 24 并发 × 5 轮 | 120 | **0** | 0% | `release-postfix-heavy/` |
+| 修复后 | 单实例 × 20 次 | 20 | **0** | 0% | `release-single-postfix/` |
+| 修复后（**最终提交源码重建**） | 12 并发 × 5 轮 | 60 | **0** | 0% | `final-release/` |
 
-修复后 Release 合计 **260 次运行 0 失败**；修复前同条件 36 次出现 2 次同签名崩溃。
+修复后 Release 合计 **320 次运行 0 失败**；修复前同条件 36 次出现 2 次同签名崩溃。
+
+> 基线一致性：修复前 `build-win-release\Release\QGroundControl.exe` 的 SHA256
+> = `581A58EAF266199AC85D4DE8C3FA955E228C029BDEAD4284C74E834AE1711F1D`，
+> 与 R16 `environment-final.txt` 记录的 `executable_sha256` **完全一致**。
+> 即本轮复现使用的是 R16 的同一二进制，不是重新构建的“近似版本”。
 
 ## 3. ASan 并发对照（关键）
 
@@ -29,9 +35,11 @@
 |---|---|---|---|---|
 | 修复前 | 12 并发 × 10 轮 | 120 | 0 | `asan-run1/` |
 | 修复前 | 16 并发 × 15 轮 | 240 | **2**（double-free，含三栈） | `asan-run2/r11-i15.err`、`r13-i10.err` |
-| **修复后** | 16 并发 × 15 轮（**同矩阵**） | 240 | **0** | `asan-postfix/` |
+| 修复后 | 16 并发 × 15 轮（**同矩阵**） | 240 | **0** | `asan-postfix/` |
+| 修复后（**最终提交源码重建**） | 16 并发 × 5 轮 | 80 | **0** | `final-asan/` |
 
 修复前失败的正是 **round 11** 与 **round 13**；修复后同一 round 编号全部通过。
+修复后 ASan 合计 **320 次运行 0 报告**。
 
 ## 4. 回归测试
 
@@ -51,12 +59,20 @@ tests=13 failures=0 errors=0
 
 ## 5. Unit / Integration
 
-见 `work/validation/fgc0029-r17/acceptance/`：
+证据目录：`work/validation/fgc0029-r17/acceptance/`。
 
 | 项 | 次数 | 结果 |
 |---|---|---|
-| Unit（`ctest -L Unit`） | 3 | 见下方记录 |
-| Integration（`ctest -L Integration`） | 1 | 见下方记录 |
+| Unit（`ctest -L Unit`） | 3（连续） | **199/199 通过 ×3**，exit 0（139 s / 140 s / 136 s） |
+| Integration（`ctest -L Integration`） | 1 | **72/72 通过**，exit 0（588 s） |
+
+修复后最终产物（由最终提交源码重建）复跑：
+
+| 项 | 结果 |
+|---|---|
+| `ExifParserTest`（含 2 个新回归用例） | 13/13 通过，0 失败 |
+| Release 12 并发 × 5 轮 | 60/60 通过 |
+| ASan 16 并发 × 5 轮 | 80/80 通过，0 报告 |
 
 ## 6. 静态检查
 
@@ -72,11 +88,11 @@ tests=13 failures=0 errors=0
 | 找到首次非法操作 | ✅ ASan：同一 20 字节 QString 块被两个不同 worker 线程先后释放 |
 | 修复原因能解释历史现象 | ✅ 只有并发路径会同时进入 `QLocale::system()`；libexif 单读、单线程解析都不触发 |
 | 有最小回归测试 | ✅ 2 个新用例（确定性 + 并发） |
-| 原始 Release 复现测试稳定通过 | ✅ 260 次 0 失败（含 24 并发加压） |
-| ASan 专项通过 | ✅ 240 次 0 报告 |
-| Unit / Integration | 见第 5 节 |
-| Windows Release CI | 见第 8 节 |
-| 独立验收 | 待外部复核 |
+| 原始 Release 复现测试稳定通过 | ✅ 320 次运行 0 失败（含 24 并发加压与最终产物复跑） |
+| ASan 专项通过 | ✅ 320 次运行 0 报告（含与修复前完全相同的 240 次矩阵） |
+| Unit / Integration | ✅ Unit 199/199 ×3；Integration 72/72 |
+| Windows Release CI | ⏳ 见第 8 节（本会话无法读取） |
+| 独立验收 | ⏳ 待外部复核 |
 
 ## 8. Windows Release CI
 

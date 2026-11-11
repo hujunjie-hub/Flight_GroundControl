@@ -61,5 +61,7 @@ spec/validation/FGC-0029/
 - [x] 根因确认（`QLocale::system()` 非重入 + `QDateTimeParser` 无条件调用）
 - [x] 最小修复（移除并发路径上的 `QDateTime::fromString`）
 - [x] 最小回归测试（`ExifParserTest::_readTimeFormatTest` / `_readTimeConcurrentTest`）
-- [ ] 原始 Release 复现实验稳定通过（见 `FIX_VALIDATION.md`）
-- [ ] Unit / Integration / Windows CI（见 `FIX_VALIDATION.md`）
+- [x] 原始 Release 复现实验稳定通过（320 次并发运行 0 失败，见 `FIX_VALIDATION.md`）
+- [x] Unit 199/199 × 3；Integration 72/72
+- [ ] Windows CI run 结果读取（本会话无 `gh` CLI 且未认证 API 被限流）
+- [ ] 外部独立验收
