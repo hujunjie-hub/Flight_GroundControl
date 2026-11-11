@@ -1068,6 +1068,24 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN]{};
         const int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
         const QByteArray bytes(reinterpret_cast<char*>(buffer), cBuffer);
+
+        if (_faultInjection.dropEveryNth > 0 || (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0)) {
+            const quint64 sequence = ++_injectSequence;
+            if (_faultInjection.dropEveryNth > 0 &&
+                (sequence % static_cast<quint64>(_faultInjection.dropEveryNth)) == 0) {
+                qCDebug(MockLinkLog) << "fault injection: drop sequence" << sequence
+                                     << "seed" << _faultInjection.seed;
+                return;
+            }
+            if (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0 &&
+                (sequence % static_cast<quint64>(_faultInjection.delayEveryNth)) == 0) {
+                qCDebug(MockLinkLog) << "fault injection: delay sequence" << sequence
+                                     << "by" << _faultInjection.delayMs << "ms seed" << _faultInjection.seed;
+                QTimer::singleShot(_faultInjection.delayMs, this, [this, bytes]() { emit bytesReceived(this, bytes); });
+                return;
+            }
+        }
+
         emit bytesReceived(this, bytes);
     }
 }

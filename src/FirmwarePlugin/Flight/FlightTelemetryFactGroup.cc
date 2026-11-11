@@ -258,6 +258,17 @@ QVariantMap FlightTelemetryFactGroup::familyReceiveAgeMs() const
     return ages;
 }
 
+QVariantMap FlightTelemetryFactGroup::familyStale() const
+{
+    const QVariantMap ages = familyReceiveAgeMs();
+    QVariantMap stale;
+    for (auto it = ages.cbegin(); it != ages.cend(); ++it) {
+        const qint64 ageMs = it.value().toLongLong();
+        // Never received counts as stale: the UI must not present "no data" as fresh.
+        stale.insert(it.key(), ageMs < 0 || ageMs > _familyStaleThresholdMs);
+    }
+    return stale;
+}
 void FlightTelemetryFactGroup::_markFamilyReceived(const QString &family)
 {
     _lastReceiveElapsedMs.insert(family, _receiveClock.elapsed());

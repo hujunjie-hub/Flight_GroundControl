@@ -28,6 +28,10 @@ public:
     Q_PROPERTY(QVariantList linkStatuses READ linkStatuses NOTIFY linkStatusesChanged)
     Q_PROPERTY(QVariantList resourceStatuses READ resourceStatuses NOTIFY resourceStatusesChanged)
     Q_PROPERTY(QVariantMap familyReceiveAgeMs READ familyReceiveAgeMs NOTIFY familyReceiveAgeMsChanged)
+    /// Per-family freshness: true when the family has not produced an accepted frame for
+    /// longer than familyStaleThresholdMs. Ageing uses _receiveClock (QElapsedTimer, monotonic);
+    /// the wall clock is never consulted, so a system time change cannot flip freshness.
+    Q_PROPERTY(QVariantMap familyStale READ familyStale NOTIFY familyReceiveAgeMsChanged)
 
     explicit FlightTelemetryFactGroup(QObject *parent = nullptr);
     QVariantList recentEvents() const;
@@ -36,6 +40,13 @@ public:
     QVariantList linkStatuses() const;
     QVariantList resourceStatuses() const;
     QVariantMap familyReceiveAgeMs() const;
+    QVariantMap familyStale() const;
+
+    /// Staleness threshold in milliseconds (default 3000). Exposed so tests can drive STALE
+    /// without waiting seconds; production keeps the default.
+    static constexpr int kDefaultFamilyStaleThresholdMs = 3000;
+    int familyStaleThresholdMs() const { return _familyStaleThresholdMs; }
+    void setFamilyStaleThresholdMs(int ms) { _familyStaleThresholdMs = qMax(0, ms); emit familyReceiveAgeMsChanged(); }
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
 signals:
@@ -229,6 +240,7 @@ private:
     void _markFamilyReceived(const QString &family);
 
     QElapsedTimer _receiveClock;
+    int _familyStaleThresholdMs = kDefaultFamilyStaleThresholdMs;
     QHash<QString, qint64> _lastReceiveElapsedMs;
     quint64 _activeBootId = 0;
     quint32 _activeProfileId = 0;
