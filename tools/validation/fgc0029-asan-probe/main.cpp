@@ -14,6 +14,9 @@
 //   d  QFile read + ExifParser::readTime       (controller worker shape)
 //   e  QtConcurrent::mapped + QFutureWatcher + shared cache + ExifParser::write
 //                                              (controller async shape, write path)
+//   qlocale  QLocale::system() only            (R18 differential experiment A)
+//   legacy   pre-fix readTime body             (R18 differential experiment C: the
+//            QDateTime::fromString call that 8295dc0 removed; diagnostic control only)
 //
 // Usage: fgc0029_asan_probe --mode=c --threads=12 --iterations=200 --image=<file.jpg>
 // ============================================================================
@@ -33,6 +36,7 @@
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QHash>
+#include <QtCore/QLocale>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QStringList>
@@ -171,6 +175,55 @@ void runModeC(const Options &opt, const QByteArray &image)
             const QDateTime dt = ExifParser::readTime(image);
             if (!dt.isValid()) {
                 reportFailure("readTime returned an invalid datetime");
+                continue;
+            }
+            g_ok.fetch_add(1, std::memory_order_relaxed);
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// qlocale: QLocale::system() only (FGC-0029 R18 differential experiment A)
+// ---------------------------------------------------------------------------
+
+void runModeQSystemLocale(const Options &opt)
+{
+    runThreads(opt, [&opt](int) {
+        for (int i = 0; i < opt.iterations; ++i) {
+            const QLocale locale = QLocale::system();
+            // Force the returned QLocale to be materialised so the call is not elided.
+            if (locale.language() == QLocale::AnyLanguage) {
+                reportFailure("QLocale::system() returned AnyLanguage");
+                continue;
+            }
+            g_ok.fetch_add(1, std::memory_order_relaxed);
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// legacy: byte-for-byte replication of the pre-fix readTime() body
+//         (commit 8117cfe ExifParser::readTime, kept only as a diagnostic control)
+// ---------------------------------------------------------------------------
+
+void runModeLegacy(const Options &opt, const QByteArray &image)
+{
+    runThreads(opt, [&opt, &image](int) {
+        for (int i = 0; i < opt.iterations; ++i) {
+            ExifData *data = ExifUtility::loadFromBuffer(image);
+            if (!data) {
+                reportFailure("legacy: loadFromBuffer returned null");
+                continue;
+            }
+            const QString text = ExifUtility::readString(data, EXIF_TAG_DATE_TIME_DIGITIZED, EXIF_IFD_EXIF);
+            exif_data_unref(data);
+            if (text.isEmpty()) {
+                reportFailure("legacy: empty DateTimeDigitized");
+                continue;
+            }
+            const QDateTime dt = QDateTime::fromString(text, QStringLiteral("yyyy:MM:dd HH:mm:ss"));
+            if (!dt.isValid()) {
+                reportFailure("legacy: QDateTime::fromString returned an invalid datetime");
                 continue;
             }
             g_ok.fetch_add(1, std::memory_order_relaxed);
@@ -397,6 +450,10 @@ int main(int argc, char *argv[])
         runModeD(opt);
     } else if (opt.mode == QStringLiteral("e")) {
         runModeE(opt, image);
+    } else if (opt.mode == QStringLiteral("qlocale")) {
+        runModeQSystemLocale(opt);
+    } else if (opt.mode == QStringLiteral("legacy")) {
+        runModeLegacy(opt, image);
     } else {
         std::printf("[probe] unknown mode: %s\n", qPrintable(opt.mode));
         return 2;
