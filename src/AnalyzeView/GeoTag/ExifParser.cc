@@ -135,23 +135,50 @@ bool write(QByteArray& buffer, const GeoTagData& geotag)
 
     const ExifByteOrder order = exif_data_get_byte_order(data);
 
-    // Helper to get existing or create new GPS entry
+    ExifContent* gpsIfd = data->ifd[EXIF_IFD_GPS];
+    if (!gpsIfd) {
+        qCWarning(ExifParserLog) << "GPS IFD is unavailable";
+        exif_data_unref(data);
+        return false;
+    }
+
+    // GPS Version ID is exactly four BYTE components. Existing EXIF entries are
+    // untrusted input: libexif preserves their declared format/count, so checking
+    // only entry->data is not sufficient before writing four bytes.
+    constexpr unsigned long kGpsVersionIdComponents = 4;
+    constexpr size_t kGpsVersionIdSize = 4;
+    ExifEntry* versionEntry = exif_content_get_entry(
+        gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID));
+    if (!versionEntry) {
+        versionEntry = ExifUtility::createTag(
+            data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID),
+            EXIF_FORMAT_BYTE, kGpsVersionIdComponents);
+    }
+
+    if (!versionEntry ||
+        versionEntry->format != EXIF_FORMAT_BYTE ||
+        versionEntry->components != kGpsVersionIdComponents ||
+        !versionEntry->data ||
+        versionEntry->size != kGpsVersionIdSize) {
+        qCWarning(ExifParserLog) << "Malformed GPS Version ID EXIF entry";
+        exif_data_unref(data);
+        return false;
+    }
+
+    // The entry has been validated and is safe to update.
+    versionEntry->data[0] = 2;
+    versionEntry->data[1] = 3;
+    versionEntry->data[2] = 0;
+    versionEntry->data[3] = 0;
+
+    // Helper to get existing or create new GPS entries.
     auto getOrCreateEntry = [&](ExifTag tag, ExifFormat format, unsigned long components) -> ExifEntry* {
-        ExifEntry* entry = exif_content_get_entry(data->ifd[EXIF_IFD_GPS], tag);
+        ExifEntry* entry = exif_content_get_entry(gpsIfd, tag);
         if (!entry) {
             entry = ExifUtility::createTag(data, EXIF_IFD_GPS, tag, format, components);
         }
         return entry;
     };
-
-    // GPS Version ID (2.3.0.0)
-    ExifEntry* versionEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID), EXIF_FORMAT_BYTE, 4);
-    if (versionEntry && versionEntry->data) {
-        versionEntry->data[0] = 2;
-        versionEntry->data[1] = 3;
-        versionEntry->data[2] = 0;
-        versionEntry->data[3] = 0;
-    }
 
     // Latitude
     ExifEntry* latRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE_REF), EXIF_FORMAT_ASCII, 2);
