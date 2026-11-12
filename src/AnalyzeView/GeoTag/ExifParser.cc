@@ -39,21 +39,14 @@ bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetyp
 ///
 /// Deliberately does not use QDateTime::fromString().
 ///
-/// FGC-0029: readTime() runs on every QtConcurrent EXIF worker thread, and it aborted with
-/// STATUS_HEAP_CORRUPTION (double free) through that call. AddressSanitizer showed a
-/// one-character QString owned by Qt's process-wide system-locale cache
-/// (QSystemLocalePrivate::zeroDigit) being allocated on one worker thread and freed on another,
-/// with every stack frame inside QLocale/QDateTimeParser. The defect is therefore reachable from
-/// QDateTime::fromString() alone and is not caused by the caller's data.
+/// FGC-0029: concurrent GeoTagController runs previously ended in STATUS_HEAP_CORRUPTION.
+/// The captured exception stack terminated in QDateTime::fromString/QDateTimeParser::locale,
+/// but that was the detection/free site and did not establish the first invalid access or free.
 ///
-/// Which Qt object owns that cross-thread lifetime is NOT established: the crash is rare, and the
-/// only mutex in the area (systemData()) does not compile into an obviously unsynchronised
-/// write. Treat this as "Qt date/time parsing is not safe to call from many threads here" and not
-/// as a confirmed Qt bug with a named field.
-///
-/// EXIF timestamps are locale independent by specification, so a fixed-format reader is both the
-/// correct behaviour and it removes the dependency on that shared Qt locale state entirely.
-/// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
+/// EXIF timestamps are locale-independent and have a fixed format. Parse that format directly
+/// rather than invoking locale-dependent QDateTime::fromString on QtConcurrent worker threads.
+/// The concurrent controller regression test exercises this path under parallel EXIF workloads.
+/// /// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
 /// two digits are accepted for all fields but the year.
 QDateTime parseExifTimestamp(QStringView text)
 {
