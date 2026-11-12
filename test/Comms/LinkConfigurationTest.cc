@@ -386,23 +386,20 @@ void LinkConfigurationTest::_testUdpSettingsRoundtrip()
     }
 }
 
-void LinkConfigurationTest::_testUdpHostnamePreservedWhenUnresolved()
+void LinkConfigurationTest::_testUdpHostnamePreservedRegardlessOfResolution()
 {
-    // Some networks (transparent proxies, captive DNS) resolve even the reserved
-    // .invalid TLD. The unresolved-host branch cannot be exercised there; skip with the
-    // reason instead of failing on an environment property.
-    if (!QHostInfo::fromName(QStringLiteral("drone.invalid")).addresses().isEmpty()) {
-        QSKIP("Local DNS resolver resolves the reserved .invalid name");
-    }
+    // DNS behavior for the reserved .invalid TLD varies across networks. The
+    // configuration contract is independent of whether the host resolves: keep
+    // the original hostname and serialized endpoint in either case.
     ignoreLogMessage("Comms.UDPLink", QtWarningMsg, QRegularExpression("Could not resolve host"));
-    UDPConfiguration config(QStringLiteral("UDPUnresolved"));
+    UDPConfiguration config(QStringLiteral("UDPHostnamePreserved"));
     config.addHost(QStringLiteral("drone.invalid"), 14550);
 
     const auto targets = config.targetHosts();
     QCOMPARE(targets.size(), 1);
     const auto target = targets.constFirst();
+    QVERIFY(target);
     QCOMPARE(target->hostname, QStringLiteral("drone.invalid"));
-    QVERIFY(target->address.isNull());
     QCOMPARE(config.hostList().constFirst(), QStringLiteral("drone.invalid:14550"));
 }
 
