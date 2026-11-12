@@ -1,4 +1,4 @@
-# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R21 状态）
+# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R22 状态）
 
 | 项目 | 内容 |
 |---|---|
@@ -6,9 +6,12 @@
 | 等级 | S1 |
 | 分支 | `codex/phase2-fcu-telemetry` |
 | 根因修复提交 | `8295dc05b52bcf2e839bc2bcf2be38bb9109aadb`（保留，未回退） |
-| R20 已验证产品代码 HEAD | `89e2914ff1445e1b86aa2851d6fd7fb8c5a30206` |
-| R20 最终文档 HEAD | `36ff8d9a87d903c0e107d024fb872cfa5df41902` |
-| R21 | 只改文档；HEAD 见 R21 交付的 `RUN-IDENTITY.txt` |
+| validated_code_head | `89e2914ff1445e1b86aa2851d6fd7fb8c5a30206`（产品 `src/` 的最后一个相关 HEAD） |
+| final_head（R21） | `f00966791ae06327aee4beb3e620b43d78f93015` |
+| R21 Windows CI | **43077208284 SUCCESS**（Unit 198/198、Integration 70/70、Installer 与安装后验证通过） |
+| R21 Check Links | **43077207915 SUCCESS**（`Errors = 0`） |
+| R21 pre-commit | **43077210673 SUCCESS** |
+| R22 | 仅文档收尾（SHA256 清单、判读表述、本 README）；HEAD 见 R22 交付的 `RUN-IDENTITY.txt` |
 | PR #3 | Open / **Draft**（未合并，main 未修改） |
 
 ## 1. 结论状态（不得过度表述）
@@ -24,6 +27,14 @@
 **Qt 内部根因的表述级别**：`zero` 字段（系统 locale 缓存里的 1 字符 QString）的**无同步读-改-写**
 是**高度相关的候选根因**，不是已证实的 Qt 缺陷。`systemData()` 本身由 `QBasicMutex` 保护，
 R17 的"无锁修改"说法已撤回。
+
+## 1.1 HEAD 关系（不得混用）
+
+- `validated_code_head = 89e2914`：产品源码 `src/` 自 `54713e5` 起未再修改，二进制与测试行为归属该 HEAD；
+  它的 CI 是 run `43061078850`（Windows，success）与 `43061078592`（Check Links，success）。
+- `final_head = f009667`（R21）：只包含文档修改；它的 CI 是 run `43077208284`（Windows，success）、
+  `43077207915`（Check Links，success）、`43077210673`（pre-commit，success）。
+- 两个 HEAD 的 CI 结果**不可互相替代**；引用时必须写明 HEAD。
 
 ## 2. 六份 ASan 报告
 
@@ -75,8 +86,8 @@ spec/validation/FGC-0029/
 - [x] 修复保留（`parseExifTimestamp()`），回归测试 2 例
 - [x] 修复后 Release 320 次 / ASan 320 次 0 失败（R17/R18 数据，未重跑）
 - [x] 统一 A/B/C/D 差分矩阵 960/960、0 超时（R19 数据，未重跑）
-- [x] Windows Release CI：`89e2914` 的 run `43061078850` **success**（Unit 198/198、Integration 70/70、Installer 与安装后验证通过）
-- [x] Check Links：`89e2914` 的 run `43061078592` **success**（Errors = 0）
+- [x] Windows Release CI：`f009667`（R21 final_head）run **43077208284 success**；`89e2914`（validated_code_head）run `43061078850 success`
+- [x] Check Links：`f009667` run **43077207915 success**（Errors = 0）；`89e2914` run `43061078592 success`
 - [ ] 首次破坏引用计数的具体操作与线程交错（未证实）
 - [ ] 外部独立验收
 - [ ] Issue #29 关闭（**保持 OPEN**，由独立验收决定）
@@ -85,3 +96,4 @@ spec/validation/FGC-0029/
 
 FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）独立登记，本轮未处理；
 `ExifParser::write()` 的 `GPSVersionID` 长度检查缺口见 `OWNERSHIP_AUDIT.md` §6，同样建议单独立项。
+

@@ -495,3 +495,13 @@ R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射�
 - 记录项：Build、Unit 实际数量、Integration 实际数量、`FlightTelemetryDispatchTest`、Installer 生成、
   安装后可执行文件验证、Check Links、pre-commit、Artifact 名称与 SHA256。
 - 结论以 `CI-RESULT-R21.md` 为准；在读到明确 `success` 之前，仓库文档不声称 R21 HEAD 的 CI 已通过。
+
+## E-37 R22 归档收尾（文档）
+
+| 项 | 处理 |
+|---|---|
+| 内部 SHA256 清单 | R21 归档的 `14-hashes/SHA256SUMS.txt` **漏掉 `README.txt`**（打包脚本先算哈希、后生成 README）。R22 修正生成顺序：README 先写入，再对其余全部文件计算哈希；清单覆盖除清单自身以外的所有文件。 |
+| 既有证据 | R21 归档中 `README.txt` 的 SHA256 实测为 `9b02044f0a0d0250684f23623ff4b3b8f5d97763e51950a246604c8e5b6a847a`，与独立验收给出的值一致——确认是"清单漏项"而非文件损坏。 |
+| 判读表述 | `FIX_VALIDATION.md` §7 的 `找到首次非法操作` 改为 `ASan 是否确认双重释放链`，并明确"不得把 double-free 的第二次释放位置误称为首次非法操作"。 |
+| README | 补入 R21 `final_head=f009667`、Windows `43077208284`、Check Links `43077207915`、pre-commit `43077210673`，并区分 `validated_code_head=89e2914` 与 `final_head=f009667`。 |
+| 约束 | 未改 `src/`，未重跑 R17/R19 实验，未改 Qt，未合并 PR，未关闭 Issue。 |
