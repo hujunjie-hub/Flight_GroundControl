@@ -516,12 +516,14 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     ignoreLogMessage("Comms.LinkInterface", QtWarningMsg,
                      QRegularExpression("still have vehicle references:"));
 
-    Vehicle *const firstVehicle = vehicle();
-    QVERIFY(firstVehicle);
-    QPointer<Vehicle> firstVehicleGuard(firstVehicle);
-
     MultiVehicleManager *const vehicleManager = MultiVehicleManager::instance();
     QVERIFY(vehicleManager);
+
+    Vehicle *const firstVehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("First vehicle retained after stale activation"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(firstVehicle);
+    QCOMPARE(vehicleManager->activeVehicle(), firstVehicle);
+    QPointer<Vehicle> firstVehicleGuard(firstVehicle);
 
     auto createGenericMockLink = [this](const QString &name) -> SharedLinkInterfacePtr {
         auto *configuration = new MockConfiguration(name);
@@ -550,6 +552,16 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     QSignalSpy destroyedSpy(secondVehicle, &QObject::destroyed);
     QVERIFY(destroyedSpy.isValid());
 
+    // The second connection normally becomes active. Switch back to the first
+    // vehicle before removal so setActiveVehicle(secondVehicle) can queue a
+    // genuinely stale activation after the deletion timer has already been queued.
+    QTRY_COMPARE_WITH_TIMEOUT(vehicleManager->activeVehicle(), secondVehicle, TestTimeout::longMs());
+    vehicleManager->setActiveVehicle(firstVehicle);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicleManager->activeVehicle(), firstVehicle, TestTimeout::longMs());
+
+    QSignalSpy activeVehicleSpy(vehicleManager, &MultiVehicleManager::activeVehicleChanged);
+    QVERIFY(activeVehicleSpy.isValid());
+
     // Force the exact timer ordering from FGC-0015:
     // 1) removal schedules _deleteVehiclePhase2();
     // 2) a stale activation request is scheduled afterwards;
@@ -559,8 +571,6 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     QCOMPARE(vehicleManager->vehicles()->count(), 1);
     QVERIFY(vehicleManager->getVehicleById(secondMockLink->vehicleId()) == nullptr);
 
-    QSignalSpy activeVehicleSpy(vehicleManager, &MultiVehicleManager::activeVehicleChanged);
-    QVERIFY(activeVehicleSpy.isValid());
     vehicleManager->setActiveVehicle(secondVehicle);
 
     // Both manager callbacks use a 20 ms timer. Wait past both deadlines so the
@@ -582,7 +592,6 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     secondLink.reset();
     settleEventLoopForCleanup();
 }
-
 
 UT_REGISTER_TEST(FlightTelemetryDispatchTest, TestLabel::Integration, TestLabel::Vehicle)
 
