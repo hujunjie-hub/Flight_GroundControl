@@ -373,6 +373,8 @@ void ExifParserTest::_readTimeFormatTest()
 
     // The empty tag value exercises the "no timestamp" warning path.
     ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg, QRegularExpression("DateTimeDigitized tag not found"));
+    ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Unterminated DateTimeDigitized EXIF entry"));
 
     const auto readInjected = [&templateJpeg](const QByteArray& tagValue) {
         QByteArray buffer = templateJpeg;
@@ -448,10 +450,11 @@ void ExifParserTest::_readTimeRejectsUnterminatedTimestampTest()
 
 void ExifParserTest::_readTimeConcurrentTest()
 {
-    // FGC-0029 regression: readTime() runs on every QtConcurrent EXIF worker thread.
-    // It used to build a QDateTimeParser (via QDateTime::fromString), whose constructor
-    // calls the process-global, unsynchronised QLocale::system(); concurrent workers then
-    // freed the same locale string twice and died with STATUS_HEAP_CORRUPTION.
+    // FGC-0029 regression coverage: readTime() runs on QtConcurrent EXIF workers.
+    // The historical Windows failure was detected in QDateTime::fromString /
+    // QDateTimeParser::locale, but that stack did not identify the first invalid
+    // operation. Keep this parser path locale-independent and stress it concurrently
+    // without claiming an unproven Qt or libexif root cause.
     const QByteArray imageBuffer = loadTemplateJpeg();
     QVERIFY(!imageBuffer.isEmpty());
 
