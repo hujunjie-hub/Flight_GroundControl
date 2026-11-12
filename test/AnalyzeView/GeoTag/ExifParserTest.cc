@@ -439,7 +439,10 @@ void ExifParserTest::_readTimeRejectsUnterminatedTimestampTest()
     QCOMPARE(unterminatedTimestamp.size(), 20);
     QVERIFY(setDateTimeDigitizedValue(buffer, unterminatedTimestamp));
 
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Unterminated DateTimeDigitized EXIF entry"));
     const QDateTime parsed = ExifParser::readTime(buffer);
+    verifyExpectedLogMessage();
     QVERIFY(!parsed.isValid());
 }
 

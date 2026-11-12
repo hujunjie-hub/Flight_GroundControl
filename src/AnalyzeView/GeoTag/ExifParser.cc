@@ -129,6 +129,7 @@ QDateTime readTime(const QByteArray& buffer)
     if (dateTimeEntry->format != EXIF_FORMAT_ASCII ||
         !dateTimeEntry->data ||
         dateTimeEntry->components == 0 ||
+        dateTimeEntry->components > 20 ||
         dateTimeEntry->size < dateTimeEntry->components) {
         qCWarning(ExifParserLog) << "Malformed DateTimeDigitized EXIF entry";
         exif_data_unref(data);
