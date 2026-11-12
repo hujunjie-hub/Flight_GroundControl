@@ -584,7 +584,9 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     QCOMPARE(vehicleManager->vehicles()->count(), 1);
     QCOMPARE(vehicleManager->activeVehicle(), firstVehicleGuard.data());
     QVERIFY(vehicleManager->activeVehicleAvailable());
-    QCOMPARE(activeVehicleSpy.count(), 0);
+    // The deletion callback legitimately selects the surviving vehicle once;
+    // the stale activation callback must not emit a second change.
+    QCOMPARE(activeVehicleSpy.count(), 1);
 
     // The test deliberately removed the vehicle before disconnecting its MockLink.
     // Release the orphaned link after the manager has completed both delayed callbacks.
