@@ -252,7 +252,7 @@ jobs:
           $buildDir = $env:FGC0037_ASAN_BUILD_DIR
           $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
           $qtestDir = Join-Path $buildDir 'qtest-results'
-          $qtestXml = Join-Path $qtestDir 'ExifParserTest-ExifParserTest.xml'
+          $qtestXml = Join-Path $qtestDir 'ExifParserTest.xml'
           $perRunDir = Join-Path $evidenceDir 'qtest-results'
           New-Item -ItemType Directory -Force -Path $qtestDir | Out-Null
           New-Item -ItemType Directory -Force -Path $perRunDir | Out-Null
@@ -329,7 +329,7 @@ jobs:
           $buildDir = $env:FGC0037_ASAN_BUILD_DIR
           $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
           $qtestDir = Join-Path $buildDir 'qtest-results'
-          $qtestXml = Join-Path $qtestDir 'GeoTagControllerTest-GeoTagControllerTest.xml'
+          $qtestXml = Join-Path $qtestDir 'GeoTagControllerTest.xml'
           $perRunDir = Join-Path $evidenceDir 'geotag-controller-qtest-results'
           New-Item -ItemType Directory -Force -Path $qtestDir | Out-Null
           New-Item -ItemType Directory -Force -Path $perRunDir | Out-Null
@@ -386,7 +386,7 @@ jobs:
             ${{ runner.temp }}/fgc0037-asan-evidence/
             ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
             ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
-            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
-            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/GeoTagControllerTest-GeoTagControllerTest.xml
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest.xml
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/GeoTagControllerTest.xml
           if-no-files-found: warn
           retention-days: 14
