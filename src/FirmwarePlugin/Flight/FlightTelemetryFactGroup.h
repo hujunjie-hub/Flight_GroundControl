@@ -231,6 +231,7 @@ private:
     Fact _sourceCommit{0, QStringLiteral("sourceCommit"), FactMetaData::valueTypeString, this};
     Fact _sourceCommitValid{0, QStringLiteral("sourceCommitValid"), FactMetaData::valueTypeBool, this};
 
+    bool _acceptTelemetryEpoch(quint64 bootId);
     bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs);
     bool _acceptTelemetryMessage(quint64 bootId, quint64 timeBootUs, quint32 instanceId,
                                  QHash<quint32, quint64> &lastTimeByInstance);

@@ -114,10 +114,13 @@ publisher enumerates its source array as IMU, MAG, BARO, GNSS and publishes
 `sensor_instance_id = index + 1`. GroundControl therefore displays the raw
 sensor instance ID instead of inferring a sensor name. The firmware publisher
 must be aligned with the ICD before named sensor labels are restored. Resource records are bounded to 64
-task IDs. It tracks one active `boot_id`; a new operation-status boot ID resets
-the family availability flags, per-instance records, digest values and timestamp
-watermarks. The QML page gates every displayed fact on its family availability flag,
-so values left in the cache from the previous boot appear as 未上报 until a new family sample arrives.
+task IDs. It tracks one active `boot_id`; any accepted nonzero boot ID that differs
+from the active, non-retired ID establishes a new epoch, regardless of which
+telemetry family arrives first. This includes EVENT and BUILD_INFO frames, not
+only OPERATION_STATUS. A new epoch resets family availability, per-instance
+records, digest values and timestamp watermarks. The QML page gates every
+displayed fact on its family availability flag, so values left in the cache from
+the previous boot appear as 未上报 until a new family sample arrives.
 Event messages reject older publication timestamps and exact duplicate
 `(event_id, time_boot_us)` pairs while the event ID remains in the bounded
 64-ID deduplication window for the current timestamp. Repeated updates to the
@@ -155,10 +158,11 @@ The fixture verifies:
 - Seeded MockLink fault schedules cover drop, delay, reorder, duplicate,
   disconnect-buffer-drop and reconnect/new-epoch delivery.
 - FCU_EVENT regressions verify duplicate suppression, the bounded 64-ID
-  current-timestamp deduplication window and the 64-record per-boot history.
+  current-timestamp deduplication window, the 64-record per-boot history and
+  EVENT-first boot-epoch activation with delayed retired-boot rejection.
 - FCU_BUILD_INFO regressions verify shuffled chunks, duplicate rejection,
-  missing digest chunks, same-timestamp mixed-metadata rejection and a new
-  boot reusing a timestamp without accepting delayed chunks from the retired boot.
+  missing digest chunks, same-timestamp mixed-metadata rejection and
+  BUILD_INFO-first boot-epoch activation when a new boot reuses a timestamp.
 
 The unit fixture also pins the generated dialect's message IDs, payload
 lengths and CRC_EXTRA values with compile-time assertions.

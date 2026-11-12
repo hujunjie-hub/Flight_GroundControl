@@ -1896,22 +1896,17 @@ void FlightTelemetryDispatchTest::_buildInfoNewBootAcceptsSameTimestampAndReject
     const uint64_t oldBoot = 0x7500000000000005ULL;
     const uint64_t newBoot = 0x7500000000000006ULL;
     const uint64_t sharedTimestamp = 10000;
-    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
     Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
     Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
-    QVERIFY(operationTime && firmwareSha && coreParamsSha);
+    QVERIFY(firmwareSha && coreParamsSha);
 
     mockLink->respondWithMavlinkMessage(
         buildInfoMessage(sysId, compId, buildInfoPayload(oldBoot, sharedTimestamp, 0, 0x20, 42)));
     QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
     const QString oldHash = firmwareSha->rawValue().toString();
 
-    // OPERATION_STATUS confirms the new boot and resets all BUILD_INFO timestamps and hashes.
-    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, newBoot, 1000, 1));
-    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 1000ULL, TestTimeout::longMs());
-    QTRY_VERIFY_WITH_TIMEOUT(firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
-
-    // The new boot may legitimately reuse the previous boot's publication timestamp.
+    // BUILD_INFO itself may be the first valid family after reboot. It must activate the
+    // new epoch and clear prior hashes before comparing the reused publication timestamp.
     mockLink->respondWithMavlinkMessage(
         buildInfoMessage(sysId, compId, buildInfoPayload(newBoot, sharedTimestamp, 0, 0x40, 42)));
     QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
@@ -1997,4 +1992,64 @@ void FlightTelemetryDispatchTest::_eventDeduplicationAndHistoryStayBounded()
     QTest::qWait(20);
     QCOMPARE(eventSequence->rawValue().toUInt(), 66U);
     QCOMPARE(eventIdFact->rawValue().toUInt(), 1U);
+}
+
+void FlightTelemetryDispatchTest::_eventNewBootStartsEpochAndRejectsRetiredBoot()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Flight event new boot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t oldBoot = 0x7600000000000002ULL;
+    const uint64_t newBoot = 0x7600000000000003ULL;
+    const uint64_t timestamp = 3000;
+    Fact *eventSequence = telemetry->getFact(QStringLiteral("eventSequence"));
+    Fact *eventIdFact = telemetry->getFact(QStringLiteral("eventId"));
+    Fact *eventBootId = telemetry->getFact(QStringLiteral("eventBootId"));
+    QVERIFY(eventSequence && eventIdFact && eventBootId);
+
+    const auto makeEvent = [=](uint64_t bootId, uint32_t eventId, uint64_t timeBootUs) {
+        mavlink_fcu_event_t payload{};
+        payload.time_boot_us = timeBootUs;
+        payload.boot_id = bootId;
+        payload.profile_id = 0x00010001;
+        payload.event_id = eventId;
+        payload.reason_code = 5;
+        payload.authority_epoch = 7;
+        payload.directive_epoch = 8;
+        payload.permit_epoch = 9;
+        payload.source_id = 25;
+        payload.reason_namespace = 0;
+        payload.severity = 2;
+        mavlink_message_t message{};
+        mavlink_msg_fcu_event_encode(sysId, compId, &message, &payload);
+        return message;
+    };
+
+    mockLink->respondWithMavlinkMessage(makeEvent(oldBoot, 1, timestamp));
+    QTRY_COMPARE_WITH_TIMEOUT(eventBootId->rawValue().toULongLong(), oldBoot, TestTimeout::longMs());
+    QTRY_COMPARE_WITH_TIMEOUT(eventSequence->rawValue().toUInt(), 1U, TestTimeout::longMs());
+
+    // A new boot may reuse the same timestamp and event ID. EVENT itself must switch epochs.
+    mockLink->respondWithMavlinkMessage(makeEvent(newBoot, 1, timestamp));
+    QTRY_COMPARE_WITH_TIMEOUT(eventBootId->rawValue().toULongLong(), newBoot, TestTimeout::longMs());
+    QCOMPARE(eventSequence->rawValue().toUInt(), 1U);
+    QCOMPARE(eventIdFact->rawValue().toUInt(), 1U);
+    QCOMPARE(telemetry->recentEvents().size(), 1);
+
+    // A delayed event from the retired boot must not roll the new event cache back.
+    mockLink->respondWithMavlinkMessage(makeEvent(oldBoot, 2, timestamp + 1000));
+    QTest::qWait(20);
+    QCOMPARE(eventBootId->rawValue().toULongLong(), newBoot);
+    QCOMPARE(eventSequence->rawValue().toUInt(), 1U);
+    QCOMPARE(eventIdFact->rawValue().toUInt(), 1U);
+    QCOMPARE(telemetry->recentEvents().size(), 1);
 }

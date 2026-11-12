@@ -342,22 +342,28 @@ void FlightTelemetryFactGroup::_notifyIfStaleSetChanged()
         emit familyReceiveAgeMsChanged();
     }
 }
-bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
-    quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
+bool FlightTelemetryFactGroup::_acceptTelemetryEpoch(quint64 bootId)
 {
-    if (bootId == 0 || timeBootUs == 0) {
+    if (bootId == 0) {
         return false;
     }
     if (_activeBootId == 0) {
         _activeBootId = bootId;
-    } else if (bootId != _activeBootId) {
-        // A confirmed different boot_id starts a new epoch for every family, not only for the
-        // message type that happens to carry _activateBoot(). A boot that was already retired is
-        // rejected inside _activateBoot, which is what keeps delayed frames from an older session
-        // out (FGC-0031 rules 4, 5 and 7).
-        if (!_activateBoot(bootId)) {
-            return false;
-        }
+        return true;
+    }
+    if (bootId == _activeBootId) {
+        return true;
+    }
+    // Any accepted message family may be the first frame observed after a reboot.
+    // _activateBoot rejects retired IDs and resets all family watermarks/caches.
+    return _activateBoot(bootId);
+}
+
+bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
+    quint64 bootId, quint64 timeBootUs, quint64 &lastTimeBootUs)
+{
+    if (bootId == 0 || timeBootUs == 0 || !_acceptTelemetryEpoch(bootId)) {
+        return false;
     }
     if (timeBootUs <= lastTimeBootUs) {
         return false;
@@ -370,19 +376,8 @@ bool FlightTelemetryFactGroup::_acceptTelemetryMessage(
     quint64 bootId, quint64 timeBootUs, quint32 instanceId,
     QHash<quint32, quint64> &lastTimeByInstance)
 {
-    if (bootId == 0 || timeBootUs == 0) {
+    if (bootId == 0 || timeBootUs == 0 || !_acceptTelemetryEpoch(bootId)) {
         return false;
-    }
-    if (_activeBootId == 0) {
-        _activeBootId = bootId;
-    } else if (bootId != _activeBootId) {
-        // A confirmed different boot_id starts a new epoch for every family, not only for the
-        // message type that happens to carry _activateBoot(). A boot that was already retired is
-        // rejected inside _activateBoot, which is what keeps delayed frames from an older session
-        // out (FGC-0031 rules 4, 5 and 7).
-        if (!_activateBoot(bootId)) {
-            return false;
-        }
     }
     const quint64 lastTimeBootUs = lastTimeByInstance.value(instanceId, 0);
     if (timeBootUs <= lastTimeBootUs) {
@@ -398,9 +393,9 @@ bool FlightTelemetryFactGroup::_acceptTelemetryProfile(quint64 bootId, quint32 p
         return false;
     }
     if (_activeBootId != 0 && bootId != _activeBootId) {
-        // A different boot is a candidate new epoch. The epoch switch itself happens in
-        // _acceptTelemetryMessage() -> _activateBoot(); here only a retired (older) boot is
-        // rejected, which is what keeps delayed frames from a previous session out.
+        // A different boot is a candidate new epoch. Callers validate the profile first,
+        // then _acceptTelemetryEpoch() activates the candidate; this check only rejects
+        // recently retired boots so delayed packets cannot roll the cache back.
         return !_retiredBootIds.contains(bootId);
     }
     return _activeProfileId == 0 || profileId == _activeProfileId;
@@ -836,12 +831,13 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_event_decode(&message, &value);
         if (value.boot_id == 0 || value.time_boot_us == 0 || value.severity > 3 ||
             value.reason_namespace > 3 ||
-            !_acceptTelemetryProfile(value.boot_id, value.profile_id) ||
-            value.time_boot_us < _lastEventTimeBootUs) {
+            !_acceptTelemetryProfile(value.boot_id, value.profile_id)) {
             return;
         }
-        if (_activeBootId == 0) {
-            _activeBootId = value.boot_id;
+        // Events may share one timestamp, so keep their nondecreasing timestamp rule while
+        // still allowing an EVENT frame itself to establish a new boot epoch.
+        if (!_acceptTelemetryEpoch(value.boot_id) || value.time_boot_us < _lastEventTimeBootUs) {
+            return;
         }
         _commitTelemetryProfile(value.profile_id);
         if (value.time_boot_us > _lastEventTimeBootUs) {
@@ -1005,8 +1001,12 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         mavlink_msg_fcu_build_info_decode(&message, &value);
         if (value.boot_id == 0 || value.time_boot_us == 0 || value.digest_kind > 3 ||
             value.source_commit_valid > 1 ||
-            !_acceptTelemetryProfile(value.boot_id, value.profile_id) ||
-            value.time_boot_us < _lastBuildInfoTimeBootUs) {
+            !_acceptTelemetryProfile(value.boot_id, value.profile_id)) {
+            return;
+        }
+        // BUILD_INFO can be the first valid family received after reboot. Activate the epoch
+        // before comparing its timestamp with the previous boot's watermark.
+        if (!_acceptTelemetryEpoch(value.boot_id) || value.time_boot_us < _lastBuildInfoTimeBootUs) {
             return;
         }
         if (value.source_commit_valid == 0) {
@@ -1015,9 +1015,6 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
                     return;
                 }
             }
-        }
-        if (_activeBootId == 0) {
-            _activeBootId = value.boot_id;
         }
         _commitTelemetryProfile(value.profile_id);
         const QByteArray sourceCommitBytes(

@@ -54,4 +54,5 @@ private slots:
     void _buildInfoRejectsMixedMetadataAtSameTimestamp();
     void _buildInfoNewBootAcceptsSameTimestampAndRejectsRetiredBoot();
     void _eventDeduplicationAndHistoryStayBounded();
+    void _eventNewBootStartsEpochAndRejectsRetiredBoot();
 };
