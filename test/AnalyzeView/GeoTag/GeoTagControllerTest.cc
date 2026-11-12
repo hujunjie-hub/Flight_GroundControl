@@ -353,6 +353,70 @@ void GeoTagControllerTest::_previewModeTest()
     QVERIFY2(foundCoordinate, "Preview mode should populate model with coordinates");
 }
 
+void GeoTagControllerTest::_concurrentControllersExifStressTest()
+{
+    // FGC-0029 regression: reproduce the controller-level parallel EXIF workload rather
+    // than only calling ExifParser::readTime from a synthetic thread pool.
+    constexpr int kControllerCount = 8;
+    constexpr int kImagesPerController = 24;
+
+    QFile templateFile(":/unittest/DSCN0010.jpg");
+    QVERIFY(templateFile.open(QIODevice::ReadOnly));
+    const QByteArray templateBuffer = templateFile.readAll();
+    templateFile.close();
+    QVERIFY(!templateBuffer.isEmpty());
+
+    QTemporaryDir tempDirs[kControllerCount];
+    QScopedPointer<GeoTagController> controllers[kControllerCount];
+    bool completed[kControllerCount] = {};
+    int completedCount = 0;
+
+    for (int controllerIndex = 0; controllerIndex < kControllerCount; ++controllerIndex) {
+        QVERIFY2(tempDirs[controllerIndex].isValid(), "Failed to create an isolated controller test directory");
+
+        const QString imageDirPath = tempDirs[controllerIndex].filePath(QStringLiteral("images"));
+        QVERIFY(QDir().mkpath(imageDirPath));
+
+        const QString ulogPath = generateTestULogFile(tempDirs[controllerIndex].path(), kImagesPerController);
+        QVERIFY(!ulogPath.isEmpty());
+
+        for (int imageIndex = 0; imageIndex < kImagesPerController; ++imageIndex) {
+            const QString imagePath = QDir(imageDirPath).filePath(
+                QStringLiteral("image_%1.jpg").arg(imageIndex, 3, 10, QChar('0')));
+            QFile imageFile(imagePath);
+            QVERIFY(imageFile.open(QIODevice::WriteOnly));
+            QCOMPARE(imageFile.write(templateBuffer), static_cast<qint64>(templateBuffer.size()));
+            imageFile.close();
+        }
+
+        controllers[controllerIndex].reset(new GeoTagController(nullptr));
+        controllers[controllerIndex]->setLogFile(ulogPath);
+        controllers[controllerIndex]->setImageDirectory(imageDirPath);
+        controllers[controllerIndex]->setPreviewMode(true);
+
+        QObject::connect(controllers[controllerIndex].data(), &GeoTagController::inProgressChanged,
+                         this, [&, controllerIndex]() {
+            if (!controllers[controllerIndex]->inProgress() && !completed[controllerIndex]) {
+                completed[controllerIndex] = true;
+                ++completedCount;
+            }
+        });
+    }
+
+    // Start every controller before waiting so their QtConcurrent EXIF jobs overlap.
+    for (int controllerIndex = 0; controllerIndex < kControllerCount; ++controllerIndex) {
+        controllers[controllerIndex]->startTagging();
+    }
+
+    QTRY_COMPARE_WITH_TIMEOUT(completedCount, kControllerCount, TestTimeout::longMs());
+
+    for (int controllerIndex = 0; controllerIndex < kControllerCount; ++controllerIndex) {
+        QVERIFY2(controllers[controllerIndex]->errorMessage().isEmpty(),
+                 qPrintable(controllers[controllerIndex]->errorMessage()));
+        QVERIFY(!controllers[controllerIndex]->inProgress());
+    }
+}
+
 // ============================================================================
 // Calibrator algorithm tests
 // ============================================================================
