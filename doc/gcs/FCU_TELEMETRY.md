@@ -119,9 +119,11 @@ the family availability flags, per-instance records, digest values and timestamp
 watermarks. The QML page gates every displayed fact on its family availability flag,
 so values left in the cache from the previous boot appear as 未上报 until a new family sample arrives.
 Event messages reject older publication timestamps and exact duplicate
-`(event_id, time_boot_us)` pairs. Repeated updates to the same event ID with a
-newer timestamp remain valid, and distinct event IDs may share one publication
-timestamp. Build-info digest chunks are keyed by `digest_kind`; duplicate chunks
+`(event_id, time_boot_us)` pairs while the event ID remains in the bounded
+64-ID deduplication window for the current timestamp. Repeated updates to the
+same event ID with a newer timestamp remain valid, and distinct event IDs may
+share one publication timestamp. The separate per-boot recent-event history
+also retains at most 64 accepted records. Build-info digest chunks are keyed by `digest_kind`; duplicate chunks
 at the same publication timestamp are rejected independently, so all four
 hashes can be retained even when they share one snapshot timestamp. All chunks
 in a snapshot must agree on profile, product/port revision, schema and source
@@ -150,6 +152,13 @@ The fixture verifies:
 - Two simultaneously connected generic FCUs retain independent telemetry caches.
 - Disconnect/reconnect creates a fresh Vehicle telemetry state before new
   samples are accepted.
+- Seeded MockLink fault schedules cover drop, delay, reorder, duplicate,
+  disconnect-buffer-drop and reconnect/new-epoch delivery.
+- FCU_EVENT regressions verify duplicate suppression, the bounded 64-ID
+  current-timestamp deduplication window and the 64-record per-boot history.
+- FCU_BUILD_INFO regressions verify shuffled chunks, duplicate rejection,
+  missing digest chunks, same-timestamp mixed-metadata rejection and a new
+  boot reusing a timestamp without accepting delayed chunks from the retired boot.
 
 The unit fixture also pins the generated dialect's message IDs, payload
 lengths and CRC_EXTRA values with compile-time assertions.

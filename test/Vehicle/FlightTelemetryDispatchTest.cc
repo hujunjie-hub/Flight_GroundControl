@@ -1824,12 +1824,177 @@ void FlightTelemetryDispatchTest::_buildInfoNewSnapshotClearsPreviousHashes()
     Fact *abiSha = telemetry->getFact(QStringLiteral("abiSha256"));
     QVERIFY(coreParamsSha && profileSha && abiSha);
 
-    // A newer publication timestamp starts a new snapshot: chunk 0 repopulates firmwareSha, while
-    // the previous snapshot's other hashes must be cleared instead of being mixed in.
+    // A newer publication timestamp starts a new snapshot. Send chunks 0, 1 and 3 but
+    // deliberately omit digest kind 2; the missing PROFILE hash must not leak from the old snapshot.
     mockLink->respondWithMavlinkMessage(
         buildInfoMessage(sysId, compId, buildInfoPayload(boot, 8000, 0, 0x40, 42)));
-    QTRY_VERIFY_WITH_TIMEOUT(coreParamsSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, 8000, 1, 0x50, 42)));
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, 8000, 3, 0x70, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty() &&
+                                 !coreParamsSha->rawValue().toString().isEmpty() &&
+                                 !abiSha->rawValue().toString().isEmpty(),
+                             TestTimeout::longMs());
     QVERIFY(profileSha->rawValue().toString().isEmpty());
-    QVERIFY(abiSha->rawValue().toString().isEmpty());
-    QVERIFY(!firmwareSha->rawValue().toString().isEmpty());
+}
+
+void FlightTelemetryDispatchTest::_buildInfoRejectsMixedMetadataAtSameTimestamp()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("BuildInfo mixed metadata"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7500000000000004ULL;
+    const uint64_t ts = 9000;
+    Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
+    Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
+    Fact *productRevision = telemetry->getFact(QStringLiteral("buildProductRevision"));
+    QVERIFY(firmwareSha && coreParamsSha && productRevision);
+
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, ts, 0, 0x20, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    QCOMPARE(productRevision->rawValue().toUInt(), 42U);
+
+    // A chunk with the same timestamp but different snapshot metadata must be rejected.
+    // It must not consume digest kind 1, so the correct chunk can still arrive afterwards.
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, ts, 1, 0x30, 43)));
+    QTest::qWait(20);
+    QVERIFY(coreParamsSha->rawValue().toString().isEmpty());
+    QCOMPARE(productRevision->rawValue().toUInt(), 42U);
+
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(boot, ts, 1, 0x30, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(!coreParamsSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    QCOMPARE(productRevision->rawValue().toUInt(), 42U);
+}
+
+void FlightTelemetryDispatchTest::_buildInfoNewBootAcceptsSameTimestampAndRejectsRetiredBoot()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("BuildInfo new boot"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t oldBoot = 0x7500000000000005ULL;
+    const uint64_t newBoot = 0x7500000000000006ULL;
+    const uint64_t sharedTimestamp = 10000;
+    Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
+    Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
+    Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
+    QVERIFY(operationTime && firmwareSha && coreParamsSha);
+
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(oldBoot, sharedTimestamp, 0, 0x20, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    const QString oldHash = firmwareSha->rawValue().toString();
+
+    // OPERATION_STATUS confirms the new boot and resets all BUILD_INFO timestamps and hashes.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, newBoot, 1000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 1000ULL, TestTimeout::longMs());
+    QTRY_VERIFY_WITH_TIMEOUT(firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+
+    // The new boot may legitimately reuse the previous boot's publication timestamp.
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(newBoot, sharedTimestamp, 0, 0x40, 42)));
+    QTRY_VERIFY_WITH_TIMEOUT(!firmwareSha->rawValue().toString().isEmpty(), TestTimeout::longMs());
+    const QString newHash = firmwareSha->rawValue().toString();
+    QVERIFY(newHash != oldHash);
+
+    // A delayed chunk from the retired boot must not populate the new boot's snapshot.
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, buildInfoPayload(oldBoot, sharedTimestamp + 1000, 1, 0x50, 42)));
+    QTest::qWait(20);
+    QCOMPARE(firmwareSha->rawValue().toString(), newHash);
+    QVERIFY(coreParamsSha->rawValue().toString().isEmpty());
+}
+
+void FlightTelemetryDispatchTest::_eventDeduplicationAndHistoryStayBounded()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Flight event history"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    const uint64_t boot = 0x7600000000000001ULL;
+    const uint64_t timestamp = 2000;
+    Fact *eventSequence = telemetry->getFact(QStringLiteral("eventSequence"));
+    Fact *eventIdFact = telemetry->getFact(QStringLiteral("eventId"));
+    Fact *eventReasonCode = telemetry->getFact(QStringLiteral("eventReasonCode"));
+    QVERIFY(eventSequence && eventIdFact && eventReasonCode);
+
+    const auto makeEvent = [=](uint32_t eventId, uint32_t reasonCode) {
+        mavlink_fcu_event_t payload{};
+        payload.time_boot_us = timestamp;
+        payload.boot_id = boot;
+        payload.profile_id = 0x00010001;
+        payload.event_id = eventId;
+        payload.reason_code = reasonCode;
+        payload.authority_epoch = 7;
+        payload.directive_epoch = 8;
+        payload.permit_epoch = 9;
+        payload.source_id = 25;
+        payload.reason_namespace = 0;
+        payload.severity = 2;
+        mavlink_message_t message{};
+        mavlink_msg_fcu_event_encode(sysId, compId, &message, &payload);
+        return message;
+    };
+
+    mockLink->respondWithMavlinkMessage(makeEvent(1, 5));
+    QTRY_COMPARE_WITH_TIMEOUT(eventSequence->rawValue().toUInt(), 1U, TestTimeout::longMs());
+    QCOMPARE(telemetry->recentEvents().size(), 1);
+
+    // A duplicate pair must not overwrite the first event or advance its sequence.
+    mockLink->respondWithMavlinkMessage(makeEvent(1, 99));
+    QTest::qWait(20);
+    QCOMPARE(eventSequence->rawValue().toUInt(), 1U);
+    QCOMPARE(eventReasonCode->rawValue().toUInt(), 5U);
+    QCOMPARE(telemetry->recentEvents().size(), 1);
+
+    // The current-timestamp dedup window and per-boot event history are both bounded to 64.
+    for (uint32_t id = 2; id <= 65; ++id) {
+        mockLink->respondWithMavlinkMessage(makeEvent(id, 5));
+    }
+    QTRY_COMPARE_WITH_TIMEOUT(eventSequence->rawValue().toUInt(), 65U, TestTimeout::longMs());
+    QCOMPARE(telemetry->recentEvents().size(), 64);
+
+    // Event 1 has aged out of the 64-ID dedup window and may be accepted again.
+    mockLink->respondWithMavlinkMessage(makeEvent(1, 99));
+    QTRY_COMPARE_WITH_TIMEOUT(eventSequence->rawValue().toUInt(), 66U, TestTimeout::longMs());
+    QCOMPARE(eventIdFact->rawValue().toUInt(), 1U);
+    QCOMPARE(eventReasonCode->rawValue().toUInt(), 99U);
+    const QVariantList recent = telemetry->recentEvents();
+    QCOMPARE(recent.size(), 64);
+    QCOMPARE(recent.constFirst().toMap().value(QStringLiteral("eventId")).toUInt(), 1U);
+
+    // A duplicate that is still in the window remains suppressed.
+    mockLink->respondWithMavlinkMessage(makeEvent(65, 123));
+    QTest::qWait(20);
+    QCOMPARE(eventSequence->rawValue().toUInt(), 66U);
+    QCOMPARE(eventIdFact->rawValue().toUInt(), 1U);
 }

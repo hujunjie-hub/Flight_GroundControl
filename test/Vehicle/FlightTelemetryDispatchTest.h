@@ -51,4 +51,7 @@ private slots:
     void _buildInfoChunksCompleteInAnyOrder();
     void _buildInfoDuplicateChunkIsIdempotent();
     void _buildInfoNewSnapshotClearsPreviousHashes();
+    void _buildInfoRejectsMixedMetadataAtSameTimestamp();
+    void _buildInfoNewBootAcceptsSameTimestampAndRejectsRetiredBoot();
+    void _eventDeduplicationAndHistoryStayBounded();
 };
