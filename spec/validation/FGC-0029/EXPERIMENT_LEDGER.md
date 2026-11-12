@@ -519,3 +519,16 @@ R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射�
 | 5 | R23 提交与最终验证 | R23 只改文档，一次性提交；最终 HEAD 的 Windows / Check Links / pre-commit 结果记录在 R23 交付 ZIP 的 `CI-RESULT-R23.md`，**不再为写 CI 结果追加提交**。 |
 
 - 未修改 `src/`，未重跑 R17/R19 实验，未改 Qt，未合并 PR，未关闭 Issue，未删除任何历史证据。
+
+## E-39 R23a 独立验收遗留项修正（文档）
+
+E-37、E-38 原文全部保留，本节仅追加。
+
+| # | R23 独立验收发现的问题 | R23a 处理 |
+|---|---|---|
+| 1 | 模块 `README.md` §1.1 只列了两个 HEAD（`89e2914`、`f009667`），未登记 R22 `e6185bd` 及其 CI | §1.1 重写为四个条目：`validated_code_head=89e2914`（Windows `43061078850` / Check Links `43061078592` / pre-commit `43061078770`）、R21 `f009667`（`43077208284` / `43077207915` / `43077210673`）、R22 `e6185bd`（`43129824822` / `43129824818` / `43129824742`）、R23 `d49678e`（`43141092273` / `43141092396` / `43141092261`）；结论句改为"三个（及以上）文档 HEAD 与 validated_code_head 的 CI 结果互不可替代" |
+| 2 | 目录索引仍写 `EXPERIMENT_LEDGER.md ← E-01…E-36` | 更新为 `E-01…E-38`（R23a 追加 E-39 后为 E-01…E-39） |
+| 3 | 归档未包含实际使用的生成脚本 | 交付 ZIP 新增 `generator-source/`：`New-R22Archive.ps1`、`New-R23Archive.ps1`（完整文件，非片段）及其 SHA256；并给出修改前后关键差异，确认 R22 模板引用 `09-ci/CI-RESULT-R22.md`、R23 模板引用 `09-ci/CI-RESULT-R23.md` |
+| 4 | R23a 最终 HEAD 与 CI | 一次性文档提交取得 R23a final HEAD；Windows / Check Links / pre-commit 结果写入 R23a 交付 ZIP 的 `CI-RESULT-R23a.md`，**不再为记录 CI 结果追加提交** |
+
+- 未修改 `src/`，未重跑 R17/R19 实验，未改 Qt，未改 main，未合并 PR，未关闭 Issue，未删除任何历史证据。

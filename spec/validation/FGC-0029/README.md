@@ -34,11 +34,15 @@ R17 的"无锁修改"说法已撤回。
 
 ## 1.1 HEAD 关系（不得混用）
 
-- `validated_code_head = 89e2914`：产品源码 `src/` 自 `54713e5` 起未再修改，二进制与测试行为归属该 HEAD；
-  它的 CI 是 run `43061078850`（Windows，success）与 `43061078592`（Check Links，success）。
-- `final_head = f009667`（R21）：只包含文档修改；它的 CI 是 run `43077208284`（Windows，success）、
-  `43077207915`（Check Links，success）、`43077210673`（pre-commit，success）。
-- 两个 HEAD 的 CI 结果**不可互相替代**；引用时必须写明 HEAD。
+- `validated_code_head = 89e2914`：产品源码 `src/` 自 `54713e5` 起未再修改，二进制与测试行为归属该 HEAD。
+  CI：Windows `43061078850` success、Check Links `43061078592` success、pre-commit `43061078770` success。
+- `final_head = f009667`（R21）：只包含文档修改。CI：Windows `43077208284` success、
+  Check Links `43077207915` success、pre-commit `43077210673` success。
+- `final_head = e6185bd`（R22）：只包含文档修改。CI：Windows `43129824822` success、
+  Check Links `43129824818` success、pre-commit `43129824742` success。
+- `final_head = d49678e`（R23）：只包含文档修改。CI：Windows `43141092273` success、
+  Check Links `43141092396` success、pre-commit `43141092261` success。
+- **三个（及以上）文档 HEAD 与 validated_code_head 的 CI 结果互不可替代**；引用时必须写明 HEAD。
 
 ## 2. 六份 ASan 报告
 
@@ -77,7 +81,7 @@ spec/validation/FGC-0029/
     OWNERSHIP_AUDIT.md                     ← 所有权与异步生命周期审计
     REPRODUCTION_GUIDE.md                  ← 复现步骤
     FIX_VALIDATION.md                      ← 修复前后对照 + R21 更正
-    EXPERIMENT_LEDGER.md                   ← E-01…E-36 全部登记（含 SUPERSEDED 标记）
+    EXPERIMENT_LEDGER.md                   ← E-01…E-38 全部登记（含 SUPERSEDED 标记；R23a 追加 E-39）
     evidence/                              ← 证据索引（真实文件在 ZIP 内）
 ```
 
