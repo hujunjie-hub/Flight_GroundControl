@@ -484,9 +484,17 @@ void FlightTelemetryDispatchTest::_telemetryStartsFreshAfterReconnect()
     oldSharedLink.reset();
     QTRY_VERIFY(oldVehicle.isNull());
 
+    MultiVehicleManager *const vehicleManager = MultiVehicleManager::instance();
+    QVERIFY(vehicleManager);
+    QTRY_COMPARE(vehicleManager->vehicles()->count(), 0);
+    QVERIFY(vehicleManager->activeVehicle() == nullptr);
+    QVERIFY(!vehicleManager->activeVehicleAvailable());
+
     Vehicle *reconnectedVehicle = createMockLinkAndWaitForVehicle(
         QStringLiteral("Flight telemetry reconnect"), MAV_AUTOPILOT_GENERIC);
     QVERIFY(reconnectedVehicle);
+    QTRY_VERIFY(vehicleManager->activeVehicle() == reconnectedVehicle);
+    QVERIFY(vehicleManager->activeVehicleAvailable());
 
     FlightTelemetryFactGroup *reconnectedTelemetry = telemetryFor(reconnectedVehicle);
     QVERIFY(reconnectedTelemetry);
