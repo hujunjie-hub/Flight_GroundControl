@@ -477,9 +477,6 @@ void ExifParserTest::_writeRejectsShortGpsVersionEntriesTest()
     GeoTagData geotag;
     geotag.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
 
-    ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
-                     QRegularExpression("Malformed GPS Version ID EXIF entry"));
-
     for (quint32 components = 0; components < 4; ++components) {
         QByteArray buffer = makeGpsVersionJpeg(EXIF_FORMAT_BYTE, components);
         QVERIFY(!buffer.isEmpty());
@@ -508,6 +505,8 @@ void ExifParserTest::_writeRejectsShortGpsVersionEntriesTest()
         exif_data_unref(parsedData);
 
         const QByteArray originalBuffer = buffer;
+        ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                         QRegularExpression("Malformed GPS Version ID EXIF entry"));
         QVERIFY(!ExifParser::write(buffer, geotag));
         QCOMPARE(buffer, originalBuffer);
     }
