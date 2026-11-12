@@ -312,24 +312,13 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-geotag-controller-list.txt'
-          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -R '^GeoTagControllerTest        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: fgc0037-windows-msvc-asan-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/fgc0037-asan-evidence/
-            ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
-            ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
-            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
-          if-no-files-found: warn
-          retention-days: 14
- -V 2>&1 |
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -R '^GeoTagControllerTest$' -V 2>&1 |
             Tee-Object -FilePath $listingPath
           if ($LASTEXITCODE -ne 0) {
             throw 'CTest GeoTagControllerTest listing command failed.'
           }
           $listing = Get-Content $listingPath -Raw
-          if ($listing -notmatch 'GeoTagControllerTest' -or $listing -notmatch '--unittest:GeoTagControllerTest') {
+          if ($listing -notmatch '--unittest:GeoTagControllerTest') {
             throw 'GeoTagControllerTest is not registered as the expected CTest target.'
           }
 
@@ -353,18 +342,7 @@ jobs:
           for ($iteration = 1; $iteration -le 20; $iteration++) {
             $logPath = Join-Path $evidenceDir ("geotag-controller-run-{0:D2}.log" -f $iteration)
             Write-Host "=== GeoTagControllerTest ASan iteration $iteration / 20 ==="
-            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: fgc0037-windows-msvc-asan-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/fgc0037-asan-evidence/
-            ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
-            ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
-            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
-          if-no-files-found: warn
-          retention-days: 14
- --output-on-failure -V 2>&1 |
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               throw "GeoTagControllerTest failed on ASan iteration $iteration."
@@ -408,5 +386,6 @@ jobs:
             ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
             ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
             ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/GeoTagControllerTest-GeoTagControllerTest.xml
           if-no-files-found: warn
           retention-days: 14

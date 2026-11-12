@@ -46,7 +46,7 @@ bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetyp
 /// EXIF timestamps are locale-independent and have a fixed format. Parse that format directly
 /// rather than invoking locale-dependent QDateTime::fromString on QtConcurrent worker threads.
 /// The concurrent controller regression test exercises this path under parallel EXIF workloads.
-/// /// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
+/// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
 /// two digits are accepted for all fields but the year.
 QDateTime parseExifTimestamp(QStringView text)
 {
