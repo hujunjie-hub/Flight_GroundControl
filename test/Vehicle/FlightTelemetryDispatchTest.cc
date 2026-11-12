@@ -507,6 +507,72 @@ void FlightTelemetryDispatchTest::_telemetryStartsFreshAfterReconnect()
     QCOMPARE(reconnectedTelemetry->getFact(QStringLiteral("armState"))->rawValue().toUInt(), 2U);
 }
 
+void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestoreDeletedVehicle()
+{
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Connected to Vehicle \\d+")));
+    ignoreLogMessage("Comms.LinkInterface", QtWarningMsg,
+                     QRegularExpression("still have vehicle references:"));
+
+    Vehicle *const firstVehicle = vehicle();
+    QVERIFY(firstVehicle);
+    QPointer<Vehicle> firstVehicleGuard(firstVehicle);
+
+    MultiVehicleManager *const vehicleManager = MultiVehicleManager::instance();
+    QVERIFY(vehicleManager);
+
+    auto createGenericMockLink = [this](const QString &name) -> SharedLinkInterfacePtr {
+        auto *configuration = new MockConfiguration(name);
+        configuration->setDynamic(true);
+        configuration->setFirmwareType(MAV_AUTOPILOT_GENERIC);
+
+        SharedLinkConfigurationPtr sharedConfiguration(configuration);
+        if (!linkManager()->createConnectedLink(sharedConfiguration)) {
+            return {};
+        }
+
+        return linkManager()->sharedLinkInterfacePointerForLink(configuration->link());
+    };
+
+    SharedLinkInterfacePtr secondLink = createGenericMockLink(
+        QStringLiteral("Delayed activation race"));
+    QVERIFY(secondLink);
+    auto *secondMockLink = qobject_cast<MockLink *>(secondLink.get());
+    QVERIFY(secondMockLink);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicleManager->vehicles()->count(), 2, TestTimeout::longMs());
+
+    Vehicle *const secondVehicle = vehicleManager->getVehicleById(secondMockLink->vehicleId());
+    QVERIFY(secondVehicle);
+    QVERIFY(secondVehicle != firstVehicle);
+    QPointer<Vehicle> secondVehicleGuard(secondVehicle);
+    QSignalSpy destroyedSpy(secondVehicle, &QObject::destroyed);
+    QVERIFY(destroyedSpy.isValid());
+
+    // Force the exact timer ordering from FGC-0015:
+    // 1) removal schedules _deleteVehiclePhase2();
+    // 2) a stale activation request is scheduled afterwards;
+    // 3) deletion must win and the later activation must be discarded.
+    secondMockLink->setCommLost(true);
+    emit secondVehicle->vehicleLinkManager()->allLinksRemoved(secondVehicle);
+    QCOMPARE(vehicleManager->vehicles()->count(), 1);
+    QVERIFY(vehicleManager->getVehicleById(secondMockLink->vehicleId()) == nullptr);
+
+    vehicleManager->setActiveVehicle(secondVehicle);
+
+    QTRY_VERIFY_WITH_TIMEOUT(secondVehicleGuard.isNull(), TestTimeout::longMs());
+    QCOMPARE(destroyedSpy.count(), 1);
+    QCOMPARE(vehicleManager->vehicles()->count(), 1);
+    QCOMPARE(vehicleManager->activeVehicle(), firstVehicleGuard.data());
+    QVERIFY(vehicleManager->activeVehicleAvailable());
+
+    // The test deliberately removed the vehicle before disconnecting its MockLink.
+    // Release the orphaned link after the manager has completed both delayed callbacks.
+    secondMockLink->disconnect();
+    secondLink.reset();
+    settleEventLoopForCleanup();
+}
+
+
 UT_REGISTER_TEST(FlightTelemetryDispatchTest, TestLabel::Integration, TestLabel::Vehicle)
 
 // Appended to FlightTelemetryDispatchTest.cc (FGC-0031 timestamp contract).

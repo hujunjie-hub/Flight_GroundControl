@@ -13,6 +13,7 @@ private slots:
     void _invalidFramesAndSourcesDoNotUpdateTelemetry();
     void _telemetryIsIsolatedAcrossVehicles();
     void _telemetryStartsFreshAfterReconnect();
+    void _delayedActivationAfterDisconnectDoesNotRestoreDeletedVehicle();
     void _freshFrameStillUpdates();
     void _equalTimestampIsIdempotent();
     void _staleOperationFrameDoesNotOverwrite();
