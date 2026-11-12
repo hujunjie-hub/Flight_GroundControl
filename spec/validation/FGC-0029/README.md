@@ -11,7 +11,11 @@
 | R21 Windows CI | **43077208284 SUCCESS**（Unit 198/198、Integration 70/70、Installer 与安装后验证通过） |
 | R21 Check Links | **43077207915 SUCCESS**（`Errors = 0`） |
 | R21 pre-commit | **43077210673 SUCCESS** |
-| R22 | 仅文档收尾（SHA256 清单、判读表述、本 README）；HEAD 见 R22 交付的 `RUN-IDENTITY.txt` |
+| final_head（R22） | `e6185bd5917db4b5d35f803dd31628b6ace56f4b` |
+| R22 Windows CI | **43129824822 SUCCESS**（Unit 198/198、Integration 70/70、`FlightTelemetryDispatchTest` 20.34 s、Installer 与安装后验证通过） |
+| R22 Check Links | **43129824818 SUCCESS**（`Errors = 0`） |
+| R22 pre-commit | **43129824742 SUCCESS** |
+| R23 | 仅文档收尾（归档根目录 README 修正、本 README 的 R22 登记、台账 E-38）；HEAD 与 CI 见 R23 交付的 `RUN-IDENTITY.txt` / `CI-RESULT-R23.md` |
 | PR #3 | Open / **Draft**（未合并，main 未修改） |
 
 ## 1. 结论状态（不得过度表述）
@@ -63,7 +67,7 @@ B(`fromString`)=**40040**、C(legacy)=**40040**、D(修复后)=**0**。
 
 ```
 spec/validation/FGC-0029/
-    README.md                              ← 本文件（R21 状态）
+    README.md                              ← 本文件（R22 状态）
     ROOT_CAUSE_ANALYSIS.md                 ← 四级证据划分（FACT / SOURCE-CONFIRMED / STATIC-INFERENCE / UNCONFIRMED）
     ROOT_CAUSE_ANALYSIS-R17-superseded.md  ← 被取代的 R17 原文（保留错误假设）
     ROOT_CAUSE_ANALYSIS-R18-superseded.md  ← 被取代的 R18 原文（保留）
@@ -86,8 +90,9 @@ spec/validation/FGC-0029/
 - [x] 修复保留（`parseExifTimestamp()`），回归测试 2 例
 - [x] 修复后 Release 320 次 / ASan 320 次 0 失败（R17/R18 数据，未重跑）
 - [x] 统一 A/B/C/D 差分矩阵 960/960、0 超时（R19 数据，未重跑）
-- [x] Windows Release CI：`f009667`（R21 final_head）run **43077208284 success**；`89e2914`（validated_code_head）run `43061078850 success`
-- [x] Check Links：`f009667` run **43077207915 success**（Errors = 0）；`89e2914` run `43061078592 success`
+- [x] 产品代码 HEAD `89e2914`：Windows run `43061078850` success（Unit 198/198、Integration 70/70）
+- [x] R21 文档 HEAD `f009667`：Windows `43077208284` success、Check Links `43077207915` success、pre-commit `43077210673` success
+- [x] R22 文档 HEAD `e6185bd`：Windows `43129824822` success（Unit 198/198、Integration 70/70、FlightTelemetryDispatchTest 20.34 s）、Check Links `43129824818` success、pre-commit `43129824742` success
 - [ ] 首次破坏引用计数的具体操作与线程交错（未证实）
 - [ ] 外部独立验收
 - [ ] Issue #29 关闭（**保持 OPEN**，由独立验收决定）
@@ -96,4 +101,5 @@ spec/validation/FGC-0029/
 
 FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）独立登记，本轮未处理；
 `ExifParser::write()` 的 `GPSVersionID` 长度检查缺口见 `OWNERSHIP_AUDIT.md` §6，同样建议单独立项。
+
 

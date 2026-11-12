@@ -505,3 +505,17 @@ R19 不重复 R17 的 640 次修复后压力测试；重点是把 R18 的映射�
 | 判读表述 | `FIX_VALIDATION.md` §7 的 `找到首次非法操作` 改为 `ASan 是否确认双重释放链`，并明确"不得把 double-free 的第二次释放位置误称为首次非法操作"。 |
 | README | 补入 R21 `final_head=f009667`、Windows `43077208284`、Check Links `43077207915`、pre-commit `43077210673`，并区分 `validated_code_head=89e2914` 与 `final_head=f009667`。 |
 | 约束 | 未改 `src/`，未重跑 R17/R19 实验，未改 Qt，未合并 PR，未关闭 Issue。 |
+
+## E-38 R23 归档签收准备（文档）
+
+本节为 R22 独立验收遗留问题的修正记录；E-37 原文保持不动，历史边界以标题为界。
+
+| # | R22 遗留问题 | 修正 |
+|---|---|---|
+| 1 | 根目录 `README.txt` 引用错误：`R21 head results are in 09-ci/CI-RESULT-R22.md.` —— 文案里的轮次与被引用的文件不匹配 | 生成模板（`work/validation/fgc0029-r22/New-R22Archive.ps1` 与 R23 生成脚本）中的该句改为 `R22 final HEAD results are in 09-ci/CI-RESULT-R22.md.`；R23 生成脚本对应句为 `R23 final HEAD results are in 09-ci/CI-RESULT-R23.md.`。修正落在**生成源**，不是只改 ZIP 内的输出文件。 |
+| 2 | 模块 `README.md` 状态索引仍写 `README.md ← 本文件（R21 状态）` | 改为 `（R22 状态）`；标题同步为 R22 状态。 |
+| 3 | 模块 `README.md` 未登记 R22 的 final_head 与三个 CI | 补入 `final_head（R22）= e6185bd`、Windows `43129824822 SUCCESS`、Check Links `43129824818 SUCCESS`、pre-commit `43129824742 SUCCESS`；R21 的 `f009667` / `43077208284` / `43077207915` / `43077210673` 保留。 |
+| 4 | 状态清单未按 HEAD 区分 | 拆为三行：产品代码 HEAD `89e2914`（Windows `43061078850`）、R21 文档 HEAD `f009667`（三 workflow）、R22 文档 HEAD `e6185bd`（三 workflow）；历史行不删除。 |
+| 5 | R23 提交与最终验证 | R23 只改文档，一次性提交；最终 HEAD 的 Windows / Check Links / pre-commit 结果记录在 R23 交付 ZIP 的 `CI-RESULT-R23.md`，**不再为写 CI 结果追加提交**。 |
+
+- 未修改 `src/`，未重跑 R17/R19 实验，未改 Qt，未合并 PR，未关闭 Issue，未删除任何历史证据。
