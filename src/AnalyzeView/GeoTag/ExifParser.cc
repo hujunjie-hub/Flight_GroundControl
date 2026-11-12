@@ -152,7 +152,7 @@ bool write(QByteArray& buffer, const GeoTagData& geotag)
         versionEntry->format != EXIF_FORMAT_BYTE ||
         versionEntry->components != kGpsVersionIdComponents ||
         !versionEntry->data ||
-        versionEntry->size != kGpsVersionIdSize) {
+        versionEntry->size < kGpsVersionIdSize) {
         qCWarning(ExifParserLog) << "Malformed GPS Version ID EXIF entry";
         exif_data_unref(data);
         return false;

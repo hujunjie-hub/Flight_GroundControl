@@ -20,5 +20,6 @@ private slots:
     void _writePreservesExistingDataTest();
     void _writeGpsVersionEntryValidTest();
     void _writeRejectsShortGpsVersionEntriesTest();
+    void _writeRejectsWrongGpsVersionComponentCountTest();
     void _writeRejectsWrongGpsVersionFormatTest();
 };
