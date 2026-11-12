@@ -146,6 +146,8 @@ gst-inspect-1.0 --version
 ```powershell
 $QtRoot = (Resolve-Path ".qt\Qt\6.11.1\msvc2022_64").Path
 $env:QT_ROOT_DIR = $QtRoot
+# Keep Qt runtime DLLs available for configure/build tools and executable-backed tests.
+$env:PATH = (Join-Path $QtRoot "bin") + ";" + $env:PATH
 $BuildDir = "build-win-release"
 New-Item -ItemType Directory -Force "work\validation\current" | Out-Null
 & $PythonExe tools/configure.py -S . -B $BuildDir -G Ninja -t Release --testing --qt-root $QtRoot -- -DQGC_ENABLE_GST_VIDEOSTREAMING=ON "-DPython3_EXECUTABLE=$PythonExe" 2>&1 | Tee-Object -FilePath "work\validation\current\configure.log"
