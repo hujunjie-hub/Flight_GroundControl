@@ -9,8 +9,10 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
+#include <QtCore/QEventLoop>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
@@ -557,13 +559,22 @@ void FlightTelemetryDispatchTest::_delayedActivationAfterDisconnectDoesNotRestor
     QCOMPARE(vehicleManager->vehicles()->count(), 1);
     QVERIFY(vehicleManager->getVehicleById(secondMockLink->vehicleId()) == nullptr);
 
+    QSignalSpy activeVehicleSpy(vehicleManager, &MultiVehicleManager::activeVehicleChanged);
+    QVERIFY(activeVehicleSpy.isValid());
     vehicleManager->setActiveVehicle(secondVehicle);
 
-    QTRY_VERIFY_WITH_TIMEOUT(secondVehicleGuard.isNull(), TestTimeout::longMs());
+    // Both manager callbacks use a 20 ms timer. Wait past both deadlines so the
+    // stale activation callback cannot remain pending when the assertions run.
+    QEventLoop activationBarrier;
+    QTimer::singleShot(60, &activationBarrier, &QEventLoop::quit);
+    activationBarrier.exec();
+
+    QVERIFY(secondVehicleGuard.isNull());
     QCOMPARE(destroyedSpy.count(), 1);
     QCOMPARE(vehicleManager->vehicles()->count(), 1);
     QCOMPARE(vehicleManager->activeVehicle(), firstVehicleGuard.data());
     QVERIFY(vehicleManager->activeVehicleAvailable());
+    QCOMPARE(activeVehicleSpy.count(), 0);
 
     // The test deliberately removed the vehicle before disconnecting its MockLink.
     // Release the orphaned link after the manager has completed both delayed callbacks.
