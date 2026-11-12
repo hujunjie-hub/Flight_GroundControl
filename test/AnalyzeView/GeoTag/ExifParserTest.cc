@@ -318,7 +318,7 @@ QByteArray makeGpsVersionJpeg(ExifFormat format, quint32 components)
     tiff.append(value);
     appendLe32(tiff, 0);
 
-    QByteArray exif("Exif\\0\\0", 6);
+    QByteArray exif("Exif\0\0", 6);
     exif.append(tiff);
 
     QByteArray jpeg;
