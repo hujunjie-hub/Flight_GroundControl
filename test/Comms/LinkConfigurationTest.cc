@@ -1,5 +1,4 @@
 #include "LinkConfigurationTest.h"
-#include <QtNetwork/QHostInfo>
 
 #include "LinkConfiguration.h"
 #include "TCPLink.h"

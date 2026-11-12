@@ -33,7 +33,7 @@ private slots:
     void _testUdpCopyConstruction();
     void _testUdpCopyFrom();
     void _testUdpSettingsRoundtrip();
-    void _testUdpHostnamePreservedWhenUnresolved();
+    void _testUdpHostnamePreservedRegardlessOfResolution();
     void _testUdpHostnameRoundtrip();
     void _testUdpRemoveByHostname();
     void _testUdpResolveHostsUpdatesAddress();
