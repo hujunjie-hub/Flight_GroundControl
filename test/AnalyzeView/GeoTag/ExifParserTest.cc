@@ -240,7 +240,7 @@ namespace {
 /// readTime() sees an arbitrary (including malformed) EXIF timestamp string.
 bool setDateTimeDigitizedValue(QByteArray& buffer, const QByteArray& value)
 {
-    if (value.size() > 19) {
+    if (value.size() > 20) {
         return false;
     }
 
@@ -424,6 +424,23 @@ void ExifParserTest::_readTimeFormatTest()
     for (const QByteArray& value : invalidValues) {
         QVERIFY2(!readInjected(value).isValid(), value.constData());
     }
+}
+
+void ExifParserTest::_readTimeRejectsUnterminatedTimestampTest()
+{
+    const QByteArray templateJpeg = loadTemplateJpeg();
+    QVERIFY(!templateJpeg.isEmpty());
+
+    // A valid EXIF DateTime field occupies 20 ASCII bytes including its NUL.
+    // This 20-byte value fills the entire entry without a terminator and must
+    // be rejected without reading beyond the libexif entry allocation.
+    QByteArray buffer = templateJpeg;
+    const QByteArray unterminatedTimestamp("2024:05:06 07:08:09X", 20);
+    QCOMPARE(unterminatedTimestamp.size(), 20);
+    QVERIFY(setDateTimeDigitizedValue(buffer, unterminatedTimestamp));
+
+    const QDateTime parsed = ExifParser::readTime(buffer);
+    QVERIFY(!parsed.isValid());
 }
 
 void ExifParserTest::_readTimeConcurrentTest()

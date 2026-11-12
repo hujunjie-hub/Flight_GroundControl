@@ -5,6 +5,9 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QTime>
 
+#include <cstring>
+#include <string_view>
+
 #include "ExifUtility.h"
 #include "QGCLoggingCategory.h"
 
@@ -13,17 +16,17 @@ QGC_LOGGING_CATEGORY(ExifParserLog, "AnalyzeView.ExifParser")
 namespace {
 
 /// Reads between \a minDigits and \a maxDigits ASCII digits starting at \a pos.
-bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetype maxDigits, int& value)
+bool readDecimal(std::string_view text, size_t& pos, size_t minDigits, size_t maxDigits, int& value)
 {
-    const qsizetype start = pos;
+    const size_t start = pos;
     int result = 0;
 
     while ((pos < text.size()) && ((pos - start) < maxDigits)) {
-        const char16_t digit = text.at(pos).unicode();
-        if ((digit < u'0') || (digit > u'9')) {
+        const char digit = text[pos];
+        if ((digit < '0') || (digit > '9')) {
             break;
         }
-        result = (result * 10) + static_cast<int>(digit - u'0');
+        result = (result * 10) + static_cast<int>(digit - '0');
         ++pos;
     }
 
@@ -48,7 +51,7 @@ bool readDecimal(QStringView text, qsizetype& pos, qsizetype minDigits, qsizetyp
 /// The concurrent controller regression test exercises this path under parallel EXIF workloads.
 /// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
 /// two digits are accepted for all fields but the year.
-QDateTime parseExifTimestamp(QStringView text)
+QDateTime parseExifTimestamp(std::string_view text)
 {
     int year = 0;
     int month = 0;
@@ -57,24 +60,24 @@ QDateTime parseExifTimestamp(QStringView text)
     int minute = 0;
     int second = 0;
 
-    qsizetype pos = 0;
-    if (!readDecimal(text, pos, 4, 4, year) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+    size_t pos = 0;
+    if (!readDecimal(text, pos, 4, 4, year) || (pos >= text.size()) || (text[pos] != ':')) {
         return QDateTime();
     }
     ++pos;
-    if (!readDecimal(text, pos, 1, 2, month) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+    if (!readDecimal(text, pos, 1, 2, month) || (pos >= text.size()) || (text[pos] != ':')) {
         return QDateTime();
     }
     ++pos;
-    if (!readDecimal(text, pos, 1, 2, day) || (pos >= text.size()) || (text.at(pos).unicode() != u' ')) {
+    if (!readDecimal(text, pos, 1, 2, day) || (pos >= text.size()) || (text[pos] != ' ')) {
         return QDateTime();
     }
     ++pos;
-    if (!readDecimal(text, pos, 1, 2, hour) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+    if (!readDecimal(text, pos, 1, 2, hour) || (pos >= text.size()) || (text[pos] != ':')) {
         return QDateTime();
     }
     ++pos;
-    if (!readDecimal(text, pos, 1, 2, minute) || (pos >= text.size()) || (text.at(pos).unicode() != u':')) {
+    if (!readDecimal(text, pos, 1, 2, minute) || (pos >= text.size()) || (text[pos] != ':')) {
         return QDateTime();
     }
     ++pos;
@@ -104,15 +107,49 @@ QDateTime readTime(const QByteArray& buffer)
         return QDateTime();
     }
 
-    const QString dateTimeDigitized = ExifUtility::readString(data, EXIF_TAG_DATE_TIME_DIGITIZED, EXIF_IFD_EXIF);
-    exif_data_unref(data);
+    ExifEntry* dateTimeEntry = nullptr;
+    if (data->ifd[EXIF_IFD_EXIF]) {
+        dateTimeEntry = exif_content_get_entry(
+            data->ifd[EXIF_IFD_EXIF], static_cast<ExifTag>(EXIF_TAG_DATE_TIME_DIGITIZED));
+    }
+    if (!dateTimeEntry) {
+        dateTimeEntry = exif_data_get_entry(data, static_cast<ExifTag>(EXIF_TAG_DATE_TIME_DIGITIZED));
+    }
 
-    if (dateTimeDigitized.isEmpty()) {
+    if (!dateTimeEntry) {
         qCWarning(ExifParserLog) << "DateTimeDigitized tag not found";
+        exif_data_unref(data);
         return QDateTime();
     }
 
-    return parseExifTimestamp(dateTimeDigitized);
+    // The EXIF DateTimeDigitized value is an ASCII byte sequence. Validate its
+    // declared representation and bounds before inspecting the payload. Parsing
+    // the bounded bytes directly avoids a temporary QString conversion on each
+    // QtConcurrent worker and never scans beyond the libexif-owned entry buffer.
+    if (dateTimeEntry->format != EXIF_FORMAT_ASCII ||
+        !dateTimeEntry->data ||
+        dateTimeEntry->components == 0 ||
+        dateTimeEntry->size < dateTimeEntry->components) {
+        qCWarning(ExifParserLog) << "Malformed DateTimeDigitized EXIF entry";
+        exif_data_unref(data);
+        return QDateTime();
+    }
+
+    const size_t valueSize = static_cast<size_t>(dateTimeEntry->components);
+    const auto* terminator = static_cast<const unsigned char*>(
+        std::memchr(dateTimeEntry->data, '\0', valueSize));
+    if (!terminator) {
+        qCWarning(ExifParserLog) << "Unterminated DateTimeDigitized EXIF entry";
+        exif_data_unref(data);
+        return QDateTime();
+    }
+
+    const std::string_view timestamp(
+        reinterpret_cast<const char*>(dateTimeEntry->data),
+        static_cast<size_t>(terminator - dateTimeEntry->data));
+    const QDateTime result = parseExifTimestamp(timestamp);
+    exif_data_unref(data);
+    return result;
 }
 
 bool write(QByteArray& buffer, const GeoTagData& geotag)

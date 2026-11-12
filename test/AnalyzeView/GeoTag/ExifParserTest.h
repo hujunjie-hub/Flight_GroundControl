@@ -11,6 +11,7 @@ private slots:
     void _readTimeEmptyBufferTest();
     void _readTimeInvalidJpegTest();
     void _readTimeFormatTest();
+    void _readTimeRejectsUnterminatedTimestampTest();
     void _readTimeConcurrentTest();
     void _writeTest();
     void _writeEmptyBufferTest();
