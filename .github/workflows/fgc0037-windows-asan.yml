@@ -260,7 +260,8 @@ jobs:
           $requiredFunctions = @(
             '_writeGpsVersionEntryValidTest',
             '_writeRejectsShortGpsVersionEntriesTest',
-            '_writeRejectsWrongGpsVersionFormatTest'
+            '_writeRejectsWrongGpsVersionFormatTest',
+            '_writeRejectsWrongGpsVersionComponentCountTest'
           )
           $passed = 0
 
