@@ -1898,7 +1898,8 @@ void FlightTelemetryDispatchTest::_buildInfoNewBootAcceptsSameTimestampAndReject
     const uint64_t sharedTimestamp = 10000;
     Fact *firmwareSha = telemetry->getFact(QStringLiteral("firmwareSha256"));
     Fact *coreParamsSha = telemetry->getFact(QStringLiteral("coreParametersSha256"));
-    QVERIFY(firmwareSha && coreParamsSha);
+    Fact *buildBootId = telemetry->getFact(QStringLiteral("buildBootId"));
+    QVERIFY(firmwareSha && coreParamsSha && buildBootId);
 
     mockLink->respondWithMavlinkMessage(
         buildInfoMessage(sysId, compId, buildInfoPayload(oldBoot, sharedTimestamp, 0, 0x20, 42)));
@@ -1917,6 +1918,17 @@ void FlightTelemetryDispatchTest::_buildInfoNewBootAcceptsSameTimestampAndReject
     mockLink->respondWithMavlinkMessage(
         buildInfoMessage(sysId, compId, buildInfoPayload(oldBoot, sharedTimestamp + 1000, 1, 0x50, 42)));
     QTest::qWait(20);
+    QCOMPARE(firmwareSha->rawValue().toString(), newHash);
+    QVERIFY(coreParamsSha->rawValue().toString().isEmpty());
+
+    // An invalid candidate boot must not reset a valid cache before its payload is rejected.
+    mavlink_fcu_build_info_t invalidCandidate =
+        buildInfoPayload(0x7500000000000007ULL, sharedTimestamp + 2000, 1, 0x60, 42);
+    invalidCandidate.source_commit_valid = 0;
+    mockLink->respondWithMavlinkMessage(
+        buildInfoMessage(sysId, compId, invalidCandidate));
+    QTest::qWait(20);
+    QCOMPARE(buildBootId->rawValue().toULongLong(), newBoot);
     QCOMPARE(firmwareSha->rawValue().toString(), newHash);
     QVERIFY(coreParamsSha->rawValue().toString().isEmpty());
 }

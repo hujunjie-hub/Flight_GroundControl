@@ -1004,17 +1004,17 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
             !_acceptTelemetryProfile(value.boot_id, value.profile_id)) {
             return;
         }
-        // BUILD_INFO can be the first valid family received after reboot. Activate the epoch
-        // before comparing its timestamp with the previous boot's watermark.
-        if (!_acceptTelemetryEpoch(value.boot_id) || value.time_boot_us < _lastBuildInfoTimeBootUs) {
-            return;
-        }
         if (value.source_commit_valid == 0) {
             for (const uint8_t byte : value.source_commit) {
                 if (byte != 0) {
                     return;
                 }
             }
+        }
+        // BUILD_INFO can be the first valid family received after reboot. Validate the full
+        // payload before activating its epoch or comparing its timestamp with the prior boot.
+        if (!_acceptTelemetryEpoch(value.boot_id) || value.time_boot_us < _lastBuildInfoTimeBootUs) {
+            return;
         }
         _commitTelemetryProfile(value.profile_id);
         const QByteArray sourceCommitBytes(
