@@ -60,3 +60,10 @@ The R26 run completed the instrumented build, ExifParserTest 20/20, GeoTagContro
 - [ ] Independent review of the final exact-head evidence.
 
 Issue #37 is VERIFIED and closed on validated code HEAD `d38eaeb6c449ca887fa34bb2eb7ffbddab3b91bb` after the exact-head ASan and Windows Release gates passed. PR #39 remains Open / Draft; FGC-0029 remains a separate OPEN / S1 root-cause investigation. No PR merge is performed by this validation record.
+
+
+## R27 — 2026-11-13 ASan retest boundary
+
+The exact-head ASan run [43365258406](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43365258406) did not pass: `ExifParserTest` passed 20/20 and `GeoTagControllerTest` passed its first 18 repetitions, but repetition 19 wrote a complete 19-case QtTest XML report (0 failures/errors/skips; 0.952 s) and then the process failed to exit before CTest's 60 s timeout. No ASan memory error signature was found in the captured logs. This is a post-test process-shutdown hang, not a failed QtTest assertion. It resembles FGC-0028; the precise blocking call remains unproven. FGC-0029 remains **OPEN / S1 / BLOCKED**.
+
+The follow-up diagnostic adds QtTest per-function verbosity, map-engine shutdown begin/end and worker stop/wait markers, and preserves the XML report on CTest failure. Its exact-head retest is pending; do not infer a pass from the earlier R26 run.
