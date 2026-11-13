@@ -384,6 +384,30 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
     undersizedGps->size = sizeof(ExifRational);
     QCOMPARE(ExifUtility::gpsRationalToDecimal(undersizedGps, order), 0.0);
 
+    // A non-null ExifEntry with a declared payload size but no backing data
+    // must be rejected before passing the pointer to libexif.
+    ExifEntry* nullDataEntry = exif_entry_new();
+    QVERIFY(nullDataEntry != nullptr);
+    nullDataEntry->tag = static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF);
+    nullDataEntry->format = EXIF_FORMAT_SHORT;
+    nullDataEntry->components = 1;
+    nullDataEntry->size = sizeof(ExifShort);
+    exif_content_add_entry(data->ifd[EXIF_IFD_GPS], nullDataEntry);
+    exif_entry_unref(nullDataEntry);
+    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
+    QVERIFY(ExifUtility::readString(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS).isEmpty());
+
+    // A missing IFD is a normal malformed-input condition, not a null dereference.
+    ExifData* missingIfdData = ExifUtility::createNew();
+    QVERIFY(missingIfdData != nullptr);
+    if (missingIfdData->ifd[EXIF_IFD_GPS]) {
+        exif_content_unref(missingIfdData->ifd[EXIF_IFD_GPS]);
+        missingIfdData->ifd[EXIF_IFD_GPS] = nullptr;
+    }
+    QCOMPARE(ExifUtility::readShort(missingIfdData, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
+    QVERIFY(ExifUtility::readString(missingIfdData, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS).isEmpty());
+    exif_data_unref(missingIfdData);
+
     // The scalar readers must also reject a tag whose storage is large enough
     // but whose EXIF format is not the requested type.
     ExifEntry* wrongShort = ExifUtility::createTag(

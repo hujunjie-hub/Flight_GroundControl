@@ -8,6 +8,19 @@ QGC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
 
 namespace ExifUtility
 {
+namespace {
+ExifEntry *getEntry(ExifData *data, ExifTag tag, ExifIfd ifd)
+{
+    if (!data || static_cast<unsigned int>(ifd) >= EXIF_IFD_COUNT) {
+        return nullptr;
+    }
+
+    ExifContent *content = data->ifd[ifd];
+    ExifEntry *entry = content ? exif_content_get_entry(content, tag) : nullptr;
+    return entry ? entry : exif_data_get_entry(data, tag);
+}
+} // namespace
+
 
 // ============================================================================
 // EXIF Data Management
@@ -359,13 +372,19 @@ void writeGpsCoordinate(ExifEntry *entry, ExifByteOrder order, double value)
     };
 
     for (int i = 0; i < 3; i++) {
-        exif_set_rational(entry->data + i * 8, order, rationals[i]);
+        exif_set_rational(entry->data + i * sizeof(ExifRational), order, rationals[i]);
     }
 }
 
 void writeRational(ExifEntry *entry, ExifByteOrder order, double value, int denominator)
 {
-    if (!entry || entry->format != EXIF_FORMAT_RATIONAL || entry->components < 1 || !entry->data || entry->size < sizeof(ExifRational)) return;
+    if (!entry ||
+        entry->format != EXIF_FORMAT_RATIONAL ||
+        entry->components < 1 ||
+        !entry->data ||
+        entry->size < sizeof(ExifRational)) {
+        return;
+    }
 
     ExifRational rational = {
         static_cast<ExifLong>(static_cast<int>(fabs(value) * denominator)),
@@ -376,14 +395,26 @@ void writeRational(ExifEntry *entry, ExifByteOrder order, double value, int deno
 
 void writeGpsRef(ExifEntry *entry, char value)
 {
-    if (!entry || entry->format != EXIF_FORMAT_ASCII || entry->components < 2 || !entry->data || entry->size < 2) return;
+    if (!entry ||
+        entry->format != EXIF_FORMAT_ASCII ||
+        entry->components < 2 ||
+        !entry->data ||
+        entry->size < 2) {
+        return;
+    }
     entry->data[0] = static_cast<unsigned char>(value);
     entry->data[1] = '\0';
 }
 
 void writeGpsAltRef(ExifEntry *entry, unsigned char value)
 {
-    if (!entry || entry->format != EXIF_FORMAT_BYTE || entry->components < 1 || !entry->data || entry->size < 1) return;
+    if (!entry ||
+        entry->format != EXIF_FORMAT_BYTE ||
+        entry->components < 1 ||
+        !entry->data ||
+        entry->size < 1) {
+        return;
+    }
     entry->data[0] = value;
 }
 
