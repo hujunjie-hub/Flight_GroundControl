@@ -376,7 +376,7 @@ jobs:
               Remove-Item -LiteralPath $qtestXml -Force
             }
             Write-Host "=== GeoTagControllerTest ASan iteration $iteration / 20 ==="
-            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               if (Test-Path -LiteralPath $qtestXml) {
