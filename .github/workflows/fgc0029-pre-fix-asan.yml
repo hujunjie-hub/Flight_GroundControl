@@ -283,7 +283,7 @@ jobs:
             if (Test-Path -LiteralPath $qtestXml) {
               Remove-Item -LiteralPath $qtestXml -Force
             }
-            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               throw "Historical GeoTagControllerTest failed on ASan iteration $iteration."
@@ -340,59 +340,6 @@ jobs:
           }
 
           & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $true
-
-      - name: Upload historical baseline ASan evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: fgc0029-historical-baseline-asan-c746af2
-          path: ${{ runner.temp }}/fgc0029-baseline-asan-evidence/
-          if-no-files-found: warn
-          retention-days: 14
- --timeout 180 --output-on-failure -V 2>&1 |
-              Tee-Object -FilePath $logPath
-            if ($LASTEXITCODE -ne 0) {
-              throw "Historical GeoTagControllerTest failed on ASan iteration $iteration."
-            }
-            if (-not (Test-Path -LiteralPath $qtestXml)) {
-              throw "Historical GeoTagControllerTest QtTest XML missing on iteration $iteration."
-            }
-
-            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
-            $testCases = @($xmlDocument.SelectNodes('//testcase'))
-            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
-            $skipped = @($xmlDocument.SelectNodes('//skipped'))
-            if ($xmlDocument.DocumentElement.LocalName -notin @('testsuite', 'testsuites') -or
-                $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skipped.Count -gt 0) {
-              throw "Historical GeoTagControllerTest XML incomplete/failed/skipped on iteration $iteration."
-            }
-
-            Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $evidenceDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
-            $passed++
-          }
-
-          "sequential_controller_runs=$passed" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
-          if ($passed -ne 20) {
-            throw "Expected 20 sequential historical controller runs, observed $passed."
-          }
-
-          $asanPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
-          $findings = Get-ChildItem -Path $evidenceDir -Filter 'geotag-controller-run-*.log' -File | Select-String -Pattern $asanPattern
-          if ($findings) {
-            $findings | Out-String | Set-Content (Join-Path $evidenceDir 'sequential-asan-findings.txt')
-            throw 'AddressSanitizer findings were emitted by sequential historical controller tests.'
-          }
-
-      - name: Run historical 12-process x 3-round FGC-0029 ASan stress
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $exe = Get-ChildItem -Path $env:FGC0029_BASELINE_BUILD_DIR -Filter 'QGroundControl.exe' -File -Recurse |
-            Select-Object -First 1
-          if (-not $exe) {
-            throw 'Historical ASan QGroundControl.exe is missing.'
-          }
-
-          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $false
 
       - name: Upload historical baseline ASan evidence
         if: always()
