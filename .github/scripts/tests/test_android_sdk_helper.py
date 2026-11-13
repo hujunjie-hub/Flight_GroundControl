@@ -9,6 +9,7 @@ from typing import Any
 import android_sdk_helper as mod
 import pytest
 
+
 def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tuple[Path, Path]:
     sdk_root = tmp_path / "sdk"
     ndk_dir = sdk_root / "ndk" / "27.0.12077973"

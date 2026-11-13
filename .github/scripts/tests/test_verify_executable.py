@@ -19,12 +19,17 @@ def test_boot_runner_resolves_from_checkout_without_github_workspace(tmp_path, m
     binary_dir.mkdir()
     binary = binary_dir / "QGroundControl.exe"
     binary.touch()
-    monkeypatch.setattr(sys, "argv", ["verify_executable.py", "--binary-path", str(binary), "--type", "exe"])
+    monkeypatch.setattr(
+        sys, "argv", ["verify_executable.py", "--binary-path", str(binary), "--type", "exe"]
+    )
 
     def run(command, *, cwd, check):
         runner = Path(command[1])
         assert runner.is_absolute()
-        assert runner == Path(verify_executable.__file__).resolve().parents[2] / "tools" / "run_tests.py"
+        assert (
+            runner
+            == Path(verify_executable.__file__).resolve().parents[2] / "tools" / "run_tests.py"
+        )
         assert runner.is_file()
         assert Path(cwd) == binary_dir
         return CompletedProcess(command, 0)
