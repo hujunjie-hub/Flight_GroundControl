@@ -94,6 +94,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           testing: 'true'
+          output-file: ${{ runner.temp }}/build/configure.log
           extra-args: -DQGC_ENABLE_GST_VIDEOSTREAMING=ON
 
       - name: Resolve GStreamer root
@@ -118,6 +119,21 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          output-file: build.log
+
+      - name: Set non-English user culture for Unit regression
+        id: test_locale
+        if: matrix.build_type == 'Release'
+        shell: powershell
+        run: |
+          Import-Module International -ErrorAction Stop
+          Set-Culture -CultureInfo 'zh-CN'
+          $culture = (Get-ItemProperty -Path 'HKCU:\Control Panel\International' -Name LocaleName).LocaleName
+          if ($culture -ne 'zh-CN') {
+            throw "Expected current-user culture zh-CN after Set-Culture, got '$culture'."
+          }
+          "QGC_EXPECT_SYSTEM_LOCALE=zh-CN" >> $env:GITHUB_ENV
+          "QGC_UNIT_TEST_HOST_CULTURE=$culture" >> $env:GITHUB_ENV
 
       - name: Run Unit Tests (parallel)
         id: unit_tests
@@ -129,6 +145,19 @@ jobs:
           include-labels: 'Unit'
           exclude-labels: 'Flaky|Network'
           parallel: 'auto'
+
+      - name: Restore English user culture before Integration
+        id: restore_locale
+        if: always() && matrix.build_type == 'Release'
+        shell: powershell
+        run: |
+          Import-Module International -ErrorAction Stop
+          Set-Culture -CultureInfo 'en-US'
+          $culture = (Get-ItemProperty -Path 'HKCU:\Control Panel\International' -Name LocaleName).LocaleName
+          if ($culture -ne 'en-US') {
+            throw "Expected current-user culture en-US after restore, got '$culture'."
+          }
+          "QGC_EXPECT_SYSTEM_LOCALE=" >> $env:GITHUB_ENV
 
       - name: Run Integration Tests (serial)
         id: integration_tests
@@ -185,12 +214,14 @@ jobs:
           build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
+        id: installer
         uses: ./.github/actions/cmake-install
         with:
           build-dir: ${{ runner.temp }}\\build
           build-type: ${{ matrix.build_type }}
 
       - name: Install and verify installer
+        id: install_verify
         if: matrix.build_type == 'Release'
         shell: pwsh
         run: |
@@ -232,6 +263,7 @@ jobs:
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify installed executable
+        id: verify_installed
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
         env:
@@ -250,3 +282,105 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+      - name: Archive Windows Release validation evidence
+        if: always() && !cancelled()
+        shell: pwsh
+        env:
+          BUILD_RESULT: ${{ steps.build.conclusion || 'skipped' }}
+          UNIT_RESULT: ${{ steps.unit_tests.conclusion || 'skipped' }}
+          INTEGRATION_RESULT: ${{ steps.integration_tests.conclusion || 'skipped' }}
+          INSTALLER_RESULT: ${{ steps.installer.conclusion || 'skipped' }}
+          INSTALL_VERIFY_RESULT: ${{ steps.install_verify.conclusion || 'skipped' }}
+          INSTALLED_VERIFY_RESULT: ${{ steps.verify_installed.conclusion || 'skipped' }}
+          TEST_LOCALE_RESULT: ${{ steps.test_locale.conclusion || 'skipped' }}
+          RESTORE_LOCALE_RESULT: ${{ steps.restore_locale.conclusion || 'skipped' }}
+          UNIT_TEST_HOST_CULTURE: ${{ env.QGC_UNIT_TEST_HOST_CULTURE || 'UNVERIFIED' }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = Join-Path $env:RUNNER_TEMP 'build'
+          $evidenceDir = Join-Path $env:GITHUB_WORKSPACE 'work/validation/current'
+          New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+
+          foreach ($name in @('test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
+            $source = Join-Path $buildDir $name
+            if (Test-Path -LiteralPath $source) {
+              Copy-Item -LiteralPath $source -Destination $evidenceDir -Force
+            }
+          }
+
+          $gateResults = @(
+            $env:BUILD_RESULT,
+            $env:TEST_LOCALE_RESULT,
+            $env:UNIT_RESULT,
+            $env:RESTORE_LOCALE_RESULT,
+            $env:INTEGRATION_RESULT,
+            $env:INSTALLER_RESULT,
+            $env:INSTALL_VERIFY_RESULT,
+            $env:INSTALLED_VERIFY_RESULT
+          )
+          if ($gateResults -contains 'failure' -or $gateResults -contains 'cancelled') {
+            $result = 'FAIL'
+          } elseif ($gateResults -contains 'skipped' -or $gateResults -contains '') {
+            $result = 'PARTIAL'
+          } else {
+            $result = 'PASS'
+          }
+
+          $headShort = (git rev-parse --short=12 HEAD).Trim()
+          $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ') + '_' + $headShort
+          "WINDOWS_ARCHIVE_NAME=$runId" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Windows Release evidence result: $result"
+          Write-Host "Build=$env:BUILD_RESULT Locale=$env:TEST_LOCALE_RESULT Unit=$env:UNIT_RESULT RestoreLocale=$env:RESTORE_LOCALE_RESULT UnitHostCulture=$env:UNIT_TEST_HOST_CULTURE Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
+
+          & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir
+
+          $archiveDir = Join-Path $env:GITHUB_WORKSPACE 'work/validation/archives'
+          $zipPath = Join-Path $archiveDir "$runId.zip"
+          $shaPath = Join-Path $archiveDir "$runId.zip.sha256"
+          if (-not (Test-Path -LiteralPath $zipPath) -or -not (Test-Path -LiteralPath $shaPath)) {
+            throw "Validation archive ZIP or SHA-256 file is missing for $runId"
+          }
+          $expectedHash = ((Get-Content -LiteralPath $shaPath -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          $actualHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($expectedHash -ne $actualHash) {
+            throw "Validation archive SHA-256 mismatch: expected $expectedHash, actual $actualHash"
+          }
+
+          if ($result -eq 'PASS') {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+            try {
+              $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+              $requiredEntries = @(
+                'configure.log',
+                'build.log',
+                'cmake-cache-summary.txt',
+                'test-output-windows-unit.txt',
+                'test-output-windows-integration.txt',
+                'junit-results-windows-unit.xml',
+                'junit-results-windows-integration.xml',
+                'environment.json',
+                'run-manifest.json'
+              )
+              foreach ($entry in $requiredEntries) {
+                if ($entries -notcontains $entry) {
+                  throw "PASS archive is missing required entry: $entry"
+                }
+              }
+            } finally {
+              $archive.Dispose()
+            }
+          }
+
+      - name: Upload Windows Release validation archive
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-release-validation-${{ github.sha }}
+          path: |
+            work/validation/archives/${{ env.WINDOWS_ARCHIVE_NAME }}.zip
+            work/validation/archives/${{ env.WINDOWS_ARCHIVE_NAME }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

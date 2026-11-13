@@ -144,7 +144,7 @@ $RunId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssfffZ") + "_" + (g
 pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Result PASS
 ```
 
-只有全部 Gate 通过时才填 PASS。脚本仅归档，不会替代验收判断。
+只有全部 Gate 通过时才填 PASS。归档脚本会独立校验报告、日志、环境与安装包证据的完整性；它不能替代 G0–G10 的实际验收，也不会把缺失或跳过的测试转为 PASS。
 
 ## 7. 问题登记和关闭
 
@@ -186,3 +186,29 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 - 所有 S0/S1 阻断问题关闭或得到明确且经用户接受的处理决策。
 - 验收证据与当前 commit 一致且可复核。
 - 用户明确授权后才可改变 PR Draft 状态或合并；本指南不授权合并 main。
+
+
+## 10. GitHub Windows CI 自动证据归档门禁
+
+Windows Release workflow 在 Unit、Integration、Installer、干净安装和安装版启动检查结束后，自动执行 `tools/validation/Archive-WindowsReleaseRun.ps1`，并上传归档 ZIP 与 SHA-256。
+
+自动归档规则：
+
+- 归档脚本同时支持仓库相对路径和绝对路径，CI 直接使用本轮 `$RUNNER_TEMP/build`。
+- 只有 Build、Unit、Integration、Installer、Install Verify、Installed Runtime Verify 全部成功时，CI 才请求 `Result=PASS`。
+- PASS 必须同时包含非空的 `configure.log`、`build.log`、`test-output-windows-unit.txt`、`test-output-windows-integration.txt`，以及 `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`。
+- `cmake-cache-summary.txt` 必须先从本轮 `CMakeCache.txt` 生成，再执行 PASS 文件存在性和非空校验；不能在生成前检查它，否则会把有效构建错误判为归档失败。
+- 两份 JUnit 必须可解析、测试数量非零，failures、errors、skipped 均为 0。
+- Qt/GStreamer 根目录优先采用存在的 `QT_ROOT_DIR` / `GSTREAMER_1_0_ROOT_MSVC_X86_64` 环境目录；缺失或无效时，分别回退到 CMakeCache 的 `Qt6_DIR`（解析到 Qt 安装根目录）和 `GStreamer_ROOT_DIR`。目录不存在时记录 `UNVERIFIED`。
+- PASS 还要求 CMake、Ninja、Python、MSVC、Qt、GStreamer 环境事实可从构建缓存/实际可执行文件解析；MSVC PATH 编译器若可用，必须与 CMake 缓存编译器路径一致。
+- 若调用方请求 PASS 但证据不完整，脚本仍先生成诊断 ZIP 和 SHA-256，再将归档验证结果降为 FAIL 并使 CI 步骤失败；不得生成缺报告的 PASS 归档。
+- 归档 manifest 的 UTC 时间戳使用 PowerShell `[DateTime]::UtcNow` 属性（不带方法调用括号）；Windows CI 必须实际执行归档步骤并验证 ZIP 与 SHA-256 文件存在，不能仅以脚本静态检查通过作为验收。
+- FAIL / PARTIAL 仍保留本轮可获得的日志、JUnit、环境摘要和清单，便于定位失败。
+- 归档 manifest 记录 GitHub run ID、attempt、PR head ref、实际 checkout commit、JUnit 统计、环境来源、逐文件 SHA-256 和 ZIP SHA-256。
+
+CI 归档 Artifact 名称为 `windows-release-validation-<github.sha>`，包含：
+
+- `<RUN_ID>.zip`
+- `<RUN_ID>.zip.sha256`
+
+此门禁用于验证 FGC-0004（JUnit 报告完整性）和 FGC-0019（构建环境证据真实性）。上传成功不代表测试 PASS；必须检查归档 manifest 中的 `result_validated` 和各项 JUnit 统计。
