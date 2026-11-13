@@ -183,6 +183,17 @@
         "zip_sha256_sidecar",
         "commit_and_environment_recorded"
       ]
+    },
+    {
+      "id": "G12",
+      "name": "non_english_locale_regression",
+      "required": true,
+      "pass": [
+        "unit_host_culture_is_zh_CN",
+        "Qt_system_locale_is_zh_CN",
+        "unit_application_language_is_English",
+        "English_culture_restored_before_integration_and_archive"
+      ]
     }
   ],
   "telemetry_test_matrix": [
@@ -220,5 +231,11 @@
     "ctest_unit_log": "work/validation/current/unit-ctest.log",
     "ctest_integration_log": "work/validation/current/integration-ctest.log",
     "report_generator": ".github/scripts/cmake_helper.py ctest"
+  },
+  "test_environment": {
+    "unit_test_host_culture": "zh-CN",
+    "unit_qt_system_locale": "zh-CN",
+    "unit_application_language": "English",
+    "integration_and_archive_host_culture": "en-US"
   }
 }

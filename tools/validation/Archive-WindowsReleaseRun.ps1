@@ -319,6 +319,8 @@ $environment = [ordered]@{
     gstreamer_root = $gstResolved.value
     gstreamer_source = $gstResolved.source
     build_directory = $buildPath
+    unit_test_host_culture = if ($env:QGC_UNIT_TEST_HOST_CULTURE) { $env:QGC_UNIT_TEST_HOST_CULTURE } else { 'UNVERIFIED' }
+    archive_host_culture = [System.Globalization.CultureInfo]::CurrentCulture.Name
 }
 if ($Result -eq 'PASS') {
     foreach ($field in @('cmake_version', 'ninja_version', 'python_version', 'msvc_version', 'qt_root_dir', 'gstreamer_root')) {
@@ -334,6 +336,12 @@ if ($Result -eq 'PASS') {
     }
     if ($environment.msvc_probe_consistency -eq 'MISMATCH') {
         $validationErrors += 'PATH cl.exe does not match CMAKE_CXX_COMPILER.'
+    }
+    if ($environment.unit_test_host_culture -ne 'zh-CN') {
+        $validationErrors += "Unit test host culture must be zh-CN; found $($environment.unit_test_host_culture)."
+    }
+    if ($environment.archive_host_culture -ne 'en-US') {
+        $validationErrors += "Archive host culture must be restored to en-US; found $($environment.archive_host_culture)."
     }
 }
 
@@ -409,7 +417,7 @@ $manifest = [ordered]@{
     github_head_ref = $environment.github_head_ref
     github_head_sha = $environment.github_head_sha
     github_sha = $environment.github_sha
-    note = 'The caller supplies the requested result. PASS is accepted only when configure/build/test logs, both JUnit reports, installer evidence, and required build-environment facts are independently validated.'
+    note = 'The caller supplies the requested result. PASS requires configure/build/test logs, clean Unit and Integration JUnit reports, installer evidence, required toolchain provenance, a zh-CN Unit test host locale, and restoration to en-US before Integration/archive.'
 }
 
 $manifest | ConvertTo-Json -Depth 8 |

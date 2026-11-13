@@ -14,15 +14,27 @@
 
 QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
 
-// Unit tests assert on English user-facing strings, and the Windows CI runner uses an
-// English locale. Pin the same language here so a developer machine set to another
-// language cannot change test outcomes. Tests that exercise localization switch the
-// language themselves and restore it.
+// Unit tests assert on English user-facing strings, so pin the application language
+// independently of the host locale. The non-English Windows regression job also sets
+// QGC_EXPECT_SYSTEM_LOCALE and verifies that Qt sees the requested host locale.
 static void pinDeterministicTestLanguage()
 {
+    const QString expectedSystemLocale = qEnvironmentVariable("QGC_EXPECT_SYSTEM_LOCALE");
+    QString systemLocale;
+    if (!expectedSystemLocale.isEmpty()) {
+        systemLocale = QLocale::system().name().replace(QLatin1Char('_'), QLatin1Char('-'));
+        if (systemLocale.compare(expectedSystemLocale, Qt::CaseInsensitive) != 0) {
+            qFatal("Expected QLocale::system() to be '%s', got '%s'",
+                   qPrintable(expectedSystemLocale), qPrintable(systemLocale));
+        }
+    }
+
     QGCApplication *const app = qgcApp();
     SettingsManager *const settingsManager = SettingsManager::instance();
     if (!app || !settingsManager) {
+        if (!expectedSystemLocale.isEmpty()) {
+            qFatal("Cannot verify non-English test locale without QGCApplication and SettingsManager");
+        }
         return;
     }
 
@@ -30,6 +42,14 @@ static void pinDeterministicTestLanguage()
     if (languageFact && languageFact->rawValue().toInt() != QLocale::English) {
         languageFact->setRawValue(QLocale::English);
         app->setLanguage();
+    }
+
+    if (!expectedSystemLocale.isEmpty()) {
+        if (!languageFact || languageFact->rawValue().toInt() != QLocale::English) {
+            qFatal("Unit test application language was not pinned to English");
+        }
+        qCInfo(UnitTestListLog) << "Verified non-English test host locale" << systemLocale
+                                << "with English application test language";
     }
 }
 

@@ -121,6 +121,20 @@ jobs:
           build-type: ${{ matrix.build_type }}
           output-file: build.log
 
+      - name: Set non-English user culture for Unit regression
+        id: test_locale
+        if: matrix.build_type == 'Release'
+        shell: powershell
+        run: |
+          Import-Module International -ErrorAction Stop
+          Set-Culture -CultureInfo 'zh-CN'
+          $culture = (Get-ItemProperty -Path 'HKCU:\Control Panel\International' -Name LocaleName).LocaleName
+          if ($culture -ne 'zh-CN') {
+            throw "Expected current-user culture zh-CN after Set-Culture, got '$culture'."
+          }
+          "QGC_EXPECT_SYSTEM_LOCALE=zh-CN" >> $env:GITHUB_ENV
+          "QGC_UNIT_TEST_HOST_CULTURE=$culture" >> $env:GITHUB_ENV
+
       - name: Run Unit Tests (parallel)
         id: unit_tests
         uses: ./.github/actions/run-unit-tests
@@ -131,6 +145,19 @@ jobs:
           include-labels: 'Unit'
           exclude-labels: 'Flaky|Network'
           parallel: 'auto'
+
+      - name: Restore English user culture before Integration
+        id: restore_locale
+        if: always() && matrix.build_type == 'Release'
+        shell: powershell
+        run: |
+          Import-Module International -ErrorAction Stop
+          Set-Culture -CultureInfo 'en-US'
+          $culture = (Get-ItemProperty -Path 'HKCU:\Control Panel\International' -Name LocaleName).LocaleName
+          if ($culture -ne 'en-US') {
+            throw "Expected current-user culture en-US after restore, got '$culture'."
+          }
+          "QGC_EXPECT_SYSTEM_LOCALE=" >> $env:GITHUB_ENV
 
       - name: Run Integration Tests (serial)
         id: integration_tests
@@ -266,6 +293,9 @@ jobs:
           INSTALLER_RESULT: ${{ steps.installer.conclusion || 'skipped' }}
           INSTALL_VERIFY_RESULT: ${{ steps.install_verify.conclusion || 'skipped' }}
           INSTALLED_VERIFY_RESULT: ${{ steps.verify_installed.conclusion || 'skipped' }}
+          TEST_LOCALE_RESULT: ${{ steps.test_locale.conclusion || 'skipped' }}
+          RESTORE_LOCALE_RESULT: ${{ steps.restore_locale.conclusion || 'skipped' }}
+          UNIT_TEST_HOST_CULTURE: ${{ env.QGC_UNIT_TEST_HOST_CULTURE || 'UNVERIFIED' }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -282,7 +312,9 @@ jobs:
 
           $gateResults = @(
             $env:BUILD_RESULT,
+            $env:TEST_LOCALE_RESULT,
             $env:UNIT_RESULT,
+            $env:RESTORE_LOCALE_RESULT,
             $env:INTEGRATION_RESULT,
             $env:INSTALLER_RESULT,
             $env:INSTALL_VERIFY_RESULT,
@@ -300,7 +332,7 @@ jobs:
           $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ') + '_' + $headShort
           "WINDOWS_ARCHIVE_NAME=$runId" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Windows Release evidence result: $result"
-          Write-Host "Build=$env:BUILD_RESULT Unit=$env:UNIT_RESULT Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
+          Write-Host "Build=$env:BUILD_RESULT Locale=$env:TEST_LOCALE_RESULT Unit=$env:UNIT_RESULT RestoreLocale=$env:RESTORE_LOCALE_RESULT UnitHostCulture=$env:UNIT_TEST_HOST_CULTURE Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
 
           & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir
 
