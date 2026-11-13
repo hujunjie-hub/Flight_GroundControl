@@ -599,3 +599,47 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - Diagnostic-only historical baseline workflow [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) is running on exact reproducer commit `c746af2`; its result is pending.
 
 **Status remains OPEN / S1 / BLOCKED.** The bounded parser is a mitigation with R26 regression evidence; neither a clean baseline ASan result nor the current source audit alone closes the first-invalid-operation requirement.
+
+
+---
+
+## E-43 — R27 exact-head ASan process-shutdown timeout — 2026-11-13
+
+**Code HEAD:** `dbd31996e94fb5a488fa5f04cd89cb6ea3d817b2`  
+**Workflow:** [43365258406](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43365258406) — **FAIL / timeout**, not an ASan memory finding.
+
+- MSVC ASan build and `ExifParserTest` repeated suite: **20/20 PASS**.
+- `GeoTagControllerTest`: iterations 1–18 passed. Iteration 19 produced a QtTest XML report with **19 tests, 0 failures, 0 errors, 0 skipped**, elapsed **0.952 s**, including `_concurrentControllersExifStressTest`.
+- The CTest child process nevertheless remained alive until CTest killed it at **60.05 s**. The run log records a process timeout after the QtTest report was written; no AddressSanitizer error signature was found in the captured ASan build/controller logs.
+- This is a post-QtTest process-exit/shutdown hang, matching the symptom class previously tracked by FGC-0028. The current candidate path is `QGCUnitTest::runTests()` → `UnitTestTileGenerator::shutdownMapEngine()` → `QGCMapEngine::shutdown()` / cache worker teardown. The exact blocking call is **not yet proven**.
+- Do not increase the CTest timeout or mark this as a pass. Preserve the XML even on timeout and add per-test verbose output plus begin/stop/wait/end markers around map-engine shutdown for the next exact-head ASan run.
+
+**Status remains OPEN / S1 / BLOCKED.** This run does not establish the historical first invalid write/free. The next diagnostic must identify whether the shutdown call, worker wait, or later application teardown is blocking, preferably with a thread dump captured before CTest terminates the process.
+
+---
+
+## E-43 — R27 ASan timeout finding and diagnostic baseline — 2026-11-13
+
+- R27 candidate code HEAD before this workflow-only correction: `dbd31996e94fb5a488fa5f04cd89cb6ea3d817b2`.
+- Dedicated MSVC ASan run [43365258406](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43365258406) completed ExifParserTest 20/20 and GeoTagControllerTest iterations 1–18, then iteration 19 exceeded CTest's default 60-second timeout. The recorded failure is a **test timeout**, not an observed AddressSanitizer diagnostic. The workflow did not complete the focused repetition gate or the following multiprocess gate.
+- Workflow correction commit `a0b75a5b8ceef74c22a8c8101967e3369343ee69` raises only the GeoTagControllerTest CTest timeout to 180 seconds. This is a validation-harness adjustment, not a product-code fix; a fresh exact-head ASan run is required.
+- Historical pre-fix diagnostic run [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) built and completed the sequential controller repetitions, but its 12-process × 3-round matrix reported 0/36 PASS. The uploaded artifact is retained for inspection. The run did not provide a causal first-invalid-operation trace in the job summary; worker-level evidence must be examined before interpreting these failures as a reproduced heap corruption.
+- Windows Release runs on the dependent FGC-0004/0019, FGC-0008 and FGC-0031 branches were cancelled while the branch/CI work was being revised; they are not acceptance evidence.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** Do not treat the timeout adjustment as a pass, do not treat 0/36 as a proven memory fault without worker evidence, and do not close the root-cause issue.
+
+
+---
+
+## E-44 — Historical baseline ASan stress harness defect — 2026-11-13
+
+**Historical source:** `c746af2608de6c51e8632dd75775fef4dac6d97d`  
+**Diagnostic run:** [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) — **INVALID / HARNESS FAILURE**, not a product failure result.
+
+- The historical source built with MSVC ASan; the sequential GeoTagControllerTest suite completed **20/20**.
+- The 12-process × 3-round run generated **36/36** QtTest XML files. Every report contains 18 test cases, 0 failures, 0 errors and 0 skipped tests. This historical source predates the new concurrent-controller test slot, so 18 cases are expected.
+- The stress CSV nevertheless records 0/36 because every PowerShell worker job failed to return its result. The worker script referenced `$RequireStressCase` under `Set-StrictMode -Version Latest` without declaring it in the worker parameters or passing it through `Start-Job -ArgumentList`. The final reference is outside the XML parse catch and terminates the worker after the QGC process has run. The parent also read the job error stream only after `Receive-Job`, which consumed the error and hid the actual exception.
+- Diagnostic fix committed on `diag/fgc0029-pre-fix-asan`: [4b400d4](https://github.com/hujunjie-hub/Flight_GroundControl/commit/4b400d4f56d7669ce63e33fd2a02f26d09b593cb) passes `RequireStressCase` into each worker and captures the error stream before `Receive-Job`. The workflow path filter now includes the stress script so future script-only changes trigger the run.
+- Corrected historical baseline rerun [43370205206](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43370205206) is **QUEUED**. No historical crash/no-crash conclusion can be drawn from run 43364448297 because process exit codes were not retained.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** Do not treat the 36 XML files as a 36/36 process pass until the corrected harness records exit codes, timeout state and ASan findings.
