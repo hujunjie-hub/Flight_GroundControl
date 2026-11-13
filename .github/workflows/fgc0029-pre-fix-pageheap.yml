@@ -248,7 +248,7 @@ jobs:
           if ($verifyOutput -notmatch '(?i)QGroundControl\.exe') {
             throw "GFlags did not report PageHeap enabled for QGroundControl.exe: $verifyOutput"
           }
-          if ($verifyOutput -notmatch '(?i)full traces') {
+          if ($verifyOutput -notmatch '(?i)full(?:\s+size)?\s+traces') {
             throw "GFlags did not confirm full PageHeap for the 16..32-byte allocation range: $verifyOutput"
           }
 
