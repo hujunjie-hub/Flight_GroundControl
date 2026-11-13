@@ -284,6 +284,7 @@ $environment = [ordered]@{
     github_run_attempt = if ($env:GITHUB_RUN_ATTEMPT) { $env:GITHUB_RUN_ATTEMPT } else { 'UNAVAILABLE' }
     github_ref = if ($env:GITHUB_REF) { $env:GITHUB_REF } else { 'UNAVAILABLE' }
     github_head_ref = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { 'UNAVAILABLE' }
+    github_head_sha = if ($env:GITHUB_HEAD_SHA) { $env:GITHUB_HEAD_SHA } else { 'UNAVAILABLE' }
     github_sha = if ($env:GITHUB_SHA) { $env:GITHUB_SHA } else { 'UNAVAILABLE' }
     qt_root_dir = $qtResolved.value
     qt_source = $qtResolved.source
@@ -327,6 +328,10 @@ if (Test-Path $buildPath) {
                 last_write_utc = $_.LastWriteTimeUtc.ToString('o')
             }
         })
+}
+
+if ($Result -eq 'PASS' -and $installerInfo.Count -eq 0) {
+    $validationErrors += 'PASS requires at least one installer candidate with a SHA-256 hash.'
 }
 
 $fileHashes = @(
@@ -374,6 +379,7 @@ $manifest = [ordered]@{
     github_run_attempt = $environment.github_run_attempt
     github_ref = $environment.github_ref
     github_head_ref = $environment.github_head_ref
+    github_head_sha = $environment.github_head_sha
     github_sha = $environment.github_sha
     note = 'The caller supplies the requested result. PASS is accepted only when both JUnit reports and required build-environment facts are independently validated.'
 }

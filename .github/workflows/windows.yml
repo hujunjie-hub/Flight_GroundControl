@@ -266,6 +266,7 @@ jobs:
           INSTALLER_RESULT: ${{ steps.installer.conclusion || 'skipped' }}
           INSTALL_VERIFY_RESULT: ${{ steps.install_verify.conclusion || 'skipped' }}
           INSTALLED_VERIFY_RESULT: ${{ steps.verify_installed.conclusion || 'skipped' }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
           $buildDir = Join-Path $env:RUNNER_TEMP 'build'
