@@ -30,16 +30,29 @@ static void pinDeterministicTestLanguage()
     }
 
     QGCApplication *const app = qgcApp();
+    if (!app) {
+        // Lightweight tests run with QCoreApplication only. The host locale was still
+        // verified above; the full-app test path verifies the application language.
+        return;
+    }
+
     SettingsManager *const settingsManager = SettingsManager::instance();
-    if (!app || !settingsManager) {
+    if (!settingsManager) {
         if (!expectedSystemLocale.isEmpty()) {
-            qFatal("Cannot verify non-English test locale without QGCApplication and SettingsManager");
+            qFatal("Cannot verify English test language without SettingsManager");
         }
         return;
     }
 
     Fact *const languageFact = settingsManager->appSettings()->qLocaleLanguage();
-    if (languageFact && languageFact->rawValue().toInt() != QLocale::English) {
+    if (!languageFact) {
+        if (!expectedSystemLocale.isEmpty()) {
+            qFatal("Cannot verify English test language: qLocaleLanguage Fact is unavailable");
+        }
+        return;
+    }
+
+    if (languageFact->rawValue().toInt() != QLocale::English) {
         languageFact->setRawValue(QLocale::English);
         app->setLanguage();
     }
