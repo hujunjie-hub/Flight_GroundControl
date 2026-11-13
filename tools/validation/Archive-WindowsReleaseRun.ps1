@@ -138,7 +138,7 @@ foreach ($name in @('configure.log', 'build.log')) {
 }
 
 if ($Result -eq 'PASS') {
-    foreach ($name in @('configure.log', 'build.log', 'test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
+    foreach ($name in @('configure.log', 'build.log', 'cmake-cache-summary.txt', 'test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
         $evidenceFile = Join-Path $runDirectory $name
         if (-not (Test-Path -LiteralPath $evidenceFile)) {
             $validationErrors += "Required validation log is missing: $name"

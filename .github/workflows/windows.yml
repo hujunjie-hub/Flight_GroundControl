@@ -304,6 +304,44 @@ jobs:
 
           & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir
 
+          $archiveDir = Join-Path $env:GITHUB_WORKSPACE 'work/validation/archives'
+          $zipPath = Join-Path $archiveDir "$runId.zip"
+          $shaPath = Join-Path $archiveDir "$runId.zip.sha256"
+          if (-not (Test-Path -LiteralPath $zipPath) -or -not (Test-Path -LiteralPath $shaPath)) {
+            throw "Validation archive ZIP or SHA-256 file is missing for $runId"
+          }
+          $expectedHash = ((Get-Content -LiteralPath $shaPath -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          $actualHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($expectedHash -ne $actualHash) {
+            throw "Validation archive SHA-256 mismatch: expected $expectedHash, actual $actualHash"
+          }
+
+          if ($result -eq 'PASS') {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+            try {
+              $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+              $requiredEntries = @(
+                'configure.log',
+                'build.log',
+                'cmake-cache-summary.txt',
+                'test-output-windows-unit.txt',
+                'test-output-windows-integration.txt',
+                'junit-results-windows-unit.xml',
+                'junit-results-windows-integration.xml',
+                'environment.json',
+                'run-manifest.json'
+              )
+              foreach ($entry in $requiredEntries) {
+                if ($entries -notcontains $entry) {
+                  throw "PASS archive is missing required entry: $entry"
+                }
+              }
+            } finally {
+              $archive.Dispose()
+            }
+          }
+
       - name: Upload Windows Release validation archive
         if: always() && !cancelled()
         uses: actions/upload-artifact@v7
