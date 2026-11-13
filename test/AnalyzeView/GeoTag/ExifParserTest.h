@@ -19,4 +19,8 @@ private slots:
     void _writeNegativeCoordinatesTest();
     void _writeNegativeAltitudeTest();
     void _writePreservesExistingDataTest();
+    void _writeGpsVersionEntryValidTest();
+    void _writeRejectsShortGpsVersionEntriesTest();
+    void _writeRejectsWrongGpsVersionComponentCountTest();
+    void _writeRejectsWrongGpsVersionFormatTest();
 };
