@@ -394,8 +394,9 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
     nullDataEntry->size = sizeof(ExifShort);
     exif_content_add_entry(data->ifd[EXIF_IFD_GPS], nullDataEntry);
     exif_entry_unref(nullDataEntry);
-    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS), 0);
-    QVERIFY(ExifUtility::readString(data, EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS).isEmpty());
+    constexpr auto distanceRefTag = static_cast<ExifTag>(EXIF_TAG_GPS_DEST_DISTANCE_REF);
+    QCOMPARE(ExifUtility::readShort(data, distanceRefTag, EXIF_IFD_GPS), 0);
+    QVERIFY(ExifUtility::readString(data, distanceRefTag, EXIF_IFD_GPS).isEmpty());
 
     // A missing IFD is a normal malformed-input condition, not a null dereference.
     ExifData* missingIfdData = ExifUtility::createNew();
@@ -404,24 +405,25 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
         exif_content_unref(missingIfdData->ifd[EXIF_IFD_GPS]);
         missingIfdData->ifd[EXIF_IFD_GPS] = nullptr;
     }
-    QCOMPARE(ExifUtility::readShort(missingIfdData, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
-    QVERIFY(ExifUtility::readString(missingIfdData, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS).isEmpty());
+    constexpr auto altitudeRefTag = static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF);
+    QCOMPARE(ExifUtility::readShort(missingIfdData, altitudeRefTag, EXIF_IFD_GPS), 0);
+    QVERIFY(ExifUtility::readString(missingIfdData, altitudeRefTag, EXIF_IFD_GPS).isEmpty());
     exif_data_unref(missingIfdData);
 
     // The scalar readers must also reject a tag whose storage is large enough
     // but whose EXIF format is not the requested type.
     ExifEntry* wrongShort = ExifUtility::createTag(
-        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_ASCII, 2);
+        data, EXIF_IFD_GPS, altitudeRefTag, EXIF_FORMAT_ASCII, 2);
     QVERIFY(wrongShort != nullptr);
     wrongShort->data[0] = 0x34;
     wrongShort->data[1] = 0x12;
-    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
+    QCOMPARE(ExifUtility::readShort(data, altitudeRefTag, EXIF_IFD_GPS), 0);
 
-    ExifEntry* wrongRational = ExifUtility::createTag(
-        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_SHORT, 4);
+    constexpr auto altitudeTag = static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE);
+    ExifEntry* wrongRational = ExifUtility::createTag(data, EXIF_IFD_GPS, altitudeTag, EXIF_FORMAT_SHORT, 4);
     QVERIFY(wrongRational != nullptr);
     exif_set_rational(wrongRational->data, order, {123, 1});
-    QCOMPARE(ExifUtility::readRational(data, EXIF_TAG_GPS_ALTITUDE, EXIF_IFD_GPS), 0.0);
+    QCOMPARE(ExifUtility::readRational(data, altitudeTag, EXIF_IFD_GPS), 0.0);
 
     exif_data_unref(data);
 }
