@@ -137,6 +137,15 @@ foreach ($name in @('configure.log', 'build.log')) {
     }
 }
 
+# Keep a small CMake cache summary, not the full machine-specific cache.
+$cachePath = Join-Path $buildPath 'CMakeCache.txt'
+if (Test-Path $cachePath) {
+    $cachePatterns = '^(CMAKE_BUILD_TYPE|CMAKE_GENERATOR|CMAKE_CXX_COMPILER|CMAKE_CXX_COMPILER_ID|CMAKE_CXX_COMPILER_VERSION|QGC_BUILD_TESTING|QGC_ENABLE_GST_VIDEOSTREAMING|GStreamer_ROOT_DIR):'
+    Get-Content -LiteralPath $cachePath |
+        Where-Object { $_ -match $cachePatterns } |
+        Set-Content -LiteralPath (Join-Path $runDirectory 'cmake-cache-summary.txt') -Encoding utf8
+}
+
 if ($Result -eq 'PASS') {
     foreach ($name in @('configure.log', 'build.log', 'cmake-cache-summary.txt', 'test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
         $evidenceFile = Join-Path $runDirectory $name
@@ -146,15 +155,6 @@ if ($Result -eq 'PASS') {
             $validationErrors += "Required validation log is empty: $name"
         }
     }
-}
-
-# Keep a small CMake cache summary, not the full machine-specific cache.
-$cachePath = Join-Path $buildPath 'CMakeCache.txt'
-if (Test-Path $cachePath) {
-    $cachePatterns = '^(CMAKE_BUILD_TYPE|CMAKE_GENERATOR|CMAKE_CXX_COMPILER|CMAKE_CXX_COMPILER_ID|CMAKE_CXX_COMPILER_VERSION|QGC_BUILD_TESTING|QGC_ENABLE_GST_VIDEOSTREAMING|GStreamer_ROOT_DIR):'
-    Get-Content -LiteralPath $cachePath |
-        Where-Object { $_ -match $cachePatterns } |
-        Set-Content -LiteralPath (Join-Path $runDirectory 'cmake-cache-summary.txt') -Encoding utf8
 }
 
 function Get-GitValue([string[]]$GitArgs) {
