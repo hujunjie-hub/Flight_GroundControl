@@ -1,0 +1,461 @@
+name: FGC-0037 Windows MSVC ASan
+
+on:
+  # Manual diagnostic only: the instrumented ASan matrix takes hours and must not gate pushes.
+  workflow_dispatch:
+
+concurrency:
+  group: fgc0037-windows-asan-${{ github.ref }}
+  # A newer commit supersedes older ASan runs on this branch; do not let stale runs block validation.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  exifparser-asan:
+    name: Windows x64 MSVC ASan - GeoTag regression
+    runs-on: windows-2022
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a
+        with:
+          egress-policy: audit
+
+      - name: Checkout exact pushed commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Verify checkout identity
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $head = (git rev-parse HEAD).Trim()
+          Write-Host "Checked out commit: $head"
+          Write-Host "Workflow commit:    $env:GITHUB_SHA"
+          if ($head -ne $env:GITHUB_SHA) {
+            throw "Checkout does not match the pushed commit."
+          }
+          git status --short --branch
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup  # zizmor: ignore[self-repository] actionlint does not parse the $/ form yet
+        with:
+          qt-host: windows
+          qt-arch: win64_msvc2022_64
+          build-type: RelWithDebInfo
+          cache-variant: asan
+          aqt-source: git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95
+
+      - name: Configure MSVC AddressSanitizer build
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:QT_ROOT_DIR) {
+            throw 'Build Setup did not export QT_ROOT_DIR.'
+          }
+
+          $buildDir = Join-Path $env:RUNNER_TEMP 'build-fgc0037-asan'
+          $evidenceDir = Join-Path $env:RUNNER_TEMP 'fgc0037-asan-evidence'
+          New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+          "FGC0037_ASAN_BUILD_DIR=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "FGC0037_ASAN_EVIDENCE_DIR=$evidenceDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          $configureArgs = @(
+            '-B', $buildDir,
+            '-t', 'RelWithDebInfo',
+            '--testing',
+            '--qt-root', $env:QT_ROOT_DIR,
+            '--',
+            '-DCMAKE_C_FLAGS=/DWIN32 /D_WINDOWS /fsanitize=address',
+            '-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc /fsanitize=address',
+            '-DCMAKE_EXE_LINKER_FLAGS=/fsanitize=address',
+            '-DCMAKE_SHARED_LINKER_FLAGS=/fsanitize=address',
+            '-DQGC_ENABLE_HARDENING=OFF',
+            '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+            '-DQGC_ENABLE_GST_VIDEOSTREAMING=ON'
+          )
+
+          & python tools\configure.py @configureArgs
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSVC ASan CMake configure failed with exit code $LASTEXITCODE."
+          }
+
+          $head = (git rev-parse HEAD).Trim()
+          @(
+            "commit=$head"
+            "branch=$env:GITHUB_REF_NAME"
+            "workflow_run_id=$env:GITHUB_RUN_ID"
+            "qt_root=$env:QT_ROOT_DIR"
+            "build_type=RelWithDebInfo"
+            "compiler=MSVC x64"
+            "sanitizer=/fsanitize=address"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'validation-metadata.txt')
+
+      - name: Resolve GStreamer runtime
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cachePath = Join-Path $env:FGC0037_ASAN_BUILD_DIR 'CMakeCache.txt'
+          if (-not (Test-Path $cachePath)) {
+            throw "CMakeCache.txt not found: $cachePath"
+          }
+
+          $line = Get-Content $cachePath | Where-Object { $_ -match '^GStreamer_ROOT_DIR:PATH=' } | Select-Object -First 1
+          if (-not $line) {
+            throw 'GStreamer_ROOT_DIR is missing from CMakeCache.txt.'
+          }
+
+          $gstRoot = ($line -split '=', 2)[1]
+          $gstBin = Join-Path $gstRoot 'bin'
+          if (-not (Test-Path $gstBin)) {
+            throw "GStreamer bin directory not found: $gstBin"
+          }
+
+          "$gstBin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $pluginDir = Join-Path $gstRoot 'lib\gstreamer-1.0'
+          if (Test-Path $pluginDir) {
+            "GST_PLUGIN_PATH=$pluginDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
+          Write-Host "GStreamer root: $gstRoot"
+          Write-Host "GStreamer runtime: $gstBin"
+
+      - name: Build with verbose MSVC commands
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildLog = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'build-verbose.log'
+          # QGC_BUILD_TESTING wires the Integration tests into the QGroundControl target.
+          # Building this target keeps the complete product/test translation units instrumented
+          # while avoiding unrelated top-level build targets.
+          & cmake --build $env:FGC0037_ASAN_BUILD_DIR --target QGroundControl --parallel 10 --verbose 2>&1 |
+            Tee-Object -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSVC ASan build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Verify complete compile and link instrumentation
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0037_ASAN_BUILD_DIR
+          $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
+          $compileDb = Join-Path $buildDir 'compile_commands.json'
+          $cachePath = Join-Path $buildDir 'CMakeCache.txt'
+
+          if (-not (Test-Path $compileDb)) {
+            throw 'compile_commands.json is missing.'
+          }
+
+          $entries = @(Get-Content $compileDb -Raw | ConvertFrom-Json)
+          if ($entries.Count -eq 0) {
+            throw 'compile_commands.json contains no compile commands.'
+          }
+
+          $cppEntries = @($entries | Where-Object {
+            $_.file -match '(?i)\.(c|cc|cpp|cxx|c\+\+)$'
+          })
+          if ($cppEntries.Count -eq 0) {
+            throw 'No C/C++ compile commands were found.'
+          }
+
+          $missingInstrumentation = @()
+          foreach ($entry in $cppEntries) {
+            $command = if ($entry.command) { $entry.command } else { @($entry.arguments) -join ' ' }
+            if ($command -notmatch '(?i)/fsanitize=address') {
+              $missingInstrumentation += $entry.file
+            }
+          }
+          if ($missingInstrumentation.Count -gt 0) {
+            $missingInstrumentation | Set-Content (Join-Path $evidenceDir 'un-instrumented-translation-units.txt')
+            throw "$($missingInstrumentation.Count) C/C++ translation units lack /fsanitize=address."
+          }
+
+          $requiredSources = @(
+            'src/AnalyzeView/GeoTag/ExifParser.cc',
+            'src/Utilities/Parsing/Exif/ExifUtility.cc',
+            'test/AnalyzeView/GeoTag/ExifParserTest.cc'
+          )
+          foreach ($suffix in $requiredSources) {
+            $entry = $cppEntries | Where-Object {
+              $_.file.Replace('\', '/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase)
+            } | Select-Object -First 1
+            if (-not $entry) {
+              throw "Required source missing from compile_commands.json: $suffix"
+            }
+            $command = if ($entry.command) { $entry.command } else { @($entry.arguments) -join ' ' }
+            if ($command -notmatch '(?i)/fsanitize=address') {
+              throw "ASan instrumentation missing from required source: $suffix"
+            }
+            Write-Host "ASan compile instrumentation verified: $suffix"
+          }
+
+          $cacheText = Get-Content $cachePath -Raw
+          foreach ($cacheKey in @(
+            'CMAKE_C_FLAGS:STRING',
+            'CMAKE_CXX_FLAGS:STRING',
+            'CMAKE_EXE_LINKER_FLAGS:STRING',
+            'CMAKE_SHARED_LINKER_FLAGS:STRING'
+          )) {
+            $cacheLine = ($cacheText -split "\r?\n") | Where-Object { $_.StartsWith("$cacheKey=") } | Select-Object -First 1
+            if (-not $cacheLine -or $cacheLine -notmatch '(?i)/fsanitize=address') {
+              throw "CMake cache does not prove ASan flag on $cacheKey."
+            }
+            Write-Host "ASan CMake flag verified: $cacheKey"
+          }
+
+          $ninjaCommands = (& ninja -C $buildDir -t commands 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to inspect Ninja link commands.'
+          }
+          $appLinkLines = @($ninjaCommands -split "\r?\n" | Where-Object {
+            $_ -match '(?i)link\.exe' -and $_ -match '(?i)QGroundControl\.exe'
+          })
+          if ($appLinkLines.Count -eq 0) {
+            throw 'Could not locate the QGroundControl.exe link command in Ninja output.'
+          }
+          if (($appLinkLines -join "\n") -notmatch '(?i)/fsanitize=address') {
+            throw 'QGroundControl.exe link command does not contain /fsanitize=address.'
+          }
+          Write-Host 'QGroundControl.exe link command contains /fsanitize=address.'
+
+          $exe = Get-ChildItem -Path $buildDir -Filter 'QGroundControl.exe' -File -Recurse |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'ASan-instrumented QGroundControl.exe was not produced.'
+          }
+          Write-Host "ASan executable: $($exe.FullName)"
+
+          "compile_commands_total=$($entries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "asan_instrumented_cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "app_executable=$($exe.FullName)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          Copy-Item $compileDb (Join-Path $evidenceDir 'compile_commands.json')
+          Copy-Item $cachePath (Join-Path $evidenceDir 'CMakeCache.txt')
+
+      - name: Confirm CTest Integration registration
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-integration-list.txt'
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -L Integration -R '^ExifParserTest$' -V 2>&1 |
+            Tee-Object -FilePath $listingPath
+          if ($LASTEXITCODE -ne 0) {
+            throw 'CTest listing command failed.'
+          }
+          $listing = Get-Content $listingPath -Raw
+          if ($listing -notmatch 'ExifParserTest' -or $listing -notmatch '--unittest:ExifParserTest') {
+            throw 'ExifParserTest is not selected as the expected CTest Integration target.'
+          }
+
+      - name: Run ExifParserTest 20 times under MSVC ASan
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0037_ASAN_BUILD_DIR
+          $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
+          $qtestDir = Join-Path $buildDir 'qtest-results'
+          $qtestXml = Join-Path $qtestDir 'ExifParserTest-ExifParserTest.xml'
+          $perRunDir = Join-Path $evidenceDir 'qtest-results'
+          New-Item -ItemType Directory -Force -Path $qtestDir | Out-Null
+          New-Item -ItemType Directory -Force -Path $perRunDir | Out-Null
+
+          $requiredFunctions = @(
+            '_readTimeRejectsUnterminatedTimestampTest',
+            '_readTimeConcurrentTest',
+            '_writeGpsVersionEntryValidTest',
+            '_writeRejectsShortGpsVersionEntriesTest',
+            '_writeRejectsWrongGpsVersionFormatTest',
+            '_writeRejectsWrongGpsVersionComponentCountTest'
+          )
+          $passed = 0
+
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $env:QT_QUICK_BACKEND = 'software'
+          $env:QT_QPA_FONTDIR = 'C:/WINDOWS/Fonts'
+          $env:QT_LOGGING_RULES = '*.debug=false'
+
+          for ($iteration = 1; $iteration -le 20; $iteration++) {
+            $logPath = Join-Path $evidenceDir ("ctest-run-{0:D2}.log" -f $iteration)
+            if (Test-Path $qtestXml) {
+              Remove-Item -LiteralPath $qtestXml -Force
+            }
+            Write-Host "=== ExifParserTest ASan iteration $iteration / 20 ==="
+            & ctest --test-dir $buildDir -C RelWithDebInfo -L Integration -R '^ExifParserTest$' --output-on-failure -V 2>&1 |
+              Tee-Object -FilePath $logPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "ExifParserTest failed on ASan iteration $iteration."
+            }
+            if (-not (Test-Path $qtestXml)) {
+              throw "QtTest XML was not generated on iteration $iteration."
+            }
+
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $rootName = $xmlDocument.DocumentElement.LocalName
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+              $suiteSkipped = 0
+              if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+              }
+            }
+            $skippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skippedCount -gt 0) {
+              throw "ExifParserTest XML is incomplete, failed, or contains skipped cases on iteration $iteration."
+            }
+            foreach ($functionName in $requiredFunctions) {
+              $testCase = $xmlDocument.SelectSingleNode("//testcase[@name='$functionName']")
+              if ($null -eq $testCase) {
+                throw "QtTest XML on iteration $iteration is missing $functionName."
+              }
+              if ($null -ne $testCase.SelectSingleNode('./skipped')) {
+                throw "Required test case $functionName was skipped on iteration $iteration."
+              }
+            }
+
+            Copy-Item $qtestXml (Join-Path $perRunDir ("ExifParserTest-{0:D2}.xml" -f $iteration))
+            "iteration=$iteration result=PASS" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+            $passed++
+          }
+
+          if ($passed -ne 20) {
+            throw "Expected 20 successful ASan runs, observed $passed."
+          }
+
+          $asanErrorPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
+          $asanFindings = Get-ChildItem -Path $evidenceDir -Filter 'ctest-run-*.log' -File |
+            Select-String -Pattern $asanErrorPattern
+          if ($asanFindings) {
+            $asanFindings | Out-String | Set-Content (Join-Path $evidenceDir 'asan-error-matches.txt')
+            throw 'AddressSanitizer diagnostics were found in test logs.'
+          }
+
+          "total_runs=$passed" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+          "new_gps_version_test_functions=$($requiredFunctions -join ',')" |
+            Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+
+      - name: Confirm CTest GeoTagControllerTest registration
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-geotag-controller-list.txt'
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -R '^GeoTagControllerTest$' -V 2>&1 |
+            Tee-Object -FilePath $listingPath
+          if ($LASTEXITCODE -ne 0) {
+            throw 'CTest GeoTagControllerTest listing command failed.'
+          }
+          $listing = Get-Content $listingPath -Raw
+          if ($listing -notmatch '--unittest:GeoTagControllerTest') {
+            throw 'GeoTagControllerTest is not registered as the expected CTest target.'
+          }
+
+      - name: Run GeoTagControllerTest 20 times under MSVC ASan
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0037_ASAN_BUILD_DIR
+          $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
+          $qtestDir = Join-Path $buildDir 'qtest-results'
+          $qtestXml = Join-Path $qtestDir 'GeoTagControllerTest-GeoTagControllerTest.xml'
+          $perRunDir = Join-Path $evidenceDir 'geotag-controller-qtest-results'
+          New-Item -ItemType Directory -Force -Path $qtestDir | Out-Null
+          New-Item -ItemType Directory -Force -Path $perRunDir | Out-Null
+
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $env:QT_QUICK_BACKEND = 'software'
+          $env:LIBGL_ALWAYS_SOFTWARE = '1'
+          $env:QT_QPA_FONTDIR = 'C:/WINDOWS/Fonts'
+          $env:QT_LOGGING_RULES = '*.debug=false'
+          $env:QGC_TEST_VERBOSE = '1'
+
+          $passed = 0
+          for ($iteration = 1; $iteration -le 20; $iteration++) {
+            $logPath = Join-Path $evidenceDir ("geotag-controller-run-{0:D2}.log" -f $iteration)
+            if (Test-Path -LiteralPath $qtestXml) {
+              Remove-Item -LiteralPath $qtestXml -Force
+            }
+            Write-Host "=== GeoTagControllerTest ASan iteration $iteration / 20 ==="
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
+              Tee-Object -FilePath $logPath
+            if ($LASTEXITCODE -ne 0) {
+              if (Test-Path -LiteralPath $qtestXml) {
+                $failedXml = Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}-ctest-failed.xml" -f $iteration)
+                Copy-Item -LiteralPath $qtestXml -Destination $failedXml
+                Write-Host "Preserved QtTest XML from failed CTest iteration $iteration at $failedXml"
+              }
+              throw "GeoTagControllerTest failed on ASan iteration $iteration."
+            }
+            if (-not (Test-Path -LiteralPath $qtestXml)) {
+              throw "GeoTagControllerTest QtTest XML was not generated on iteration $iteration."
+            }
+
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $rootName = $xmlDocument.DocumentElement.LocalName
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+              $suiteSkipped = 0
+              if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+              }
+            }
+            $skippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
+            $stressCaseExecuted = ($null -ne $stressCase -and $null -eq $stressCase.SelectSingleNode('./skipped'))
+            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skippedCount -gt 0 -or -not $stressCaseExecuted) {
+              throw "GeoTagControllerTest XML is incomplete, failed, skipped, or did not execute the concurrency regression case on iteration $iteration."
+            }
+
+            Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
+            "iteration=$iteration result=PASS test_cases=$($testCases.Count) skipped=$skippedCount stress_case=EXECUTED" |
+              Add-Content (Join-Path $evidenceDir 'geotag-controller-test-summary.txt')
+            $passed++
+          }
+
+          if ($passed -ne 20) {
+            throw "Expected 20 successful GeoTagControllerTest ASan runs, observed $passed."
+          }
+
+          $asanErrorPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
+          $asanFindings = Get-ChildItem -Path $evidenceDir -Filter 'geotag-controller-run-*.log' -File |
+            Select-String -Pattern $asanErrorPattern
+          if ($asanFindings) {
+            $asanFindings | Out-String | Set-Content (Join-Path $evidenceDir 'geotag-controller-asan-error-matches.txt')
+            throw 'AddressSanitizer diagnostics were found in GeoTagControllerTest logs.'
+          }
+
+          "total_runs=$passed" | Add-Content (Join-Path $evidenceDir 'geotag-controller-test-summary.txt')
+          "sequential_repetitions=$passed" | Add-Content (Join-Path $evidenceDir 'geotag-controller-test-summary.txt')
+
+      - name: Run FGC-0029 12-process x 3-round GeoTagControllerTest stress under MSVC ASan
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0037_ASAN_BUILD_DIR
+          $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
+          $exe = Get-ChildItem -Path $buildDir -Filter 'QGroundControl.exe' -File -Recurse |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'ASan-instrumented QGroundControl.exe was not found for the FGC-0029 stress matrix.'
+          }
+
+          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 `
+              -Executable $exe.FullName `
+              -WorkingDirectory $buildDir `
+              -OutputDirectory (Join-Path $evidenceDir 'fgc0029-multiprocess-stress') `
+              -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120
+
+      - name: Upload ASan evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fgc0037-windows-msvc-asan-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/fgc0037-asan-evidence/
+            ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
+            ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/GeoTagControllerTest-GeoTagControllerTest.xml
+          if-no-files-found: warn
+          retention-days: 14

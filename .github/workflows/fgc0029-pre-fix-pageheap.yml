@@ -1,0 +1,323 @@
+name: FGC-0029 historical Release PageHeap diagnostic
+
+on:
+  # Manual diagnostic only: the historical baseline PageHeap run takes hours and must not gate pushes.
+  workflow_dispatch:
+
+concurrency:
+  group: fgc0029-pre-fix-pageheap-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  historical-release-pageheap:
+    name: Windows x64 MSVC Release - historical FGC-0029 PageHeap
+    runs-on: windows-2022
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a
+        with:
+          egress-policy: audit
+
+      - name: Checkout diagnostic tooling
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Checkout historical reproducer source
+        uses: actions/checkout@v7
+        with:
+          ref: c746af2608de6c51e8632dd75775fef4dac6d97d
+          path: baseline
+          persist-credentials: false
+
+      - name: Checkout current controller stress test source
+        uses: actions/checkout@v7
+        with:
+          ref: 119edd4af97af4e159050650317fd945e4e03ecc
+          path: stress-source
+          persist-credentials: false
+
+      - name: Inject current concurrency regression into historical source
+        run: |
+          & .\tools\validation\Prepare-Fgc0029HistoricalStressSource.ps1 `
+              -BaselineRoot (Join-Path $env:GITHUB_WORKSPACE 'baseline') `
+              -StressSourceRoot (Join-Path $env:GITHUB_WORKSPACE 'stress-source') `
+              -ExpectedBaselineCommit 'c746af2608de6c51e8632dd75775fef4dac6d97d' `
+              -ExpectedStressSourceCommit '119edd4af97af4e159050650317fd945e4e03ecc'
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup  # zizmor: ignore[self-repository] actionlint does not parse the $/ form yet
+        with:
+          qt-host: windows
+          qt-arch: win64_msvc2022_64
+          build-type: Release
+          cache-variant: fgc0029-baseline-pageheap
+          aqt-source: git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95
+
+      - name: Verify historical source and configure Release with symbols
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourceDir = Join-Path $env:GITHUB_WORKSPACE 'baseline'
+          $expectedHead = 'c746af2608de6c51e8632dd75775fef4dac6d97d'
+          $actualHead = (git -C $sourceDir rev-parse HEAD).Trim()
+          if ($actualHead -ne $expectedHead) {
+            throw "Historical source checkout mismatch: expected $expectedHead, got $actualHead."
+          }
+
+          $parserPath = Join-Path $sourceDir 'src/AnalyzeView/GeoTag/ExifParser.cc'
+          $parserSource = Get-Content -LiteralPath $parserPath -Raw
+          if ($parserSource -notmatch 'QDateTime::fromString\s*\(\s*dateTimeDigitized') {
+            throw 'The historical EXIF QDateTime::fromString call is missing; this is not the intended reproducer.'
+          }
+          if ($parserSource -notmatch 'ExifUtility::readString') {
+            throw 'The historical ExifUtility::readString path is missing; this is not the intended reproducer.'
+          }
+          if (-not $env:QT_ROOT_DIR) {
+            throw 'Build Setup did not export QT_ROOT_DIR.'
+          }
+
+          $buildDir = Join-Path $env:RUNNER_TEMP 'build-fgc0029-baseline-pageheap'
+          $evidenceDir = Join-Path $env:RUNNER_TEMP 'fgc0029-baseline-pageheap-evidence'
+          New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+          "FGC0029_BASELINE_BUILD_DIR=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "FGC0029_BASELINE_EVIDENCE_DIR=$evidenceDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          Push-Location $sourceDir
+          try {
+            $configureArgs = @(
+              '-B', $buildDir,
+              '-t', 'Release',
+              '--testing',
+              '--qt-root', $env:QT_ROOT_DIR,
+              '--',
+              '-DQGC_ENABLE_HARDENING=OFF',
+              '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+              '-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=ProgramDatabase',
+              '-DCMAKE_EXE_LINKER_FLAGS=/DEBUG',
+              '-DQGC_ENABLE_GST_VIDEOSTREAMING=ON'
+            )
+            & python tools\configure.py @configureArgs
+            if ($LASTEXITCODE -ne 0) {
+              throw "Historical baseline Release configure failed with exit code $LASTEXITCODE."
+            }
+          } finally {
+            Pop-Location
+          }
+
+          $cachePath = Join-Path $buildDir 'CMakeCache.txt'
+          if (-not (Test-Path $cachePath)) {
+            throw 'Historical baseline CMakeCache.txt was not generated.'
+          }
+          $cacheText = Get-Content $cachePath -Raw
+          if ($cacheText -notmatch '(?i)Qt6_DIR:PATH=.*[/\\]6\.11\.1[/\\]') {
+            throw 'Historical baseline did not resolve the required Qt 6.11.1 toolchain.'
+          }
+
+          @(
+            "baseline_commit=$actualHead"
+            "diagnostic_commit=$env:GITHUB_SHA"
+            "workflow_run_id=$env:GITHUB_RUN_ID"
+            "qt_root=$env:QT_ROOT_DIR"
+            "qt_version=6.11.1"
+            "build_type=Release"
+            "compiler=MSVC x64"
+            "debug_symbols=ProgramDatabase"
+            "source_call=QDateTime::fromString(dateTimeDigitized, QStringLiteral(...))"
+            "stress_test_source_commit=119edd4af97af4e159050650317fd945e4e03ecc"
+            "stress_test_case=_concurrentControllersExifStressTest"
+            "historical_parser_preserved=TRUE"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'validation-metadata.txt')
+
+      - name: Resolve GStreamer runtime
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cachePath = Join-Path $env:FGC0029_BASELINE_BUILD_DIR 'CMakeCache.txt'
+          $line = Get-Content $cachePath | Where-Object { $_ -match '^GStreamer_ROOT_DIR:PATH=' } | Select-Object -First 1
+          if (-not $line) {
+            throw 'GStreamer_ROOT_DIR is missing from historical baseline CMakeCache.txt.'
+          }
+          $gstRoot = ($line -split '=', 2)[1]
+          $gstBin = Join-Path $gstRoot 'bin'
+          if (-not (Test-Path $gstBin)) {
+            throw "GStreamer bin directory not found: $gstBin"
+          }
+          "$gstBin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $pluginDir = Join-Path $gstRoot 'lib\gstreamer-1.0'
+          if (Test-Path $pluginDir) {
+            "GST_PLUGIN_PATH=$pluginDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
+
+      - name: Build historical QGroundControl Release with symbols
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildLog = Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'build-verbose.log'
+          & cmake --build $env:FGC0029_BASELINE_BUILD_DIR --target QGroundControl --config Release --parallel 10 --verbose 2>&1 |
+            Tee-Object -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) {
+            throw "Historical baseline Release build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Enable targeted PageHeap, UST and WER full dumps
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+          $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+          if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            throw 'PageHeap requires an elevated Windows runner; current token is not an Administrator.'
+          }
+
+          $debuggersRoot = Join-Path $env:ProgramFiles(x86) 'Windows Kits\10\Debuggers'
+          $gflags = Get-ChildItem -Path $debuggersRoot -Filter 'gflags.exe' -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\gflags\.exe$' } |
+            Select-Object -First 1
+          if (-not $gflags) {
+            throw "GFlags x64 was not found under $debuggersRoot. Install Windows Debugging Tools on the runner."
+          }
+
+          $evidenceDir = $env:FGC0029_BASELINE_EVIDENCE_DIR
+          $dumpDir = Join-Path $evidenceDir 'wer-dumps'
+          New-Item -ItemType Directory -Force -Path $dumpDir | Out-Null
+          $werKey = 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\QGroundControl.exe'
+          New-Item -Path $werKey -Force | Out-Null
+          New-ItemProperty -Path $werKey -Name DumpFolder -PropertyType ExpandString -Value $dumpDir -Force | Out-Null
+          New-ItemProperty -Path $werKey -Name DumpType -PropertyType DWord -Value 2 -Force | Out-Null
+          New-ItemProperty -Path $werKey -Name DumpCount -PropertyType DWord -Value 100 -Force | Out-Null
+
+          $ustOutput = & $gflags.FullName /i QGroundControl.exe +ust 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unable to enable UST: $ustOutput"
+          }
+
+          # Historical ASan reports identify a 20-byte QString data allocation.
+          # Full PageHeap is restricted to 16..32-byte allocations to keep the
+          # 12-process stress matrix within runner memory while guarding this block.
+          $pageHeapOutput = & $gflags.FullName /p /enable QGroundControl.exe /size 16 32 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unable to enable targeted PageHeap: $pageHeapOutput"
+          }
+
+          $verifyOutput = & $gflags.FullName /p 2>&1 | Out-String
+          if ($verifyOutput -notmatch '(?i)QGroundControl\.exe') {
+            throw "GFlags did not report PageHeap enabled for QGroundControl.exe: $verifyOutput"
+          }
+
+          @(
+            "gflags=$($gflags.FullName)"
+            "ust_enabled=TRUE"
+            "pageheap_mode=FULL_FOR_ALLOCATIONS_16_TO_32_BYTES"
+            "reported_suspect_allocation_bytes=20"
+            "wer_dump_type=2"
+            "wer_dump_folder=$dumpDir"
+            "pageheap_verification=$verifyOutput"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'pageheap-setup.txt')
+          Write-Host $verifyOutput
+
+      - name: Run historical 12-process x 3-round Release stress under PageHeap
+        continue-on-error: true
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Get-ChildItem -Path $env:FGC0029_BASELINE_BUILD_DIR -Filter 'QGroundControl.exe' -File -Recurse |
+            Where-Object { $_.FullName -notmatch '\\CMakeFiles\\' } |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'Historical Release QGroundControl.exe is missing.'
+          }
+
+          $stressLog = Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'pageheap-stress-command.log'
+          try {
+            & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 `
+                -Executable $exe.FullName `
+                -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR `
+                -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-release-pageheap-stress') `
+                -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 `
+                -RequireStressCase $true 2>&1 |
+              Tee-Object -FilePath $stressLog
+          } catch {
+            $_ | Out-String | Add-Content -LiteralPath $stressLog
+            Write-Warning "PageHeap stress recorded diagnostic failures; preserve worker and dump evidence: $($_.Exception.Message)"
+          }
+
+      - name: Collect PageHeap, WER dump and process-result evidence
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $evidenceDir = $env:FGC0029_BASELINE_EVIDENCE_DIR
+          if (-not $evidenceDir -or -not (Test-Path $evidenceDir)) {
+            throw 'PageHeap evidence directory is missing.'
+          }
+
+          $dumpDir = Join-Path $evidenceDir 'wer-dumps'
+          $dumps = @()
+          if (Test-Path $dumpDir) {
+            $deadline = [DateTime]::UtcNow.AddSeconds(60)
+            do {
+              $dumps = @(Get-ChildItem -Path $dumpDir -Filter '*.dmp' -File -ErrorAction SilentlyContinue)
+              if ($dumps.Count -gt 0) { Start-Sleep -Seconds 5 }
+            } while ([DateTime]::UtcNow -lt $deadline -and $dumps.Count -gt 0 -and ($dumps | Where-Object { $_.Length -eq 0 }).Count -gt 0)
+          }
+
+          $dumpManifest = @()
+          foreach ($dump in $dumps) {
+            $hash = Get-FileHash -LiteralPath $dump.FullName -Algorithm SHA256
+            $dumpManifest += [pscustomobject]@{
+              name = $dump.Name
+              size_bytes = $dump.Length
+              sha256 = $hash.Hash
+              modified_utc = $dump.LastWriteTimeUtc.ToString('o')
+            }
+          }
+          $dumpManifest | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $evidenceDir 'wer-dump-manifest.json')
+
+          $resultsPath = Join-Path $evidenceDir 'fgc0029-release-pageheap-stress\process-results.csv'
+          $results = @()
+          if (Test-Path $resultsPath) {
+            $results = @(Import-Csv -LiteralPath $resultsPath)
+          }
+          $corruptionExitCodes = @($results | Where-Object {
+            try { [uint32]([int64]$_.exit_code -band 4294967295) -eq 0xC0000374 } catch { $false }
+          })
+          $failed = @($results | Where-Object { $_.result -ne 'PASS' })
+          @(
+            "historical_process_results=$($results.Count)"
+            "failed_process_results=$($failed.Count)"
+            "heap_corruption_0xC0000374_processes=$($corruptionExitCodes.Count)"
+            "wer_full_dumps=$($dumps.Count)"
+            "pageheap_mode=FULL_FOR_ALLOCATIONS_16_TO_32_BYTES"
+            "interpretation=diagnostic_only; a clean run is not proof that the historical race is absent"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'pageheap-summary.txt')
+
+          Get-ChildItem -Path $evidenceDir -Recurse -File |
+            Where-Object { $_.FullName -notmatch '\\wer-dumps\\' } |
+            Select-Object FullName, Length |
+            Format-Table -AutoSize
+
+      - name: Disable PageHeap and remove WER dump settings
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $debuggersRoot = Join-Path $env:ProgramFiles(x86) 'Windows Kits\10\Debuggers'
+          $gflags = Get-ChildItem -Path $debuggersRoot -Filter 'gflags.exe' -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\gflags\.exe$' } |
+            Select-Object -First 1
+          if ($gflags) {
+            & $gflags.FullName /p /disable QGroundControl.exe
+            & $gflags.FullName /i QGroundControl.exe -ust
+          }
+          Remove-Item -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\QGroundControl.exe' -Recurse -Force -ErrorAction SilentlyContinue
+
+      - name: Upload historical Release PageHeap evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fgc0029-historical-release-pageheap-${{ github.sha }}
+          path: ${{ runner.temp }}/fgc0029-baseline-pageheap-evidence/
+          if-no-files-found: error
+          retention-days: 30
