@@ -81,7 +81,7 @@ spec/validation/FGC-0029/
     OWNERSHIP_AUDIT.md                     ← 所有权与异步生命周期审计
     REPRODUCTION_GUIDE.md                  ← 复现步骤
     FIX_VALIDATION.md                      ← 修复前后对照 + R21 更正
-    EXPERIMENT_LEDGER.md                   ← E-01…E-38 全部登记（含 SUPERSEDED 标记；R23a 追加 E-39）
+    EXPERIMENT_LEDGER.md                   ← E-01…E-40 全部登记（含 SUPERSEDED 标记）
     evidence/                              ← 证据索引（真实文件在 ZIP 内）
 ```
 
@@ -121,6 +121,30 @@ The MSVC ASan run [43275152519](https://github.com/hujunjie-hub/Flight_GroundCon
 - The workflow then failed because it required the absent QtTest slot **_concurrentControllersExifStressTest**.
 - No AddressSanitizer memory diagnostic was emitted before the stale assertion stopped the job. The intended 20 controller repetitions were not completed.
 
-The workflow has been corrected to remove that stale test-name assertion, validate fresh QtTest XML, and run an actual multi-process matrix. The new harness **tools/validation/Invoke-Fgc0029AsanStress.ps1** starts 12 independent QGroundControl processes together for 3 rounds. Each process receives unique APPDATA, LOCALAPPDATA, TEMP, and TMP directories, plus isolated stdout/stderr/XML evidence. A ready/start barrier proves that all 12 workers are prepared before each round is released. Per-process exit codes, timeouts, XML test/failure counts, and ASan diagnostics are recorded.
+The R24 implementation did not yet make that correction effective: the sequential workflow step still asserted a test slot that was absent from the checked-in controller test, and the stress harness parsed a QtTest XML shape different from the actual JUnit-style `testsuite/testcase` output. The harness file and multi-process workflow step existed, but the stale sequential gate prevented the matrix from running. R25 below records the code-level correction and exact current-head validation state.
 
 **Status remains BLOCKED / S1.** The bounded EXIF parser path is a mitigation, not proof of the historical first invalid write/free. A successful 12 × 3 matrix would strengthen regression evidence but does not by itself close the root-cause requirement. Do not close Issue #29 until the first invalid operation is identified or an independently accepted causal closure is documented.
+
+
+---
+
+## R25 — FGC-0029 ASan concurrency gate correction — 2026-11-13
+
+Current branch: `fix/fgc-0037-clean`.
+
+| Commit | Change |
+|---|---|
+| `c57c9d4a` | Restore `GeoTagControllerTest::_concurrentControllersExifStressTest`: 8 independent controllers, each parsing 24 JPEGs with overlapping QtConcurrent EXIF work |
+| `56007c8c` | Register the stress case in the QtTest header |
+| `b880c879` | Correct the PowerShell harness to parse the actual JUnit-style QtTest XML (`testsuite/testcase/failure/error`) and require the concurrency case |
+| `8068391c` | Correct the sequential ASan XML gate and retain the 12-process × 3-round matrix |
+
+The ASan workflow now has three distinct gates:
+
+1. `ExifParserTest`: 20 sequential runs, including bounded timestamp and concurrent parser regressions.
+2. `GeoTagControllerTest`: 20 sequential runs; each XML report must contain `_concurrentControllersExifStressTest`.
+3. FGC-0029 multi-process stress: 12 independent `QGroundControl.exe` processes released together after a ready barrier, repeated for 3 rounds. Every process receives isolated `APPDATA`, `LOCALAPPDATA`, `TEMP`, `TMP`, stdout, stderr and XML output. The harness records process IDs, exit codes, timeout state, XML test/failure counts and ASan diagnostics.
+
+The previous exact-head ASan run `43275152519` completed the instrumented build and ExifParserTest 20/20. GeoTagControllerTest itself passed 1/1, but the workflow stopped because the expected stress slot was missing. That run is a workflow-validation failure, not an ASan memory finding and not a completed concurrency matrix.
+
+**Current-head CI is pending. FGC-0029 remains BLOCKED / S1.** A successful 12 × 3 matrix will be regression/mitigation evidence only; it does not identify the historical first invalid operation or prove the Qt-side ownership/refcount root cause. Issue #29 remains OPEN until the causal closure requirement is met.
