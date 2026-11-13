@@ -599,3 +599,19 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - Diagnostic-only historical baseline workflow [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) is running on exact reproducer commit `c746af2`; its result is pending.
 
 **Status remains OPEN / S1 / BLOCKED.** The bounded parser is a mitigation with R26 regression evidence; neither a clean baseline ASan result nor the current source audit alone closes the first-invalid-operation requirement.
+
+
+---
+
+## E-43 — R27 exact-head ASan process-shutdown timeout — 2026-11-13
+
+**Code HEAD:** `dbd31996e94fb5a488fa5f04cd89cb6ea3d817b2`  
+**Workflow:** [43365258406](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43365258406) — **FAIL / timeout**, not an ASan memory finding.
+
+- MSVC ASan build and `ExifParserTest` repeated suite: **20/20 PASS**.
+- `GeoTagControllerTest`: iterations 1–18 passed. Iteration 19 produced a QtTest XML report with **19 tests, 0 failures, 0 errors, 0 skipped**, elapsed **0.952 s**, including `_concurrentControllersExifStressTest`.
+- The CTest child process nevertheless remained alive until CTest killed it at **60.05 s**. The run log records a process timeout after the QtTest report was written; no AddressSanitizer error signature was found in the captured ASan build/controller logs.
+- This is a post-QtTest process-exit/shutdown hang, matching the symptom class previously tracked by FGC-0028. The current candidate path is `QGCUnitTest::runTests()` → `UnitTestTileGenerator::shutdownMapEngine()` → `QGCMapEngine::shutdown()` / cache worker teardown. The exact blocking call is **not yet proven**.
+- Do not increase the CTest timeout or mark this as a pass. Preserve the XML even on timeout and add per-test verbose output plus begin/stop/wait/end markers around map-engine shutdown for the next exact-head ASan run.
+
+**Status remains OPEN / S1 / BLOCKED.** This run does not establish the historical first invalid write/free. The next diagnostic must identify whether the shutdown call, worker wait, or later application teardown is blocking, preferably with a thread dump captured before CTest terminates the process.
