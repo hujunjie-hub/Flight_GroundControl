@@ -67,6 +67,8 @@ R17 的"无锁修改"说法已撤回。
 运行时 QueryType 捕获（2 线程 × 1000 次）：`ZeroDigit` 查询 A(`QLocale::system()`)=**0**、
 B(`fromString`)=**40040**、C(legacy)=**40040**、D(修复后)=**0**。
 
+R19 的运行时计数证明**整体 `QDateTime::fromString()` 调用仍触发格式化侧系统 locale 查询**，但不是 `NumericData` 解析分支；ASan 直接捕获的也是 `QLocale::toString(qlonglong)` 格式化路径。该调用内部究竟哪个 `QLocale` 实例触发格式化路径仍未定位。详见 [`ROOT_CAUSE_AUDIT_20261113.md`](ROOT_CAUSE_AUDIT_20261113.md)。
+
 ## 4. 目录
 
 ```
@@ -81,7 +83,7 @@ spec/validation/FGC-0029/
     OWNERSHIP_AUDIT.md                     ← 所有权与异步生命周期审计
     REPRODUCTION_GUIDE.md                  ← 复现步骤
     FIX_VALIDATION.md                      ← 修复前后对照 + R21 更正
-    EXPERIMENT_LEDGER.md                   ← E-01…E-40 全部登记（含 SUPERSEDED 标记）
+    EXPERIMENT_LEDGER.md                   ← E-01…E-42 全部登记（含 SUPERSEDED 标记）
     evidence/                              ← 证据索引（真实文件在 ZIP 内）
 ```
 
