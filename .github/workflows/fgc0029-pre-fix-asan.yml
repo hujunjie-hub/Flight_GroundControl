@@ -330,7 +330,7 @@ jobs:
             throw 'AddressSanitizer findings were emitted by sequential historical controller tests.'
           }
 
-      - name: Run historical 12-process x 3-round FGC-0029 ASan stress
+      - name: Run historical 12-process x 10-round FGC-0029 ASan stress
         run: |
           $ErrorActionPreference = 'Stop'
           $exe = Get-ChildItem -Path $env:FGC0029_BASELINE_BUILD_DIR -Filter 'QGroundControl.exe' -File -Recurse |
@@ -339,7 +339,7 @@ jobs:
             throw 'Historical ASan QGroundControl.exe is missing.'
           }
 
-          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $true
+          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 10 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $true
 
       - name: Upload historical baseline ASan evidence
         if: always()
