@@ -89,6 +89,7 @@ jobs:
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
+        id: configure
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -206,6 +207,7 @@ jobs:
           retention-days: 7
 
       - name: Verify Executable
+        id: verify_executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
         with:
@@ -287,7 +289,9 @@ jobs:
         if: always() && !cancelled()
         shell: pwsh
         env:
+          CONFIGURE_RESULT: ${{ steps.configure.conclusion || 'skipped' }}
           BUILD_RESULT: ${{ steps.build.conclusion || 'skipped' }}
+          EXECUTABLE_RESULT: ${{ steps.verify_executable.conclusion || 'skipped' }}
           UNIT_RESULT: ${{ steps.unit_tests.conclusion || 'skipped' }}
           INTEGRATION_RESULT: ${{ steps.integration_tests.conclusion || 'skipped' }}
           INSTALLER_RESULT: ${{ steps.installer.conclusion || 'skipped' }}
@@ -311,11 +315,13 @@ jobs:
           }
 
           $gateResults = @(
+            $env:CONFIGURE_RESULT,
             $env:BUILD_RESULT,
             $env:TEST_LOCALE_RESULT,
             $env:UNIT_RESULT,
             $env:RESTORE_LOCALE_RESULT,
             $env:INTEGRATION_RESULT,
+            $env:EXECUTABLE_RESULT,
             $env:INSTALLER_RESULT,
             $env:INSTALL_VERIFY_RESULT,
             $env:INSTALLED_VERIFY_RESULT
@@ -334,7 +340,7 @@ jobs:
           Write-Host "Windows Release evidence result: $result"
           Write-Host "Build=$env:BUILD_RESULT Locale=$env:TEST_LOCALE_RESULT Unit=$env:UNIT_RESULT RestoreLocale=$env:RESTORE_LOCALE_RESULT UnitHostCulture=$env:UNIT_TEST_HOST_CULTURE Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
 
-          & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir
+          & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir -RequireCiLocale
 
           $archiveDir = Join-Path $env:GITHUB_WORKSPACE 'work/validation/archives'
           $zipPath = Join-Path $archiveDir "$runId.zip"

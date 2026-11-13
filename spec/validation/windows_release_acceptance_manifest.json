@@ -188,6 +188,7 @@
       "id": "G12",
       "name": "non_english_locale_regression",
       "required": true,
+      "scope": "windows_release_ci",
       "pass": [
         "unit_host_culture_is_zh_CN",
         "Qt_system_locale_is_zh_CN",

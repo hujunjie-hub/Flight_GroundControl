@@ -195,7 +195,8 @@ Windows Release workflow 在 Unit、Integration、Installer、干净安装和安
 自动归档规则：
 
 - 归档脚本同时支持仓库相对路径和绝对路径，CI 直接使用本轮 `$RUNNER_TEMP/build`。
-- 只有 Build、Unit、Integration、Installer、Install Verify、Installed Runtime Verify 全部成功时，CI 才请求 `Result=PASS`。
+- Configure、Build、Unit、Integration、构建产物启动、Installer、干净安装、安装版启动以及 CI 区域设置步骤全部成功后，CI 才请求 `Result=PASS`。
+- CI 传入 `-RequireCiLocale`，归档必须记录 Unit 宿主为 `zh-CN`、Integration 前恢复为 `en-US`。本地归档记录实际区域设置并保留其余证据检查，开发机可沿用原有设置。
 - PASS 必须同时包含非空的 `configure.log`、`build.log`、`test-output-windows-unit.txt`、`test-output-windows-integration.txt`，以及 `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`。
 - `cmake-cache-summary.txt` 必须先从本轮 `CMakeCache.txt` 生成，再执行 PASS 文件存在性和非空校验；不能在生成前检查它，否则会把有效构建错误判为归档失败。
 - 两份 JUnit 必须可解析、测试数量非零，failures、errors、skipped 均为 0。

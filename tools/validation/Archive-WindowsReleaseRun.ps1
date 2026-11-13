@@ -15,7 +15,8 @@ param(
     [int]$Round = 0,
 
     [string]$EvidenceDirectory = 'work/validation/current',
-    [string]$BuildDirectory = 'build-win-release'
+    [string]$BuildDirectory = 'build-win-release',
+    [switch]$RequireCiLocale
 )
 
 $ErrorActionPreference = 'Stop'
@@ -337,10 +338,10 @@ if ($Result -eq 'PASS') {
     if ($environment.msvc_probe_consistency -eq 'MISMATCH') {
         $validationErrors += 'PATH cl.exe does not match CMAKE_CXX_COMPILER.'
     }
-    if ($environment.unit_test_host_culture -ne 'zh-CN') {
+    if ($RequireCiLocale -and $environment.unit_test_host_culture -ne 'zh-CN') {
         $validationErrors += "Unit test host culture must be zh-CN; found $($environment.unit_test_host_culture)."
     }
-    if ($environment.archive_host_culture -ne 'en-US') {
+    if ($RequireCiLocale -and $environment.archive_host_culture -ne 'en-US') {
         $validationErrors += "Archive host culture must be restored to en-US; found $($environment.archive_host_culture)."
     }
 }
@@ -417,7 +418,8 @@ $manifest = [ordered]@{
     github_head_ref = $environment.github_head_ref
     github_head_sha = $environment.github_head_sha
     github_sha = $environment.github_sha
-    note = 'The caller supplies the requested result. PASS requires configure/build/test logs, clean Unit and Integration JUnit reports, installer evidence, required toolchain provenance, a zh-CN Unit test host locale, and restoration to en-US before Integration/archive.'
+    ci_locale_required = [bool]$RequireCiLocale
+    note = 'The caller supplies the requested result. PASS requires configure/build/test logs, clean Unit and Integration JUnit reports, installer evidence, and toolchain provenance. The CI locale gate additionally requires zh-CN for Unit and en-US for the archive.'
 }
 
 $manifest | ConvertTo-Json -Depth 8 |
