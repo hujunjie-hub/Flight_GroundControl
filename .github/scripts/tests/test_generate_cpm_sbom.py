@@ -94,7 +94,7 @@ def _mock_git_info(source_dir: Path) -> tuple[str, str]:
             "f36ced7e50254738c4e5af1a239f5fb7b1094007",
         ),
     }
-    return mapping.get(str(source_dir), ("", ""))
+    return mapping.get(source_dir.as_posix(), ("", ""))
 
 
 def test_generate_sbom(tmp_path: Path) -> None:
