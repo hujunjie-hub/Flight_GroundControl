@@ -197,6 +197,7 @@ Windows Release workflow 在 Unit、Integration、Installer、干净安装和安
 - 归档脚本同时支持仓库相对路径和绝对路径，CI 直接使用本轮 `$RUNNER_TEMP/build`。
 - 只有 Build、Unit、Integration、Installer、Install Verify、Installed Runtime Verify 全部成功时，CI 才请求 `Result=PASS`。
 - PASS 必须同时包含非空的 `configure.log`、`build.log`、`test-output-windows-unit.txt`、`test-output-windows-integration.txt`，以及 `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`。
+- `cmake-cache-summary.txt` 必须先从本轮 `CMakeCache.txt` 生成，再执行 PASS 文件存在性和非空校验；不能在生成前检查它，否则会把有效构建错误判为归档失败。
 - 两份 JUnit 必须可解析、测试数量非零，failures、errors、skipped 均为 0。
 - Qt/GStreamer 根目录优先采用存在的 `QT_ROOT_DIR` / `GSTREAMER_1_0_ROOT_MSVC_X86_64` 环境目录；缺失或无效时，分别回退到 CMakeCache 的 `Qt6_DIR`（解析到 Qt 安装根目录）和 `GStreamer_ROOT_DIR`。目录不存在时记录 `UNVERIFIED`。
 - PASS 还要求 CMake、Ninja、Python、MSVC、Qt、GStreamer 环境事实可从构建缓存/实际可执行文件解析；MSVC PATH 编译器若可用，必须与 CMake 缓存编译器路径一致。
