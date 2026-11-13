@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest.mock import patch
 
 from configure import CMakeConfig, find_qt_cmake, parse_version
@@ -17,6 +17,10 @@ class TestParseVersion:
     def test_double_digit_minor(self) -> None:
         path = Path("/home/user/Qt/6.10.1/gcc_64/bin/qt-cmake")
         assert parse_version(path) == (6, 10, 1)
+
+    def test_windows_path(self) -> None:
+        path = PureWindowsPath("C:/Qt/6.11.1/msvc2022_64/bin/qt-cmake.bat")
+        assert parse_version(path) == (6, 11, 1)
 
     def test_no_version_returns_zeros(self) -> None:
         path = Path("/usr/bin/qt-cmake")
@@ -46,8 +50,10 @@ class TestCMakeConfig:
 
 class TestFindQtCmake:
     def test_returns_none_when_not_found(self, tmp_path: Path) -> None:
-        with patch("configure.Path.home", return_value=tmp_path), \
-             patch.dict("os.environ", {}, clear=True):
+        with (
+            patch("configure.Path.home", return_value=tmp_path),
+            patch.dict("os.environ", {}, clear=True),
+        ):
             result = find_qt_cmake(tmp_path / "nonexistent")
         assert result is None
 

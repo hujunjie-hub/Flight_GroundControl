@@ -22,7 +22,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from _bootstrap import ensure_tools_dir
 
@@ -51,10 +51,10 @@ class CMakeConfig:
     extra_args: list[str] = field(default_factory=list)
 
 
-def parse_version(path: Path) -> tuple[int, ...]:
+def parse_version(path: PurePath) -> tuple[int, ...]:
     """Extract version tuple from Qt path for sorting."""
     # Match patterns like 6.8.0, 6.10.1, etc.
-    match = re.search(r"/(\d+)\.(\d+)\.(\d+)/", str(path))
+    match = re.search(r"/(\d+)\.(\d+)\.(\d+)/", path.as_posix())
     if match:
         return tuple(int(x) for x in match.groups())
     return (0, 0, 0)
