@@ -192,3 +192,24 @@ The bounded, locale-independent EXIF timestamp parser and the controller-level c
 The workflow command is restored with the complete `'^GeoTagControllerTest$'` filter, the documented 180-second CTest timeout, verbose failure output and the pipeline to the per-iteration log. A new exact-head run is required.
 
 **Status remains OPEN / S1 / BLOCKED.** This fixes a validation-harness defect only. It does not prove or close the historical first-invalid-operation requirement.
+
+
+---
+
+## R29 — exact-head MSVC ASan mitigation regression — 2026-11-13
+
+**Code/workflow HEAD:** `119edd4af97af4e159050650317fd945e4e03ecc`  
+**Dedicated ASan run:** [43374424501](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374424501) — **SUCCESS**.
+
+- MSVC ASan configure/build and complete compile/link instrumentation verification: PASS.
+- `ExifParserTest`: 20/20 sequential CTest repetitions passed.
+- `GeoTagControllerTest`: 20/20 sequential CTest repetitions passed; the workflow's XML gate required the concurrency regression slot in each report.
+- Multi-process stress: 12 isolated processes × 3 rounds = **36/36** passed. Each round reached the synchronized ready/start barrier.
+- No AddressSanitizer diagnostic was reported; evidence artifact `fgc0037-windows-msvc-asan-119edd4af97af4e159050650317fd945e4e03ecc` uploaded successfully.
+- The previously truncated PowerShell CTest command is now executed successfully; the R28 harness parser failure is cleared.
+
+This is exact-head mitigation/regression evidence for the bounded, locale-independent EXIF parser and controller concurrency path. It does **not** establish the historical first invalid write/free or prove the precise Qt locale QString reference-count interleaving.
+
+The same-head Windows Release run [43374431985](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374431985) was still in progress when this entry was recorded; installer creation, clean-install verification, installed executable verification and final attestation/upload remained pending.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** Do not close the root-cause issue based on post-fix stress passes alone.
