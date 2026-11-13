@@ -388,14 +388,14 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
     // must be rejected before passing the pointer to libexif.
     ExifEntry* nullDataEntry = exif_entry_new();
     QVERIFY(nullDataEntry != nullptr);
-    nullDataEntry->tag = static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF);
+    nullDataEntry->tag = static_cast<ExifTag>(EXIF_TAG_GPS_DEST_DISTANCE_REF);
     nullDataEntry->format = EXIF_FORMAT_SHORT;
     nullDataEntry->components = 1;
     nullDataEntry->size = sizeof(ExifShort);
     exif_content_add_entry(data->ifd[EXIF_IFD_GPS], nullDataEntry);
     exif_entry_unref(nullDataEntry);
-    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
-    QVERIFY(ExifUtility::readString(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS).isEmpty());
+    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS), 0);
+    QVERIFY(ExifUtility::readString(data, EXIF_TAG_GPS_DEST_DISTANCE_REF, EXIF_IFD_GPS).isEmpty());
 
     // A missing IFD is a normal malformed-input condition, not a null dereference.
     ExifData* missingIfdData = ExifUtility::createNew();
