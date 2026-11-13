@@ -3,6 +3,7 @@ name: Windows
 on:
   push:
     branches:
+      - main
       - master
       - 'Stable*'
     tags:
@@ -125,7 +126,7 @@ jobs:
       - name: Set non-English user culture for Unit regression
         id: test_locale
         if: matrix.build_type == 'Release'
-        shell: powershell
+        shell: pwsh
         run: |
           Import-Module International -ErrorAction Stop
           Set-Culture -CultureInfo 'zh-CN'
@@ -149,8 +150,8 @@ jobs:
 
       - name: Restore English user culture before Integration
         id: restore_locale
-        if: always() && matrix.build_type == 'Release'
-        shell: powershell
+        if: always() && steps.test_locale.conclusion != 'skipped' && matrix.build_type == 'Release'
+        shell: pwsh
         run: |
           Import-Module International -ErrorAction Stop
           Set-Culture -CultureInfo 'en-US'
@@ -162,7 +163,7 @@ jobs:
 
       - name: Run Integration Tests (serial)
         id: integration_tests
-        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' && steps.restore_locale.conclusion == 'success' }}
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
@@ -234,8 +235,14 @@ jobs:
             exit 1
           }
           $installDir = "${{ runner.temp }}\\qgc-install-test"
+          if (Test-Path -LiteralPath $installDir) {
+            throw "Expected a clean install directory: $installDir"
+          }
           Write-Host "Installing $($installerExe.Name) to $installDir"
-          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
+          $install = Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -PassThru -WindowStyle Hidden
+          if ($install.ExitCode -ne 0) {
+            throw "Installer returned exit code $($install.ExitCode)"
+          }
           $binary = Join-Path $installDir "bin\\QGroundControl.exe"
           if (-not (Test-Path $binary)) {
             Write-Error "QGroundControl.exe not found at $binary after install"
@@ -260,8 +267,12 @@ jobs:
         env:
           GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
         run: |
-          $sdkBin = Join-Path $env:GST_ROOT "bin"
-          $sanitizedPath = (($env:PATH -split ';') | Where-Object { $_ -and ($_ -ne $sdkBin) }) -join ';'
+          $sdkBins = @($env:GST_ROOT, $env:QT_ROOT_DIR) | Where-Object { $_ } | ForEach-Object {
+            [IO.Path]::GetFullPath((Join-Path $_ 'bin')).TrimEnd([char]92)
+          }
+          $sanitizedPath = (($env:PATH -split ';') | Where-Object {
+            $_ -and ([IO.Path]::GetFullPath($_).TrimEnd([char]92) -notin $sdkBins)
+          }) -join ';'
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify installed executable
@@ -299,7 +310,7 @@ jobs:
           INSTALLED_VERIFY_RESULT: ${{ steps.verify_installed.conclusion || 'skipped' }}
           TEST_LOCALE_RESULT: ${{ steps.test_locale.conclusion || 'skipped' }}
           RESTORE_LOCALE_RESULT: ${{ steps.restore_locale.conclusion || 'skipped' }}
-          UNIT_TEST_HOST_CULTURE: ${{ env.QGC_UNIT_TEST_HOST_CULTURE || 'UNVERIFIED' }}
+          QGC_UNIT_TEST_HOST_CULTURE: ${{ env.QGC_UNIT_TEST_HOST_CULTURE || 'UNVERIFIED' }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -338,7 +349,7 @@ jobs:
           $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ') + '_' + $headShort
           "WINDOWS_ARCHIVE_NAME=$runId" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Windows Release evidence result: $result"
-          Write-Host "Build=$env:BUILD_RESULT Locale=$env:TEST_LOCALE_RESULT Unit=$env:UNIT_RESULT RestoreLocale=$env:RESTORE_LOCALE_RESULT UnitHostCulture=$env:UNIT_TEST_HOST_CULTURE Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
+          Write-Host "Build=$env:BUILD_RESULT Locale=$env:TEST_LOCALE_RESULT Unit=$env:UNIT_RESULT RestoreLocale=$env:RESTORE_LOCALE_RESULT UnitHostCulture=$env:QGC_UNIT_TEST_HOST_CULTURE Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
 
           & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir -RequireCiLocale
 

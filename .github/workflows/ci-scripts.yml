@@ -21,6 +21,7 @@ on:
       - 'src/MAVLink/mavlink-flight-dialect.patch'
   push:
     branches:
+      - main
       - master
       - 'Stable*'
     paths:

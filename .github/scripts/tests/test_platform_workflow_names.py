@@ -63,6 +63,12 @@ def test_windows_workflow_is_release_only() -> None:
     assert dispatch is None or "inputs" not in dispatch
 
 
+def test_local_delivery_workflows_check_pushes_to_main() -> None:
+    for path in (WINDOWS_YML, WORKFLOWS_DIR / "pre-commit.yml", WORKFLOWS_DIR / "ci-scripts.yml"):
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert "main" in _workflow_on(doc)["push"]["branches"], path.name
+
+
 def test_build_results_trigger_matches_build_config() -> None:
     doc = yaml.safe_load(BUILD_RESULTS_YML.read_text(encoding="utf-8"))
     on = _workflow_on(doc)
