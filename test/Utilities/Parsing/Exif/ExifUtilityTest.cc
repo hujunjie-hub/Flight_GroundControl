@@ -366,16 +366,16 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
 
     // A SHORT entry with three components occupies only six bytes. It must
     // never be read as three 8-byte EXIF rationals.
-    ExifEntry* shortGps = ExifUtility::createTag(
-        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE), EXIF_FORMAT_SHORT, 3);
+    ExifEntry* shortGps =
+        ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE), EXIF_FORMAT_SHORT, 3);
     QVERIFY(shortGps != nullptr);
     QCOMPARE(shortGps->size, static_cast<unsigned long>(3 * sizeof(ExifShort)));
     QCOMPARE(ExifUtility::gpsRationalToDecimal(shortGps, order), 0.0);
 
     // A rational entry whose declared byte size is shorter than its component
     // count must be rejected before reading the second and third components.
-    ExifEntry* undersizedGps = ExifUtility::createTag(
-        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
+    ExifEntry* undersizedGps = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE),
+                                                      EXIF_FORMAT_RATIONAL, 3);
     QVERIFY(undersizedGps != nullptr);
     const ExifRational coordinateValues[] = {{10, 1}, {20, 1}, {30, 1}};
     for (unsigned int i = 0; i < 3; ++i) {
@@ -412,8 +412,7 @@ void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
 
     // The scalar readers must also reject a tag whose storage is large enough
     // but whose EXIF format is not the requested type.
-    ExifEntry* wrongShort = ExifUtility::createTag(
-        data, EXIF_IFD_GPS, altitudeRefTag, EXIF_FORMAT_ASCII, 2);
+    ExifEntry* wrongShort = ExifUtility::createTag(data, EXIF_IFD_GPS, altitudeRefTag, EXIF_FORMAT_ASCII, 2);
     QVERIFY(wrongShort != nullptr);
     wrongShort->data[0] = 0x34;
     wrongShort->data[1] = 0x12;
@@ -433,7 +432,7 @@ void ExifUtilityTest::_testWriteDateTimeOriginalRejectsInvalidInput()
     const QDateTime invalidDateTime;
     QVERIFY(!ExifUtility::writeDateTimeOriginal(nullptr, invalidDateTime));
 
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     QVERIFY(!ExifUtility::writeDateTimeOriginal(data, invalidDateTime));
@@ -442,7 +441,7 @@ void ExifUtilityTest::_testWriteDateTimeOriginalRejectsInvalidInput()
 
 void ExifUtilityTest::_testWriteDateTimeOriginalWritesBothTags()
 {
-    ExifData *data = ExifUtility::createNew();
+    ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
 
     const QDateTime dateTime(QDate(2025, 2, 14), QTime(12, 34, 56), QTimeZone::UTC);
