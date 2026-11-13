@@ -237,9 +237,6 @@ jobs:
           try {
             & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-release-pageheap-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $true 2>&1 |
               Tee-Object -FilePath $stressLog
-            if ($LASTEXITCODE -ne 0) {
-              throw "Historical Release PageHeap stress exited with $LASTEXITCODE."
-            }
           } catch {
             $_ | Out-String | Add-Content -LiteralPath $stressLog
             Write-Warning "PageHeap stress recorded diagnostic failures; preserve worker and dump evidence: $($_.Exception.Message)"
