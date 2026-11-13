@@ -225,6 +225,34 @@ if ($env:PYTHON_EXE -and (Test-Path -LiteralPath $env:PYTHON_EXE)) {
 $pythonResolved = Get-ResolvedValue $pythonFromEnvironment 'environment:PYTHON_EXE' `
     (Get-ExeVersion $cachePython @('--version')) 'CMakeCache:Python3_EXECUTABLE'
 
+# Resolve Qt and GStreamer roots from the active environment when valid, otherwise
+# from the exact CMake configuration used for this build. Keep unavailable values
+# explicit so a requested PASS cannot hide missing toolchain provenance.
+$qtFromEnvironment = $null
+if ($env:QT_ROOT_DIR -and (Test-Path -LiteralPath $env:QT_ROOT_DIR -PathType Container)) {
+    $qtFromEnvironment = $env:QT_ROOT_DIR
+}
+$qtFromCache = if ($qtRootFromCache -and (Test-Path -LiteralPath $qtRootFromCache -PathType Container)) {
+    $qtRootFromCache
+} else {
+    $null
+}
+$qtResolved = Get-ResolvedValue $qtFromEnvironment 'environment:QT_ROOT_DIR' `
+    $qtFromCache 'CMakeCache:Qt6_DIR'
+
+$gstFromEnvironment = $null
+if ($env:GSTREAMER_1_0_ROOT_MSVC_X86_64 -and
+    (Test-Path -LiteralPath $env:GSTREAMER_1_0_ROOT_MSVC_X86_64 -PathType Container)) {
+    $gstFromEnvironment = $env:GSTREAMER_1_0_ROOT_MSVC_X86_64
+}
+$gstFromCache = if ($cacheGstRoot -and (Test-Path -LiteralPath $cacheGstRoot -PathType Container)) {
+    $cacheGstRoot
+} else {
+    $null
+}
+$gstResolved = Get-ResolvedValue $gstFromEnvironment 'environment:GSTREAMER_1_0_ROOT_MSVC_X86_64' `
+    $gstFromCache 'CMakeCache:GStreamer_ROOT_DIR'
+
 $pathClCommand = Get-Command 'cl' -CommandType Application -ErrorAction SilentlyContinue |
     Select-Object -First 1
 $pathCl = if ($pathClCommand) { $pathClCommand.Source } else { $null }
