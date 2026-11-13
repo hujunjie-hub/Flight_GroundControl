@@ -234,6 +234,7 @@ public:
     // FactGroup object model properties
 
     Q_PROPERTY(FactGroup*           vehicle         READ vehicleFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup*           flightTelemetry READ flightTelemetryFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
     Q_PROPERTY(FactGroup*           gps2            READ gps2FactGroup              CONSTANT)
     Q_PROPERTY(FactGroup*           gpsAggregate    READ gpsAggregateFactGroup      CONSTANT)
@@ -547,6 +548,7 @@ public:
     void stopCalibration    (bool showError);
 
     FactGroup* vehicleFactGroup             () { return _vehicleFactGroup; }
+    FactGroup* flightTelemetryFactGroup     () const { return _flightTelemetryFactGroup; }
     FactGroup* gpsFactGroup                 ();
     FactGroup* gps2FactGroup                ();
     FactGroup* gpsAggregateFactGroup        ();
@@ -1090,6 +1092,7 @@ public:
     const QString _radioStatusFactGroupName =        QStringLiteral("radioStatus");
 
     VehicleFactGroup*               _vehicleFactGroup;
+    FactGroup*                      _flightTelemetryFactGroup = nullptr;
     VehicleGPSFactGroup*                _gpsFactGroup               = nullptr;
     VehicleGPS2FactGroup*               _gps2FactGroup              = nullptr;
     VehicleGPSAggregateFactGroup*       _gpsAggregateFactGroup      = nullptr;

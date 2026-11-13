@@ -15,4 +15,6 @@ private slots:
     void _roleNames_test();
     void _resetClearsOldRows_test();
     void _integerIncrement_test();
+    void _modelIsOwnedAndDestroyedWithFact_test();
+    void _modelStaysCppOwnedWhenExposedToQml_test();
 };

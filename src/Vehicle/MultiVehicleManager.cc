@@ -20,6 +20,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(MultiVehicleManagerLog, "Vehicle.MultiVehicleManager")
@@ -229,8 +230,17 @@ void MultiVehicleManager::setActiveVehicle(Vehicle *vehicle)
             _setParameterReadyVehicleAvailable(false);
         }
 
-        QTimer::singleShot(20, this, [this, vehicle]() {
-            _setActiveVehiclePhase2(vehicle);
+        // Guard the delayed request against QObject destruction and allocator address reuse.
+        // A raw pointer membership check alone has an ABA window if a new Vehicle is allocated
+        // at the same address before this timer fires.
+        const QPointer<Vehicle> guardedVehicle(vehicle);
+        const bool clearActiveVehicle = (vehicle == nullptr);
+        QTimer::singleShot(20, this, [this, guardedVehicle, clearActiveVehicle]() {
+            if (!clearActiveVehicle && !guardedVehicle) {
+                qCDebug(MultiVehicleManagerLog) << "Dropping activation for a destroyed vehicle";
+                return;
+            }
+            _setActiveVehiclePhase2(guardedVehicle.data());
         });
     }
 }
@@ -238,6 +248,15 @@ void MultiVehicleManager::setActiveVehicle(Vehicle *vehicle)
 void MultiVehicleManager::_setActiveVehiclePhase2(Vehicle *vehicle)
 {
     qCDebug(MultiVehicleManagerLog) << Q_FUNC_INFO << vehicle;
+
+    // The delayed activation can fire after the vehicle was removed again (a fast
+    // connect/disconnect). Activating it then would leave _activeVehicle pointing at a
+    // Vehicle that is about to be deleted; the deletion phase already picks the correct
+    // replacement, so drop the stale request.
+    if (vehicle && !_vehicles->contains(vehicle)) {
+        qCDebug(MultiVehicleManagerLog) << "Dropping activation for a vehicle that is no longer present" << vehicle;
+        return;
+    }
 
     _setActiveVehicle(vehicle);
 

@@ -1,7 +1,11 @@
 #include "FactGroupTest.h"
 #include <QtCore/QRegularExpression>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 
+#include <memory>
 
 #include "Fact.h"
 #include "FactGroup.h"
@@ -232,6 +236,71 @@ void FactGroupTest::_factGroupNames_test()
     QCOMPARE(names.count(), 2);
     QVERIFY(names.contains(QStringLiteral("sub1")));
     QVERIFY(names.contains(QStringLiteral("sub2")));
+}
+
+/// A Fact registered in a FactGroup is owned by C++: in most FactGroup subclasses it is a
+/// plain value member, i.e. a subobject of the group. It therefore has no QObject parent, and
+/// a parentless QObject exposed to QML is adopted by the JavaScript engine as
+/// JavaScriptOwned and destroyed with deleteLater() when the wrapper is garbage collected.
+/// That is an invalid free of memory the group still owns (FGC-0016).
+void FactGroupTest::_factGroupFactIsNotAdoptedByQml_test()
+{
+    TestableFactGroup group;
+    // Heap allocated on purpose: an adopted Fact is still a valid free in this case, so the
+    // regression surfaces as a failed expectation instead of crashing the test binary.
+    Fact *const memberFact = new Fact(0, QStringLiteral("member"), FactMetaData::valueTypeInt32);
+    group._addFact(memberFact, QStringLiteral("member"));
+
+    {
+        QQmlEngine engine;
+        engine.rootContext()->setContextProperty(QStringLiteral("testFactGroup"), &group);
+
+        QQmlComponent component(&engine);
+        component.setData(QByteArrayLiteral("import QtQml\n"
+                                            "QtObject { property var fact: testFactGroup.getFact('member') }"),
+                          QUrl());
+        std::unique_ptr<QObject> object(component.create());
+        QVERIFY2(object != nullptr, qPrintable(component.errorString()));
+        QCoreApplication::processEvents();
+
+        QCOMPARE(QQmlEngine::objectOwnership(memberFact), QQmlEngine::CppOwnership);
+
+        // Drop the JavaScript reference and collect: a JavaScriptOwned Fact would now be
+        // deleted through a deferred delete.
+        object.reset();
+        engine.collectGarbage();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    QVERIFY2(group.getFact(QStringLiteral("member")) == memberFact,
+             "a FactGroup member Fact must survive QML garbage collection");
+    delete memberFact;
+}
+
+/// The nameless `Fact { }` placeholder in QML is instantiated by the engine itself and must
+/// stay engine owned, otherwise every placeholder instance would leak. This pins the other
+/// half of the ownership rule: only named (C++ data) Facts are pinned to C++ ownership.
+void FactGroupTest::_qmlFactPlaceholderStaysJavaScriptOwned_test()
+{
+    TestableFactGroup group;
+    Fact placeholder;
+    group._addFact(&placeholder, QStringLiteral("placeholder"));
+
+    QQmlEngine engine;
+    engine.rootContext()->setContextProperty(QStringLiteral("testFactGroup"), &group);
+
+    QQmlComponent component(&engine);
+    component.setData(QByteArrayLiteral("import QtQml\n"
+                                        "QtObject { property var fact: testFactGroup.getFact('placeholder') }"),
+                      QUrl());
+    std::unique_ptr<QObject> object(component.create());
+    QVERIFY2(object != nullptr, qPrintable(component.errorString()));
+    QCoreApplication::processEvents();
+
+    QCOMPARE(QQmlEngine::objectOwnership(&placeholder), QQmlEngine::JavaScriptOwnership);
+
+    // Keep the stack object away from the engine's garbage collector at scope exit.
+    QQmlEngine::setObjectOwnership(&placeholder, QQmlEngine::CppOwnership);
 }
 
 #include "FactGroupTest.moc"

@@ -61,6 +61,14 @@ public:
     [[nodiscard]] static bool hasCapturedUncategorizedMessage();
     static void captureIfEnabled(QtMsgType type, const QMessageLogContext& context, const QString& msg);
 
+    /// Deliver an entry to the manager's sinks (log model and disk writer) without taking
+    /// over the global message handler.
+    ///
+    /// The product installs msgHandler() once. Code that installs its own global handler on
+    /// top of it (the unit-test harness does this via QTest) must forward messages here so
+    /// the in-app log model keeps receiving them, exactly as it does in the real application.
+    static void deliverToSinks(QtMsgType type, const QMessageLogContext& context, const QString& msg);
+
 signals:
     void hasErrorChanged();
     void lastErrorChanged();

@@ -1,0 +1,242 @@
+{
+  "schema": "flight-groundcontrol-windows-release-acceptance/1.0",
+  "repository": "hujunjie-hub/Flight_GroundControl",
+  "branch": "codex/phase2-fcu-telemetry",
+  "pull_request": 3,
+  "pull_request_policy": {
+    "state": "OPEN",
+    "draft": true,
+    "merge_allowed_without_user_approval": false,
+    "main_must_remain_unchanged": true
+  },
+  "product_target": {
+    "os": "Windows x64",
+    "compiler": "MSVC 2022 x64",
+    "build_type": "Release",
+    "generator": "Ninja"
+  },
+  "dependency_source": ".github/build-config.json",
+  "configured_dependencies": {
+    "qt_version_at_manifest_creation": "6.11.1",
+    "qt_arch": "win64_msvc2022_64",
+    "gstreamer_windows_version_at_manifest_creation": "1.28.4",
+    "cmake_minimum": "3.25"
+  },
+  "forbidden_product_targets": [
+    "Linux x64",
+    "macOS",
+    "iOS",
+    "Android",
+    "ARM64",
+    "Windows Debug",
+    "RelWithDebInfo",
+    "MinSizeRel",
+    "AppImage",
+    "Docker",
+    "Flatpak",
+    "VM"
+  ],
+  "test_filters": {
+    "unit": {
+      "include_labels": "Unit",
+      "exclude_labels": "Flaky|Network",
+      "parallel": "auto"
+    },
+    "integration": {
+      "include_labels": "Integration",
+      "exclude_labels": "Flaky|Network",
+      "parallel": 1
+    }
+  },
+  "result_states": [
+    "PASS",
+    "FAIL",
+    "PARTIAL",
+    "NOT_RUN",
+    "UNVERIFIED"
+  ],
+  "required_gates": [
+    {
+      "id": "G0",
+      "name": "source_identity",
+      "required": true,
+      "pass": [
+        "correct_repository",
+        "feature_branch_not_main",
+        "commit_matches_test_artifacts",
+        "working_tree_changes_explained"
+      ]
+    },
+    {
+      "id": "G1",
+      "name": "windows_toolchain",
+      "required": true,
+      "pass": [
+        "Windows_x64",
+        "MSVC_2022_x64",
+        "Qt_MSVC_x64",
+        "GStreamer_MSVC_x64"
+      ]
+    },
+    {
+      "id": "G2",
+      "name": "cmake_configure",
+      "required": true,
+      "pass": [
+        "Ninja",
+        "Release",
+        "QGC_BUILD_TESTING_ON",
+        "configure_exit_code_zero"
+      ]
+    },
+    {
+      "id": "G3",
+      "name": "release_build",
+      "required": true,
+      "pass": [
+        "compile_exit_code_zero",
+        "link_exit_code_zero",
+        "no_unresolved_build_errors"
+      ]
+    },
+    {
+      "id": "G4",
+      "name": "unit_tests",
+      "required": true,
+      "minimum_executed_tests": 1,
+      "pass": [
+        "junit_exists_and_parses",
+        "ctest_exit_code_zero",
+        "failures_zero",
+        "errors_zero",
+        "actual_test_count_recorded"
+      ]
+    },
+    {
+      "id": "G5",
+      "name": "integration_tests",
+      "required": true,
+      "minimum_executed_tests": 1,
+      "serial": true,
+      "pass": [
+        "junit_exists_and_parses",
+        "ctest_exit_code_zero",
+        "failures_zero",
+        "errors_zero",
+        "actual_test_count_recorded"
+      ]
+    },
+    {
+      "id": "G6",
+      "name": "build_executable",
+      "required": true,
+      "pass": [
+        "current_release_executable_exists",
+        "startup_verification_passes"
+      ]
+    },
+    {
+      "id": "G7",
+      "name": "installer",
+      "required": true,
+      "pass": [
+        "installer_generated_this_run",
+        "installer_sha256_recorded"
+      ]
+    },
+    {
+      "id": "G8",
+      "name": "clean_install",
+      "required": true,
+      "pass": [
+        "fresh_install_directory",
+        "installer_exit_code_zero",
+        "installed_executable_exists",
+        "gstreamer_plugins_present"
+      ]
+    },
+    {
+      "id": "G9",
+      "name": "installed_runtime",
+      "required": true,
+      "pass": [
+        "build_sdk_path_removed_or_sanitized",
+        "installed_executable_startup_passes"
+      ]
+    },
+    {
+      "id": "G10",
+      "name": "static_quality",
+      "required": true,
+      "pass": [
+        "applicable_lint_and_format_checks_pass"
+      ]
+    },
+    {
+      "id": "G11",
+      "name": "evidence",
+      "required": true,
+      "pass": [
+        "unique_run_id",
+        "logs_and_junit_archived",
+        "sha256_manifest",
+        "zip_sha256_sidecar",
+        "commit_and_environment_recorded"
+      ]
+    },
+    {
+      "id": "G12",
+      "name": "non_english_locale_regression",
+      "required": true,
+      "scope": "windows_release_ci",
+      "pass": [
+        "unit_host_culture_is_zh_CN",
+        "Qt_system_locale_is_zh_CN",
+        "unit_application_language_is_English",
+        "English_culture_restored_before_integration_and_archive"
+      ]
+    }
+  ],
+  "telemetry_test_matrix": [
+    "all_13_FCU_message_families_wire_dispatch",
+    "MAVLink_CRC_rejection",
+    "wrong_system_and_component_rejection",
+    "reserved_enum_boolean_and_mask_rejection",
+    "duplicate_and_out_of_order_sample_rejection",
+    "boot_id_and_profile_consistency",
+    "event_deduplication_and_bounded_history",
+    "build_info_digest_chunk_consistency",
+    "multi_vehicle_isolation",
+    "disconnect_reconnect_state_reset",
+    "QML_unknown_invalid_and_stale_presentation",
+    "read_only_diagnostics_no_control_authority"
+  ],
+  "separate_interop_matrix": [
+    "Flight_UDP_SIL_normal_interop",
+    "packet_loss",
+    "packet_reordering",
+    "duplicate_frames",
+    "disconnect_reconnect",
+    "FCU_reboot_with_delayed_old_boot_frames",
+    "profile_or_schema_mismatch",
+    "burst_load_and_bounded_memory"
+  ],
+  "interop_rule": "MockLink host integration does not count as Flight UDP SIL interoperability. If the matching Flight sender is unavailable, mark separate interop cases NOT_RUN.",
+  "known_contract_issue": "Flight sensor_instance_id publisher order currently conflicts with ICD registry; GroundControl must display raw IDs until the Flight publisher is corrected.",
+  "safety_boundary": "Telemetry is diagnostic/read-only. It never authorizes ARM, FMS, Permit, failsafe clearance, or actuator output. Host/SIL does not prove H723 hardware or real-flight release.",
+  "issue_workflow": "spec/quality/ISSUE_WORKFLOW.md",
+  "evidence_root": "work/validation/archives",
+  "test_artifacts": {
+    "junit_unit": "build-win-release/junit-results-windows-unit.xml",
+    "junit_integration": "build-win-release/junit-results-windows-integration.xml",
+    "ctest_unit_log": "work/validation/current/unit-ctest.log",
+    "ctest_integration_log": "work/validation/current/integration-ctest.log",
+    "report_generator": ".github/scripts/cmake_helper.py ctest"
+  },
+  "test_environment": {
+    "unit_test_host_culture": "zh-CN",
+    "unit_qt_system_locale": "zh-CN",
+    "unit_application_language": "English",
+    "integration_and_archive_host_culture": "en-US"
+  }
+}

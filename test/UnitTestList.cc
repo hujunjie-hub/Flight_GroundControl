@@ -2,12 +2,69 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLocale>
 #include <QtCore/QSet>
 
+#include "AppSettings.h"
+#include "Fact.h"
+#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 #include "UnitTestTileGenerator.h"
 
 QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
+
+// Unit tests assert on English user-facing strings, so pin the application language
+// independently of the host locale. The non-English Windows regression job also sets
+// QGC_EXPECT_SYSTEM_LOCALE and verifies that Qt sees the requested host locale.
+static void pinDeterministicTestLanguage()
+{
+    const QString expectedSystemLocale = qEnvironmentVariable("QGC_EXPECT_SYSTEM_LOCALE");
+    QString systemLocale;
+    if (!expectedSystemLocale.isEmpty()) {
+        systemLocale = QLocale::system().name().replace(QLatin1Char('_'), QLatin1Char('-'));
+        if (systemLocale.compare(expectedSystemLocale, Qt::CaseInsensitive) != 0) {
+            qFatal("Expected QLocale::system() to be '%s', got '%s'",
+                   qPrintable(expectedSystemLocale), qPrintable(systemLocale));
+        }
+    }
+
+    QGCApplication *const app = qgcApp();
+    if (!app) {
+        // Lightweight tests run with QCoreApplication only. The host locale was still
+        // verified above; the full-app test path verifies the application language.
+        return;
+    }
+
+    SettingsManager *const settingsManager = SettingsManager::instance();
+    if (!settingsManager) {
+        if (!expectedSystemLocale.isEmpty()) {
+            qFatal("Cannot verify English test language without SettingsManager");
+        }
+        return;
+    }
+
+    Fact *const languageFact = settingsManager->appSettings()->qLocaleLanguage();
+    if (!languageFact) {
+        if (!expectedSystemLocale.isEmpty()) {
+            qFatal("Cannot verify English test language: qLocaleLanguage Fact is unavailable");
+        }
+        return;
+    }
+
+    if (languageFact->rawValue().toInt() != QLocale::English) {
+        languageFact->setRawValue(QLocale::English);
+        app->setLanguage();
+    }
+
+    if (!expectedSystemLocale.isEmpty()) {
+        if (!languageFact || languageFact->rawValue().toInt() != QLocale::English) {
+            qFatal("Unit test application language was not pinned to English");
+        }
+        qCInfo(UnitTestListLog) << "Verified non-English test host locale" << systemLocale
+                                << "with English application test language";
+    }
+}
 
 // ============================================================================
 // Test Execution Functions
@@ -17,6 +74,9 @@ namespace QGCUnitTest {
 
 int runTests(const QStringList& unitTests, int iterations, const QString& outputFile, TestLabels labelFilter)
 {
+    // Match the English-locale CI baseline before any test asserts on UI text.
+    pinDeterministicTestLanguage();
+
     // Serve synthetic tiles on tile cache misses so no test ever hits the network
     UnitTestTileGenerator::install();
 
@@ -72,7 +132,9 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
 
     // Stop the tile cache worker while the app still exists: its database teardown
     // cannot run after QApplication destruction.
+    qCInfo(UnitTestListLog) << "Map engine shutdown begin";
     UnitTestTileGenerator::shutdownMapEngine();
+    qCInfo(UnitTestListLog) << "Map engine shutdown complete";
 
     return result;
 }
@@ -84,6 +146,9 @@ int runLightweightTests(const QStringList& unitTests, int iterations, const QStr
         qCWarning(UnitTestListLog) << "runLightweightTests called with no QCoreApplication instance";
         return -1;
     }
+
+    // Match the English-locale CI baseline before any test asserts on UI text.
+    pinDeterministicTestLanguage();
 
     // Serve synthetic tiles on tile cache misses so no test ever hits the network
     UnitTestTileGenerator::install();
@@ -233,7 +298,6 @@ int handleTestOptions(const QGCCommandLineParser::CommandLineParseResult& args)
 
         const int exitCode =
             runTests(args.unitTests, stressIterations, args.unitTestOutput.value_or(QString()), labelFilter);
-
         const qint64 elapsed = timer.elapsed();
         if (exitCode == 0) {
             qCInfo(UnitTestListLog).noquote() << QString("All %1 test(s) passed in %2 ms").arg(testCount).arg(elapsed);

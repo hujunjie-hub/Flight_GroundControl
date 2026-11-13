@@ -24,4 +24,6 @@ private slots:
     void _telemetryAvailable_test();
     void _factNames_test();
     void _factGroupNames_test();
+    void _factGroupFactIsNotAdoptedByQml_test();
+    void _qmlFactPlaceholderStaysJavaScriptOwned_test();
 };

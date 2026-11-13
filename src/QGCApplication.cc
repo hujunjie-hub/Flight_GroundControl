@@ -76,9 +76,13 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
     if (_runningUnitTests || _simpleBootTest) {
         // We don't want unit tests to use the same QSettings space as the normal app. So we tweak the app
         // name. Also we want to run unit tests with clean settings every time.
-        // Include test name or PID to prevent settings file conflicts when tests run in parallel
+        // The PID is part of the name so that two processes running the *same* test class cannot
+        // share one INI file: parallel CI runs of an identical class used to overwrite each
+        // other's seeded settings and fail intermittently (FGC-0030).
         if (!cli.unitTests.isEmpty()) {
-            applicationName = QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME, cli.unitTests.first());
+            applicationName = QStringLiteral("%1_unittest_%2_%3")
+                                  .arg(QGC_APP_NAME, cli.unitTests.first())
+                                  .arg(QCoreApplication::applicationPid());
         } else {
             applicationName =
                 QStringLiteral("%1_unittest_%2").arg(QGC_APP_NAME).arg(QCoreApplication::applicationPid());

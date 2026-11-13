@@ -17,6 +17,8 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'src/MAVLink/flight.xml'
+      - 'src/MAVLink/mavlink-flight-dialect.patch'
   push:
     branches:
       - master
@@ -36,6 +38,8 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'src/MAVLink/flight.xml'
+      - 'src/MAVLink/mavlink-flight-dialect.patch'
   workflow_dispatch:
 
 concurrency:
@@ -103,6 +107,9 @@ jobs:
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
+            .github/workflows/linux.yml
+            .github/workflows/windows.yml
+            .github/workflows/release.yml
             tools/pyproject.toml
             tools/uv.lock
             tools/*.py
@@ -114,6 +121,9 @@ jobs:
             tools/simulation
             tools/translations
             deploy/docker
+            src/MAVLink/flight.xml
+            src/MAVLink/mavlink-flight-dialect.patch
+            src/Vehicle/FactGroups/VehicleGPSFactGroup.h
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

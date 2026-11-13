@@ -61,8 +61,12 @@ void PlatformTest::_testInitializeSetsUnitTestEnvironment()
     const std::optional<int> initResult = Platform::initialize(1, argv, args);
 
     QVERIFY(!initResult.has_value());
+#ifdef Q_OS_UNIX
+    // Platform::initialize only forces the Qt stderr logging environment on Unix
+    // (Android is excluded there too); Windows GUI builds keep their own console setup.
     QCOMPARE(qgetenv("QT_ASSUME_STDERR_HAS_CONSOLE"), QByteArray("1"));
     QCOMPARE(qgetenv("QT_FORCE_STDERR_LOGGING"), QByteArray("1"));
+#endif
     QCOMPARE(qgetenv("QT_QPA_PLATFORM"), QByteArray("offscreen"));
 }
 #endif

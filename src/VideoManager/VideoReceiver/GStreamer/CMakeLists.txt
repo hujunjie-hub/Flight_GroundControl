@@ -3,10 +3,10 @@ if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
 endif()
 
 # Linux adds Allocators (gstreamer-allocators-1.0) for the DMABuf header probe in Orchestrator.cmake.
-# RtspServer (gstreamer-rtsp-server-1.0) drives the MockLink test video stream server, which is
-# Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
-# rtsp-server lib out of release builds. It is also optional: a define is emitted below only
-# when the SDK actually ships it.
+# RtspServer (gstreamer-rtsp-server-1.0) drives the RTSP mode of the MockLink test video stream
+# server. Only request it in Debug to keep the rtsp-server lib out of release builds; Release test
+# builds still compile the server without RTSP (isStreamTypeAvailable(RtspH264) then returns false).
+# It is also optional: a define is emitted below only when the SDK actually ships it.
 set(_qgc_gst_components Core Base Video App Rtsp)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
@@ -42,9 +42,11 @@ if(LINUX AND GStreamer_VERSION VERSION_LESS "1.28.0")
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER=1)
 endif()
 
-# MockVideoStreamServer feeds MockLink's synthetic video stream; MockLink is Debug-only
-# (see Comms/MockLink/CMakeLists.txt), so only compile it in Debug to keep it out of release.
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# MockVideoStreamServer feeds MockLink's synthetic video stream. MockLink is built in Debug and
+# in every test-enabled configuration (see Comms/MockLink/CMakeLists.txt), so this server must
+# follow the same gate: a Release testing build links MockLink and would otherwise fail with
+# unresolved MockVideoStreamServer symbols. Release-only builds still omit both.
+if(_QGC_DEBUG_BUILD OR QGC_BUILD_TESTING)
     target_sources(QGCGStreamer
         PRIVATE
             MockVideoStreamServer.cc

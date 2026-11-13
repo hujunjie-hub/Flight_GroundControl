@@ -363,6 +363,13 @@ void Vehicle::_commonInit(LinkInterface* link)
     _addFactGroup(_terrainFactGroup,           _terrainFactGroupName);
     _addFactGroup(_radioStatusFactGroup,       _radioStatusFactGroupName);
 
+    // Flight and other firmware-specific telemetry groups are instantiated per Vehicle.
+    // FirmwarePlugin instances may be shared, so mutable telemetry must never live in the plugin.
+    _flightTelemetryFactGroup = _firmwarePlugin->createFactGroup(this);
+    if (_flightTelemetryFactGroup) {
+        _addFactGroup(_flightTelemetryFactGroup, QStringLiteral("flightTelemetry"));
+    }
+
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
     if (fwFactGroups) {

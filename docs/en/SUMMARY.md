@@ -3,7 +3,6 @@
 - [Overview](qgc-user-guide/index.md)
   - [What's New](qgc-user-guide/getting_started/whats_new.md)
   - [Download and Install](qgc-user-guide/getting_started/download_and_install.md)
-  - [UI Overview](qgc-user-guide/getting_started/ui_overview.md)
   - [First Flight Guide](qgc-user-guide/getting_started/quick_start.md)
   - [Support](qgc-user-guide/support/support.md)
 - [Fly](qgc-user-guide/fly_view/fly_view.md)

@@ -84,9 +84,10 @@ void LoggingQmlBindingTest::_modelReceivesEntries()
 
     expectLogMessage("Test.LoggingQmlBinding", QtWarningMsg, QRegularExpression("test message for model"));
     qCWarning(LoggingQmlBindingTestLog) << "test message for model";
-    // Model update is an in-process queued signal, not I/O; a 500 ms window
-    // is generous for a local Qt signal and keeps failure feedback fast.
-    QTRY_VERIFY_WITH_TIMEOUT(model->totalCount() > before, 500);
+    // The model update is delivered through the queued log path; use the project
+    // standard short timeout instead of a hardcoded budget that expires on a loaded
+    // parallel run.
+    QTRY_VERIFY_WITH_TIMEOUT(model->totalCount() > before, TestTimeout::shortDuration());
     verifyExpectedLogMessage();
 
     QQmlComponent component(_engine);

@@ -129,7 +129,7 @@ SetupPage {
                         }
                         QGCButton {
                             text: qsTr("复制微调量")
-                            enabled: root._canCalibrate && root._monitor && root._monitor.channelCount >= 4 && root._state !== 1
+                            enabled: root._canCalibrate && root._monitor && root._monitor.channelCount >= 4 && root._state === 2
                             onClicked: QGroundControl.showMessageDialog(root, qsTr("复制微调量"),
                                 qsTr("确认方向摇杆已回中、油门已降到底？此操作将记录横滚、俯仰和偏航的中位。"),
                                 Dialog.Yes | Dialog.Cancel, function() {

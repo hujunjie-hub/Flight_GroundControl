@@ -1,136 +1,106 @@
 #!/usr/bin/env python3
-"""Tests for detect_changes.py."""
+"""Tests for Linux x64 and Windows x64 detect_changes.py."""
 
 from __future__ import annotations
 
-from detect_changes import (
-    build_patterns,
-    has_relevant_changes,
-    workflow_name_for_platform,
-)
+import pytest
+
+from detect_changes import build_patterns, has_relevant_changes, workflow_name_for_platform
 
 
 class TestWorkflowNameForPlatform:
-    def test_regular_platform(self) -> None:
+    def test_supported_platforms(self) -> None:
         assert workflow_name_for_platform("linux") == "linux"
         assert workflow_name_for_platform("windows") == "windows"
-        assert workflow_name_for_platform("macos") == "macos"
 
-    def test_docker_prefix(self) -> None:
-        assert workflow_name_for_platform("docker-linux") == "docker"
-        assert workflow_name_for_platform("docker-android") == "docker"
+    def test_unsupported_platform_is_rejected(self) -> None:
+        with pytest.raises(ValueError, match="expected linux or windows"):
+            workflow_name_for_platform("macos")
 
 
 class TestBuildPatterns:
-    def test_common_patterns_present(self) -> None:
-        patterns = build_patterns("linux")
-        pattern_strs = [p.pattern for p in patterns]
-        assert any("^src/" in p for p in pattern_strs)
-        assert any("CMakeLists" in p for p in pattern_strs)
+    @pytest.mark.parametrize("platform", ("linux", "windows"))
+    def test_common_patterns_are_included(self, platform: str) -> None:
+        patterns = [pattern.pattern for pattern in build_patterns(platform)]
+        assert r"^src/" in patterns
+        assert r"^CMakeLists\.txt$" in patterns
+        assert r"^cmake/" in patterns
+        assert r"^\.github/build-config\.json$" in patterns
+        assert r"^\.github/build-config\.schema\.json$" in patterns
 
-    def test_platform_workflow_pattern(self) -> None:
-        patterns = build_patterns("linux")
-        pattern_strs = [p.pattern for p in patterns]
-        assert any("linux\\.yml" in p for p in pattern_strs)
+    def test_linux_patterns_are_included(self) -> None:
+        patterns = [pattern.pattern for pattern in build_patterns("linux")]
+        assert r"^deploy/linux/" in patterns
+        assert r"^\.github/workflows/linux\.yml$" in patterns
+        assert r"^tools/setup/.*debian" in patterns
+        assert r"^tools/setup/install_dependencies/" in patterns
 
-    def test_docker_workflow_pattern(self) -> None:
-        patterns = build_patterns("docker-linux")
-        pattern_strs = [p.pattern for p in patterns]
-        assert any("docker\\.yml" in p for p in pattern_strs)
-
-    def test_android_extra_pattern(self) -> None:
-        patterns = build_patterns("android")
-        pattern_strs = [p.pattern for p in patterns]
-        assert any("^android/" in p for p in pattern_strs)
-
-    def test_deploy_pattern_uses_platform(self) -> None:
-        patterns = build_patterns("linux")
-        pattern_strs = [p.pattern for p in patterns]
-        assert any("deploy/linux/" in p for p in pattern_strs)
+    def test_windows_patterns_are_included(self) -> None:
+        patterns = [pattern.pattern for pattern in build_patterns("windows")]
+        assert r"^deploy/windows/" in patterns
+        assert r"^\.github/workflows/windows\.yml$" in patterns
+        assert r"^tools/setup/.*windows" in patterns
 
 
 class TestHasRelevantChanges:
-    def test_src_change_triggers_any_platform(self) -> None:
-        assert has_relevant_changes(["src/Vehicle.cc"], "linux")
-        assert has_relevant_changes(["src/Vehicle.cc"], "windows")
-        assert has_relevant_changes(["src/Vehicle.cc"], "android")
+    @pytest.mark.parametrize(
+        "path",
+        (
+            "src/Vehicle/Vehicle.cc",
+            "CMakeLists.txt",
+            "cmake/FindFoo.cmake",
+            "libs/some-library/CMakeLists.txt",
+            "resources/qgc.qrc",
+            "translations/qgc.ts",
+            "test/UnitTest.cc",
+            ".github/actions/qt-install/action.yml",
+            ".github/scripts/detect_changes.py",
+            ".github/build-config.json",
+            ".github/build-config.schema.json",
+        ),
+    )
+    def test_common_changes_trigger_both_builds(self, path: str) -> None:
+        assert has_relevant_changes([path], "linux")
+        assert has_relevant_changes([path], "windows")
 
-    def test_cmakelists_triggers(self) -> None:
-        assert has_relevant_changes(["CMakeLists.txt"], "linux")
+    @pytest.mark.parametrize(
+        "path",
+        (
+            ".github/workflows/linux.yml",
+            "deploy/linux/AppImage.sh",
+            "tools/setup/install_dependencies/_debian.py",
+            "tools/setup/foo-debian.sh",
+        ),
+    )
+    def test_linux_specific_changes_only_trigger_linux(self, path: str) -> None:
+        assert has_relevant_changes([path], "linux")
+        assert not has_relevant_changes([path], "windows")
 
-    def test_cmake_dir_triggers(self) -> None:
-        assert has_relevant_changes(["cmake/FindFoo.cmake"], "macos")
+    @pytest.mark.parametrize(
+        "path",
+        (
+            ".github/workflows/windows.yml",
+            "deploy/windows/installer.nsi",
+            "tools/setup/foo-windows.ps1",
+        ),
+    )
+    def test_windows_specific_changes_only_trigger_windows(self, path: str) -> None:
+        assert has_relevant_changes([path], "windows")
+        assert not has_relevant_changes([path], "linux")
 
-    def test_qrc_triggers(self) -> None:
-        assert has_relevant_changes(["resources/qgc.qrc"], "linux")
+    @pytest.mark.parametrize("path", ("README.md", "docs/guide.md", "android/AndroidManifest.xml"))
+    def test_unrelated_changes_do_not_trigger_builds(self, path: str) -> None:
+        assert not has_relevant_changes([path], "linux")
+        assert not has_relevant_changes([path], "windows")
 
-    def test_unrelated_file_does_not_trigger(self) -> None:
-        assert not has_relevant_changes(["README.md"], "linux")
-        assert not has_relevant_changes(["docs/guide.md"], "windows")
-
-    def test_workflow_file_triggers_own_platform(self) -> None:
-        assert has_relevant_changes([".github/workflows/linux.yml"], "linux")
-        assert not has_relevant_changes([".github/workflows/linux.yml"], "windows")
-
-    def test_actions_dir_triggers_all(self) -> None:
-        assert has_relevant_changes([".github/actions/qt-install/action.yml"], "linux")
-        assert has_relevant_changes([".github/actions/qt-install/action.yml"], "android")
-
-    def test_build_config_triggers_all(self) -> None:
-        assert has_relevant_changes([".github/build-config.json"], "ios")
-
-    def test_android_dir_only_triggers_android(self) -> None:
-        assert has_relevant_changes(["android/AndroidManifest.xml"], "android")
-        assert not has_relevant_changes(["android/AndroidManifest.xml"], "linux")
-
-    def test_docker_linux_patterns(self) -> None:
-        assert has_relevant_changes(["deploy/docker/Dockerfile"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/install-sysroot-aarch64.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/entrypoint.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/_docker-exec.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/lib/retry.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/linux/AppImage.sh"], "docker-linux")
-        assert not has_relevant_changes(["deploy/docker/Dockerfile"], "linux")
-
-    def test_docker_android_patterns(self) -> None:
-        assert has_relevant_changes(["deploy/docker/Dockerfile"], "docker-android")
-        assert has_relevant_changes(["deploy/docker/lib/build-type.sh"], "docker-android")
-        assert has_relevant_changes(["android/build.gradle"], "docker-android")
-
-    def test_setup_patterns_linux(self) -> None:
-        assert has_relevant_changes(["tools/setup/install_dependencies/_debian.py"], "linux")
-        assert has_relevant_changes(["tools/setup/foo-debian.sh"], "linux")
-        assert not has_relevant_changes(["tools/setup/foo-windows.ps1"], "linux")
-
-    def test_setup_patterns_windows(self) -> None:
-        assert has_relevant_changes(["tools/setup/foo-windows.ps1"], "windows")
-        assert not has_relevant_changes(["tools/setup/foo-debian.sh"], "windows")
-
-    def test_setup_patterns_android_matches_all(self) -> None:
-        assert has_relevant_changes(["tools/setup/anything.py"], "android")
-
-    def test_setup_patterns_ios(self) -> None:
-        assert has_relevant_changes(["tools/setup/foo-ios.sh"], "ios")
-        assert has_relevant_changes(["tools/setup/foo-macos.sh"], "ios")
-        assert not has_relevant_changes(["tools/setup/foo-debian.sh"], "ios")
-
-    def test_empty_files_list(self) -> None:
-        assert not has_relevant_changes([], "linux")
-
-    def test_empty_strings_ignored(self) -> None:
+    def test_empty_paths_are_ignored(self) -> None:
         assert not has_relevant_changes(["", ""], "linux")
+        assert not has_relevant_changes(["", ""], "windows")
 
-    def test_test_dir_triggers(self) -> None:
-        assert has_relevant_changes(["test/UnitTest.cc"], "linux")
+    def test_empty_file_list_does_not_trigger_build(self) -> None:
+        assert not has_relevant_changes([], "linux")
+        assert not has_relevant_changes([], "windows")
 
-    def test_deploy_platform_triggers(self) -> None:
-        assert has_relevant_changes(["deploy/macos/Info.plist"], "macos")
-        assert not has_relevant_changes(["deploy/macos/Info.plist"], "linux")
-
-    def test_scripts_dir_triggers_all(self) -> None:
-        assert has_relevant_changes([".github/scripts/foo.py"], "windows")
-
-    def test_docker_workflow_triggers_docker_platforms(self) -> None:
-        assert has_relevant_changes([".github/workflows/docker.yml"], "docker-linux")
-        assert has_relevant_changes([".github/workflows/docker.yml"], "docker-android")
-        assert not has_relevant_changes([".github/workflows/docker.yml"], "linux")
+    def test_unsupported_platform_is_rejected(self) -> None:
+        with pytest.raises(ValueError, match="expected linux or windows"):
+            has_relevant_changes(["src/Vehicle/Vehicle.cc"], "android")

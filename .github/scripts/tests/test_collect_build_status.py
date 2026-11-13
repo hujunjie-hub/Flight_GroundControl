@@ -51,8 +51,6 @@ def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.Monke
     runs = [
         _run("Linux", html_url="https://example.test/linux"),
         _run("Windows", html_url="https://example.test/windows"),
-        _run("MacOS", html_url="https://example.test/macos"),
-        _run("Android", html_url="https://example.test/android"),
         _run("pre-commit", run_id=99, html_url="https://example.test/precommit"),
     ]
     monkeypatch.setattr(mod, "list_workflow_runs_for_sha", lambda repo, sha: runs)
@@ -64,7 +62,7 @@ def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.Monke
             "--head-sha",
             "abc123",
             "--platform-workflows",
-            "Linux,Windows,MacOS,Android",
+            "Windows",
             "--event",
             "pull_request",
         ]
@@ -76,4 +74,5 @@ def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.Monke
     assert "summary=All builds passed." in text
     assert "precommit_status=Passed" in text
     assert "precommit_run_id=99" in text
-    assert "| Linux | Passed | [View](https://example.test/linux) |" in text
+    assert "| Windows | Passed | [View](https://example.test/windows) |" in text
+    assert "| Linux |" not in text

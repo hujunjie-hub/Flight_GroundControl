@@ -4,6 +4,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlightAutoPilotPlugin.h
         FlightFirmwarePlugin.cc
         FlightFirmwarePlugin.h
+        FlightTelemetryFactGroup.cc
+        FlightTelemetryFactGroup.h
         FlightFirmwarePluginFactory.cc
         FlightFirmwarePluginFactory.h
         FlightParameterMetaData.cc
@@ -37,6 +39,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flight_configure_pages
         FlightSensors.qml
         FlightStorage.qml
         FlightSummary.qml
+        FlightTelemetry.qml
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} flight_section_icons

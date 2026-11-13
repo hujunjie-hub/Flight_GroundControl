@@ -29,6 +29,7 @@ private:
     FlightVehicleComponent *_flightComponent = nullptr;
     FlightPlaceholderComponent *_flightModesComponent = nullptr;
     FlightPlaceholderComponent *_safetyComponent = nullptr;
+    FlightPlaceholderComponent *_telemetryComponent = nullptr;
     FlightPlaceholderComponent *_gimbalComponent = nullptr;
     FlightPlaceholderComponent *_storageComponent = nullptr;
 };

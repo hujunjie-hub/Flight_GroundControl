@@ -1,5 +1,7 @@
 #include "ToolbarIndicatorUITest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QPointer>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -20,9 +22,30 @@ bool ToolbarIndicatorUITest::_exerciseIndicator(QQuickItem *indicatorItem, const
         return false;
     }
 
-    // 1. Click the indicator — verify the drawer opens
-    const QPointF indicatorCenter = indicatorItem->mapToScene(
-        QPointF(indicatorItem->width() / 2.0, indicatorItem->height() / 2.0));
+    // 1. Click the indicator — verify the drawer opens.
+    // The toolbar lays every indicator out in a single row, so an indicator can be laid out
+    // beyond the window edge. QTest::mouseClick silently drops a click outside the window and
+    // the drawer then simply never opens, which used to surface as an unexplained
+    // "drawer did not open" failure. Wait until the centre is actually inside the window
+    // (layout settles one frame after a resize) and report precisely when it does not.
+    const auto indicatorCentre = [indicatorItem]() {
+        return indicatorItem->mapToScene(
+            QPointF(indicatorItem->width() / 2.0, indicatorItem->height() / 2.0));
+    };
+    if (!waitForCondition(
+            [&] {
+                const QPointF centre = indicatorCentre();
+                return (centre.x() >= 1) && (centre.y() >= 1)
+                       && (centre.x() < _window->width()) && (centre.y() < _window->height());
+            },
+            TestTimeout::shortMs(),
+            QStringLiteral("%1 centre inside the %2x%3 window")
+                .arg(indicatorName).arg(_window->width()).arg(_window->height()))) {
+        qWarning() << indicatorName << ": indicator centre" << indicatorCentre()
+                   << "never became clickable inside the" << _window->size() << "window";
+        return false;
+    }
+    const QPointF indicatorCenter = indicatorCentre();
     QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, indicatorCenter.toPoint());
 
     if (!findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 2000)) {
@@ -80,6 +103,16 @@ void ToolbarIndicatorUITest::_runIndicatorTest(
     // -------------------------------------------------------------------------
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_fly"), 3000),
              qPrintable(QStringLiteral("%1: Fly view not visible").arg(vehicleName)));
+
+    // The offscreen window defaults to 800x590, which is narrower than the toolbar needs once
+    // firmware-specific indicator labels are laid out (APM's ESC indicator ended up at x=849
+    // and its click was dropped). Use a desktop-sized window so every indicator is reachable.
+    static constexpr int kWindowWidth  = 1280;
+    static constexpr int kWindowHeight = 800;
+    if ((_window->width() < kWindowWidth) || (_window->height() < kWindowHeight)) {
+        _window->resize(kWindowWidth, kWindowHeight);
+        QCoreApplication::processEvents();
+    }
 
     // -------------------------------------------------------------------------
     // Table of indicators to exercise: { objectName, displayName, expectExpand }

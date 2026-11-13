@@ -10,10 +10,17 @@ private slots:
     void _readTimeTest();
     void _readTimeEmptyBufferTest();
     void _readTimeInvalidJpegTest();
+    void _readTimeFormatTest();
+    void _readTimeRejectsUnterminatedTimestampTest();
+    void _readTimeConcurrentTest();
     void _writeTest();
     void _writeEmptyBufferTest();
     void _writeAndReadBackTest();
     void _writeNegativeCoordinatesTest();
     void _writeNegativeAltitudeTest();
     void _writePreservesExistingDataTest();
+    void _writeGpsVersionEntryValidTest();
+    void _writeRejectsShortGpsVersionEntriesTest();
+    void _writeRejectsWrongGpsVersionComponentCountTest();
+    void _writeRejectsWrongGpsVersionFormatTest();
 };

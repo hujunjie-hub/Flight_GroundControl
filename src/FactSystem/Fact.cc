@@ -4,6 +4,8 @@
 #include <cstring>
 #include <limits>
 
+#include <QtQml/QQmlEngine>
+
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
 #include "AppMessages.h"
@@ -80,6 +82,19 @@ Fact::~Fact()
 
 void Fact::_init()
 {
+    // A named Fact describes C++ data - a parameter, a setting, a FactGroup member - and is
+    // owned by the C++ object that created it. In most FactGroup subclasses it is a plain
+    // value member, i.e. a subobject of that object, so it has no QObject parent of its own.
+    // A parentless QObject handed to QML is adopted by the JavaScript engine as
+    // JavaScriptOwned and destroyed with deleteLater() when the wrapper is garbage collected.
+    // For a value member that is an invalid free of memory the owner still holds (FGC-0016),
+    // so pin C++ ownership before QML can ever see the Fact.
+    // Nameless Facts are the `Fact { }` placeholders QML instantiates itself; those must stay
+    // engine owned so that they are still garbage collected.
+    if (!_name.isEmpty()) {
+        QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    }
+
     (void) connect(this, &Fact::containerRawValueChanged, this, &Fact::_checkForRebootMessaging);
 }
 
@@ -925,7 +940,18 @@ bool Fact::volatileValue() const
 FactValueSliderListModel *Fact::valueSliderModel()
 {
     if (!_valueSliderModel) {
-        _valueSliderModel = new FactValueSliderListModel(*this);
+        // Two things are needed here; each one alone is wrong.
+        //  - Parenting it to the Fact ties its lifetime to the Fact it dereferences and removes
+        //    the leak (nothing deleted the model before). Parenting alone is not enough: the QML
+        //    engine still treats an object returned from a C++ method as JavaScriptOwned, so a
+        //    garbage collection would delete it behind the Fact's back and leave
+        //    _valueSliderModel dangling for every other consumer.
+        //  - Pinning C++ ownership keeps the engine from deleting it. Ownership alone is not
+        //    enough either: the model would then have no owner and leak, still outliving the
+        //    Fact whose reference it holds.
+        // QML consumers only borrow the single shared instance; the Fact owns it.
+        _valueSliderModel = new FactValueSliderListModel(*this, this);
+        QQmlEngine::setObjectOwnership(_valueSliderModel, QQmlEngine::CppOwnership);
     }
 
     return _valueSliderModel;

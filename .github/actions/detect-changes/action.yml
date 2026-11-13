@@ -1,33 +1,21 @@
 name: Detect Changes
-description: Detect source, test, and CI changes for one or more platforms
+description: Detect source, test, and CI changes for Linux x64 and Windows x64 builds
 
 inputs:
   platform:
-    description: "Space-separated platform(s) (linux, windows, macos, android, ios, docker-linux, docker-android)"
+    description: "Build platform (linux or windows)"
     required: true
 
 outputs:
   any:
-    description: "Any relevant files changed (first platform result for backwards compat)"
+    description: "Whether the requested platform build inputs changed"
     value: ${{ steps.check.outputs.any }}
   linux:
-    description: "Linux-relevant files changed"
+    description: "Whether Linux x64 build inputs changed"
     value: ${{ steps.check.outputs.linux }}
   windows:
-    description: "Windows-relevant files changed"
+    description: "Whether Windows x64 build inputs changed"
     value: ${{ steps.check.outputs.windows }}
-  macos:
-    description: "macOS-relevant files changed"
-    value: ${{ steps.check.outputs.macos }}
-  android:
-    description: "Android-relevant files changed"
-    value: ${{ steps.check.outputs.android }}
-  docker_linux:
-    description: "Docker-Linux build inputs changed"
-    value: ${{ steps.check.outputs['docker-linux'] }}
-  docker_android:
-    description: "Docker-Android build inputs changed"
-    value: ${{ steps.check.outputs['docker-android'] }}
 
 runs:
   using: composite
@@ -43,4 +31,4 @@ runs:
         MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha || '' }}
         CURRENT_SHA: ${{ github.sha }}
         INPUTS_PLATFORM: ${{ inputs.platform }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform ${INPUTS_PLATFORM}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform "${INPUTS_PLATFORM}"

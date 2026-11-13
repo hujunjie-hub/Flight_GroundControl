@@ -2,6 +2,10 @@
 
 Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundControl.
 
+## Flight_GroundControl Project Workflow (Mandatory)
+
+**Before changing code, read [`spec/README.md`](spec/README.md) and follow [`spec/AGENT-操作指南.md`](spec/AGENT-操作指南.md).** These documents define the local Windows-only workflow, acceptance gates, issue lifecycle, and evidence delivery. The only product build/test target is Windows x64 MSVC 2022 Release; PR #3 must remain Open / Draft unless the user explicitly authorizes a state change. Local validation evidence belongs under `work/validation/` and must not be committed.
+
 ## Quick References
 
 - [CODING_STYLE.md](CODING_STYLE.md) — Naming, formatting, C++20 features, QML style, logging
@@ -52,33 +56,62 @@ src/
 └── Settings/         # Persistent settings
 ```
 
-## Build & Test Commands
+## Build & Test Scope (Mandatory)
 
-The `just` recipes are the canonical workflow — see [tools/README.md](tools/README.md) for the full list.
-[.github/ci-overview.md](.github/ci-overview.md) documents how CI invokes builds and tests; match CI, don't guess.
+**The only active product build/test/package target is Windows x64 MSVC 2022 Release.**
+Do not run Linux x64, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows Debug, or other
+platform/configuration product builds, CMake configure steps, Unit/Integration test suites,
+package generation, or executable/install verification.
 
-```bash
-just configure          # CMake configure (pulls submodules first)
-just build              # incremental build; uses all cores (override with JOBS=N)
-just test               # ctest, LABELS="Unit|Integration" EXCLUDE="Flaky|Network"
-just lint               # fast pre-commit gate (clang-format, ruff, qmllint, ...)
-just check              # lint + test (run before declaring done)
-just format-fix         # apply clang-format / ruff-format
-just info               # print resolved versions (Qt, CMake, GStreamer)
-```
+Platform-independent repository checks (for example actionlint, formatting/lint, Python
+CI-script tests, documentation, CodeQL, and PR metadata checks) may use Ubuntu-hosted
+runners. These checks must not configure, build, test, or package the Linux QGroundControl
+product.
 
-- **Build incrementally** — rebuild every few file edits during multi-file C++/Qt work, not just at the end; fix build errors before continuing.
-- **Tight test loops** — iterate one test with `ctest -R <name>` (or `--gtest_filter`); only run the full label on the final pass. CI runs `ctest --output-on-failure -L Unit`.
-- **Match CI** — before running tests/lint locally, use the same command CI runs ([.github/ci-overview.md](.github/ci-overview.md)), not a local guess.
+In particular, do not run Linux, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows
+Debug, or other non-Windows-x64-Release build/test jobs. Do not spend time fixing or
+reporting failures from those environments as part of this task.
+
+The required validation sequence is:
+
+1. Configure with the Windows x64 MSVC 2022 toolchain in **Release** mode.
+2. Build the Release target successfully.
+3. Run the **Unit** test suite and record the actual executed test count.
+4. Run the **Integration** test suite and record the actual executed test count.
+5. Treat missing test reports, CTest errors, skipped/cancelled test steps, and zero executed
+   tests as failures. A successful build alone is not a successful validation.
+6. Verify the generated Windows x64 Release executable.
+7. Build the Windows installer, install it in a clean temporary directory, and verify the
+   installed executable and required runtime/plugin dependencies.
+8. Run applicable platform-independent static checks (for example, formatting and lint)
+   when relevant to the changed files. These checks do not authorize builds or tests on
+   another platform.
+
+Use the repository's `just` recipes and scripts only where they select the required
+Windows x64 Release toolchain. See [tools/README.md](tools/README.md) and
+[.github/ci-overview.md](.github/ci-overview.md) for command details; do not follow
+generic examples that would invoke another platform or configuration.
+
+- **Build incrementally** — rebuild after focused groups of C++/Qt changes and fix errors
+  before continuing.
+- **Tight test loops** — use a focused test filter while iterating, then run both complete
+  Unit and Integration labels for final Windows Release validation.
+- **Test-count gate** — Unit and Integration must each execute at least one test; zero is
+  always a failure, even if the test command exits successfully.
+- **No platform expansion** — do not add or restore CI jobs for other operating systems,
+  architectures, or build configurations for this validation scope.
 
 ## Definition of Done
 
 Before considering a change complete:
 
-1. `just build` succeeds.
-2. `just lint` (or `pre-commit run --all-files` for the full sweep) passes.
-3. Relevant tests pass (`ctest -R <name>` for the touched area; full `-L Unit` on the final pass).
-4. Commit message follows Conventional Commits (below).
+1. Windows x64 MSVC 2022 **Release** configuration and build succeed.
+2. Unit tests execute and pass with a non-zero recorded test count.
+3. Integration tests execute and pass with a non-zero recorded test count.
+4. Windows x64 Release executable verification succeeds.
+5. Windows installer creation, clean installation, and installed-runtime verification succeed.
+6. Applicable platform-independent lint/format checks pass.
+7. Commit message follows Conventional Commits (below).
 
 ## Commit & Review Conventions
 

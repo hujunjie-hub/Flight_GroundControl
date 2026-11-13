@@ -301,7 +301,9 @@ Item {
                 anchors.left:           parent.left
                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
                 anchors.verticalCenter: parent.verticalCenter
-                text:                   display
+                // A synced header view has no DisplayRole for columns without header data;
+                // assigning undefined to text logs a warning on every rebuild.
+                text:                   display ?? ""
                 font.bold:              true
             }
 

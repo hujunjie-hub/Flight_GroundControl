@@ -3,8 +3,41 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+from subprocess import CompletedProcess
 
+import pytest
+import verify_executable
 from verify_executable import _setup_gstreamer_env
+
+
+def test_boot_runner_resolves_from_checkout_without_github_workspace(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_WORKSPACE", raising=False)
+    monkeypatch.chdir(tmp_path)
+    binary_dir = tmp_path / "Release"
+    binary_dir.mkdir()
+    binary = binary_dir / "QGroundControl.exe"
+    binary.touch()
+    monkeypatch.setattr(
+        sys, "argv", ["verify_executable.py", "--binary-path", str(binary), "--type", "exe"]
+    )
+
+    def run(command, *, cwd, check):
+        runner = Path(command[1])
+        assert runner.is_absolute()
+        assert (
+            runner
+            == Path(verify_executable.__file__).resolve().parents[2] / "tools" / "run_tests.py"
+        )
+        assert runner.is_file()
+        assert Path(cwd) == binary_dir
+        return CompletedProcess(command, 0)
+
+    monkeypatch.setattr(verify_executable.subprocess, "run", run)
+    with pytest.raises(SystemExit) as result:
+        verify_executable.main()
+    assert result.value.code == 0
 
 
 class TestSetupGstreamerEnv:

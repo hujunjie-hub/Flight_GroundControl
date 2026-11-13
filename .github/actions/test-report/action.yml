@@ -1,5 +1,5 @@
 name: Test Report
-description: Publish and upload test results
+description: Publish and upload test results; tolerate absent optional JUnit XML while retaining raw CTest logs.
 
 inputs:
   name:
@@ -27,13 +27,29 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Publish Test Results
+    - name: Check for JUnit report
+      id: junit
       if: always()
-      uses: dorny/test-reporter@v3
+      shell: bash
+      env:
+        BUILD_DIR: ${{ inputs.build-dir }}
+        JUNIT_FILE: ${{ inputs.junit-file }}
+      run: |
+        if [[ -s "${BUILD_DIR}/${JUNIT_FILE}" ]]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::JUnit report missing; raw CTest output will be uploaded."
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Publish Test Results
+      if: always() && steps.junit.outputs.exists == 'true'
+      uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3
       with:
         name: ${{ inputs.name }}
         path: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
         reporter: java-junit
+        path-replace-backslashes: true
         fail-on-error: false
 
     - name: Upload Test Results
@@ -44,4 +60,5 @@ runs:
         path: |
           ${{ inputs.build-dir }}/${{ inputs.output-file }}
           ${{ inputs.build-dir }}/${{ inputs.junit-file }}
+        if-no-files-found: error
         retention-days: ${{ inputs.retention-days }}

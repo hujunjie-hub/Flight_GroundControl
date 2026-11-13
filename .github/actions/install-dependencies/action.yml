@@ -69,16 +69,17 @@ runs:
               args.append('--nsis')
           sys.exit(subprocess.run(args).returncode)
 
+    # Refresh apt metadata before resolving distro-specific package aliases.
+    - name: Enable universe repository (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" enable-universe
+
     - name: Get system package list (Linux)
       if: runner.os == 'Linux'
       id: linux-deps
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" print-packages
-
-    - name: Enable universe repository (Linux)
-      if: runner.os == 'Linux'
-      shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" enable-universe
 
     # Cache downloaded .debs so slow apt mirrors only hurt on a cache miss.
     # Keyed on the package-list sources plus a year-month stamp: actions/cache
@@ -114,7 +115,7 @@ runs:
       # which downloads .debs into the cached directory restored above.
       run: |
         read -ra packages <<< "${APT_PACKAGES}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        bash "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
           --update --no-install-recommends --autoclean "${packages[@]}"
 
     - name: Fix apt alternatives (Linux)
@@ -143,7 +144,7 @@ runs:
         read -ra extra <<< "${EXTRA_PACKAGES}"
         validated="$(python3 tools/setup/install_dependencies --validate-extra-packages "${extra[@]}")"
         read -ra packages <<< "${validated}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        bash "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
           --install-timeout 300 --label "extra apt packages" "${packages[@]}"
 
     - name: Install dependencies (macOS)

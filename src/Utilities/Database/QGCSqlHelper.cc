@@ -36,6 +36,9 @@ void applySqlitePragmas(QSqlDatabase& db)
     q.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
     q.exec(QStringLiteral("PRAGMA synchronous=NORMAL"));
     q.exec(QStringLiteral("PRAGMA foreign_keys=ON"));
+    // Do not block forever on a database locked by another connection/process: fail fast so a
+    // cache-worker shutdown can observe it (FGC-0035).
+    q.exec(QStringLiteral("PRAGMA busy_timeout=3000"));
 }
 
 std::optional<int> userVersion(QSqlDatabase& db)

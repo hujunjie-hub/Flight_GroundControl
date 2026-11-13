@@ -5,10 +5,8 @@ import QGroundControl
 import QGroundControl.Controls
 
 SetupPage {
-    id: root
     pageComponent: pageComponent
-    pageDescription: ""
-    readonly property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
+    pageDescription: qsTr("当前 Flight 固件尚未接入 MAVLink Onboard Log 协议；地面站不会发送未支持的日志管理命令。")
 
     Component {
         id: pageComponent
@@ -17,32 +15,46 @@ SetupPage {
             width: availableWidth
             spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
-            QGCLabel { text: qsTr("Onboard Storage"); font.pointSize: ScreenTools.largeFontPointSize }
             QGCLabel {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                text: qsTr("Flight exposes onboard logs through MAVLink. This firmware does not provide an SD card file browser or Lua scripting interface.")
+                text: qsTr("板载存储")
+                font.pointSize: ScreenTools.largeFontPointSize
             }
+
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(300, availableHeight - y)
-                visible: !!root.vehicle
-                color: "#202d2a"
-                border.color: "#354641"
-                radius: 4
+                Layout.preferredHeight: 176
+                color: qgcPal.windowShade
+                radius: ScreenTools.defaultFontPixelWidth / 2
+                border.width: 1
+                border.color: qgcPal.windowShadeDark
 
-                Loader {
+                ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
-                    enabled: root.vehicle && !root.vehicle.armed && !root.vehicle.flying &&
-                             !root.vehicle.vehicleLinkManager.communicationLost
-                    source: "qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml"
+                    anchors.margins: 16
+                    spacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                    QGCLabel {
+                        text: qsTr("日志管理暂不可用")
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        color: qgcPal.text
+                        text: qsTr("当前 Flight 固件的遥测链路尚未接入 MAVLink 日志列表、日志数据读取和日志擦除消息。通用日志页面会发送这些请求，但固件目前不会处理。")
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        color: qgcPal.text
+                        text: qsTr("为避免提供看似可用但实际无响应的操作，本页面暂不加载通用日志下载器。待固件端完成协议实现及验证后再开放。")
+                    }
                 }
             }
-            QGCLabel {
-                visible: root.vehicle && root.vehicle.armed
-                text: qsTr("Disarm the vehicle before managing onboard logs.")
-            }
+
+            Item { Layout.fillHeight: true }
         }
     }
 }

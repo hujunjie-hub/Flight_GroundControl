@@ -148,9 +148,11 @@ function(add_qgc_test test_name)
         list(APPEND _test_command --onscreen)
     endif()
 
-    add_test(
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/qtest-results")
+
+add_test(
         NAME ${test_name}
-        COMMAND ${_test_command}
+        COMMAND ${_test_command} "--unittest-output" "${CMAKE_BINARY_DIR}/qtest-results/${test_name}.xml"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -172,6 +174,18 @@ function(add_qgc_test test_name)
         # GLX path (under xvfb, see cmake_helper.py) onto Mesa llvmpipe, no GPU needed.
         list(PREPEND _test_env "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software"
              "LIBGL_ALWAYS_SOFTWARE=1")
+
+        # Qt 6.11 no longer ships fonts, and the offscreen QPA does not fall back to the
+        # platform font database: every QML test would log "QFontDatabase: Cannot find
+        # font directory" and text layout collapses, failing strict-log assertions.
+        # Point it at the Windows font store unless the caller already chose a directory.
+        if(WIN32 AND NOT DEFINED ENV{QT_QPA_FONTDIR})
+            set(_windows_font_dir "$ENV{SystemRoot}/Fonts")
+            file(TO_CMAKE_PATH "${_windows_font_dir}" _windows_font_dir)
+            if(IS_DIRECTORY "${_windows_font_dir}")
+                list(APPEND _test_env "QT_QPA_FONTDIR=${_windows_font_dir}")
+            endif()
+        endif()
     endif()
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on

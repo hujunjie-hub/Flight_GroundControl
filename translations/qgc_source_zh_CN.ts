@@ -14794,7 +14794,7 @@ VTOL</translation>
         <message>
             <location filename="../src/PlanView/MissionItemEditor.qml" line="295"/>
             <source>Item #%1</source>
-            <translation>项目 1</translation>
+            <translation>项目 #%1</translation>
         </message>
     </context>
     <context>
@@ -16430,7 +16430,7 @@ Is this really what you want?</source>
         <message>
             <location filename="../src/QmlControls/PIDTuning.qml" line="334"/>
             <source>Switches to '%1' when you click Stop.</source>
-            <translation>点击“停止”后,切换到 '稳定'.</translation>
+            <translation>点击“停止”后,切换到 '%1'.</translation>
         </message>
         <message>
             <location filename="../src/QmlControls/PIDTuning.qml" line="350"/>
@@ -18673,7 +18673,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
         <message>
             <location filename="../src/MissionManager/PlanManager.cc" line="704"/>
             <source>Frame: %1</source>
-            <translation>框架1</translation>
+            <translation>框架: %1</translation>
         </message>
         <message>
             <location filename="../src/MissionManager/PlanManager.cc" line="710"/>
@@ -24682,22 +24682,22 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <message>
             <location filename="../src/Vehicle/VehicleLinkManager.cc" line="77"/>
             <source>%1Switching communication to new primary link</source>
-            <translation>切换到新的主要通信链接</translation>
+            <translation>%1切换到新的主要通信链接</translation>
         </message>
         <message>
             <location filename="../src/Vehicle/VehicleLinkManager.cc" line="118"/>
             <source>%1Communication lost on %2 link.</source>
-            <translation>通信丢失在%2链接上.</translation>
+            <translation>%1通信丢失在%2链接上.</translation>
         </message>
         <message>
             <location filename="../src/Vehicle/VehicleLinkManager.cc" line="129"/>
             <source>%1Switching communication to secondary link.</source>
-            <translation>切换到次要通信链接</translation>
+            <translation>%1切换到次要通信链接.</translation>
         </message>
         <message>
             <location filename="../src/Vehicle/VehicleLinkManager.cc" line="153"/>
             <source>%1Communication lost</source>
-            <translation>通信丢失</translation>
+            <translation>%1通信丢失</translation>
         </message>
         <message>
             <location filename="../src/Vehicle/VehicleLinkManager.cc" line="412"/>

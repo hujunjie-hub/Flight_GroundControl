@@ -13,8 +13,18 @@ function(_qgc_json_version key out_var)
 endfunction()
 
 _qgc_json_version(default _version_default)
+# This repository ships Windows x64 only, so `windows` is the required platform floor.
+# Any other platform floor that is configured must still track the bundled SDK version,
+# which keeps this guard meaningful if a platform is re-added without updating it.
 foreach(_platform IN ITEMS android ios macos windows)
-    _qgc_json_version(${_platform} _version_platform)
+    string(JSON _version_platform ERROR_VARIABLE _err
+        GET "${_build_config}" "gstreamer" "version" "${_platform}")
+    if(_err OR NOT _version_platform)
+        if(_platform STREQUAL "windows")
+            message(FATAL_ERROR "ASSERT [version.windows]: missing gstreamer.version.windows")
+        endif()
+        continue()
+    endif()
     if(_version_platform VERSION_LESS "1.28.0")
         message(FATAL_ERROR "ASSERT [version.${_platform}]: expected >= 1.28.0 actual='${_version_platform}'")
     endif()

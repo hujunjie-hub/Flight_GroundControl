@@ -130,10 +130,10 @@ def main() -> None:
             exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
         run_binary = str(exe.resolve())
 
-    workspace = os.environ.get("GITHUB_WORKSPACE", ".")
+    workspace = Path(__file__).resolve().parents[2]
     cmd = [
         sys.executable,
-        os.path.join(workspace, "tools", "run_tests.py"),
+        str(workspace / "tools" / "run_tests.py"),
         "--binary",
         run_binary,
         "--timeout",

@@ -404,7 +404,8 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     existingDirs.insert(canonicalOutputDir);
 
     bool formatLogged = false;
-    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+    int headerResult = ARCHIVE_OK;
+    while ((headerResult = archive_read_next_header(a, &entry)) == ARCHIVE_OK) {
         // Log detected format after first header read
         if (!formatLogged) {
             updateFormatState(a);
@@ -467,7 +468,15 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
         }
         // Note: symlinks don't have meaningful permissions on most systems
 
-        archive_entry_set_pathname(entry, outputPath.toUtf8().constData());
+        // libarchive converts a pathname set with archive_entry_set_pathname() using the
+        // runtime charset rules. On Windows that decodes our UTF-8 bytes as the ANSI code
+        // page, so extraction silently lands in a mojibake directory (FGC-0010). Declare
+        // the UTF-8 pathname explicitly and also provide the wide path on Windows.
+        const QByteArray outputPathUtf8 = outputPath.toUtf8();
+        archive_entry_set_pathname_utf8(entry, outputPathUtf8.constData());
+#ifdef Q_OS_WIN
+        archive_entry_copy_pathname_w(entry, reinterpret_cast<const wchar_t *>(outputPath.utf16()));
+#endif
 
         // Create parent directories and track newly created ones
         trackAndCreateParentDirs(outputPath, canonicalOutputDir, existingDirs, createdDirs);
@@ -539,6 +548,16 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             success = false;
             break;
         }
+    }
+
+    // Only ARCHIVE_EOF means every entry was consumed. A truncated or corrupt archive
+    // stops the loop with a different status and must be reported as a failure instead
+    // of silently returning success (FGC-0010).
+    if (success && headerResult != ARCHIVE_EOF) {
+        const char* errorText = archive_error_string(a);
+        qCWarning(QGClibarchiveLog) << "Archive read ended before the end of the archive:"
+                                    << (errorText ? errorText : "unknown error");
+        success = false;
     }
 
     archive_read_close(a);
@@ -729,9 +748,15 @@ bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArra
             return false;
         }
     } else {
-        // Stream directly from file (memory efficient)
-        if (archive_read_open_filename(a, filePath.toLocal8Bit().constData(),
-                                       QGCFileHelper::optimalBufferSize(filePath)) != ARCHIVE_OK) {
+        // Stream directly from file (memory efficient). Use the wide-character API on
+        // Windows so archive paths outside the ANSI code page are opened correctly.
+        const size_t blockSize = QGCFileHelper::optimalBufferSize(filePath);
+#ifdef Q_OS_WIN
+        const int openResult = archive_read_open_filename_w(a, reinterpret_cast<const wchar_t *>(filePath.utf16()), blockSize);
+#else
+        const int openResult = archive_read_open_filename(a, QFile::encodeName(filePath).constData(), blockSize);
+#endif
+        if (openResult != ARCHIVE_OK) {
             qCWarning(QGClibarchiveLog) << "Failed to open file:" << filePath << archive_error_string(a);
             return false;
         }

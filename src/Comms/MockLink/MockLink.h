@@ -57,6 +57,29 @@ public:
     bool signingEnabled() const { return _signingEnabled; }
 
     /// Sends the specified mavlink message to QGC
+    /// Deterministic fault injection for tests (FGC-0032). Each respondWithMavlinkMessage() call
+    /// takes the next sequence number and every decision is a pure function of
+    /// (sequence, seed, config), so a run is reproducible from the seed and the sequence numbers
+    /// logged at debug level. Defaults are all-off, so existing tests are unaffected.
+    struct FaultInjection
+    {
+        quint32 seed = 0;
+        int dropEveryNth = 0;        ///< 0 disables dropping
+        int delayEveryNth = 0;       ///< 0 disables delaying
+        int delayMs = 0;
+        int duplicateEveryNth = 0;   ///< 0 disables duplicating
+        int duplicateCount = 1;      ///< extra copies delivered per duplicated frame
+        int reorderWindow = 0;       ///< 0 disables; otherwise buffer this many frames and flush reversed
+    };
+
+    void setFaultInjection(const FaultInjection &config);
+    void clearFaultInjection();
+    FaultInjection faultInjection() const { return _faultInjection; }
+    /// Sequence number of the last frame since the injector was last enabled. This is what tests
+    /// must assert on: the handshake consumes sequence numbers before the injector is enabled, so
+    /// an absolute counter never starts at a value a test can predict (round 14 bug).
+    quint64 injectedSequenceSinceEnable() const { return _injectSequence - _injectSequenceBase; }
+    quint64 injectedSequence() const { return _injectSequence; }
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 
     /// Sends a STATUSTEXT message to QGC
@@ -239,6 +262,11 @@ private slots:
     void _writeBytesQueued(const QByteArray &bytes);
 
 private:
+    FaultInjection _faultInjection;
+    quint64 _injectSequence = 0;
+    quint64 _injectSequenceBase = 0;
+    QVector<QByteArray> _reorderBuffer;
+
     typedef struct {
         const char *name;
         uint8_t standard_mode;

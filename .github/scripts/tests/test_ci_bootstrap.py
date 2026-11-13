@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import textwrap
@@ -55,10 +56,13 @@ class TestEnsureToolsDir:
         with pytest.raises(RuntimeError, match="Could not locate tools"):
             ensure_tools_dir(str(deep))
 
+
 def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProcess:
     """Run a snippet in a subprocess with tools/ on sys.path so _bootstrap imports."""
     code = textwrap.dedent(body)
     full_env = {**env, "PYTHONDONTWRITEBYTECODE": "1"}
+    if sys.platform == "win32":
+        full_env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
     return subprocess.run(
         [sys.executable, "-c", code],
         cwd=REPO_ROOT,
@@ -68,6 +72,7 @@ def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProc
         timeout=15,
         check=False,
     )
+
 
 class TestDebugConfigure:
     """`_configure_debug()` runs at import time when QGC_CI_DEBUG is set."""

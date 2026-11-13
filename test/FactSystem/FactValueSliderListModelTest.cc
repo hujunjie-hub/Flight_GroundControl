@@ -1,6 +1,12 @@
 #include "FactValueSliderListModelTest.h"
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QPointer>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlEngine>
+
+#include <memory>
 
 #include "Fact.h"
 #include "FactMetaData.h"
@@ -140,6 +146,55 @@ void FactValueSliderListModelTest::_integerIncrement_test()
     QCOMPARE_FUZZY(v1 - v0, 5.0, 0.01);
 
     QCOMPARE_FUZZY(model.valueAtModelIndex(initialIndex), 50.0, 0.01);
+}
+
+/// The slider model dereferences its Fact and the Fact caches the pointer, so the model must
+/// live and die with that Fact. A parentless model that QML reads would be adopted by the
+/// JavaScript engine and deleted when its wrapper is collected, leaving the Fact's cached
+/// pointer dangling; with no owner at all it would simply leak.
+void FactValueSliderListModelTest::_modelIsOwnedAndDestroyedWithFact_test()
+{
+    Fact *const fact = new Fact(0, QStringLiteral("slider"), FactMetaData::valueTypeDouble);
+    FactValueSliderListModel *const model = fact->valueSliderModel();
+    QVERIFY(model != nullptr);
+
+    // One shared instance per Fact: every QML consumer borrows the same model.
+    QCOMPARE(fact->valueSliderModel(), model);
+    QCOMPARE(model->parent(), fact);
+    QCOMPARE(QQmlEngine::objectOwnership(model), QQmlEngine::CppOwnership);
+
+    QPointer<FactValueSliderListModel> guard(model);
+    delete fact;
+    QVERIFY2(guard.isNull(), "the slider model must be destroyed together with its Fact");
+}
+
+/// Reading the model from QML must not hand ownership to the engine.
+void FactValueSliderListModelTest::_modelStaysCppOwnedWhenExposedToQml_test()
+{
+    Fact *const fact = new Fact(0, QStringLiteral("slider"), FactMetaData::valueTypeDouble);
+
+    {
+        QQmlEngine engine;
+        engine.rootContext()->setContextProperty(QStringLiteral("testFact"), fact);
+
+        QQmlComponent component(&engine);
+        component.setData(QByteArrayLiteral("import QtQml\n"
+                                            "QtObject { property var model: testFact.valueSliderModel() }"),
+                          QUrl());
+        std::unique_ptr<QObject> object(component.create());
+        QVERIFY2(object != nullptr, qPrintable(component.errorString()));
+        QCoreApplication::processEvents();
+
+        QCOMPARE(QQmlEngine::objectOwnership(fact->valueSliderModel()), QQmlEngine::CppOwnership);
+
+        object.reset();
+        engine.collectGarbage();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+    // The engine is gone and the model is still alive and reachable through the Fact.
+    QVERIFY(fact->valueSliderModel() != nullptr);
+    delete fact;
 }
 
 UT_REGISTER_TEST(FactValueSliderListModelTest, TestLabel::Unit)

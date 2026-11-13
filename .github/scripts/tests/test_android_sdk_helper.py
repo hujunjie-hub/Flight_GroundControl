@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import Any
 
 import android_sdk_helper as mod
 import pytest
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tuple[Path, Path]:
@@ -17,7 +15,9 @@ def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tupl
     ndk_dir = sdk_root / "ndk" / "27.0.12077973"
     ndk_dir.mkdir(parents=True)
     workspace = tmp_path / "workspace"
-    (workspace / "android").mkdir(parents=True)
+    android_dir = workspace / "android"
+    android_dir.mkdir(parents=True)
+    (android_dir / "gradlew").write_text("")
     gh_env = tmp_path / "gh_env"
     gh_env.write_text("")
     monkeypatch.setenv("ANDROID_SDK_ROOT", str(sdk_root))
@@ -53,6 +53,8 @@ def test_missing_ndk_path_exits(monkeypatch, tmp_path: Path, capsys) -> None:
 def test_unix_invokes_sdkmanager_and_gradlew(monkeypatch, tmp_path: Path) -> None:
     gh_env, _ = _setup_env(monkeypatch, tmp_path, runner_os="Linux")
     calls: list[list[str]] = []
+    chmod_calls: list[tuple[Path, int]] = []
+    monkeypatch.setattr(mod.os, "chmod", lambda path, mode: chmod_calls.append((Path(path), mode)))
     monkeypatch.setattr(
         subprocess,
         "run",
@@ -66,7 +68,9 @@ def test_unix_invokes_sdkmanager_and_gradlew(monkeypatch, tmp_path: Path) -> Non
     assert "ANDROID_NDK=" in env
     assert calls[0] == ["sdkmanager", "--update"]
     assert calls[1][-1] == "--version"
-    assert calls[1][0].endswith("/android/gradlew")
+    assert Path(calls[1][0]).parts[-2:] == ("android", "gradlew")
+    gradlew = tmp_path / "workspace" / "android" / "gradlew"
+    assert chmod_calls == [(gradlew, gradlew.stat().st_mode | 0o111)]
 
 
 def test_windows_uses_bat_paths(monkeypatch, tmp_path: Path) -> None:

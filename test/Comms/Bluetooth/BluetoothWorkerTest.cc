@@ -5,10 +5,27 @@
 #include "BluetoothConfiguration.h"
 #include "BluetoothWorker.h"
 
+#include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
+
+namespace {
+
+/// True when the host exposes a local Bluetooth adapter.
+///
+/// GitHub's Windows runners are virtual machines with no Bluetooth radio, so the platform
+/// stack there cannot run the connect path at all: it only produces adapter errors and the
+/// bookkeeping being asserted never happens. The tests that enter that path are gated on this
+/// so a capability gap is reported as a skip instead of a failure; the pure-logic tests
+/// (factory, initial state, write guards, discovery-timer handling) always run.
+bool _hostHasBluetoothAdapter()
+{
+    return !QBluetoothLocalDevice::allDevices().isEmpty();
+}
+
+} // namespace
 
 static QTimer *_findServiceDiscoveryTimer(const BluetoothWorker *worker)
 {
@@ -32,6 +49,13 @@ void BluetoothWorkerTest::init()
                      QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
     ignoreLogMessage("qt.bluetooth", QtWarningMsg,
                      QRegularExpression(QStringLiteral("LE controller has invalid adapter")));
+    // Windows runners and developer machines with the radio switched off report this instead
+    // of an adapter error; the worker surfaces it verbatim. The state under test is the
+    // connect/disconnect bookkeeping, not the local radio state.
+    ignoreLogMessage("qt.bluetooth.windows", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth adapter powered off")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth adapter powered off")));
     ignoreLogMessage("qt.bluetooth.bluez", QtInfoMsg,
                      QRegularExpression(QStringLiteral("Missing CAP_NET_ADMIN")));
     ignoreLogMessage("qt.bluetooth.bluez", QtWarningMsg,
@@ -105,6 +129,17 @@ void BluetoothWorkerTest::_testWriteWhileDisconnectedEmitsError()
 
 void BluetoothWorkerTest::_testConnectWhileConnectedWarns()
 {
+    if (!_hostHasBluetoothAdapter()) {
+        QSKIP("No local Bluetooth adapter on this host; the platform connect path cannot be exercised");
+    }
+
+    // No Bluetooth adapter on this host: the platform stack reports the missing device.
+    // The behaviour under test is the double-connect guard, so ignore exactly those platform
+    // notices instead of relaxing strict log mode.
+    ignoreLogMessage("qt.bluetooth.windows", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid/null remote device address")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothBleWorker", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("UnknownRemoteDeviceError")));
     BluetoothConfiguration config("TestBT_doubleConnect");
 
     // Use BLE worker — Classic would attempt a real socket
@@ -124,6 +159,10 @@ void BluetoothWorkerTest::_testConnectWhileConnectedWarns()
 
 void BluetoothWorkerTest::_testDisconnectResetsReconnectState()
 {
+    if (!_hostHasBluetoothAdapter()) {
+        QSKIP("No local Bluetooth adapter on this host; the platform connect path cannot be exercised");
+    }
+
     BluetoothConfiguration config("TestBT_disconnectReset");
 
     std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
@@ -202,6 +241,10 @@ void BluetoothWorkerTest::_testClassicDiscoveryTimerStopsOnError()
 
 void BluetoothWorkerTest::_testDestroyClassicWorker()
 {
+    if (!_hostHasBluetoothAdapter()) {
+        QSKIP("No local Bluetooth adapter on this host; the platform connect path cannot be exercised");
+    }
+
     BluetoothConfiguration config("TestBT_destroyClassic");
     config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
 
@@ -215,6 +258,10 @@ void BluetoothWorkerTest::_testDestroyClassicWorker()
 
 void BluetoothWorkerTest::_testDestroyBleWorker()
 {
+    if (!_hostHasBluetoothAdapter()) {
+        QSKIP("No local Bluetooth adapter on this host; the platform connect path cannot be exercised");
+    }
+
     BluetoothConfiguration config("TestBT_destroyBle");
     config.setMode(BluetoothConfiguration::BluetoothMode::ModeLowEnergy);
 

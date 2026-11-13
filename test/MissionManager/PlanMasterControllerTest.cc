@@ -490,7 +490,9 @@ void PlanMasterControllerTest::_testFileAssociationClearedOnRemoveAllFromVehicle
 
     _masterController->removeAllFromVehicle();
 
-    QVERIFY(_masterController->currentPlanFile().isEmpty());
+    // Mission, fence and rally removal run as an asynchronous MAVLink sequence; the file
+    // association is cleared when that sequence completes.
+    QTRY_VERIFY_WITH_TIMEOUT(_masterController->currentPlanFile().isEmpty(), 8000);
     QVERIFY(_masterController->currentPlanFileName().isEmpty());
     QVERIFY(currentFileSpy.count() >= 1);
 }

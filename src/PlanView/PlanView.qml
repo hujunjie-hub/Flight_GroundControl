@@ -545,6 +545,9 @@ Item {
         Row {
             id:                  layerSwitcher
             objectName:          "planView_layerSwitcher"
+            // Hidden while the create-from-template chooser is shown; there is no layer
+            // to switch until the plan has content.
+            visible:             !_planMasterController.showCreateFromTemplate
             anchors.right:       rightPanel.left
             anchors.rightMargin: _toolsMargin
             anchors.top:         parent.top

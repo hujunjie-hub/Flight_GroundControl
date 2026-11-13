@@ -108,7 +108,7 @@ public:
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
         TypeBluetooth,  ///< Bluetooth Link
-#ifdef QT_DEBUG
+#if defined(QT_DEBUG) || defined(QGC_UNITTEST_BUILD)
         TypeMock,       ///< Mock Link for Unitesting
 #endif
         TypeLogReplay,

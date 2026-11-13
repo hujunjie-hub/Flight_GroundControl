@@ -1,7 +1,9 @@
 #include "ExifParserTest.h"
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <cstring>
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
@@ -230,6 +232,379 @@ void ExifParserTest::_writePreservesExistingDataTest()
     // Verify original timestamp is preserved
     const QDateTime timeAfterWrite = ExifParser::readTime(buffer);
     QCOMPARE(timeAfterWrite, originalTime);
+}
+
+namespace {
+
+/// Replaces the raw DateTimeDigitized tag value of a JPEG with \a value so that
+/// readTime() sees an arbitrary (including malformed) EXIF timestamp string.
+bool setDateTimeDigitizedValue(QByteArray& buffer, const QByteArray& value)
+{
+    if (value.size() > 20) {
+        return false;
+    }
+
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
+    if (!data) {
+        return false;
+    }
+
+    bool ok = false;
+    ExifEntry* entry = ExifUtility::initTag(data, EXIF_IFD_EXIF, EXIF_TAG_DATE_TIME_DIGITIZED);
+    if (entry && entry->data && (entry->size >= 20)) {
+        memset(entry->data, 0, entry->size);
+        memcpy(entry->data, value.constData(), static_cast<size_t>(value.size()));
+        ok = ExifUtility::saveToBuffer(data, buffer);
+    }
+
+    exif_data_unref(data);
+    return ok;
+}
+
+void appendLe16(QByteArray& bytes, quint16 value)
+{
+    bytes.append(static_cast<char>(value & 0xFF));
+    bytes.append(static_cast<char>((value >> 8) & 0xFF));
+}
+
+void appendLe32(QByteArray& bytes, quint32 value)
+{
+    bytes.append(static_cast<char>(value & 0xFF));
+    bytes.append(static_cast<char>((value >> 8) & 0xFF));
+    bytes.append(static_cast<char>((value >> 16) & 0xFF));
+    bytes.append(static_cast<char>((value >> 24) & 0xFF));
+}
+
+void appendBe16(QByteArray& bytes, quint16 value)
+{
+    bytes.append(static_cast<char>((value >> 8) & 0xFF));
+    bytes.append(static_cast<char>(value & 0xFF));
+}
+
+/// Builds a minimal JPEG/EXIF APP1 segment containing a caller-controlled
+/// GPSVersionID format and component count. The TIFF layout is little-endian:
+/// IFD0 points to a GPS IFD at offset 26, whose first entry is GPSVersionID.
+QByteArray makeGpsVersionJpeg(ExifFormat format, quint32 components)
+{
+    QByteArray tiff;
+    tiff.append('I');
+    tiff.append('I');
+    appendLe16(tiff, 42);
+    appendLe32(tiff, 8);
+
+    // IFD0: GPSInfoIFDPointer (0x8825) -> GPS IFD at TIFF offset 26.
+    appendLe16(tiff, 1);
+    appendLe16(tiff, 0x8825);
+    appendLe16(tiff, static_cast<quint16>(EXIF_FORMAT_LONG));
+    appendLe32(tiff, 1);
+    appendLe32(tiff, 26);
+    appendLe32(tiff, 0);
+
+    // GPS IFD: GPSVersionID (0x0000), with its value stored inline.
+    appendLe16(tiff, 1);
+    appendLe16(tiff, 0x0000);
+    appendLe16(tiff, static_cast<quint16>(format));
+    appendLe32(tiff, components);
+    const qsizetype componentSize = (format == EXIF_FORMAT_SHORT) ? 2 : 1;
+    const qsizetype valueSize = componentSize * static_cast<qsizetype>(components);
+    QByteArray valueData(valueSize, '\0');
+    if (format == EXIF_FORMAT_SHORT) {
+        if (valueData.size() >= 2) {
+            valueData[0] = 2;
+        }
+        if (valueData.size() >= 4) {
+            valueData[2] = 3;
+        }
+    } else {
+        if (valueData.size() >= 1) {
+            valueData[0] = 2;
+        }
+        if (valueData.size() >= 2) {
+            valueData[1] = 3;
+        }
+    }
+
+    if (valueSize <= 4) {
+        QByteArray inlineValue(4, '\0');
+        if (!valueData.isEmpty()) {
+            memcpy(inlineValue.data(), valueData.constData(), static_cast<size_t>(valueData.size()));
+        }
+        tiff.append(inlineValue);
+        appendLe32(tiff, 0);
+    } else {
+        // The GPS IFD ends at TIFF offset 44; larger values are stored out-of-line.
+        appendLe32(tiff, static_cast<quint32>(tiff.size() + 8));
+        appendLe32(tiff, 0);
+        tiff.append(valueData);
+    }
+
+    QByteArray exif("Exif\0\0", 6);
+    exif.append(tiff);
+
+    QByteArray jpeg;
+    jpeg.append(static_cast<char>(0xFF));
+    jpeg.append(static_cast<char>(0xD8));
+    jpeg.append(static_cast<char>(0xFF));
+    jpeg.append(static_cast<char>(0xE1));
+    appendBe16(jpeg, static_cast<quint16>(exif.size() + 2));
+    jpeg.append(exif);
+    jpeg.append(static_cast<char>(0xFF));
+    jpeg.append(static_cast<char>(0xD9));
+    return jpeg;
+}
+
+QByteArray loadTemplateJpeg()
+{
+    QFile file(":/unittest/DSCN0010.jpg");
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+    const QByteArray buffer = file.readAll();
+    file.close();
+    return buffer;
+}
+
+}  // namespace
+
+void ExifParserTest::_readTimeFormatTest()
+{
+    const QByteArray templateJpeg = loadTemplateJpeg();
+    QVERIFY(!templateJpeg.isEmpty());
+
+    // The empty tag value exercises the "no timestamp" warning path.
+    ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg, QRegularExpression("DateTimeDigitized tag not found"));
+    ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Unterminated DateTimeDigitized EXIF entry"));
+
+    const auto readInjected = [&templateJpeg](const QByteArray& tagValue) {
+        QByteArray buffer = templateJpeg;
+        if (!setDateTimeDigitizedValue(buffer, tagValue)) {
+            return QDateTime();
+        }
+        return ExifParser::readTime(buffer);
+    };
+
+    // Specification-conforming value.
+    {
+        const QDateTime parsed = readInjected("2024:05:06 07:08:09");
+        QVERIFY(parsed.isValid());
+        QCOMPARE(parsed, QDateTime(QDate(2024, 5, 6), QTime(7, 8, 9)));
+    }
+
+    // Cameras that omit leading zeroes must still be understood.
+    {
+        const QDateTime parsed = readInjected("2024:5:6 7:8:9");
+        QVERIFY(parsed.isValid());
+        QCOMPARE(parsed, QDateTime(QDate(2024, 5, 6), QTime(7, 8, 9)));
+    }
+
+    // Leap day is only valid in a leap year.
+    {
+        const QDateTime leapDay = readInjected("2024:02:29 12:00:00");
+        QVERIFY(leapDay.isValid());
+        QCOMPARE(leapDay, QDateTime(QDate(2024, 2, 29), QTime(12, 0, 0)));
+
+        QVERIFY(!readInjected("2023:02:29 12:00:00").isValid());
+    }
+
+    // Out-of-range and malformed values must be rejected instead of guessing.
+    const QByteArray invalidValues[] = {
+        "2024:13:06 07:08:09",   // month out of range
+        "2024:00:06 07:08:09",   // month zero
+        "2024:05:32 07:08:09",   // day out of range
+        "2024:05:06 24:08:09",   // hour out of range
+        "2024:05:06 07:60:09",   // minute out of range
+        "2024:05:06 07:08:60",   // second out of range
+        "2024:05:06 07:08",      // truncated
+        "2024:05:06T07:08:09",   // wrong date/time separator
+        "2024-05-06 07:08:09",   // wrong date separator
+        "2024:05:06 07:08:09x",  // trailing garbage
+        "24:05:06 07:08:09",     // two digit year
+        ":2024:05:06 07:08:09",  // leading separator
+        "",                      // empty value
+    };
+    for (const QByteArray& value : invalidValues) {
+        QVERIFY2(!readInjected(value).isValid(), value.constData());
+    }
+}
+
+void ExifParserTest::_readTimeRejectsUnterminatedTimestampTest()
+{
+    const QByteArray templateJpeg = loadTemplateJpeg();
+    QVERIFY(!templateJpeg.isEmpty());
+
+    // A valid EXIF DateTime field occupies 20 ASCII bytes including its NUL.
+    // This 20-byte value fills the entire entry without a terminator and must
+    // be rejected without reading beyond the libexif entry allocation.
+    QByteArray buffer = templateJpeg;
+    const QByteArray unterminatedTimestamp("2024:05:06 07:08:09X", 20);
+    QCOMPARE(unterminatedTimestamp.size(), 20);
+    QVERIFY(setDateTimeDigitizedValue(buffer, unterminatedTimestamp));
+
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Unterminated DateTimeDigitized EXIF entry"));
+    const QDateTime parsed = ExifParser::readTime(buffer);
+    verifyExpectedLogMessage();
+    QVERIFY(!parsed.isValid());
+}
+
+void ExifParserTest::_readTimeConcurrentTest()
+{
+    // FGC-0029 regression coverage: readTime() runs on QtConcurrent EXIF workers.
+    // The historical Windows failure was detected in QDateTime::fromString /
+    // QDateTimeParser::locale, but that stack did not identify the first invalid
+    // operation. Keep this parser path locale-independent and stress it concurrently
+    // without claiming an unproven Qt or libexif root cause.
+    const QByteArray imageBuffer = loadTemplateJpeg();
+    QVERIFY(!imageBuffer.isEmpty());
+
+    const QDateTime expected = ExifParser::readTime(imageBuffer);
+    QVERIFY(expected.isValid());
+
+    constexpr int kThreads = 12;
+    constexpr int kIterations = 200;
+
+    QList<int> work;
+    work.reserve(kThreads * kIterations);
+    for (int i = 0; i < (kThreads * kIterations); ++i) {
+        work.append(i);
+    }
+
+    const QList<qint64> results = QtConcurrent::blockingMapped(
+        work, [&imageBuffer](int) { return ExifParser::readTime(imageBuffer).toSecsSinceEpoch(); });
+
+    QCOMPARE(results.count(), work.count());
+    const qint64 expectedSeconds = expected.toSecsSinceEpoch();
+    for (qsizetype i = 0; i < results.count(); ++i) {
+        QCOMPARE(results.at(i), expectedSeconds);
+    }
+}
+
+void ExifParserTest::_writeGpsVersionEntryValidTest()
+{
+    QByteArray buffer = makeGpsVersionJpeg(EXIF_FORMAT_BYTE, 4);
+    QVERIFY(!buffer.isEmpty());
+
+    ExifData* originalData = ExifUtility::loadFromBuffer(buffer);
+    QVERIFY(originalData != nullptr);
+    ExifEntry* originalEntry = exif_content_get_entry(
+        originalData->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID));
+    QVERIFY(originalEntry != nullptr);
+    QCOMPARE(originalEntry->format, EXIF_FORMAT_BYTE);
+    QCOMPARE(originalEntry->components, 4UL);
+    QCOMPARE(originalEntry->size, static_cast<size_t>(4));
+    exif_data_unref(originalData);
+
+    GeoTagData geotag;
+    geotag.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
+    QVERIFY(ExifParser::write(buffer, geotag));
+
+    ExifData* writtenData = ExifUtility::loadFromBuffer(buffer);
+    QVERIFY(writtenData != nullptr);
+    ExifEntry* writtenEntry = exif_content_get_entry(
+        writtenData->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID));
+    QVERIFY(writtenEntry != nullptr);
+    QCOMPARE(writtenEntry->format, EXIF_FORMAT_BYTE);
+    QCOMPARE(writtenEntry->components, 4UL);
+    QCOMPARE(writtenEntry->size, static_cast<size_t>(4));
+    QVERIFY(writtenEntry->data != nullptr);
+    QCOMPARE(writtenEntry->data[0], static_cast<unsigned char>(2));
+    QCOMPARE(writtenEntry->data[1], static_cast<unsigned char>(3));
+    QCOMPARE(writtenEntry->data[2], static_cast<unsigned char>(0));
+    QCOMPARE(writtenEntry->data[3], static_cast<unsigned char>(0));
+    exif_data_unref(writtenData);
+}
+
+void ExifParserTest::_writeRejectsShortGpsVersionEntriesTest()
+{
+    GeoTagData geotag;
+    geotag.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
+
+    for (quint32 components = 0; components < 4; ++components) {
+        QByteArray buffer = makeGpsVersionJpeg(EXIF_FORMAT_BYTE, components);
+        QVERIFY(!buffer.isEmpty());
+
+        ExifData* parsedData = ExifUtility::loadFromBuffer(buffer);
+        ExifEntry* entry = parsedData
+            ? exif_content_get_entry(parsedData->ifd[EXIF_IFD_GPS],
+                                     static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID))
+            : nullptr;
+
+        // libexif may omit a zero-component entry entirely. In that case there is
+        // no existing destination to overrun, so normal tag creation remains safe.
+        if ((components == 0) && !entry) {
+            if (parsedData) {
+                exif_data_unref(parsedData);
+            }
+            QVERIFY(ExifParser::write(buffer, geotag));
+            continue;
+        }
+
+        QVERIFY2(parsedData != nullptr, "libexif did not parse the malformed GPS IFD");
+        QVERIFY2(entry != nullptr, "libexif did not preserve the short GPSVersionID entry");
+        QCOMPARE(entry->format, EXIF_FORMAT_BYTE);
+        QCOMPARE(entry->components, static_cast<unsigned long>(components));
+        QCOMPARE(entry->size, static_cast<size_t>(components));
+        exif_data_unref(parsedData);
+
+        const QByteArray originalBuffer = buffer;
+        ignoreLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                         QRegularExpression("Malformed GPS Version ID EXIF entry"));
+        QVERIFY(!ExifParser::write(buffer, geotag));
+        QCOMPARE(buffer, originalBuffer);
+    }
+}
+
+void ExifParserTest::_writeRejectsWrongGpsVersionComponentCountTest()
+{
+    QByteArray buffer = makeGpsVersionJpeg(EXIF_FORMAT_BYTE, 5);
+    QVERIFY(!buffer.isEmpty());
+
+    ExifData* parsedData = ExifUtility::loadFromBuffer(buffer);
+    QVERIFY(parsedData != nullptr);
+    ExifEntry* entry = exif_content_get_entry(
+        parsedData->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID));
+    QVERIFY(entry != nullptr);
+    QCOMPARE(entry->format, EXIF_FORMAT_BYTE);
+    QCOMPARE(entry->components, 5UL);
+    QCOMPARE(entry->size, static_cast<size_t>(5));
+    exif_data_unref(parsedData);
+
+    const QByteArray originalBuffer = buffer;
+    GeoTagData geotag;
+    geotag.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
+
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Malformed GPS Version ID EXIF entry"));
+    QVERIFY(!ExifParser::write(buffer, geotag));
+    verifyExpectedLogMessage();
+    QCOMPARE(buffer, originalBuffer);
+}
+
+void ExifParserTest::_writeRejectsWrongGpsVersionFormatTest()
+{
+    QByteArray buffer = makeGpsVersionJpeg(EXIF_FORMAT_SHORT, 2);
+    QVERIFY(!buffer.isEmpty());
+
+    ExifData* parsedData = ExifUtility::loadFromBuffer(buffer);
+    QVERIFY(parsedData != nullptr);
+    ExifEntry* entry = exif_content_get_entry(
+        parsedData->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(EXIF_TAG_GPS_VERSION_ID));
+    QVERIFY(entry != nullptr);
+    QCOMPARE(entry->format, EXIF_FORMAT_SHORT);
+    QCOMPARE(entry->components, 2UL);
+    QCOMPARE(entry->size, static_cast<size_t>(4));
+    exif_data_unref(parsedData);
+
+    const QByteArray originalBuffer = buffer;
+    GeoTagData geotag;
+    geotag.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
+
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg,
+                     QRegularExpression("Malformed GPS Version ID EXIF entry"));
+    QVERIFY(!ExifParser::write(buffer, geotag));
+    verifyExpectedLogMessage();
+    QCOMPARE(buffer, originalBuffer);
 }
 
 UT_REGISTER_TEST(ExifParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

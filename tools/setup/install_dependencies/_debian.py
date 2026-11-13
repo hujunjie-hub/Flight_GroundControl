@@ -6,6 +6,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -65,10 +66,13 @@ def resolve_package_alternatives(packages: list[str]) -> list[str]:
             continue
         alt = next((a for a in DEBIAN_PACKAGE_ALTERNATIVES[pkg] if availability.get(a)), None)
         if alt:
-            print(f"  Package {pkg} not available; using {alt}")
+            print(f"[INFO] Package {pkg} not available; using {alt}", file=sys.stderr)
             resolved.append(alt)
         else:
-            _c.log_warn(f"Package {pkg} and its alternatives are unavailable; skipping")
+            print(
+                f"[WARN] Package {pkg} and its alternatives are unavailable; skipping",
+                file=sys.stderr,
+            )
     return resolved
 
 
