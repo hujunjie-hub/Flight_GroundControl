@@ -618,6 +618,11 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
         QStringList args;
         args << "*" << "-maxwarnings" << QString::number(maxWarnings);
 
+        // Include the active QtTest function in CI logs when diagnosing intermittent hangs.
+        if (isVerbose()) {
+            args << "-v2";
+        }
+
         // Add JUnit XML output if configured
         if (!_outputFile().isEmpty()) {
             // Create unique output file per test class to avoid overwriting
