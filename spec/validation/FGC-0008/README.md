@@ -1,6 +1,6 @@
 # FGC-0008 — 非英语 Windows 测试宿主区域设置回归
 
-状态：**FIXED_WAITING_RETEST**  
+状态：**VERIFIED**  
 严重级别：S2  
 优先级：P1
 
@@ -28,3 +28,16 @@ Unit 测试包含英文用户界面文本断言。测试宿主使用非英语 Wi
 ## 当前验证状态
 
 代码与 CI 回归门禁已提交到 `fix/fgc-0008-nonenglish-locale-validation`。本记录在精确 HEAD 的 Windows Release 运行完成前保持 FIXED_WAITING_RETEST；不得仅凭英文默认 runner 的历史通过记录关闭问题。
+
+
+## 2026-11-13 — R30 exact-head non-English host and Release verification
+
+- PR head: `ba07a1893f22deaaa3f3fc779f345a60fb2e6b89`.
+- Windows Release run: [43375081098](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43375081098) — **SUCCESS**.
+- Unit host culture: `zh-CN`; the test entry point verified that `QLocale::system()` actually reported `zh-CN` while the application test language remained English.
+- Unit: **198/198 PASS**, 0 failures, 0 errors, 0 skipped.
+- CI restored `en-US` before Integration; Integration: **70/70 PASS**, 0 failures, 0 errors, 0 skipped.
+- Installer creation, clean install, installed executable verification: PASS.
+- Independently inspected archive `14016886113`: `environment.json` records `unit_test_host_culture=zh-CN` and `archive_host_culture=en-US`; `run-manifest.json` records `result_validated=PASS` with no validation errors. Both JUnit reports are present and clean. ZIP SHA-256 sidecar matches the archive: `31cfbdb84ddf2a0a694629f701f53e60373c245c668910b4eceb8ce8585d0041`.
+
+**FGC-0008 status: VERIFIED.** The issue remains open as an audit record for final consolidation; no PR merge is implied.
