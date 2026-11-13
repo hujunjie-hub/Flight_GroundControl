@@ -14,6 +14,7 @@ private slots:
     void _calibrationMismatchTest();
     void _fullGeotaggingTest();
     void _previewModeTest();
+    void _concurrentControllersExifStressTest();
 
     // Calibrator algorithm tests
     void _calibratorEmptyInputsTest();
