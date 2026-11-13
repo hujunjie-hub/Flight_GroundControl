@@ -290,10 +290,29 @@ jobs:
               throw "QtTest XML was not generated on iteration $iteration."
             }
 
-            $xmlText = Get-Content $qtestXml -Raw
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $rootName = $xmlDocument.DocumentElement.LocalName
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+              $suiteSkipped = 0
+              if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+              }
+            }
+            $skippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skippedCount -gt 0) {
+              throw "ExifParserTest XML is incomplete, failed, or contains skipped cases on iteration $iteration."
+            }
             foreach ($functionName in $requiredFunctions) {
-              if ($xmlText -notmatch [regex]::Escape($functionName)) {
+              $testCase = $xmlDocument.SelectSingleNode("//testcase[@name='$functionName']")
+              if ($null -eq $testCase) {
                 throw "QtTest XML on iteration $iteration is missing $functionName."
+              }
+              if ($null -ne $testCase.SelectSingleNode('./skipped')) {
+                throw "Required test case $functionName was skipped on iteration $iteration."
               }
             }
 
@@ -369,13 +388,23 @@ jobs:
             $rootName = $xmlDocument.DocumentElement.LocalName
             $testCases = @($xmlDocument.SelectNodes('//testcase'))
             $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+              $suiteSkipped = 0
+              if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+              }
+            }
+            $skippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
             $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
-            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $null -eq $stressCase) {
-              throw "GeoTagControllerTest XML is incomplete, failed, or missing the concurrency regression case on iteration $iteration."
+            $stressCaseExecuted = ($null -ne $stressCase -and $null -eq $stressCase.SelectSingleNode('./skipped'))
+            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skippedCount -gt 0 -or -not $stressCaseExecuted) {
+              throw "GeoTagControllerTest XML is incomplete, failed, skipped, or did not execute the concurrency regression case on iteration $iteration."
             }
 
             Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
-            "iteration=$iteration result=PASS test_cases=$($testCases.Count) stress_case=PASS" |
+            "iteration=$iteration result=PASS test_cases=$($testCases.Count) skipped=$skippedCount stress_case=EXECUTED" |
               Add-Content (Join-Path $evidenceDir 'geotag-controller-test-summary.txt')
             $passed++
           }
