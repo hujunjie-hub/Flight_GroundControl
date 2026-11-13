@@ -309,8 +309,6 @@ if ($Result -eq 'PASS') {
     }
 }
 
-$validatedResult = if ($Result -eq 'PASS' -and $validationErrors.Count -gt 0) { 'FAIL' } else { $Result }
-
 $environment | ConvertTo-Json -Depth 5 |
     Set-Content -LiteralPath (Join-Path $runDirectory 'environment.json') -Encoding utf8
 
@@ -333,6 +331,8 @@ if (Test-Path $buildPath) {
 if ($Result -eq 'PASS' -and $installerInfo.Count -eq 0) {
     $validationErrors += 'PASS requires at least one installer candidate with a SHA-256 hash.'
 }
+
+$validatedResult = if ($Result -eq 'PASS' -and $validationErrors.Count -gt 0) { 'FAIL' } else { $Result }
 
 $fileHashes = @(
     Get-ChildItem -LiteralPath $runDirectory -File -Recurse |
@@ -381,7 +381,7 @@ $manifest = [ordered]@{
     github_head_ref = $environment.github_head_ref
     github_head_sha = $environment.github_head_sha
     github_sha = $environment.github_sha
-    note = 'The caller supplies the requested result. PASS is accepted only when both JUnit reports and required build-environment facts are independently validated.'
+    note = 'The caller supplies the requested result. PASS is accepted only when configure/build/test logs, both JUnit reports, installer evidence, and required build-environment facts are independently validated.'
 }
 
 $manifest | ConvertTo-Json -Depth 8 |
