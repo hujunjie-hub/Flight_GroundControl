@@ -108,7 +108,9 @@ jobs:
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
+            .github/workflows/ci-scripts.yml
             .github/workflows/linux.yml
+            .github/workflows/pre-commit.yml
             .github/workflows/windows.yml
             .github/workflows/release.yml
             tools/pyproject.toml

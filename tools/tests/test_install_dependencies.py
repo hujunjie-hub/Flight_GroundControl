@@ -464,6 +464,7 @@ def test_install_just_debian_upgrades_when_existing_too_old() -> None:
             side_effect=lambda: next(versions),
         ),
         patch("setup.install_dependencies._common.check_apt_package_available", return_value=False),
+        patch("setup.install_dependencies._debian.platform.machine", return_value="x86_64"),
         patch("setup.install_dependencies._common.download_file", return_value=False) as mock_dl,
     ):
         install_just_debian()
@@ -480,13 +481,15 @@ def test_install_just_debian_falls_back_when_apt_version_too_old() -> None:
         ),
         patch("setup.install_dependencies._common.check_apt_package_available", return_value=True),
         patch("setup.install_dependencies._common.run_apt_install_with_retry", return_value=True),
+        patch("setup.install_dependencies._debian.platform.machine", return_value="x86_64"),
         patch("setup.install_dependencies._common.download_file", return_value=False) as mock_dl,
     ):
         install_just_debian()
     mock_dl.assert_called_once()
 
 
-def test_install_windows_nsis_dry_run() -> None:
+def test_install_windows_nsis_dry_run(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROGRAMFILES(X86)", str(tmp_path))
     with (
         patch.object(_windows._c, "download_file", return_value=True) as dl,
         patch.object(_windows._c, "run_command", return_value=True) as rc,

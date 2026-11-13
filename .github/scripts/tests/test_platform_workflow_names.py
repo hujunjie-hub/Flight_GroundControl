@@ -33,8 +33,10 @@ def _workflow_on(doc: dict[str, object]) -> dict[str, object]:
 
 
 def _platform_workflows() -> list[str]:
-    raw = json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8")).get("build", {}).get(
-        "platform_workflows", ""
+    raw = (
+        json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8"))
+        .get("build", {})
+        .get("platform_workflows", "")
     )
     assert raw, "platform_workflows missing from build-config.json"
     return [name.strip() for name in raw.split(",") if name.strip()]
@@ -81,9 +83,7 @@ def test_release_wait_for_builds_lists_match_platforms() -> None:
     doc = yaml.safe_load(RELEASE_YML.read_text(encoding="utf-8"))
     steps = doc["jobs"]["wait-for-builds"]["steps"]
     names_block = next(
-        step["with"]["workflow-names"]
-        for step in steps
-        if "workflow-names" in step.get("with", {})
+        step["with"]["workflow-names"] for step in steps if "workflow-names" in step.get("with", {})
     )
     listed = {line.strip() for line in str(names_block).splitlines() if line.strip()}
     assert listed == set(_platform_workflows())
