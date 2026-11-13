@@ -10,6 +10,8 @@ permissions:
 jobs:
   cleanup:
     uses: ./.github/workflows/_cache-cleanup.yml
+    # Low-trust trigger: keep the default read-only cache access explicit.
+    cache-mode: read
     with:
       branch: refs/pull/${{ github.event.pull_request.number }}/merge
       dry-run: false

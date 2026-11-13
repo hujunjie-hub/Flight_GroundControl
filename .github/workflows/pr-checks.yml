@@ -134,7 +134,6 @@ jobs:
         uses: actions/ai-inference@v3
         with:
           prompt-file: .github/prompts/pr-title-suggestion.prompt.yml
-          max-tokens: 100
           input: |
             current_title: ${{ toJson(steps.sanitize.outputs.title) }}
             pr_body: ${{ toJson(steps.sanitize.outputs.body) }}
