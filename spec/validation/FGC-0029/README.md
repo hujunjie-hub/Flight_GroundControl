@@ -174,3 +174,21 @@ Configure, Build, Unit, serial Integration, installer creation, clean installati
 The bounded, locale-independent EXIF timestamp parser and the controller-level concurrency regression have strong exact-head mitigation evidence. The R19 differential matrix remains the leading causal evidence: the legacy `QDateTime::fromString` path produced ASan findings in the B/C arms while the fixed parser D arm did not; runtime QueryType capture showed the legacy path repeatedly querying `ZeroDigit`, `Grouping`, and `GroupSeparator`, while the fixed parser made zero system-locale queries. The Qt 6.11.1 source audit identifies unsynchronized system-locale cache fields as the leading candidate.
 
 **The historical first invalid write/free and exact Qt-side reference-count corruption are still not directly observed.** A clean post-fix stress matrix is mitigation/regression evidence, not proof of the first invalid operation. FGC-0029 therefore remains **OPEN / S1 / BLOCKED**; Issue #29 must not be closed by this R26 pass alone.
+
+
+---
+
+## R28 — ASan workflow command repair — 2026-11-13
+
+**Code/workflow HEAD under test:** `e776a9f94af175ef592a12fcd12149c47d86c87c`  
+**Run:** [43371152516](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43371152516) — **FAIL / workflow parser error**, not a product-memory finding.
+
+- The complete MSVC ASan configure/build and compile/link instrumentation checks passed.
+- `ExifParserTest` completed **20/20** repetitions successfully.
+- The `GeoTagControllerTest` repetition step did not start. PowerShell reported an unterminated single-quoted string at the truncated CTest command in `.github/workflows/fgc0037-windows-asan.yml`.
+- The 12-process × 3-round stress matrix was skipped because the sequential controller gate could not be parsed.
+- No AddressSanitizer memory diagnostic was reported by this run. It is not evidence that the controller gate or the historical race passed.
+
+The workflow command is restored with the complete `'^GeoTagControllerTest$'` filter, the documented 180-second CTest timeout, verbose failure output and the pipeline to the per-iteration log. A new exact-head run is required.
+
+**Status remains OPEN / S1 / BLOCKED.** This fixes a validation-harness defect only. It does not prove or close the historical first-invalid-operation requirement.

@@ -643,3 +643,30 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - Corrected historical baseline rerun [43370205206](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43370205206) is **QUEUED**. No historical crash/no-crash conclusion can be drawn from run 43364448297 because process exit codes were not retained.
 
 **FGC-0029 remains OPEN / S1 / BLOCKED.** Do not treat the 36 XML files as a 36/36 process pass until the corrected harness records exit codes, timeout state and ASan findings.
+
+
+---
+
+## E-45 — R28 ASan workflow parser failure and correction — 2026-11-13
+
+**Failed validation HEAD:** `e776a9f94af175ef592a12fcd12149c47d86c87c`  
+**Run:** [43371152516](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43371152516)
+
+- MSVC ASan configure/build and complete compile/link instrumentation verification: **PASS**.
+- `ExifParserTest`: **20/20 PASS**.
+- CTest registration for `GeoTagControllerTest`: **PASS**.
+- The controller repetition step failed before invoking CTest because the inline PowerShell command was truncated after `-R '^GeoTagControllerTest`; PowerShell reported `The string is missing the terminator: '`.
+- `GeoTagControllerTest` repetitions: **NOT RUN**.
+- 12-process × 3-round stress: **SKIPPED**.
+- AddressSanitizer findings from this run: **none reported**. This is a workflow syntax failure, not a product memory failure or a pass.
+
+The workflow-only correction restores the full command:
+
+```powershell
+& ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
+  Tee-Object -FilePath $logPath
+```
+
+The corrected workflow and this ledger update are committed together. The next exact-head run must complete all 20 controller repetitions and the full 12 × 3 process matrix before mitigation regression evidence is refreshed.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** The workflow repair is not a production fix and does not establish the historical first invalid operation.
