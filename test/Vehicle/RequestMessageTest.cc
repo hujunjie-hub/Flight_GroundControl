@@ -79,6 +79,10 @@ void RequestMessageTest::_duplicateCommand()
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
+    // Background managers issue their own REQUEST_MESSAGE commands; disable them so exact
+    // command-count assertions measure only the request under test.
+    vehicle->_deleteGimbalController();
+    vehicle->_deleteCameraManager();
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(firstRequestCase.failureMode);
     QVERIFY(false == vehicle->isMavCommandPending(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE));
@@ -132,6 +136,10 @@ void RequestMessageTest::_compIdAllFailure()
                                                Vehicle::RequestMessageFailureCommandError, 0, MAVLINK_MSG_ID_DEBUG, false, 0};
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
+    // Background managers issue their own REQUEST_MESSAGE commands; disable them so exact
+    // command-count assertions measure only the request under test.
+    vehicle->_deleteGimbalController();
+    vehicle->_deleteCameraManager();
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(testCase.failureMode);
     vehicle->requestMessage(_requestMessageResultHandler, &testCase, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG);
@@ -152,6 +160,10 @@ void RequestMessageTest::_duplicateWhileQueued()
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
+    // Background managers issue their own REQUEST_MESSAGE commands; disable them so exact
+    // command-count assertions measure only the request under test.
+    vehicle->_deleteGimbalController();
+    vehicle->_deleteCameraManager();
     _mockLink->clearReceivedMavCommandCounts();
     _mockLink->setRequestMessageFailureMode(firstRequestCase.failureMode);
 
