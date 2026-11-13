@@ -402,6 +402,15 @@ jobs:
           }
           Remove-Item -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\QGroundControl.exe' -Recurse -Force -ErrorAction SilentlyContinue
 
+      - name: Upload historical Release PageHeap evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fgc0029-historical-release-pageheap-${{ github.sha }}
+          path: ${{ runner.temp }}/fgc0029-baseline-pageheap-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Enforce PageHeap diagnostic acceptance
         if: always()
         run: |
@@ -471,12 +480,3 @@ jobs:
           }
 
           Write-Host "PageHeap acceptance passed: $expectedProcesses/$expectedProcesses process runs, 3/3 barriers, no heap-corruption dumps."
-
-      - name: Upload historical Release PageHeap evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: fgc0029-historical-release-pageheap-${{ github.sha }}
-          path: ${{ runner.temp }}/fgc0029-baseline-pageheap-evidence/
-          if-no-files-found: error
-          retention-days: 30
