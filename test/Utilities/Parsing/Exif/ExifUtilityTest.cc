@@ -357,6 +357,51 @@ void ExifUtilityTest::_testGpsRationalToDecimal()
     exif_data_unref(data);
 }
 
+void ExifUtilityTest::_testTypedReadersRejectMalformedEntries()
+{
+    ExifData* data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+
+    const ExifByteOrder order = exif_data_get_byte_order(data);
+
+    // A SHORT entry with three components occupies only six bytes. It must
+    // never be read as three 8-byte EXIF rationals.
+    ExifEntry* shortGps = ExifUtility::createTag(
+        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE), EXIF_FORMAT_SHORT, 3);
+    QVERIFY(shortGps != nullptr);
+    QCOMPARE(shortGps->size, static_cast<unsigned long>(3 * sizeof(ExifShort)));
+    QCOMPARE(ExifUtility::gpsRationalToDecimal(shortGps, order), 0.0);
+
+    // A rational entry whose declared byte size is shorter than its component
+    // count must be rejected before reading the second and third components.
+    ExifEntry* undersizedGps = ExifUtility::createTag(
+        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
+    QVERIFY(undersizedGps != nullptr);
+    const ExifRational coordinateValues[] = {{10, 1}, {20, 1}, {30, 1}};
+    for (unsigned int i = 0; i < 3; ++i) {
+        exif_set_rational(undersizedGps->data + i * sizeof(ExifRational), order, coordinateValues[i]);
+    }
+    undersizedGps->size = sizeof(ExifRational);
+    QCOMPARE(ExifUtility::gpsRationalToDecimal(undersizedGps, order), 0.0);
+
+    // The scalar readers must also reject a tag whose storage is large enough
+    // but whose EXIF format is not the requested type.
+    ExifEntry* wrongShort = ExifUtility::createTag(
+        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_ASCII, 2);
+    QVERIFY(wrongShort != nullptr);
+    wrongShort->data[0] = 0x34;
+    wrongShort->data[1] = 0x12;
+    QCOMPARE(ExifUtility::readShort(data, EXIF_TAG_GPS_ALTITUDE_REF, EXIF_IFD_GPS), 0);
+
+    ExifEntry* wrongRational = ExifUtility::createTag(
+        data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_SHORT, 4);
+    QVERIFY(wrongRational != nullptr);
+    exif_set_rational(wrongRational->data, order, {123, 1});
+    QCOMPARE(ExifUtility::readRational(data, EXIF_TAG_GPS_ALTITUDE, EXIF_IFD_GPS), 0.0);
+
+    exif_data_unref(data);
+}
+
 void ExifUtilityTest::_testWriteDateTimeOriginalRejectsInvalidInput()
 {
     const QDateTime invalidDateTime;

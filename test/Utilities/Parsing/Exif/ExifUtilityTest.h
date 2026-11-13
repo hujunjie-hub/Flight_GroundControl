@@ -35,6 +35,7 @@ private slots:
     void _testWriteGpsCoordinate();
     void _testWriteRational();
     void _testGpsRationalToDecimal();
+    void _testTypedReadersRejectMalformedEntries();
     void _testWriteDateTimeOriginalRejectsInvalidInput();
     void _testWriteDateTimeOriginalWritesBothTags();
 };

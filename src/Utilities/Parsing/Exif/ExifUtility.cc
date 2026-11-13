@@ -182,45 +182,44 @@ bool hasExifData(const QByteArray &buffer)
 
 QString readString(ExifData *data, ExifTag tag, ExifIfd ifd)
 {
-    if (!data) return QString();
-
-    ExifEntry *entry = exif_content_get_entry(data->ifd[ifd], tag);
-    if (!entry) {
-        entry = exif_data_get_entry(data, tag);
-    }
-    if (!entry) {
+    ExifEntry* entry = getEntry(data, tag, ifd);
+    if (!entry || !entry->data || entry->size == 0) {
         return QString();
     }
 
-    char value[256];
+    char value[256] = {};
     exif_entry_get_value(entry, value, sizeof(value));
     return QString::fromUtf8(value).trimmed();
 }
 
 int readShort(ExifData *data, ExifTag tag, ExifIfd ifd)
 {
-    if (!data) return 0;
-
-    ExifEntry *entry = exif_content_get_entry(data->ifd[ifd], tag);
-    if (!entry || entry->size < 2) {
+    ExifEntry* entry = getEntry(data, tag, ifd);
+    if (!entry ||
+        entry->format != EXIF_FORMAT_SHORT ||
+        entry->components < 1 ||
+        !entry->data ||
+        entry->size < sizeof(ExifShort)) {
         return 0;
     }
 
-    ExifByteOrder order = exif_data_get_byte_order(data);
+    const ExifByteOrder order = exif_data_get_byte_order(data);
     return exif_get_short(entry->data, order);
 }
 
 double readRational(ExifData *data, ExifTag tag, ExifIfd ifd)
 {
-    if (!data) return 0.0;
-
-    ExifEntry *entry = exif_content_get_entry(data->ifd[ifd], tag);
-    if (!entry || entry->size < 8) {
+    ExifEntry* entry = getEntry(data, tag, ifd);
+    if (!entry ||
+        entry->format != EXIF_FORMAT_RATIONAL ||
+        entry->components < 1 ||
+        !entry->data ||
+        entry->size < sizeof(ExifRational)) {
         return 0.0;
     }
 
-    ExifByteOrder order = exif_data_get_byte_order(data);
-    ExifRational rational = exif_get_rational(entry->data, order);
+    const ExifByteOrder order = exif_data_get_byte_order(data);
+    const ExifRational rational = exif_get_rational(entry->data, order);
     if (rational.denominator == 0) {
         return 0.0;
     }
@@ -233,7 +232,7 @@ double readRational(ExifData *data, ExifTag tag, ExifIfd ifd)
 
 ExifEntry* initTag(ExifData *data, ExifIfd ifd, ExifTag tag)
 {
-    if (!data) return nullptr;
+    if (!data || (static_cast<unsigned int>(ifd) >= EXIF_IFD_COUNT) || !data->ifd[ifd]) return nullptr;
 
     // Return existing tag if present
     ExifEntry *entry = exif_content_get_entry(data->ifd[ifd], tag);
@@ -262,7 +261,7 @@ ExifEntry* initTag(ExifData *data, ExifIfd ifd, ExifTag tag)
 
 ExifEntry* createTag(ExifData *data, ExifIfd ifd, ExifTag tag, ExifFormat format, unsigned long components)
 {
-    if (!data) return nullptr;
+    if (!data || (static_cast<unsigned int>(ifd) >= EXIF_IFD_COUNT) || !data->ifd[ifd]) return nullptr;
 
     // Create a memory allocator for this entry
     ExifMem *mem = exif_mem_new_default();
@@ -307,7 +306,13 @@ ExifEntry* createTag(ExifData *data, ExifIfd ifd, ExifTag tag, ExifFormat format
 
 double gpsRationalToDecimal(ExifEntry *entry, ExifByteOrder order)
 {
-    if (!entry || entry->components < 3 || !entry->data) {
+    constexpr unsigned int kGpsCoordinateComponents = 3;
+    constexpr size_t kGpsCoordinateSize = kGpsCoordinateComponents * sizeof(ExifRational);
+    if (!entry ||
+        entry->format != EXIF_FORMAT_RATIONAL ||
+        entry->components < kGpsCoordinateComponents ||
+        !entry->data ||
+        entry->size < kGpsCoordinateSize) {
         return 0.0;
     }
 
@@ -315,12 +320,12 @@ double gpsRationalToDecimal(ExifEntry *entry, ExifByteOrder order)
     double minutes = 0.0;
     double seconds = 0.0;
 
-    for (unsigned int i = 0; i < entry->components && i < 3; i++) {
-        ExifRational rational = exif_get_rational(entry->data + i * 8, order);
+    for (unsigned int i = 0; i < kGpsCoordinateComponents; i++) {
+        const ExifRational rational = exif_get_rational(entry->data + i * sizeof(ExifRational), order);
         if (rational.denominator == 0) {
             continue;
         }
-        double value = static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
+        const double value = static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
         switch (i) {
             case 0: degrees = value; break;
             case 1: minutes = value; break;
@@ -333,7 +338,13 @@ double gpsRationalToDecimal(ExifEntry *entry, ExifByteOrder order)
 
 void writeGpsCoordinate(ExifEntry *entry, ExifByteOrder order, double value)
 {
-    if (!entry || !entry->data || entry->size < 24) return;
+    constexpr unsigned int kGpsCoordinateComponents = 3;
+    constexpr size_t kGpsCoordinateSize = kGpsCoordinateComponents * sizeof(ExifRational);
+    if (!entry ||
+        entry->format != EXIF_FORMAT_RATIONAL ||
+        entry->components < kGpsCoordinateComponents ||
+        !entry->data ||
+        entry->size < kGpsCoordinateSize) return;
 
     double absVal = fabs(value);
     int degrees = static_cast<int>(absVal);
@@ -354,7 +365,7 @@ void writeGpsCoordinate(ExifEntry *entry, ExifByteOrder order, double value)
 
 void writeRational(ExifEntry *entry, ExifByteOrder order, double value, int denominator)
 {
-    if (!entry || !entry->data || entry->size < 8) return;
+    if (!entry || entry->format != EXIF_FORMAT_RATIONAL || entry->components < 1 || !entry->data || entry->size < sizeof(ExifRational)) return;
 
     ExifRational rational = {
         static_cast<ExifLong>(static_cast<int>(fabs(value) * denominator)),
@@ -365,14 +376,14 @@ void writeRational(ExifEntry *entry, ExifByteOrder order, double value, int deno
 
 void writeGpsRef(ExifEntry *entry, char value)
 {
-    if (!entry || !entry->data || entry->size < 2) return;
+    if (!entry || entry->format != EXIF_FORMAT_ASCII || entry->components < 2 || !entry->data || entry->size < 2) return;
     entry->data[0] = static_cast<unsigned char>(value);
     entry->data[1] = '\0';
 }
 
 void writeGpsAltRef(ExifEntry *entry, unsigned char value)
 {
-    if (!entry || !entry->data || entry->size < 1) return;
+    if (!entry || entry->format != EXIF_FORMAT_BYTE || entry->components < 1 || !entry->data || entry->size < 1) return;
     entry->data[0] = value;
 }
 
