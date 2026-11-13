@@ -165,6 +165,46 @@ jobs:
             throw "Historical baseline Release build failed with exit code $LASTEXITCODE."
           }
 
+      - name: Install Windows Desktop Debuggers (GFlags)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $debuggersRoot = Join-Path \${env:ProgramFiles(x86)} 'Windows Kits\10\Debuggers'
+          $gflagsPath = Join-Path $debuggersRoot 'x64\gflags.exe'
+          if (Test-Path -LiteralPath $gflagsPath) {
+            Write-Host "GFlags already installed: $gflagsPath"
+            exit 0
+          }
+
+          # GitHub's windows-2022 image includes the Windows SDK but not the
+          # optional Windows Desktop Debuggers feature. Reuse the signed SDK
+          # bundle already cached by the Visual Studio/SDK installation.
+          $sdkEntries = @(Get-ItemProperty -Path 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.DisplayName -match 'Windows Software Development Kit' -and
+              $_.BundleCachePath -and
+              (Test-Path -LiteralPath $_.BundleCachePath)
+            } |
+            Sort-Object DisplayVersion -Descending)
+          if ($sdkEntries.Count -eq 0) {
+            throw 'Windows SDK bundle cache was not found; cannot install Windows Desktop Debuggers.'
+          }
+
+          $sdkInstaller = $sdkEntries[0].BundleCachePath
+          Write-Host "Installing Windows Desktop Debuggers from: $sdkInstaller"
+          $installProcess = Start-Process -FilePath $sdkInstaller -ArgumentList @(
+            '/features',
+            'OptionId.WindowsDesktopDebuggers',
+            '/q',
+            '/norestart'
+          ) -Wait -PassThru
+          if ($installProcess.ExitCode -notin @(0, 3010)) {
+            throw "Windows Desktop Debuggers installation failed with exit code $($installProcess.ExitCode)."
+          }
+          if (-not (Test-Path -LiteralPath $gflagsPath)) {
+            throw "Windows Desktop Debuggers installer completed but GFlags was not found: $gflagsPath"
+          }
+          Write-Host "GFlags installed: $gflagsPath"
+
       - name: Enable targeted PageHeap, UST and WER full dumps
         run: |
           $ErrorActionPreference = 'Stop'
@@ -208,12 +248,16 @@ jobs:
           if ($verifyOutput -notmatch '(?i)QGroundControl\.exe') {
             throw "GFlags did not report PageHeap enabled for QGroundControl.exe: $verifyOutput"
           }
+          if ($verifyOutput -notmatch '(?i)full traces') {
+            throw "GFlags did not confirm full PageHeap for the 16..32-byte allocation range: $verifyOutput"
+          }
 
           @(
             "gflags=$($gflags.FullName)"
             "ust_enabled=TRUE"
             "pageheap_mode=FULL_FOR_ALLOCATIONS_16_TO_32_BYTES"
             "reported_suspect_allocation_bytes=20"
+            "pageheap_size_range_bytes=16..32"
             "wer_dump_type=2"
             "wer_dump_folder=$dumpDir"
             "pageheap_verification=$verifyOutput"
