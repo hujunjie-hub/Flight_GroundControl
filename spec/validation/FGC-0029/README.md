@@ -172,3 +172,8 @@ Configure, Build, Unit, serial Integration, installer creation, clean installati
 The bounded, locale-independent EXIF timestamp parser and the controller-level concurrency regression have strong exact-head mitigation evidence. The R19 differential matrix remains the leading causal evidence: the legacy `QDateTime::fromString` path produced ASan findings in the B/C arms while the fixed parser D arm did not; runtime QueryType capture showed the legacy path repeatedly querying `ZeroDigit`, `Grouping`, and `GroupSeparator`, while the fixed parser made zero system-locale queries. The Qt 6.11.1 source audit identifies unsynchronized system-locale cache fields as the leading candidate.
 
 **The historical first invalid write/free and exact Qt-side reference-count corruption are still not directly observed.** A clean post-fix stress matrix is mitigation/regression evidence, not proof of the first invalid operation. FGC-0029 therefore remains **OPEN / S1 / BLOCKED**; Issue #29 must not be closed by this R26 pass alone.
+
+
+## Root-cause source audit — 2026-11-13
+
+The Qt 6.11.1 explicit-format `QDateTime::fromString()` overload used by the original EXIF call sets the parser locale to `QLocale::c()` before parsing. The earlier claim that this exact call necessarily queries `QLocale::system()` is therefore unproven; see [`ROOT_CAUSE_AUDIT_20261113.md`](ROOT_CAUSE_AUDIT_20261113.md). FGC-0029 remains OPEN / S1 / BLOCKED until the historical first invalid operation is captured.
