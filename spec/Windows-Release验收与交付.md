@@ -18,7 +18,7 @@
 
 | Gate | 内容 | 必需证据 | 通过条件 |
 |---|---|---|---|
-| G0 | 仓库/分支/源码一致性 | Git 状态、branch、HEAD、PR | 在指定 feature branch；工作区变化可解释；测试与 HEAD 一致 |
+| G0 | 仓库/分支/源码一致性 | Git 状态、branch、HEAD | 在 `main` 上验收，工作区变化可解释，测试与 HEAD 一致 |
 | G1 | Windows 环境 | 环境报告 | Windows x64、MSVC 2022 x64、Qt MSVC x64、GStreamer MSVC x64 |
 | G2 | CMake Configure | configure.log、CMakeCache 摘要 | Release、Ninja、测试开启、依赖路径有效 |
 | G3 | Release Build | build.log | 编译和链接退出码 0，无未解决错误 |
@@ -49,7 +49,7 @@ CI 排除 Flaky/Network 是固定规则，不代表这些场景自动获得覆�
 
 ## 4. FCU 遥测协议和软件路径验收
 
-本 PR 的核心链路：
+地面站遥测的核心链路：
 
 `MAVLink wire frame → MockLink/Link → MAVLink parser → Vehicle dispatch → FlightTelemetryFactGroup → QML diagnostic UI`
 
@@ -168,24 +168,24 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 7. Installer 文件名、大小、SHA-256。
 8. Clean install 和安装后运行验证结果。
 9. RUN_ID、归档目录、ZIP 路径和 ZIP SHA-256。
-10. 新提交 SHA、是否推送、PR #3 当前状态。
+10. 本地验收 SHA、推送 SHA 和 `origin/main` 状态。
 11. 未解决问题、NOT_RUN / UNVERIFIED 项和下一步建议。
 
 交付报告必须使用 [模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)。不要只发“已修复”“编译通过”或截图；需要可复核日志和测试报告。
 
 ## 9. 阶段完成定义
 
-只有以下条件全部满足，才建议 PR #3 从 Draft 转为可评审状态：
+以下条件用于判定本阶段验收是否完成：
 
 - Windows x64 MSVC Release 配置和编译成功。
 - Unit 和 Integration 均实际执行且通过。
 - 可执行文件启动验证通过。
 - Installer 生成、干净安装、插件依赖和安装后启动验证通过。
-- 本 PR 遥测解码和 MockLink 分发测试全部通过。
+- 遥测解码和 MockLink 分发测试全部通过。
 - 适用的 MAVLink UDP SIL/故障注入专项测试结果明确；未执行项必须明确列为阶段遗留，不能宣称已覆盖。
 - 所有 S0/S1 阻断问题关闭或得到明确且经用户接受的处理决策。
 - 验收证据与当前 commit 一致且可复核。
-- 用户明确授权后才可改变 PR Draft 状态或合并；本指南不授权合并 main。
+- Windows Release 本地验收通过后推送 `main`，用同一提交的 CI 结果做复核。
 
 
 ## 10. GitHub Windows CI 自动证据归档门禁

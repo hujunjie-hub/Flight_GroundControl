@@ -1,8 +1,8 @@
 # Windows 本地开发、构建与调试指南
 
-版本：1.0  
-适用目标：Windows x64 / MSVC 2022 / Release  
-依据：当前分支 `.github/build-config.json`、`.github/workflows/windows.yml` 和对应 Composite Actions
+- 版本 1.0
+- 适用目标 Windows x64、MSVC 2022、Release 和 PowerShell 7
+- 构建配置见 `.github/build-config.json`、`.github/workflows/windows.yml` 和对应的 Composite Actions
 
 ## 1. 目标
 
@@ -18,7 +18,7 @@
 git clone https://github.com/hujunjie-hub/Flight_GroundControl.git
 cd Flight_GroundControl
 git fetch origin
-git switch --track origin/codex/phase2-fcu-telemetry
+git switch main
 git pull --ff-only
 git status --short --branch
 git rev-parse HEAD
@@ -30,8 +30,8 @@ git rev-parse HEAD
 cd <你的 Flight_GroundControl 本地目录>
 git status --short --branch
 git fetch origin
-git switch codex/phase2-fcu-telemetry
-git pull --ff-only origin codex/phase2-fcu-telemetry
+git switch main
+git pull --ff-only origin main
 ```
 
 如果本地有未提交修改，先让 Agent 检查并保护它们。禁止直接执行 `git reset --hard`、`git clean -fdx` 或覆盖式 checkout。
@@ -105,7 +105,7 @@ Qt 根目录应为：
 
 ## 4. 启动正确的 MSVC 环境
 
-从开始菜单打开 **x64 Native Tools Command Prompt for VS 2022**，然后在该命令行中启动 PowerShell：
+从开始菜单打开 **x64 Native Tools Command Prompt for VS 2022**，然后在该命令行中启动 PowerShell 7：
 
 ```cmd
 pwsh

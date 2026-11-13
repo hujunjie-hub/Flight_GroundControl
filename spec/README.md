@@ -1,26 +1,24 @@
 # Flight_GroundControl 项目规范入口
 
-版本：1.0  
-日期：2026-11-10  
-适用仓库：`hujunjie-hub/Flight_GroundControl`  
-当前工作分支：`codex/phase2-fcu-telemetry`  
-当前 PR：[#3](https://github.com/hujunjie-hub/Flight_GroundControl/pull/3)，Open / Draft  
-唯一规范入口：本文件
+- 版本 1.0
+- 日期 2026-11-13
+- 适用仓库 `hujunjie-hub/Flight_GroundControl`
+- 当前工作分支 `main`
 
 ## 1. 给本地 Agent 的第一条指令
 
 把下面这段直接交给本地 Codex / Claude Code / 其他代码 Agent：
 
-> 请先完整读取仓库根目录 `AGENTS.md`，再读取 `spec/README.md` 和其中指定的全部 Agent、构建、验收、问题闭环文档。确认当前分支为 `codex/phase2-fcu-telemetry`，只允许 Windows x64 MSVC Release。先检查 Git 状态和 PR，不要覆盖我的未提交修改。按规范在本地完成代码扫描、修改、增量编译、Unit、Integration、Installer 验证；所有问题按 GitHub Issues 规则登记，所有运行证据按 RUN_ID 归档。不得构建 Linux / macOS / Android / Debug，不得修改 main、合并或关闭 PR #3。每轮结束按交付模板报告实际执行结果，不能把 NOT_RUN 或 UNVERIFIED 写成 PASS。
+> 请先完整读取仓库根目录 `AGENTS.md` 和本文件引用的规范。用 PowerShell 7 同步 `main`，检查 Git 状态并保留用户修改。在本地完成 Windows x64 MSVC Release 配置、构建、Unit、Integration、可执行文件和 Installer 验证，按 RUN_ID 归档。记录实际结果并提交，验收通过后直接推送 `main`。GitHub Actions 用于复核推送的提交。
 
 ## 2. 项目交付原则
 
-本仓库从本阶段起采用“本地 Agent 快速开发 + 本地 Windows 验证 + GitHub PR 集成 + ChatGPT 独立验收”的协作方式。
+本仓库采用本地 Windows 构建与验收，验证通过后直接交付到 `main`。
 
 - 本地 Agent：扫描代码、定位根因、修改实现和测试、本地编译、运行测试、生成证据、提交修复。
 - 用户：在 Windows 开发机运行 Agent，审阅 Agent 的修改和提交；必要时上传证据 ZIP。
 - ChatGPT：负责架构与协议审查、验收标准、复杂问题分析、回归证据复核和阶段放行建议。
-- GitHub：保存代码、提交、PR 和动态问题状态。
+- GitHub：保存代码、提交和动态问题状态，并对已推送的提交执行 CI。
 - `spec/`：保存正式规范、验收标准、问题闭环流程、Agent 操作指南。
 - `work/validation/`：保存本地运行日志和临时报告，不提交 Git。
 
@@ -45,6 +43,7 @@
 | 项目 | 固定要求 |
 |---|---|
 | 产品构建平台 | Windows x64 |
+| 本地命令环境 | PowerShell 7（`pwsh`） |
 | 编译器 | Visual Studio 2022 / MSVC x64 |
 | 构建配置 | Release only |
 | Qt | 以 `.github/build-config.json` 为准；当前 6.11.1，MSVC 2022 x64 |
@@ -52,9 +51,7 @@
 | 构建系统 | CMake + Ninja |
 | 测试 | Unit + Integration，记录实际执行数量 |
 | 安装包 | Windows Installer，必须安装并验证 |
-| 开发分支 | `codex/phase2-fcu-telemetry` |
-| PR | #3，保持 Open / Draft |
-| main | 不得修改或合并 |
+| 开发和交付分支 | `main`，本地验收通过后正常推送 |
 
 Linux、macOS、Android、iOS、ARM64、Windows Debug、AppImage、Docker、Flatpak 等不属于本阶段产品构建和测试目标。Ubuntu runner 仍可执行纯文档、脚本、CodeQL、pre-commit 等与 Linux 产品构建无关的质量检查。
 
@@ -82,7 +79,7 @@ GroundControl 中的 Flight FCU 遥测全部是诊断和展示数据：
 
 **缺少报告、测试数量为 0、步骤跳过、被取消、运行中断、旧报告混入、源码 commit 不匹配，均不得标记 PASS。**
 
-问题状态与测试状态是两套独立状态。PR Open/Draft/Merged 又是第三套状态，不得混为一谈。
+问题状态与测试状态分别记录。
 
 ## 7. 本地交付和证据
 
@@ -106,6 +103,4 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 ## 8. 当前工作状态
 
-本规范创建时 PR #3 的基线 HEAD 为 `84c2106`，PR 保持 Open / Draft。该基线仅用于说明文档创建起点；Agent 每次运行必须重新读取远端和本地 HEAD，不得依赖本文件中的历史 SHA。
-
-下一轮开发以本地 Agent 对当前 PR 分支进行完整扫描为起点，优先解决 Windows Release 编译错误，再进入 Unit、Integration、Installer 和 MAVLink 遥测链路验收。
+每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。

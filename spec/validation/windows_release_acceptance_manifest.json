@@ -1,13 +1,11 @@
 {
   "schema": "flight-groundcontrol-windows-release-acceptance/1.0",
   "repository": "hujunjie-hub/Flight_GroundControl",
-  "branch": "codex/phase2-fcu-telemetry",
-  "pull_request": 3,
-  "pull_request_policy": {
-    "state": "OPEN",
-    "draft": true,
-    "merge_allowed_without_user_approval": false,
-    "main_must_remain_unchanged": true
+  "branch": "main",
+  "delivery": {
+    "local_shell": "PowerShell 7",
+    "local_validation_before_push": true,
+    "remote_verification_after_push": true
   },
   "product_target": {
     "os": "Windows x64",
@@ -62,7 +60,7 @@
       "required": true,
       "pass": [
         "correct_repository",
-        "feature_branch_not_main",
+        "main_branch",
         "commit_matches_test_artifacts",
         "working_tree_changes_explained"
       ]

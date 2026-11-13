@@ -1,10 +1,10 @@
 # 本地 Agent 操作总指南（Flight_GroundControl）
 
-版本：1.0  
-适用仓库：`hujunjie-hub/Flight_GroundControl`  
-当前开发分支：`codex/phase2-fcu-telemetry`  
-当前 PR：#3（Open / Draft）  
-唯一规范入口：`spec/README.md`
+- 版本 1.0
+- 适用仓库 `hujunjie-hub/Flight_GroundControl`
+- 当前开发分支 `main`
+- 本地命令环境 PowerShell 7（`pwsh`）
+- 规范入口 `spec/README.md`
 
 > **强制规则：Agent 每次接手任务，必须先读取本指南和引用规范，再检查仓库现状。不得只依据聊天摘要、旧日志、旧 CI 结果或猜测修改代码、更新问题状态或宣布验收通过。**
 
@@ -53,21 +53,20 @@ git status -sb
 必须确认：
 
 1. 仓库为 `Flight_GroundControl`，远端为用户指定仓库。
-2. 当前分支是 `codex/phase2-fcu-telemetry`，或用户明确指定的非 main 工作分支。
-3. PR #3 仍然 Open / Draft，目标分支为 main。
-4. 本地 HEAD 与远端分支关系明确；需要更新时只允许 fast-forward。
-5. 检查工作区是否有用户未提交修改；不得 reset、clean、checkout 覆盖、stash 丢弃或重写用户内容。
-6. 先检查现有 GitHub Issues，避免重复登记同一个根因。
-7. 读取目标文件的最新版本；修改前确认没有并发提交覆盖。
+2. 当前分支为 `main`。
+3. 本地 HEAD 与 `origin/main` 的关系明确，使用 fast-forward 同步远端更新。
+4. 检查工作区并保留用户未提交修改。
+5. 先检查现有 GitHub Issues，避免重复登记同一个根因。
+6. 读取目标文件的最新版本，确认并发提交的影响。
 
 推荐同步方式：
 
 ```powershell
-git switch codex/phase2-fcu-telemetry
-git pull --ff-only origin codex/phase2-fcu-telemetry
+git switch main
+git pull --ff-only origin main
 ```
 
-如果工作区有未提交修改、分支落后且无法 fast-forward、远端 HEAD 与本地不一致或 PR 状态异常，先报告并停止可能覆盖内容的操作。
+如果工作区有用户修改，先保护这些文件。如果远端有新提交，先检查差异，保留双方的提交，再验证更新后的源码。
 
 ## 4. 固定构建和测试范围
 
@@ -95,8 +94,8 @@ git pull --ff-only origin codex/phase2-fcu-telemetry
 6. **聚焦测试**：先运行变更对应的单个测试或测试组；确认通过后再进行完整测试。
 7. **完整验收**：执行 Release 完整构建、Unit、Integration、可执行文件启动验证、Installer 安装验证。
 8. **证据归档**：生成 RUN_ID，保存日志、JUnit XML、环境和 commit 指纹、报告、SHA-256。
-9. **代码提交**：按 Conventional Commits 提交到当前 PR 分支；每个提交应能对应问题 ID 或清晰任务。
-10. **推送和复核**：确认无用户未提交内容被混入后，推送当前 PR 分支；不强制推送，不改 main，不合并 PR。
+9. **代码提交**：按 Conventional Commits 提交到本地 `main`，引用问题 ID 或说明对应任务。
+10. **推送和复核**：核对本地验收提交和准备推送的源码，随后正常推送 `main`，检查同一提交的 CI。
 11. **输出交付报告**：使用模板列出实际执行项目、数量、结果、证据路径、提交和未解决问题。
 
 ## 6. 编码和测试规则
@@ -182,11 +181,11 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 
 ## 10. 提交和分支规则
 
-- 默认在 `codex/phase2-fcu-telemetry` 工作。
+- 在 `main` 上执行本地构建、验证和交付。
 - Conventional Commit 示例：`fix(Telemetry): reject stale FCU samples`、`test(Vehicle): cover FCU reconnect dispatch`、`docs(spec): add local Windows validation workflow`。
 - 每个 commit 说明修改内容；涉及 Issue 时在正文或提交说明中引用 FGC ID / GitHub Issue。
-- 允许提交并推送到当前 PR 分支；推送前必须确认没有混入用户无关的本地改动。
-- 不允许 force push、改写他人提交、删除分支、修改 main、合并或关闭 PR #3。
+- 推送前检查本地验收结果及待推送的修改，使用 `git push origin main`。
+- 保留远端历史，禁止 force push、改写他人提交或删除分支。
 - 不能仅为了 CI 变绿而删测试、跳过失败、屏蔽错误、放宽断言或改变协议定义。
 - 如果需要改 CI，只能保持 Windows x64 Release 产品验证目标；Linux Job 不得恢复，也不得成为 Windows 门禁依赖。
 
@@ -194,14 +193,14 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 
 严格按以下结构报告：
 
-1. 仓库 / 分支 / HEAD / PR 状态。
+1. 仓库、分支、HEAD。
 2. 本轮目标与完成情况。
 3. 修改文件及每项修改原因。
 4. 实际执行的命令（不要只写“已测试”）。
 5. 编译结果、Unit 数量、Integration 数量、失败/跳过数量。
 6. Installer 生成、安装、启动验证结果。
 7. 新建/更新的 FGC Issue、状态及链接。
-8. commit SHA、是否已推送、PR head 是否更新。
+8. 验收 commit SHA、推送 commit SHA 和远端状态。
 9. RUN_ID、证据 ZIP 路径和 SHA-256。
 10. 未解决问题、阻塞项、NOT_RUN / UNVERIFIED 项和下一步。
 
@@ -210,7 +209,7 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 ## 12. 禁止事项
 
 - 不得构建/测试非 Windows x64 Release 产品目标。
-- 不得修改 main、合并 PR、关闭 Draft PR。
+- 不得推送未完成本地验收的代码或强制改写远端历史。
 - 不得覆盖用户工作区或清理未知文件。
 - 不得伪造测试结果、数量、RUN_ID、Issue ID、SHA-256、CI 状态。
 - 不得把 MockLink Host 测试描述成真实 Flight UDP SIL 或 H723 实机测试。

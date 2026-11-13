@@ -8,7 +8,7 @@
 - 分支：
 - HEAD commit：
 - 工作区状态（clean/dirty）：
-- PR：#3（Open / Draft）
+- 交付分支：`main`
 - Agent：
 - 本轮目标：
 
@@ -101,8 +101,6 @@ MockLink 测试不得写成 UDP SIL 测试。没有 Flight SIL 发布端时，UD
 - NOT_RUN 项：
 - UNVERIFIED 项：
 - 安全边界/已知缺口：
-- 是否建议 PR 保持 Draft：是 / 否
-- 是否有用户明确授权改变 PR 状态：否 / 是（说明）
 
 ## 10. 证据归档
 
@@ -115,7 +113,6 @@ MockLink 测试不得写成 UDP SIL 测试。没有 Flight SIL 发布端时，UD
 ## 11. Git 交付
 
 - 新提交：
-- 是否已推送当前 PR 分支：
-- PR head：
-- main 是否未修改：是 / 否
+- 是否已推送 `main`：
+- `origin/main`：
 - 未解决问题和下一步：
