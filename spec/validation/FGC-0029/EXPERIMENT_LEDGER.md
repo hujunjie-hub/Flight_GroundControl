@@ -627,3 +627,19 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - Windows Release runs on the dependent FGC-0004/0019, FGC-0008 and FGC-0031 branches were cancelled while the branch/CI work was being revised; they are not acceptance evidence.
 
 **FGC-0029 remains OPEN / S1 / BLOCKED.** Do not treat the timeout adjustment as a pass, do not treat 0/36 as a proven memory fault without worker evidence, and do not close the root-cause issue.
+
+
+---
+
+## E-44 — Historical baseline ASan stress harness defect — 2026-11-13
+
+**Historical source:** `c746af2608de6c51e8632dd75775fef4dac6d97d`  
+**Diagnostic run:** [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) — **INVALID / HARNESS FAILURE**, not a product failure result.
+
+- The historical source built with MSVC ASan; the sequential GeoTagControllerTest suite completed **20/20**.
+- The 12-process × 3-round run generated **36/36** QtTest XML files. Every report contains 18 test cases, 0 failures, 0 errors and 0 skipped tests. This historical source predates the new concurrent-controller test slot, so 18 cases are expected.
+- The stress CSV nevertheless records 0/36 because every PowerShell worker job failed to return its result. The worker script referenced `$RequireStressCase` under `Set-StrictMode -Version Latest` without declaring it in the worker parameters or passing it through `Start-Job -ArgumentList`. The final reference is outside the XML parse catch and terminates the worker after the QGC process has run. The parent also read the job error stream only after `Receive-Job`, which consumed the error and hid the actual exception.
+- Diagnostic fix committed on `diag/fgc0029-pre-fix-asan`: [4b400d4](https://github.com/hujunjie-hub/Flight_GroundControl/commit/4b400d4f56d7669ce63e33fd2a02f26d09b593cb) passes `RequireStressCase` into each worker and captures the error stream before `Receive-Job`. The workflow path filter now includes the stress script so future script-only changes trigger the run.
+- Corrected historical baseline rerun [43370205206](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43370205206) is **QUEUED**. No historical crash/no-crash conclusion can be drawn from run 43364448297 because process exit codes were not retained.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** Do not treat the 36 XML files as a 36/36 process pass until the corrected harness records exit codes, timeout state and ASan findings.
