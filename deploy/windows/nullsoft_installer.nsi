@@ -84,14 +84,23 @@ cleanupOrphanedRegistry:
 
 doUninstall:
     DetailPrint "Uninstalling previous version..."
+    ${GetParent} "$R1" $R2
+    ${GetFileName} "$R1" $R3
+    ; Run a copy so the old uninstaller can remove its own installation directory.
+    InitPluginsDir
     ClearErrors
-    ExecWait "$R0 /S -LEAVE_DATA=1 _?=$INSTDIR"
+    CopyFiles /SILENT /FILESONLY "$R1" "$PLUGINSDIR"
     ${If} ${Errors}
-        MessageBox MB_OK|MB_ICONEXCLAMATION "Failed to start previous uninstaller."
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Failed to copy previous uninstaller." /SD IDOK
+        Abort
+    ${EndIf}
+    ExecWait '"$PLUGINSDIR\$R3" /S -LEAVE_DATA=1 _?=$R2' $0
+    ${If} ${Errors}
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Failed to start previous uninstaller." /SD IDOK
         Abort
     ${EndIf}
     IntCmp $0 0 doInstall
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Could not remove a previously installed ${APPNAME} version.$\n$\nPlease remove it before continuing."
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Could not remove a previously installed ${APPNAME} version.$\n$\nPlease remove it before continuing." /SD IDOK
     Abort
 
 doInstall:
@@ -120,7 +129,6 @@ doInstall:
     WriteRegDWORD    HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
     WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
 
-done:
     SetRegView lastused
 SectionEnd
 
