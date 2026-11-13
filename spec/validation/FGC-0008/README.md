@@ -10,10 +10,10 @@ Unit 测试包含英文用户界面文本断言。测试宿主使用非英语 Wi
 
 ## 修复与回归设计
 
-- `test/UnitTestList.cc` 的 `pinDeterministicTestLanguage()` 在 `runTests()` 和 `runLightweightTests()` 前固定应用语言为 English。
+- `test/UnitTestList.cc` 的 `pinDeterministicTestLanguage()` 在 `runTests()` 和 `runLightweightTests()` 前执行。
 - Windows Release CI 在 Unit 测试前将当前用户 Culture 设置为 `zh-CN`。
-- 测试入口通过 `QLocale::system().name()` 强制验证 Qt 实际看到的是 `zh-CN`；如果 Qt 仍看到英文或其他 locale，测试进程直接失败。
-- 同一入口确认应用语言 Fact 已固定为 `QLocale::English`。
+- 两种测试入口均通过 `QLocale::system().name()` 强制验证 Qt 实际看到的是 `zh-CN`；如果 Qt 仍看到英文或其他 locale，测试进程直接失败。
+- Full-app 测试路径另外确认应用语言 Fact 已固定为 `QLocale::English`。Lightweight 路径只有 `QCoreApplication`，因此只验证宿主 locale，不执行应用语言 Fact 检查。
 - Unit 测试结束后，CI 在 Integration 测试前恢复 `en-US`。
 - Windows Release 归档的 `environment.json` 记录 `unit_test_host_culture` 和 `archive_host_culture`；PASS 要求分别为 `zh-CN` 和 `en-US`。
 
