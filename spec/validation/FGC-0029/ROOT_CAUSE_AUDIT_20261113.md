@@ -53,3 +53,14 @@ The historical test class predates `_concurrentControllersExifStressTest`; the s
 ## Branch and scope
 
 This diagnostic-only branch is based on the validated FGC-0037 code/doc baseline. It changes only the stress runner's optional test-slot requirement and adds this workflow/audit record. It does not change product source and is not intended for merge into the product branch unless the diagnostic tooling is independently useful.
+
+
+## R31 PageHeap Release diagnostic result — 2026-11-13
+
+The exact historical production reproducer `c746af2608de6c51e8632dd75775fef4dac6d97d` was rebuilt as MSVC x64 Release with Qt 6.11.1 and PDB symbols. The historical EXIF `QDateTime::fromString()` call was preserved; only the current `_concurrentControllersExifStressTest` was injected into the historical test source from `119edd4af97af4e159050650317fd945e4e03ecc`.
+
+GFlags confirmed `QGroundControl.exe: page heap enabled with flags (full size traces)` for the configured 16–32-byte allocation range, which covers the historical 20-byte block. UST was enabled and WER full dumps were configured. Run `43444888358` completed 12 isolated processes × 3 synchronized rounds: 36/36 PASS, all 36 XML reports had 19 tests with the required concurrency case executed, zero failures/errors/skips/timeouts, zero `0xC0000374` exits, and zero WER dumps. Artifact `14049871972` was inspected, including all process CSV rows and XML reports.
+
+**Interpretation:** the historical Release/PageHeap workload did not reproduce. This is a valid non-reproduction under one CI timing window, not proof that the defect is absent and not first-invalid-operation evidence. FGC-0029 remains **OPEN / S1 / BLOCKED**.
+
+A follow-up workflow revision on main `1d117516f0744ec26126b2e23138c238caf1d101` and diagnostic branch `cf676641b062a062e1d68e48646d79b7accb49ea` adds a Windows Desktop Debuggers installation fallback and validates the actual `full size traces` GFlags output. Exact-head run `43451171747` is pending; do not claim that revision passed until its run completes.

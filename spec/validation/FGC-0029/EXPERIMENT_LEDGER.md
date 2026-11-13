@@ -532,3 +532,27 @@ E-37、E-38 原文全部保留，本节仅追加。
 | 4 | R23a 最终 HEAD 与 CI | 一次性文档提交取得 R23a final HEAD；Windows / Check Links / pre-commit 结果写入 R23a 交付 ZIP 的 `CI-RESULT-R23a.md`，**不再为记录 CI 结果追加提交** |
 
 - 未修改 `src/`，未重跑 R17/R19 实验，未改 Qt，未改 main，未合并 PR，未关闭 Issue，未删除任何历史证据。
+
+
+## E-40 R31 main Windows Release 与工程检查
+
+- 被测 HEAD：`0b8cb60953277be90d14dc630cd84678f3d333e0`。
+- Windows Release run `43444900333`：**SUCCESS**；Unit `198/198`、Integration `71/71`，非英文系统区域测试通过，可执行文件验证、Installer 生成、干净安装和安装后可执行文件验证全部通过。
+- pre-commit run `43444900133`：**SUCCESS**。
+- CI Scripts run `43444900339`：**SUCCESS**（Python 3.10 与 3.12）。
+- 后续 main HEAD `1d117516f0744ec26126b2e23138c238caf1d101` 仅更新 PageHeap 诊断 workflow，不修改产品源码/测试；其新 workflow 验证单独登记于 E-42。
+
+## E-41 R31 历史 Release PageHeap 首轮诊断
+
+- Workflow run `43444888358`：**SUCCESS**；诊断分支 HEAD `91d368b1edfd485517a729cefcdfc34fe6c7b14d`。
+- 历史生产源码：`c746af2608de6c51e8632dd75775fef4dac6d97d`；历史 `QDateTime::fromString` EXIF 解析调用保持未修改。仅将当前 `_concurrentControllersExifStressTest` 注入历史测试源码，来源 `119edd4af97af4e159050650317fd945e4e03ecc`。
+- 工具配置：MSVC x64 Release、Qt 6.11.1、PDB；GFlags PageHeap 对 16–32 B 分配启用 full-size traces（覆盖历史报告中的 20 B 块）；UST enabled；WER full dump type 2 已配置。
+- 实际矩阵：12 进程 × 3 同步轮次 = 36/36 PASS；36 份 XML 均为 19 tests、0 failures、0 errors、0 skipped，并包含且执行 `_concurrentControllersExifStressTest`；0 timeout、0 `0xC0000374`、0 WER dump。
+- 证据：artifact `14049871972`；已检查 `validation-metadata.txt`、`pageheap-setup.txt`、`pageheap-summary.txt`、`process-results.csv`、36 份 XML 和 stdout/stderr。`pageheap-summary.txt` 记录 `failed_process_results=0`、`heap_corruption_0xC0000374_processes=0`、`wer_full_dumps=0`。
+- 结论：**历史 Release PageHeap 下未复现**。该结果不证明历史缺陷不存在，也没有捕获 first invalid write/free；不得作为关闭 FGC-0029 的依据。
+
+## E-42 R31 PageHeap workflow 可移植性与结果断言修正
+
+- 早期 run `43387943510` 在 PageHeap 初始化前因 PowerShell `$env:ProgramFiles(x86)` 解析错误而失败；此轮未执行压力矩阵。修复为 `${env:ProgramFiles(x86)}`，提交 `0b8cb609` / 诊断分支 `91d368b1`。
+- 后续 workflow 加入 Windows Desktop Debuggers/GFlags 缺失时的 SDK bundle 安装兜底，并要求验证输出确认 `full size traces`，而非只检查 `QGroundControl.exe` 名称。main 提交 `1d117516`，诊断分支提交 `cf676641`。
+- 最新 exact-head workflow run `43451171747` 尚未完成；完成前不把新断言/安装兜底标记为已通过。历史 run `43444888358` 的实际 GFlags 输出已确认是 `full size traces`。

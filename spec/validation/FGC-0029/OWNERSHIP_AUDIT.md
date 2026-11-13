@@ -3,12 +3,13 @@
 审计基线：`8117cfe`（R16）。范围：`ExifParser`、`ExifUtility`、`GeoTagController`、
 `QtConcurrent`/`QFuture`/`QFutureWatcher`、`QByteArray`/`QString`、libexif、跨进程资源。
 
-结论概要：
+结论概要（R31 当前结论）：
 
-- 本模块**没有**自有的重复释放、悬垂指针或所有权错误能解释该崩溃。
-- 崩溃来自 Qt 的**进程级共享状态**（`QLocale::system()`），由 `QDateTime::fromString()` 引入。
-- R16 提出的“`waitForFinished()` 泵事件循环导致重入”假设**不成立**（源码证明，见 3.6）。
-- 另发现一处与本缺陷无关的防御性缺口（4.2），单独立项，不混入本次根因修复。
+- 当前产品代码的 `ExifParser::readTime()` 已对 EXIF ASCII 格式、component 数、缓冲区长度和 NUL 终止符做边界验证，并直接解析固定格式时间；不再经由 `QDateTime::fromString()`。
+- 历史 ASan 报告确认：20 字节 QString 数据块发生跨 worker 线程 double-free。首次破坏引用计数的具体操作、线程交错和 Qt 内部确切调用者仍未证实。
+- `QSystemLocalePrivate::zeroDigit()` 的 lazy-cache 路径是高度相关候选机制，不是已证明的 Qt 缺陷或唯一根因。不得将 `QDateTime::fromString()` 栈帧直接等同于首次非法操作。
+- FGC-0037 的 GPS Version ID 长度越界缺口已单独修复并关闭；该修复不构成 FGC-0029 的根因证据。
+- R31 历史 Release PageHeap run `43444888358` 在 16–32 B full PageHeap + UST 下完成 36/36，无复现；它是非复现证据，不是根因闭环。
 
 ## 1. ExifParser
 
@@ -28,7 +29,7 @@ return QString::fromUtf8(value).trimmed();
 | `QString` 所有权 | `fromUtf8` 深拷贝；`trimmed()` 可能共享同一 `QStringData`（原子引用计数），安全 |
 | 越界写 | 无（写入范围由 `sizeof(value)` 约束） |
 
-### 1.2 `readTime()`（修复前）
+### 1.2 `readTime()`（历史修复前路径）
 
 ```cpp
 ExifData *data = ExifUtility::loadFromBuffer(buffer);
@@ -38,14 +39,17 @@ exif_data_unref(data);
 return QDateTime::fromString(dateTimeDigitized, QStringLiteral("yyyy:MM:dd HH:mm:ss"));
 ```
 
+
+**当前 main 实现（R31）**：`ExifParser::readTime()` 先检查 `EXIF_FORMAT_ASCII`、`data`、`components`（1..20）和 `size >= components`，再在声明长度内查找 NUL 终止符；之后通过 `parseExifTimestamp(std::string_view)` 解析 `yyyy:MM:dd HH:mm:ss`，用 `QDate`/`QTime` 校验日期时间。此路径不创建中间 `QString`，也不调用 `QDateTime::fromString()`。
+
 | 检查项 | 结论 |
 |---|---|
 | `ExifData` 生命周期 | `loadFromBuffer` 返回的 `ExifData` 由本函数持有；`readString` 之后 `unref`，之后不再解引用该对象 |
 | 输入 `QByteArray` 别名 | libexif `exif_data_load_data()` 不保留输入指针（缩略图另行 `exif_data_alloc` 复制），`unref` 不会碰到调用方缓冲区 |
 | `QString` 所有权 | `dateTimeDigitized` 为值语义，函数返回后自然释放 |
-| **`QDateTime::fromString` 的可重入性** | **不安全**：构造 `QDateTimeParser` → `QLocale::system()`，见 `ROOT_CAUSE_ANALYSIS.md` |
+| **历史 `QDateTime::fromString` 路径** | ASan 栈中与 double-free 相关；Qt 内部首次非法引用计数操作仍未证实。当前 `readTime()` 已绕开该路径 |
 
-> 这是本缺陷的**唯一**非法操作来源：本次调用位于 QtConcurrent worker 线程上。
+> 这是历史复现路径上的已知调用点，不足以证明它就是首次非法操作来源。当前 main 已绕开该调用路径。
 
 ### 1.3 `write()`
 
@@ -154,18 +158,8 @@ worker 线程先后来访同一全局 locale）。
 建议：后续任何“把日志/目录解析放到 worker 线程”的改动，都不要使用带 format 参数的
 `QDateTime/QDate/QTime::fromString`，或等 Qt 修复 `QLocale::system()` 后再放开。
 
-## 6. 次要发现（与本缺陷无关，单独立项）
+## 6. 次要发现（FGC-0037，已修复并关闭）
 
-`ExifParser::write()` 对 GPS Version ID 的四字节写入没有长度检查：
+历史版本的 `ExifParser::write()` 对 GPS Version ID 四字节写入未验证输入 entry 的实际格式和长度，畸形 JPEG 可触发越界写。该问题已由 FGC-0037 单独修复：当前实现要求 `EXIF_FORMAT_BYTE`、`components == 4`、`data != nullptr`、`size == 4`，否则在写入前返回失败。回归测试覆盖有效 entry、短 entry、错误格式和错误 component 数；PR #39 已合并，Issue #37 已关闭。
 
-```cpp
-ExifEntry *versionEntry = getOrCreateEntry(EXIF_TAG_GPS_VERSION_ID, EXIF_FORMAT_BYTE, 4);
-if (versionEntry && versionEntry->data) {
-    versionEntry->data[0] = 2; ... versionEntry->data[3] = 0;
-}
-```
-
-其余写函数都有 `entry->size` 检查，只有此处缺少。若输入图片的 GPS IFD 中
-`GPSVersionID` 的 components < 4（畸形/恶意文件），会越界写 1–3 字节。
-本轮 ASan 复现中**未**出现该路径（模板图片该标签为 4 字节），因此**不并入本次根因修复**，
-以免混淆修复归因；建议新建 issue 按“防御性长度检查”处理。
+该修复与 FGC-0029 的并发 double-free 根因相互独立，不应混淆归因。

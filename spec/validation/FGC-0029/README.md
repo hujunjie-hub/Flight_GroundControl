@@ -4,8 +4,8 @@
 |---|---|
 | Issue | https://github.com/hujunjie-hub/Flight_GroundControl/issues/29（**OPEN**） |
 | 等级 | S1 |
-| 分支 | `codex/phase2-fcu-telemetry` |
-| 根因修复提交 | `8295dc05b52bcf2e839bc2bcf2be38bb9109aadb`（保留，未回退） |
+| 产品分支 | `main`（历史诊断分支：`diag/fgc0029-pre-fix-pageheap`） |
+| 缓解修复提交 | `8295dc05b52bcf2e839bc2bcf2be38bb9109aadb`（保留；不等同于根因已证实） |
 | validated_code_head | `89e2914ff1445e1b86aa2851d6fd7fb8c5a30206`（产品 `src/` 的最后一个相关 HEAD） |
 | final_head（R21） | `f00966791ae06327aee4beb3e620b43d78f93015` |
 | R21 Windows CI | **43077208284 SUCCESS**（Unit 198/198、Integration 70/70、Installer 与安装后验证通过） |
@@ -16,7 +16,17 @@
 | R22 Check Links | **43129824818 SUCCESS**（`Errors = 0`） |
 | R22 pre-commit | **43129824742 SUCCESS** |
 | R23 | 仅文档收尾（归档根目录 README 修正、本 README 的 R22 登记、台账 E-38）；HEAD 与 CI 见 R23 交付的 `RUN-IDENTITY.txt` / `CI-RESULT-R23.md` |
-| PR #3 | Open / **Draft**（未合并，main 未修改） |
+| PR #3 | **Merged**（`c26f20c8209838aeb404382ede506754ecc9f71c`） |
+
+## R31 最新验证（2026-11-13）
+
+- **当前 main 产品/测试基线**：测试 HEAD `0b8cb60953277be90d14dc630cd84678f3d333e0`；Windows Release run `43444900333` SUCCESS，Unit `198/198`、Integration `71/71`，非英文系统区域回归、可执行文件、Installer、干净安装及安装后启动验证全部通过。
+- **同 HEAD 的工程检查**：pre-commit `43444900133` SUCCESS；CI Scripts `43444900339` SUCCESS（Python 3.10/3.12）。
+- **当前 main HEAD**：`1d117516f0744ec26126b2e23138c238caf1d101`，只更新 FGC-0029 PageHeap 诊断 workflow；产品源码与测试没有在 `0b8cb60` 后变化。
+- **历史版本 Release PageHeap**：run `43444888358` SUCCESS，诊断分支 HEAD `91d368b1edfd485517a729cefcdfc34fe6c7b14d`；历史生产源码 `c746af2608de6c51e8632dd75775fef4dac6d97d`，仅注入当前并发回归用例（来源 `119edd4af97af4e159050650317fd945e4e03ecc`）。
+- PageHeap 对 `16..32` 字节分配启用 full-size traces（覆盖历史 `20 B` 块），UST 已启用，WER full dump 已配置。`12 × 3 = 36` 个进程全部通过；每份 XML 为 19 tests，包含并执行 `_concurrentControllersExifStressTest`；0 failure/error/skip/timeout，0 个 `0xC0000374`，0 个 WER dump。证据归档 `14049871972` 已逐项检查。
+- **判读**：这是历史 Release 时序下的有效非复现结果，不是根因闭环；不能据此关闭 Issue #29。
+- **下一轮诊断**：PageHeap workflow 最新修订在 main `1d117516`、诊断分支 `cf676641b062a062e1d68e48646d79b7accb49ea`；exact-head run `43451171747` 尚待完成。它增加缺失 Debuggers feature 的安装兜底，并校验 GFlags 的 `full size traces` 实际输出。
 
 ## 1. 结论状态（不得过度表述）
 
@@ -43,6 +53,9 @@ R17 的"无锁修改"说法已撤回。
 - `final_head = d49678e`（R23）：只包含文档修改。CI：Windows `43141092273` success、
   Check Links `43141092396` success、pre-commit `43141092261` success。
 - **三个（及以上）文档 HEAD 与 validated_code_head 的 CI 结果互不可替代**；引用时必须写明 HEAD。
+- `validated_product_code_head = 73404fc90bbde92ae111d1f5706d7a7f7ef33985`：当前 main 的 `ExifParser.cc`、`ExifParserTest.cc`、`GeoTagControllerTest.cc` blob 与该已通过 MSVC ASan 的产品代码一致；ASan run `43380452713` 为 20/20 ExifParserTest、20/20 GeoTagControllerTest、36/36 同步进程压力通过，0 ASan findings。
+- `main_validation_head = 0b8cb60953277be90d14dc630cd84678f3d333e0`：Windows run `43444900333` Unit 198/198、Integration 71/71、安装包与安装后验证通过。
+- `main_workflow_head = 1d117516f0744ec26126b2e23138c238caf1d101`：仅 PageHeap 诊断 workflow 更新；不能把 `0b8cb60` 的 CI 结果误写成对不同产品源码的验证。
 
 ## 2. 六份 ASan 报告
 
@@ -71,7 +84,7 @@ B(`fromString`)=**40040**、C(legacy)=**40040**、D(修复后)=**0**。
 
 ```
 spec/validation/FGC-0029/
-    README.md                              ← 本文件（R22 状态）
+    README.md                              ← 本文件（R31 状态）
     ROOT_CAUSE_ANALYSIS.md                 ← 四级证据划分（FACT / SOURCE-CONFIRMED / STATIC-INFERENCE / UNCONFIRMED）
     ROOT_CAUSE_ANALYSIS-R17-superseded.md  ← 被取代的 R17 原文（保留错误假设）
     ROOT_CAUSE_ANALYSIS-R18-superseded.md  ← 被取代的 R18 原文（保留）
@@ -81,7 +94,7 @@ spec/validation/FGC-0029/
     OWNERSHIP_AUDIT.md                     ← 所有权与异步生命周期审计
     REPRODUCTION_GUIDE.md                  ← 复现步骤
     FIX_VALIDATION.md                      ← 修复前后对照 + R21 更正
-    EXPERIMENT_LEDGER.md                   ← E-01…E-38 全部登记（含 SUPERSEDED 标记；R23a 追加 E-39）
+    EXPERIMENT_LEDGER.md                   ← E-01…E-42 全部登记（含 SUPERSEDED 标记；保留失败实验）
     evidence/                              ← 证据索引（真实文件在 ZIP 内）
 ```
 
@@ -97,13 +110,14 @@ spec/validation/FGC-0029/
 - [x] 产品代码 HEAD `89e2914`：Windows run `43061078850` success（Unit 198/198、Integration 70/70）
 - [x] R21 文档 HEAD `f009667`：Windows `43077208284` success、Check Links `43077207915` success、pre-commit `43077210673` success
 - [x] R22 文档 HEAD `e6185bd`：Windows `43129824822` success（Unit 198/198、Integration 70/70、FlightTelemetryDispatchTest 20.34 s）、Check Links `43129824818` success、pre-commit `43129824742` success
+- [x] R31 main HEAD `0b8cb60`：Windows `43444900333` success（Unit 198/198、Integration 71/71、Installer/clean install/runtime verification）；pre-commit `43444900133`、CI Scripts `43444900339` success
+- [x] R31 historical Release PageHeap `43444888358`：36/36 processes, 36/36 stress cases, 0 failures, 0 WER dumps; non-reproduction only, not root-cause closure
 - [ ] 首次破坏引用计数的具体操作与线程交错（未证实）
 - [ ] 外部独立验收
 - [ ] Issue #29 关闭（**保持 OPEN**，由独立验收决定）
 
 ## 6. 相关但独立
 
-FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）独立登记，本轮未处理；
-`ExifParser::write()` 的 `GPSVersionID` 长度检查缺口见 `OWNERSHIP_AUDIT.md` §6，同样建议单独立项。
+FGC-0037（Issue #37）已通过 PR #39 合并修复并关闭：`GPSVersionID` 现验证 BYTE 格式、4 个 components、非空数据及精确 4 字节长度；畸形短长度、错误格式和错误 component 数有 ASan 回归覆盖。该问题与 FGC-0029 的历史并发堆损坏根因相互独立。
 
-
+FGC-0029 仍为 **OPEN / S1 / BLOCKED**：ASan 已确认历史 double-free，当前缓解代码和回归矩阵通过，但首次破坏引用计数的操作、确切线程交错及 Qt 内部调用者尚未证实。
