@@ -1,6 +1,7 @@
 #include "FlightTelemetryPageUITest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QVariant>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
@@ -45,6 +46,11 @@ QString translatedTelemetryText(const char *sourceText)
 
 void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 {
+    ignoreLogMessage(
+        "ComponentInformation.RequestMetaDataTypeStateMachine",
+        QtWarningMsg,
+        QRegularExpression(QStringLiteral("COMP_METADATA_TYPE_GENERAL : failed to load metadata \\(primary and fallback\\)")));
+
     runWithMockLink(
         []() { return MockLink::startGenericMockLink(); },
         [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
