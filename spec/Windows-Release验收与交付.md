@@ -201,6 +201,7 @@ Windows Release workflow 在 Unit、Integration、Installer、干净安装和安
 - Qt/GStreamer 根目录优先采用存在的 `QT_ROOT_DIR` / `GSTREAMER_1_0_ROOT_MSVC_X86_64` 环境目录；缺失或无效时，分别回退到 CMakeCache 的 `Qt6_DIR`（解析到 Qt 安装根目录）和 `GStreamer_ROOT_DIR`。目录不存在时记录 `UNVERIFIED`。
 - PASS 还要求 CMake、Ninja、Python、MSVC、Qt、GStreamer 环境事实可从构建缓存/实际可执行文件解析；MSVC PATH 编译器若可用，必须与 CMake 缓存编译器路径一致。
 - 若调用方请求 PASS 但证据不完整，脚本仍先生成诊断 ZIP 和 SHA-256，再将归档验证结果降为 FAIL 并使 CI 步骤失败；不得生成缺报告的 PASS 归档。
+- 归档 manifest 的 UTC 时间戳使用 PowerShell `[DateTime]::UtcNow` 属性（不带方法调用括号）；Windows CI 必须实际执行归档步骤并验证 ZIP 与 SHA-256 文件存在，不能仅以脚本静态检查通过作为验收。
 - FAIL / PARTIAL 仍保留本轮可获得的日志、JUnit、环境摘要和清单，便于定位失败。
 - 归档 manifest 记录 GitHub run ID、attempt、PR head ref、实际 checkout commit、JUnit 统计、环境来源、逐文件 SHA-256 和 ZIP SHA-256。
 
