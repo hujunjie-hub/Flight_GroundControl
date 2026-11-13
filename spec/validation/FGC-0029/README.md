@@ -1,4 +1,4 @@
-# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R22 状态）
+# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R26 状态）
 
 | 项目 | 内容 |
 |---|---|
@@ -103,8 +103,7 @@ spec/validation/FGC-0029/
 
 ## 6. 相关但独立
 
-FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）独立登记，本轮未处理；
-`ExifParser::write()` 的 `GPSVersionID` 长度检查缺口见 `OWNERSHIP_AUDIT.md` §6，同样建议单独立项。
+FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）已在 R26 独立修复并通过精确 HEAD 的 MSVC ASan 与 Windows Release 验收，Issue #37 已关闭。该安全修复与本 Issue 的历史堆损坏根因调查相互独立。
 
 
 
@@ -147,4 +146,29 @@ The ASan workflow now has three distinct gates:
 
 The previous exact-head ASan run `43275152519` completed the instrumented build and ExifParserTest 20/20. GeoTagControllerTest itself passed 1/1, but the workflow stopped because the expected stress slot was missing. That run is a workflow-validation failure, not an ASan memory finding and not a completed concurrency matrix.
 
-**Current-head CI is pending. FGC-0029 remains BLOCKED / S1.** A successful 12 × 3 matrix will be regression/mitigation evidence only; it does not identify the historical first invalid operation or prove the Qt-side ownership/refcount root cause. Issue #29 remains OPEN until the causal closure requirement is met.
+At the time of the R25 update, current-head CI was pending; the R26 exact-head results below supersede that pending state. **FGC-0029 remains BLOCKED / S1.** A successful 12 × 3 matrix will be regression/mitigation evidence only; it does not identify the historical first invalid operation or prove the Qt-side ownership/refcount root cause. Issue #29 remains OPEN until the causal closure requirement is met.
+
+
+---
+
+## R26 — exact-head ASan and Windows Release validation — 2026-11-13
+
+**Validated code HEAD:** `d38eaeb6c449ca887fa34bb2eb7ffbddab3b91bb` (based on phase-2 HEAD `c26f20c8209838aeb404382ede506754ecc9f71c`).
+
+### Dedicated MSVC ASan — [43348178961](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43348178961) — SUCCESS
+
+- Complete C/C++ compile and link `/fsanitize=address` instrumentation verified.
+- `ExifParserTest`: 20/20 sequential repetitions passed.
+- `GeoTagControllerTest`: 20/20 sequential repetitions passed; every report executed `_concurrentControllersExifStressTest`.
+- Multi-process matrix: 12 isolated processes × 3 rounds = **36/36** successful process runs; all rounds passed the synchronized ready/start barrier.
+- No AddressSanitizer diagnostic; evidence artifact upload succeeded.
+
+### Windows x64 MSVC Release — [43348185004](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43348185004) — SUCCESS
+
+Configure, Build, Unit, serial Integration, installer creation, clean installation, installed executable verification, attestation and artifact upload all passed on the same validated code HEAD.
+
+### Conclusion and boundary
+
+The bounded, locale-independent EXIF timestamp parser and the controller-level concurrency regression have strong exact-head mitigation evidence. The R19 differential matrix remains the leading causal evidence: the legacy `QDateTime::fromString` path produced ASan findings in the B/C arms while the fixed parser D arm did not; runtime QueryType capture showed the legacy path repeatedly querying `ZeroDigit`, `Grouping`, and `GroupSeparator`, while the fixed parser made zero system-locale queries. The Qt 6.11.1 source audit identifies unsynchronized system-locale cache fields as the leading candidate.
+
+**The historical first invalid write/free and exact Qt-side reference-count corruption are still not directly observed.** A clean post-fix stress matrix is mitigation/regression evidence, not proof of the first invalid operation. FGC-0029 therefore remains **OPEN / S1 / BLOCKED**; Issue #29 must not be closed by this R26 pass alone.

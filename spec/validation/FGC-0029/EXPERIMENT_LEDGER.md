@@ -566,6 +566,22 @@ Run `43275152519` on head `9b22bab756139bd46174515dfb724c0e0120bfdd`:
 
 ## Current status
 
-The new source, XML parser and workflow gates are committed. The exact-head CI result is **PENDING** at this ledger update. Do not treat the prior workflow failure as a product memory error, and do not treat the 1/1 sequential controller run as concurrency acceptance.
+The new source, XML parser and workflow gates are committed. At the time of this E-40 ledger update, the exact-head CI result was **PENDING**. E-41 below records the completed R26 ASan and Windows Release runs; the prior workflow failure remains a workflow-validation failure, not a product memory error.
 
 FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mitigation regression evidence, not proof of the historical first invalid write/free or the exact Qt-side refcount interleaving. No root-cause closure is claimed.
+
+
+---
+
+# E-41 — R26 exact-head ASan and Windows Release evidence
+
+**Validated code HEAD:** `d38eaeb6c449ca887fa34bb2eb7ffbddab3b91bb`.
+
+| Gate | Run | Result |
+|---|---|---|
+| Dedicated MSVC ASan | [43348178961](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43348178961) | **SUCCESS** — complete instrumentation; ExifParserTest 20/20; GeoTagControllerTest 20/20; 12-process × 3-round stress 36/36; no ASan diagnostics; artifact uploaded |
+| Windows x64 MSVC Release | [43348185004](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43348185004) | **SUCCESS** — Configure, Build, Unit, Integration, installer, clean install, installed executable, attestation and artifact upload |
+
+- FGC-0037 GPS Version ID malformed-entry guard: **VERIFIED** on this code HEAD; Issue #37 closed.
+- FGC-0029 bounded EXIF parser/concurrency mitigation: regression gates passed, but **root cause remains BLOCKED / S1 / OPEN**. The historical first invalid operation is not directly proven; do not close Issue #29.
+- The R26 code HEAD is the validated code baseline. Any later documentation-only commit must not be described as a newly ASan-tested code HEAD unless its own workflow completes.
