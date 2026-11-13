@@ -585,3 +585,26 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - FGC-0037 GPS Version ID malformed-entry guard: **VERIFIED** on this code HEAD; Issue #37 closed.
 - FGC-0029 bounded EXIF parser/concurrency mitigation: regression gates passed, but **root cause remains BLOCKED / S1 / OPEN**. The historical first invalid operation is not directly proven; do not close Issue #29.
 - The R26 code HEAD is the validated code baseline. Any later documentation-only commit must not be described as a newly ASan-tested code HEAD unless its own workflow completes.
+
+
+---
+
+# E-42 — Qt 6.11.1 explicit-format source audit and pre-fix ASan diagnostic
+
+**Date:** 2026-11-13  
+**Diagnostic baseline:** `c746af2608de6c51e8632dd75775fef4dac6d97d`  
+**Current mitigation code baseline:** `d38eaeb6c449ca887fa34bb2eb7ffbddab3b91bb`
+
+The R26 ASan artifact `fgc0037-windows-msvc-asan-d38eaeb6c449ca887fa34bb2eb7ffbddab3b91bb` contains a CMake cache resolving Qt **6.11.1**.
+
+An independent source audit found that the original explicit-format call:
+
+`QDateTime::fromString(dateTimeDigitized, QStringLiteral("yyyy:MM:dd HH:mm:ss"))`
+
+resolves through the Qt 6.11.1 explicit-format overload, whose implementation calls `dt.setDefaultLocale(QLocale::c())` before parsing. Although `QDateTimeParser` initially constructs with `QLocale::system()`, that locale is overwritten for this call. Therefore the previous attribution of the EXIF parser's own work to concurrent system-locale queries is **not proven**. The historical runtime QueryType observations need callsite correlation and may originate elsewhere. See [ROOT_CAUSE_AUDIT_20261113.md](ROOT_CAUSE_AUDIT_20261113.md).
+
+This does not invalidate the observed heap corruption or the bounded-parser mitigation. It changes the root-cause status: do not present the Qt system-locale race as the established cause.
+
+A diagnostic-only branch `diag/fgc0029-pre-fix-asan` is being used to rebuild the exact historical reproducer commit under MSVC ASan and rerun 20 sequential controller tests plus the 12-process × 3-round stress matrix. The historical test class predates the post-fix-only `_concurrentControllersExifStressTest` slot, so the stress runner now has an explicit optional `RequireStressCase=false` mode for this baseline; its default remains true for the current mitigation workflow.
+
+**Status remains OPEN / S1 / BLOCKED.** A baseline ASan report may identify the first invalid operation. A clean baseline ASan run does not close the issue because instrumentation can perturb the timing-sensitive failure. No product-source fix or root-cause closure is claimed in E-42.
