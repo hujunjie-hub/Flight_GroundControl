@@ -670,3 +670,20 @@ The workflow-only correction restores the full command:
 The corrected workflow and this ledger update are committed together. The next exact-head run must complete all 20 controller repetitions and the full 12 × 3 process matrix before mitigation regression evidence is refreshed.
 
 **FGC-0029 remains OPEN / S1 / BLOCKED.** The workflow repair is not a production fix and does not establish the historical first invalid operation.
+
+
+---
+
+## E-46 — R29 exact-head MSVC ASan mitigation regression — 2026-11-13
+
+- Exact code/workflow HEAD: `119edd4af97af4e159050650317fd945e4e03ecc`.
+- Dedicated ASan workflow [43374424501](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374424501): **SUCCESS**.
+- Complete MSVC ASan compile/link instrumentation: PASS.
+- `ExifParserTest`: 20/20 sequential repetitions PASS.
+- `GeoTagControllerTest`: 20/20 sequential repetitions PASS; each report passed the required concurrency-slot XML gate.
+- 12 isolated processes × 3 synchronized rounds: **36/36 PASS**; all rounds reached the ready/start barrier.
+- No ASan diagnostic; evidence artifact uploaded: `fgc0037-windows-msvc-asan-119edd4af97af4e159050650317fd945e4e03ecc`.
+- This exact-head run confirms the R28 PowerShell command truncation is repaired and the intended controller and multi-process gates execute.
+- Same-head Windows Release run [43374431985](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374431985) was still in progress at documentation time; no full Release/installer acceptance is claimed here.
+
+**Interpretation:** strong post-fix mitigation/regression evidence only. The historical first invalid write/free and precise Qt-side reference-count corruption remain unobserved. FGC-0029 stays **OPEN / S1 / BLOCKED**.
