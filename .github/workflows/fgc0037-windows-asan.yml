@@ -379,6 +379,11 @@ jobs:
             & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
+              if (Test-Path -LiteralPath $qtestXml) {
+                $failedXml = Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}-ctest-failed.xml" -f $iteration)
+                Copy-Item -LiteralPath $qtestXml -Destination $failedXml
+                Write-Host "Preserved QtTest XML from failed CTest iteration $iteration at $failedXml"
+              }
               throw "GeoTagControllerTest failed on ASan iteration $iteration."
             }
             if (-not (Test-Path -LiteralPath $qtestXml)) {
