@@ -1,0 +1,322 @@
+name: FGC-0029 historical baseline MSVC ASan diagnostic
+
+on:
+  push:
+    branches:
+      - diag/fgc0029-pre-fix-asan
+    paths:
+      - .github/workflows/fgc0029-pre-fix-asan.yml
+  workflow_dispatch:
+
+concurrency:
+  group: fgc0029-pre-fix-asan-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  historical-baseline:
+    name: Windows x64 MSVC ASan - historical FGC-0029 reproducer
+    runs-on: windows-2022
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a
+        with:
+          egress-policy: audit
+
+      - name: Checkout diagnostic tooling
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Checkout historical reproducer source
+        uses: actions/checkout@v7
+        with:
+          ref: c746af2608de6c51e8632dd75775fef4dac6d97d
+          path: baseline
+          persist-credentials: false
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: windows
+          qt-arch: win64_msvc2022_64
+          build-type: RelWithDebInfo
+          cache-variant: fgc0029-baseline-asan
+          aqt-source: git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95
+
+      - name: Verify historical source and configure MSVC ASan
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourceDir = Join-Path $env:GITHUB_WORKSPACE 'baseline'
+          $expectedHead = 'c746af2608de6c51e8632dd75775fef4dac6d97d'
+          $actualHead = (git -C $sourceDir rev-parse HEAD).Trim()
+          if ($actualHead -ne $expectedHead) {
+            throw "Historical source checkout mismatch: expected $expectedHead, got $actualHead."
+          }
+
+          $parserPath = Join-Path $sourceDir 'src/AnalyzeView/GeoTag/ExifParser.cc'
+          $parserSource = Get-Content -LiteralPath $parserPath -Raw
+          if ($parserSource -notmatch 'QDateTime::fromString\s*\(\s*dateTimeDigitized') {
+            throw 'The historical EXIF QDateTime::fromString call is missing; this is not the intended reproducer.'
+          }
+          if ($parserSource -notmatch 'ExifUtility::readString') {
+            throw 'The historical ExifUtility::readString path is missing; this is not the intended reproducer.'
+          }
+
+          if (-not $env:QT_ROOT_DIR) {
+            throw 'Build Setup did not export QT_ROOT_DIR.'
+          }
+
+          $buildDir = Join-Path $env:RUNNER_TEMP 'build-fgc0029-baseline-asan'
+          $evidenceDir = Join-Path $env:RUNNER_TEMP 'fgc0029-baseline-asan-evidence'
+          New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+          "FGC0029_BASELINE_BUILD_DIR=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "FGC0029_BASELINE_EVIDENCE_DIR=$evidenceDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          Push-Location $sourceDir
+          try {
+            $configureArgs = @(
+              '-B', $buildDir,
+              '-t', 'RelWithDebInfo',
+              '--testing',
+              '--qt-root', $env:QT_ROOT_DIR,
+              '--',
+              '-DCMAKE_C_FLAGS=/DWIN32 /D_WINDOWS /fsanitize=address',
+              '-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc /fsanitize=address',
+              '-DCMAKE_EXE_LINKER_FLAGS=/fsanitize=address',
+              '-DCMAKE_SHARED_LINKER_FLAGS=/fsanitize=address',
+              '-DQGC_ENABLE_HARDENING=OFF',
+              '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+              '-DQGC_ENABLE_GST_VIDEOSTREAMING=ON'
+            )
+            & python tools\configure.py @configureArgs
+            if ($LASTEXITCODE -ne 0) {
+              throw "Historical baseline MSVC ASan configure failed with exit code $LASTEXITCODE."
+            }
+          } finally {
+            Pop-Location
+          }
+
+          $cachePath = Join-Path $buildDir 'CMakeCache.txt'
+          if (-not (Test-Path $cachePath)) {
+            throw 'Historical baseline CMakeCache.txt was not generated.'
+          }
+          $cacheText = Get-Content $cachePath -Raw
+          if ($cacheText -notmatch '(?i)Qt6_DIR:PATH=.*[/\\]6\.11\.1[/\\]') {
+            throw 'Historical baseline did not resolve the required Qt 6.11.1 toolchain.'
+          }
+
+          @(
+            "baseline_commit=$actualHead"
+            "diagnostic_commit=$env:GITHUB_SHA"
+            "workflow_run_id=$env:GITHUB_RUN_ID"
+            "qt_root=$env:QT_ROOT_DIR"
+            "qt_version=6.11.1"
+            "build_type=RelWithDebInfo"
+            "compiler=MSVC x64"
+            "sanitizer=/fsanitize=address"
+            "source_call=QDateTime::fromString(dateTimeDigitized, QStringLiteral(...))"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'validation-metadata.txt')
+
+      - name: Resolve GStreamer runtime
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cachePath = Join-Path $env:FGC0029_BASELINE_BUILD_DIR 'CMakeCache.txt'
+          $line = Get-Content $cachePath | Where-Object { $_ -match '^GStreamer_ROOT_DIR:PATH=' } | Select-Object -First 1
+          if (-not $line) {
+            throw 'GStreamer_ROOT_DIR is missing from historical baseline CMakeCache.txt.'
+          }
+
+          $gstRoot = ($line -split '=', 2)[1]
+          $gstBin = Join-Path $gstRoot 'bin'
+          if (-not (Test-Path $gstBin)) {
+            throw "GStreamer bin directory not found: $gstBin"
+          }
+          "$gstBin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $pluginDir = Join-Path $gstRoot 'lib\gstreamer-1.0'
+          if (Test-Path $pluginDir) {
+            "GST_PLUGIN_PATH=$pluginDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
+
+      - name: Build historical QGroundControl with verbose MSVC commands
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildLog = Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'build-verbose.log'
+          & cmake --build $env:FGC0029_BASELINE_BUILD_DIR --target QGroundControl --parallel 10 --verbose 2>&1 |
+            Tee-Object -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) {
+            throw "Historical baseline ASan build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Verify complete ASan compile and link instrumentation
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0029_BASELINE_BUILD_DIR
+          $evidenceDir = $env:FGC0029_BASELINE_EVIDENCE_DIR
+          $compileDb = Join-Path $buildDir 'compile_commands.json'
+          $cachePath = Join-Path $buildDir 'CMakeCache.txt'
+          if (-not (Test-Path $compileDb)) {
+            throw 'Historical baseline compile_commands.json is missing.'
+          }
+
+          $entries = @(Get-Content $compileDb -Raw | ConvertFrom-Json)
+          $cppEntries = @($entries | Where-Object { $_.file -match '(?i)\.(c|cc|cpp|cxx|c\+\+)$' })
+          if ($cppEntries.Count -eq 0) {
+            throw 'No C/C++ compile commands were found in historical baseline.'
+          }
+
+          $missing = @()
+          foreach ($entry in $cppEntries) {
+            $command = if ($entry.command) { $entry.command } else { @($entry.arguments) -join ' ' }
+            if ($command -notmatch '(?i)/fsanitize=address') {
+              $missing += $entry.file
+            }
+          }
+          if ($missing.Count -gt 0) {
+            $missing | Set-Content (Join-Path $evidenceDir 'uninstrumented-translation-units.txt')
+            throw "$($missing.Count) C/C++ translation units lack /fsanitize=address."
+          }
+
+          foreach ($suffix in @(
+            'src/AnalyzeView/GeoTag/ExifParser.cc',
+            'src/Utilities/Parsing/Exif/ExifUtility.cc',
+            'test/AnalyzeView/GeoTag/GeoTagControllerTest.cc'
+          )) {
+            $entry = $cppEntries | Where-Object {
+              $_.file.Replace('\', '/').EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase)
+            } | Select-Object -First 1
+            if (-not $entry) {
+              throw "Required historical source is missing from compile_commands.json: $suffix"
+            }
+            $command = if ($entry.command) { $entry.command } else { @($entry.arguments) -join ' ' }
+            if ($command -notmatch '(?i)/fsanitize=address') {
+              throw "ASan instrumentation missing from historical source: $suffix"
+            }
+          }
+
+          $cacheText = Get-Content $cachePath -Raw
+          foreach ($cacheKey in @(
+            'CMAKE_C_FLAGS:STRING',
+            'CMAKE_CXX_FLAGS:STRING',
+            'CMAKE_EXE_LINKER_FLAGS:STRING',
+            'CMAKE_SHARED_LINKER_FLAGS:STRING'
+          )) {
+            $cacheLine = ($cacheText -split "\r?\n") | Where-Object { $_.StartsWith("$cacheKey=") } | Select-Object -First 1
+            if (-not $cacheLine -or $cacheLine -notmatch '(?i)/fsanitize=address') {
+              throw "CMake cache does not prove ASan flag on $cacheKey."
+            }
+          }
+
+          $ninjaCommands = (& ninja -C $buildDir -t commands 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to inspect historical baseline Ninja link commands.'
+          }
+          $appLinkLines = @($ninjaCommands -split "\r?\n" | Where-Object {
+            $_ -match '(?i)link\.exe' -and $_ -match '(?i)QGroundControl\.exe'
+          })
+          if ($appLinkLines.Count -eq 0 -or ($appLinkLines -join "\n") -notmatch '(?i)/fsanitize=address') {
+            throw 'Historical QGroundControl.exe link command does not prove /fsanitize=address.'
+          }
+
+          $exe = Get-ChildItem -Path $buildDir -Filter 'QGroundControl.exe' -File -Recurse |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'Historical ASan QGroundControl.exe was not produced.'
+          }
+
+          "cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "asan_instrumented_cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "app_executable=$($exe.FullName)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          Copy-Item $compileDb (Join-Path $evidenceDir 'compile_commands.json')
+          Copy-Item $cachePath (Join-Path $evidenceDir 'CMakeCache.txt')
+
+      - name: Confirm historical GeoTagControllerTest registration
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $listing = & ctest --test-dir $env:FGC0029_BASELINE_BUILD_DIR -C RelWithDebInfo -N -R '^GeoTagControllerTest$' -V 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0 -or $listing -notmatch '--unittest:GeoTagControllerTest') {
+            throw 'Historical GeoTagControllerTest is not registered as expected.'
+          }
+          $listing | Set-Content (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'ctest-geotag-controller-list.txt')
+
+      - name: Run historical GeoTagControllerTest 20 times under ASan
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = $env:FGC0029_BASELINE_BUILD_DIR
+          $evidenceDir = $env:FGC0029_BASELINE_EVIDENCE_DIR
+          $qtestDir = Join-Path $buildDir 'qtest-results'
+          $qtestXml = Join-Path $qtestDir 'GeoTagControllerTest-GeoTagControllerTest.xml'
+          New-Item -ItemType Directory -Force -Path $qtestDir | Out-Null
+
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $env:QT_QUICK_BACKEND = 'software'
+          $env:LIBGL_ALWAYS_SOFTWARE = '1'
+          $env:QT_QPA_FONTDIR = 'C:/WINDOWS/Fonts'
+          $env:QT_LOGGING_RULES = '*.debug=false'
+
+          $passed = 0
+          for ($iteration = 1; $iteration -le 20; $iteration++) {
+            $logPath = Join-Path $evidenceDir ("geotag-controller-run-{0:D2}.log" -f $iteration)
+            if (Test-Path -LiteralPath $qtestXml) {
+              Remove-Item -LiteralPath $qtestXml -Force
+            }
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --output-on-failure -V 2>&1 |
+              Tee-Object -FilePath $logPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Historical GeoTagControllerTest failed on ASan iteration $iteration."
+            }
+            if (-not (Test-Path -LiteralPath $qtestXml)) {
+              throw "Historical GeoTagControllerTest QtTest XML missing on iteration $iteration."
+            }
+
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skipped = @($xmlDocument.SelectNodes('//skipped'))
+            if ($xmlDocument.DocumentElement.LocalName -notin @('testsuite', 'testsuites') -or
+                $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skipped.Count -gt 0) {
+              throw "Historical GeoTagControllerTest XML incomplete/failed/skipped on iteration $iteration."
+            }
+
+            Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $evidenceDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
+            $passed++
+          }
+
+          "sequential_controller_runs=$passed" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+          if ($passed -ne 20) {
+            throw "Expected 20 sequential historical controller runs, observed $passed."
+          }
+
+          $asanPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
+          $findings = Get-ChildItem -Path $evidenceDir -Filter 'geotag-controller-run-*.log' -File | Select-String -Pattern $asanPattern
+          if ($findings) {
+            $findings | Out-String | Set-Content (Join-Path $evidenceDir 'sequential-asan-findings.txt')
+            throw 'AddressSanitizer findings were emitted by sequential historical controller tests.'
+          }
+
+      - name: Run historical 12-process x 3-round FGC-0029 ASan stress
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Get-ChildItem -Path $env:FGC0029_BASELINE_BUILD_DIR -Filter 'QGroundControl.exe' -File -Recurse |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'Historical ASan QGroundControl.exe is missing.'
+          }
+
+          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $false
+
+      - name: Upload historical baseline ASan evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fgc0029-historical-baseline-asan-c746af2
+          path: ${{ runner.temp }}/fgc0029-baseline-asan-evidence/
+          if-no-files-found: warn
+          retention-days: 14
