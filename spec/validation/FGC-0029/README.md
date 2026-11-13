@@ -107,3 +107,20 @@ FGC-0037（https://github.com/hujunjie-hub/Flight_GroundControl/issues/37）独�
 `ExifParser::write()` 的 `GPSVersionID` 长度检查缺口见 `OWNERSHIP_AUDIT.md` §6，同样建议单独立项。
 
 
+
+
+---
+
+## R24 current-head validation follow-up — 2026-11-13
+
+The current FGC-0037 validation branch is **fix/fgc-0037-clean**, HEAD **9b22bab756139bd46174515dfb724c0e0120bfdd**, which contains the current phase-2 base. The exact-head Windows Release run [43275165598](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43275165598) passed Unit 198/198, Integration 70/70, executable verification, installer creation, clean installation, and installed-executable verification.
+
+The MSVC ASan run [43275152519](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43275152519) is a **workflow validation failure, not a confirmed product memory failure**:
+- ExifParserTest passed 20/20 sequential CTest repetitions.
+- GeoTagControllerTest CTest passed its first 1/1 execution.
+- The workflow then failed because it required the absent QtTest slot **_concurrentControllersExifStressTest**.
+- No AddressSanitizer memory diagnostic was emitted before the stale assertion stopped the job. The intended 20 controller repetitions were not completed.
+
+The workflow has been corrected to remove that stale test-name assertion, validate fresh QtTest XML, and run an actual multi-process matrix. The new harness **tools/validation/Invoke-Fgc0029AsanStress.ps1** starts 12 independent QGroundControl processes together for 3 rounds. Each process receives unique APPDATA, LOCALAPPDATA, TEMP, and TMP directories, plus isolated stdout/stderr/XML evidence. A ready/start barrier proves that all 12 workers are prepared before each round is released. Per-process exit codes, timeouts, XML test/failure counts, and ASan diagnostics are recorded.
+
+**Status remains BLOCKED / S1.** The bounded EXIF parser path is a mitigation, not proof of the historical first invalid write/free. A successful 12 × 3 matrix would strengthen regression evidence but does not by itself close the root-cause requirement. Do not close Issue #29 until the first invalid operation is identified or an independently accepted causal closure is documented.
