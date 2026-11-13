@@ -9,7 +9,7 @@ QGC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
 namespace ExifUtility
 {
 namespace {
-ExifEntry *getEntry(ExifData *data, ExifTag tag, ExifIfd ifd)
+ExifEntry *getEntry(ExifData *data, ExifTag tag, ExifIfd ifd, bool fallbackToAnyIfd = false)
 {
     if (!data || static_cast<unsigned int>(ifd) >= EXIF_IFD_COUNT) {
         return nullptr;
@@ -17,7 +17,10 @@ ExifEntry *getEntry(ExifData *data, ExifTag tag, ExifIfd ifd)
 
     ExifContent *content = data->ifd[ifd];
     ExifEntry *entry = content ? exif_content_get_entry(content, tag) : nullptr;
-    return entry ? entry : exif_data_get_entry(data, tag);
+    if (!entry && fallbackToAnyIfd) {
+        entry = exif_data_get_entry(data, tag);
+    }
+    return entry;
 }
 } // namespace
 
@@ -195,7 +198,7 @@ bool hasExifData(const QByteArray &buffer)
 
 QString readString(ExifData *data, ExifTag tag, ExifIfd ifd)
 {
-    ExifEntry* entry = getEntry(data, tag, ifd);
+    ExifEntry* entry = getEntry(data, tag, ifd, true);
     if (!entry || !entry->data || entry->size == 0) {
         return QString();
     }
