@@ -13,7 +13,8 @@ param(
     [ValidateRange(30, 1800)]
     [int] $ProcessTimeoutSeconds = 300,
     [ValidateRange(10, 600)]
-    [int] $ReadyTimeoutSeconds = 120
+    [int] $ReadyTimeoutSeconds = 120,
+    [bool] $RequireStressCase = $true
 )
 
 Set-StrictMode -Version Latest
@@ -163,7 +164,8 @@ $worker = {
             $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
             $stressCasePresent = $null -ne $stressCase
             $stressCaseExecuted = ($stressCasePresent -and $null -eq $stressCase.SelectSingleNode('./skipped'))
-            $xmlPresent = ($rootName -in @('testsuite', 'testsuites') -and $testCaseCount -gt 0 -and $xmlFailureCount -eq 0 -and $xmlSkippedCount -eq 0 -and $stressCaseExecuted)
+            $stressGatePassed = (-not $RequireStressCase) -or $stressCaseExecuted
+            $xmlPresent = ($rootName -in @('testsuite', 'testsuites') -and $testCaseCount -gt 0 -and $xmlFailureCount -eq 0 -and $xmlSkippedCount -eq 0 -and $stressGatePassed)
         } catch {
             $exceptionText = "QtTest XML parse failed: $($_.Exception.Message)"
             $xmlPresent = $false
@@ -177,7 +179,8 @@ $worker = {
         }
     }
 
-    $result = if ($exitCode -eq 0 -and $xmlPresent -and $stressCaseExecuted -and $xmlSkippedCount -eq 0 -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
+    $stressGatePassed = (-not $RequireStressCase) -or $stressCaseExecuted
+    $result = if ($exitCode -eq 0 -and $xmlPresent -and $stressGatePassed -and $xmlSkippedCount -eq 0 -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
 
     [pscustomobject]@{
         round = $RoundNumber
@@ -331,6 +334,7 @@ $roundSummaries | Sort-Object round | Export-Csv -LiteralPath (Join-Path $output
 
 @(
     "instances_per_round=$Instances"
+    "stress_case_required=$RequireStressCase"
     "rounds=$Rounds"
     "expected_processes=$expectedProcesses"
     "actual_processes=$($results.Count)"
