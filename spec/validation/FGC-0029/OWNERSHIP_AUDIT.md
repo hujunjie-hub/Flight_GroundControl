@@ -142,21 +142,19 @@ worker 内未使用 `QObject::tr()` 之外的对象成员；`tr()` 为静态翻�
 | 文件映射/共享内存 | 本模块无 | 代码审计 |
 | 共享缓存目录 | 未使用 | 代码审计 |
 
-结论：**不是**跨进程文件/资源竞争；仅靠**线程级**并发即可触发（ASan 报告中同一进程内两个
-worker 线程先后来访同一全局 locale）。
+结论：历史复现发生在同一进程的 worker 线程之间，因此不是由跨进程临时目录共享导致；但这**不能**证明竞争对象就是全局 locale，也不能定位首次非法操作。`QSystemLocalePrivate::zeroDigit()` 路径目前仍是候选机制，证据边界见 `ROOT_CAUSE_AUDIT_20261113.md`。
 
-## 5. 其余 `QLocale::system()` 暴露点（同类风险，非本次崩溃）
+## 5. 其他日期解析调用点（源码快照审计；非根因结论）
 
 `grep -rn "fromString" src/` 结果：
 
 | 文件 | 调用 | 线程上下文 | 结论 |
 |---|---|---|---|
-| `src/AnalyzeView/GeoTag/ExifParser.cc:29` | `QDateTime::fromString` | **QtConcurrent worker** | 本次缺陷，已修复 |
-| `src/AnalyzeView/OnboardLogs/OnboardLogController.cc:1045` | `QDate::fromString` | 主线程（目录扫描回调） | 若将来并行化则同类风险 |
-| `src/AnalyzeView/OnboardLogs/OnboardLogController.cc:1088` | `QTime::fromString` | 主线程 | 同上 |
+| `src/AnalyzeView/GeoTag/ExifParser.cc`（历史版本） | `QDateTime::fromString` | **QtConcurrent worker** | 历史触发路径；R31 当前实现已改为 `parseExifTimestamp()` |
+| `src/AnalyzeView/OnboardLogs/OnboardLogController.cc` | `QDate::fromString` | 主线程（目录扫描回调） | 当前审计未发现 worker 调用；若并行化需重新评估 |
+| `src/AnalyzeView/OnboardLogs/OnboardLogController.cc` | `QTime::fromString` | 主线程 | 当前审计未发现 worker 调用；若并行化需重新评估 |
 
-建议：后续任何“把日志/目录解析放到 worker 线程”的改动，都不要使用带 format 参数的
-`QDateTime/QDate/QTime::fromString`，或等 Qt 修复 `QLocale::system()` 后再放开。
+建议：若后续将日期/时间解析移动到 worker 线程，应使用明确的 locale-independent 解析，或先针对目标 Qt 版本做并发安全审查和压力测试；当前证据不足以把所有 `fromString()` 重载一概判定为不安全。
 
 ## 6. 次要发现（FGC-0037，已修复并关闭）
 

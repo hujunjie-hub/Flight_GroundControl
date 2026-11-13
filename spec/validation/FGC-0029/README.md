@@ -1,4 +1,4 @@
-# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R22 状态）
+# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R31 状态）
 
 | 项目 | 内容 |
 |---|---|
@@ -22,7 +22,8 @@
 
 - **当前 main 产品/测试基线**：测试 HEAD `0b8cb60953277be90d14dc630cd84678f3d333e0`；Windows Release run `43444900333` SUCCESS，Unit `198/198`、Integration `71/71`，非英文系统区域回归、可执行文件、Installer、干净安装及安装后启动验证全部通过。
 - **同 HEAD 的工程检查**：pre-commit `43444900133` SUCCESS；CI Scripts `43444900339` SUCCESS（Python 3.10/3.12）。
-- **当前 main HEAD**：`1d117516f0744ec26126b2e23138c238caf1d101`，只更新 FGC-0029 PageHeap 诊断 workflow；产品源码与测试没有在 `0b8cb60` 后变化。
+- **R31 PageHeap workflow HEAD**：`1d117516f0744ec26126b2e23138c238caf1d101`，只更新 FGC-0029 诊断 workflow；产品源码与测试没有在 `0b8cb60` 后变化。
+- **当前 main HEAD**：`e6317f76bd7f573619d9a07d4322fad961bceb53`，本轮只同步 R31 验证文档，不修改产品源码、测试或 workflow。
 - **历史版本 Release PageHeap**：run `43444888358` SUCCESS，诊断分支 HEAD `91d368b1edfd485517a729cefcdfc34fe6c7b14d`；历史生产源码 `c746af2608de6c51e8632dd75775fef4dac6d97d`，仅注入当前并发回归用例（来源 `119edd4af97af4e159050650317fd945e4e03ecc`）。
 - PageHeap 对 `16..32` 字节分配启用 full-size traces（覆盖历史 `20 B` 块），UST 已启用，WER full dump 已配置。`12 × 3 = 36` 个进程全部通过；每份 XML 为 19 tests，包含并执行 `_concurrentControllersExifStressTest`；0 failure/error/skip/timeout，0 个 `0xC0000374`，0 个 WER dump。证据归档 `14049871972` 已逐项检查。
 - **判读**：这是历史 Release 时序下的有效非复现结果，不是根因闭环；不能据此关闭 Issue #29。
@@ -56,6 +57,7 @@ R17 的"无锁修改"说法已撤回。
 - `validated_product_code_head = 73404fc90bbde92ae111d1f5706d7a7f7ef33985`：当前 main 的 `ExifParser.cc`、`ExifParserTest.cc`、`GeoTagControllerTest.cc` blob 与该已通过 MSVC ASan 的产品代码一致；ASan run `43380452713` 为 20/20 ExifParserTest、20/20 GeoTagControllerTest、36/36 同步进程压力通过，0 ASan findings。
 - `main_validation_head = 0b8cb60953277be90d14dc630cd84678f3d333e0`：Windows run `43444900333` Unit 198/198、Integration 71/71、安装包与安装后验证通过。
 - `main_workflow_head = 1d117516f0744ec26126b2e23138c238caf1d101`：仅 PageHeap 诊断 workflow 更新；不能把 `0b8cb60` 的 CI 结果误写成对不同产品源码的验证。
+- `main_docs_head = e6317f76bd7f573619d9a07d4322fad961bceb53`：仅同步本目录 R31 验证文档；产品源码/测试/workflow 与前述 HEAD 相同。
 
 ## 2. 六份 ASan 报告
 
