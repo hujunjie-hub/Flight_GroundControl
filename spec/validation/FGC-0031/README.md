@@ -61,4 +61,4 @@ Initial Windows Release run [43355557100](https://github.com/hujunjie-hub/Flight
 
 The initial failing run's JUnit artifact confirms the observed mismatch (`Actual: 3`, `Expected: 2`). This source-level isolation correction is a test-harness fix, not a change to request-message production behavior. Exact-head Windows Release validation on the new commit is required before marking the gate green.
 
-A failed-job rerun (attempt 2) was also started for the original head to distinguish transient runner/test contention from a persistent failure. Its result is not acceptance evidence for commit `9e9d53d`.
+A failed-job rerun (attempt 2) was started for the original head, then cancelled automatically when commit `9e9d53d` updated the PR branch and superseded that run. It produced no new test result and is not acceptance evidence.
