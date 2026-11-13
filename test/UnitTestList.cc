@@ -132,7 +132,9 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
 
     // Stop the tile cache worker while the app still exists: its database teardown
     // cannot run after QApplication destruction.
+    qCInfo(UnitTestListLog) << "Map engine shutdown begin";
     UnitTestTileGenerator::shutdownMapEngine();
+    qCInfo(UnitTestListLog) << "Map engine shutdown complete";
 
     return result;
 }
