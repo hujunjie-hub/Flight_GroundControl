@@ -110,3 +110,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 本规范创建时 PR #3 的基线 HEAD 为 `84c2106`，PR 保持 Open / Draft。该基线仅用于说明文档创建起点；Agent 每次运行必须重新读取远端和本地 HEAD，不得依赖本文件中的历史 SHA。
 
 下一轮开发以本地 Agent 对当前 PR 分支进行完整扫描为起点，优先解决 Windows Release 编译错误，再进入 Unit、Integration、Installer 和 MAVLink 遥测链路验收。
+
+## 9. FGC 验证记录
+
+- [FGC-0031 FlightTelemetry 页面状态验收记录](validation/FGC-0031/README.md)：遥测时间戳、重启代次、刷新/失效及 QML 展示验收。
