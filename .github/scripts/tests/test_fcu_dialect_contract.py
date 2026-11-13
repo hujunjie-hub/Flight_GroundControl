@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import xml.etree.ElementTree as ET
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FLIGHT_XML = REPO_ROOT / "src" / "MAVLink" / "flight.xml"

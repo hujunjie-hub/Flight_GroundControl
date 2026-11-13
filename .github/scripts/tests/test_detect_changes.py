@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import pytest
-
 from detect_changes import build_patterns, has_relevant_changes, workflow_name_for_platform
 
 

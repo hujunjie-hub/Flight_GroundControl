@@ -140,10 +140,8 @@ def main(argv: list[str] | None = None) -> int:
     platforms: list[str] = args.platform
     changed = get_changed_files()
     if changed is None:
-        gh_warning(
-            "Unable to compute changed files reliably; forcing requested platform build(s)."
-        )
-        outputs = {platform: "true" for platform in platforms}
+        gh_warning("Unable to compute changed files reliably; forcing requested platform build(s).")
+        outputs = dict.fromkeys(platforms, "true")
         outputs["any"] = "true"
         write_github_output(outputs)
         return 0
