@@ -99,6 +99,7 @@ void RequestMessageTest::_duplicateCommand()
     vehicle->requestMessage(_requestMessageResultHandler, &queuedRequestCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);
     QCOMPARE(queuedRequestCase.resultHandlerCalled, false);
     QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG), exactDuplicateCase.expectedSendCount);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION), 0);
 
     // Let queued request succeed once it is dequeued after first request message-timeout.
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageNone);
@@ -159,6 +160,7 @@ void RequestMessageTest::_duplicateWhileQueued()
     QVERIFY_TRUE_WAIT(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG) == 1, TestTimeout::shortMs());
 
     vehicle->requestMessage(_requestMessageResultHandler, &queuedRequestCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG), 1);
     QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION), 0);
     QCOMPARE(queuedRequestCase.resultHandlerCalled, false);
 
@@ -169,6 +171,7 @@ void RequestMessageTest::_duplicateWhileQueued()
     verifyExpectedLogMessage();
     QCOMPARE(duplicateQueuedCase.resultHandlerCalled, true);
     QCOMPARE(duplicateQueuedCase.callbackCount, 1);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG), 1);
     QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION), 0);
 
     // Allow queued request to succeed once first request has completed its message timeout path.
