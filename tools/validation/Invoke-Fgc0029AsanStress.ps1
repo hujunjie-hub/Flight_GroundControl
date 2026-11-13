@@ -57,7 +57,9 @@ $worker = {
     $xmlPresent = $false
     $testCaseCount = 0
     $xmlFailureCount = 0
+    $xmlSkippedCount = 0
     $stressCasePresent = $false
+    $stressCaseExecuted = $false
     $asanFindingCount = 0
     $exceptionText = ''
 
@@ -147,10 +149,21 @@ $worker = {
             $rootName = $xmlDocument.DocumentElement.LocalName
             $testCases = @($xmlDocument.SelectNodes('//testcase'))
             $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+                $suiteSkipped = 0
+                if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                    $skippedAttributeCount += $suiteSkipped
+                }
+            }
             $testCaseCount = $testCases.Count
             $xmlFailureCount = $failures.Count
-            $stressCasePresent = $null -ne $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
-            $xmlPresent = ($rootName -in @('testsuite', 'testsuites') -and $testCaseCount -gt 0 -and $xmlFailureCount -eq 0 -and $stressCasePresent)
+            $xmlSkippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
+            $stressCasePresent = $null -ne $stressCase
+            $stressCaseExecuted = ($stressCasePresent -and $null -eq $stressCase.SelectSingleNode('./skipped'))
+            $xmlPresent = ($rootName -in @('testsuite', 'testsuites') -and $testCaseCount -gt 0 -and $xmlFailureCount -eq 0 -and $xmlSkippedCount -eq 0 -and $stressCaseExecuted)
         } catch {
             $exceptionText = "QtTest XML parse failed: $($_.Exception.Message)"
             $xmlPresent = $false
@@ -164,7 +177,7 @@ $worker = {
         }
     }
 
-    $result = if ($exitCode -eq 0 -and $xmlPresent -and $stressCasePresent -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
+    $result = if ($exitCode -eq 0 -and $xmlPresent -and $stressCaseExecuted -and $xmlSkippedCount -eq 0 -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
 
     [pscustomobject]@{
         round = $RoundNumber
@@ -177,7 +190,9 @@ $worker = {
         xml_present = $xmlPresent
         test_case_count = $testCaseCount
         xml_failure_count = $xmlFailureCount
+        xml_skipped_count = $xmlSkippedCount
         stress_case_present = $stressCasePresent
+        stress_case_executed = $stressCaseExecuted
         asan_finding_count = $asanFindingCount
         result = $result
         output_dir = $processRoot
@@ -229,7 +244,7 @@ for ($round = 1; $round -le $Rounds; $round++) {
     if (-not $barrierComplete) {
         Write-Warning "Round $round did not reach the $Instances-process start barrier ($readyCount ready)."
     } else {
-        Write-Host "Round $round: all $Instances isolated processes are ready; releasing them together."
+        Write-Host ("Round {0}: all {1} isolated processes are ready; releasing them together." -f $round, $Instances)
     }
 
     $jobList = @($jobRecords | ForEach-Object { $_.Job })
@@ -258,7 +273,9 @@ for ($round = 1; $round -le $Rounds; $round++) {
                 xml_present = $false
                 test_case_count = 0
                 xml_failure_count = 0
+                xml_skipped_count = 0
                 stress_case_present = $false
+                stress_case_executed = $false
                 asan_finding_count = 0
                 ready_barrier_complete = $barrierComplete
                 ready_count = $readyCount
@@ -280,7 +297,9 @@ for ($round = 1; $round -le $Rounds; $round++) {
             xml_present = $candidate.xml_present
             test_case_count = $candidate.test_case_count
             xml_failure_count = $candidate.xml_failure_count
+            xml_skipped_count = $candidate.xml_skipped_count
             stress_case_present = $candidate.stress_case_present
+            stress_case_executed = $candidate.stress_case_executed
             asan_finding_count = $candidate.asan_finding_count
             ready_barrier_complete = $barrierComplete
             ready_count = $readyCount
@@ -318,6 +337,8 @@ $roundSummaries | Sort-Object round | Export-Csv -LiteralPath (Join-Path $output
     "passed_processes=$passedProcesses"
     "failed_processes=$failedProcesses"
     "stress_case_processes=$(@($results | Where-Object { $_.stress_case_present }).Count)"
+    "stress_case_executed_processes=$(@($results | Where-Object { $_.stress_case_executed }).Count)"
+    "processes_with_skipped_tests=$(@($results | Where-Object { $_.xml_skipped_count -gt 0 }).Count)"
     "barrier_complete_rounds=$(@($roundSummaries | Where-Object { $_.barrier_complete }).Count)"
 ) | Set-Content -LiteralPath (Join-Path $outputRoot 'summary.txt') -Encoding utf8
 
