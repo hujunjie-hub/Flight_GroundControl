@@ -8,6 +8,7 @@ import QGroundControl.Controls
 /// This page never sends commands and never infers control authority.
 SetupPage {
     id: root
+    objectName: "flightTelemetry_page"
     pageComponent: pageComponent
     pageDescription: qsTr("只读诊断页。每个数据组独立显示接收状态；未上报不等于健康。")
 
@@ -450,7 +451,11 @@ SetupPage {
 
                 StatusCard {
                     title: qsTr("操作与飞行模式")
-                    VehicleSummaryRow { labelText: qsTr("消息"); valueText: root._familyStatus("operationAvailable") }
+                    VehicleSummaryRow {
+                        objectName: "flightTelemetry_operationMessageStatus"
+                        labelText: qsTr("消息")
+                        valueText: root._familyStatus("operationAvailable")
+                    }
                     VehicleSummaryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("operation") }
                     VehicleSummaryRow { labelText: qsTr("解锁状态"); valueText: root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")]) }
                     VehicleSummaryRow { labelText: qsTr("飞行模式"); valueText: root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")]) }
@@ -626,7 +631,11 @@ SetupPage {
                         labelText: qsTr("NOR")
                         valueText: root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
                     }
-                    VehicleSummaryRow { labelText: qsTr("剩余空间"); valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB") }
+                    VehicleSummaryRow {
+                        objectName: "flightTelemetry_storageFreeKib"
+                        labelText: qsTr("剩余空间")
+                        valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
+                    }
                     VehicleSummaryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
                     VehicleSummaryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
                     VehicleSummaryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }

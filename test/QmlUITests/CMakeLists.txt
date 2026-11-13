@@ -48,6 +48,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/CriticalVehicleMessageUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/CriticalVehicleMessageUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlightTelemetryPageUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlightTelemetryPageUITest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -72,6 +74,7 @@ add_qgc_test(OnboardLogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(ParameterDiffDialogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(CriticalVehicleMessageUITest LABELS Integration NoSanitizer TIMEOUT 180)
+add_qgc_test(FlightTelemetryPageUITest LABELS Integration NoSanitizer TIMEOUT 180)
 
 # Qt Quick 3D requires an RHI backend, which the default software Quick backend
 # cannot provide. On Linux the offscreen platform exposes GLX (CI runs ctest
