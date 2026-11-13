@@ -52,8 +52,9 @@ $worker = {
     $exitCode = 1
     $timedOut = $false
     $xmlPresent = $false
-    $testFunctionCount = 0
+    $testCaseCount = 0
     $xmlFailureCount = 0
+    $stressCasePresent = $false
     $asanFindingCount = 0
     $exceptionText = ''
 
@@ -78,6 +79,7 @@ $worker = {
         $env:TMP = $tmpPath
         $env:TMPDIR = $tmpPath
         $env:QT_QPA_PLATFORM = 'offscreen'
+        $env:LIBGL_ALWAYS_SOFTWARE = '1'
         $env:QT_QUICK_BACKEND = 'software'
         $env:QT_QPA_FONTDIR = 'C:/WINDOWS/Fonts'
         $env:QT_LOGGING_RULES = '*.debug=false'
@@ -137,10 +139,19 @@ $worker = {
     }
 
     if (Test-Path -LiteralPath $xmlPath) {
-        $xmlText = Get-Content -LiteralPath $xmlPath -Raw
-        $testFunctionCount = [regex]::Matches($xmlText, '<TestFunction\b').Count
-        $xmlFailureCount = [regex]::Matches($xmlText, '<Incident\b[^>]*\btype="(?:fail|fatal)"').Count
-        $xmlPresent = ($xmlText -match '<TestCase\b' -and $testFunctionCount -gt 0 -and $xmlFailureCount -eq 0)
+        try {
+            [xml] $xmlDocument = Get-Content -LiteralPath $xmlPath -Raw
+            $rootName = $xmlDocument.DocumentElement.LocalName
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $testCaseCount = $testCases.Count
+            $xmlFailureCount = $failures.Count
+            $stressCasePresent = $null -ne $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
+            $xmlPresent = ($rootName -in @('testsuite', 'testsuites') -and $testCaseCount -gt 0 -and $xmlFailureCount -eq 0 -and $stressCasePresent)
+        } catch {
+            $exceptionText = "QtTest XML parse failed: $($_.Exception.Message)"
+            $xmlPresent = $false
+        }
     }
 
     $asanPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
@@ -150,7 +161,7 @@ $worker = {
         }
     }
 
-    $result = if ($exitCode -eq 0 -and $xmlPresent -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
+    $result = if ($exitCode -eq 0 -and $xmlPresent -and $stressCasePresent -and -not $timedOut -and $asanFindingCount -eq 0) { 'PASS' } else { 'FAIL' }
 
     [pscustomobject]@{
         round = $RoundNumber
@@ -161,8 +172,9 @@ $worker = {
         exit_code = $exitCode
         timed_out = $timedOut
         xml_present = $xmlPresent
-        test_function_count = $testFunctionCount
+        test_case_count = $testCaseCount
         xml_failure_count = $xmlFailureCount
+        stress_case_present = $stressCasePresent
         asan_finding_count = $asanFindingCount
         result = $result
         output_dir = $processRoot
@@ -241,8 +253,9 @@ for ($round = 1; $round -le $Rounds; $round++) {
                 exit_code = 1
                 timed_out = $false
                 xml_present = $false
-                test_function_count = 0
+                test_case_count = 0
                 xml_failure_count = 0
+                stress_case_present = $false
                 asan_finding_count = 0
                 ready_barrier_complete = $barrierComplete
                 ready_count = $readyCount
@@ -262,8 +275,9 @@ for ($round = 1; $round -le $Rounds; $round++) {
             exit_code = $candidate.exit_code
             timed_out = $candidate.timed_out
             xml_present = $candidate.xml_present
-            test_function_count = $candidate.test_function_count
+            test_case_count = $candidate.test_case_count
             xml_failure_count = $candidate.xml_failure_count
+            stress_case_present = $candidate.stress_case_present
             asan_finding_count = $candidate.asan_finding_count
             ready_barrier_complete = $barrierComplete
             ready_count = $readyCount
@@ -300,6 +314,7 @@ $roundSummaries | Sort-Object round | Export-Csv -LiteralPath (Join-Path $output
     "actual_processes=$($results.Count)"
     "passed_processes=$passedProcesses"
     "failed_processes=$failedProcesses"
+    "stress_case_processes=$(@($results | Where-Object { $_.stress_case_present }).Count)"
     "barrier_complete_rounds=$(@($roundSummaries | Where-Object { $_.barrier_complete }).Count)"
 ) | Set-Content -LiteralPath (Join-Path $outputRoot 'summary.txt') -Encoding utf8
 
