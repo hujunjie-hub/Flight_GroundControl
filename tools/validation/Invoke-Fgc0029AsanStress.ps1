@@ -44,7 +44,10 @@ $worker = {
     $readyPath = Join-Path $processRoot 'ready.txt'
     $stdoutPath = Join-Path $processRoot 'stdout.log'
     $stderrPath = Join-Path $processRoot 'stderr.log'
-    $xmlPath = Join-Path $processRoot 'GeoTagControllerTest.xml'
+    # QGC appends the test class name to --unittest-output. Keep the base path
+    # separate from the actual generated JUnit XML path.
+    $xmlBasePath = Join-Path $processRoot 'GeoTagControllerTest.xml'
+    $xmlPath = Join-Path $processRoot 'GeoTagControllerTest-GeoTagControllerTest.xml'
     $process = $null
     $processId = 0
     $startUtc = $null
@@ -109,7 +112,7 @@ $worker = {
         }
 
         $startUtc = [DateTime]::UtcNow.ToString('o')
-        $quotedXmlPath = '"{0}"' -f $xmlPath
+        $quotedXmlPath = '"{0}"' -f $xmlBasePath
         $process = Start-Process -FilePath $ExePath -ArgumentList @('--unittest:GeoTagControllerTest', '--allow-multiple', '--unittest-output', $quotedXmlPath) -WorkingDirectory $WorkingDir -NoNewWindow -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
 
         $processId = $process.Id
