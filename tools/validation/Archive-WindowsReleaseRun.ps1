@@ -129,6 +129,25 @@ foreach ($name in @('junit-results-windows-unit.xml', 'junit-results-windows-int
     }
 }
 
+# Copy configure/build logs as compact evidence; never copy the full build tree.
+foreach ($name in @('configure.log', 'build.log')) {
+    $source = Join-Path $buildPath $name
+    if (Test-Path -LiteralPath $source) {
+        Copy-Item -LiteralPath $source -Destination $runDirectory -Force
+    }
+}
+
+if ($Result -eq 'PASS') {
+    foreach ($name in @('configure.log', 'build.log', 'test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
+        $evidenceFile = Join-Path $runDirectory $name
+        if (-not (Test-Path -LiteralPath $evidenceFile)) {
+            $validationErrors += "Required validation log is missing: $name"
+        } elseif ((Get-Item -LiteralPath $evidenceFile).Length -le 0) {
+            $validationErrors += "Required validation log is empty: $name"
+        }
+    }
+}
+
 # Keep a small CMake cache summary, not the full machine-specific cache.
 $cachePath = Join-Path $buildPath 'CMakeCache.txt'
 if (Test-Path $cachePath) {

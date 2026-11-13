@@ -196,7 +196,7 @@ Windows Release workflow 在 Unit、Integration、Installer、干净安装和安
 
 - 归档脚本同时支持仓库相对路径和绝对路径，CI 直接使用本轮 `$RUNNER_TEMP/build`。
 - 只有 Build、Unit、Integration、Installer、Install Verify、Installed Runtime Verify 全部成功时，CI 才请求 `Result=PASS`。
-- PASS 必须同时包含 `junit-results-windows-unit.xml` 和 `junit-results-windows-integration.xml`。
+- PASS 必须同时包含非空的 `configure.log`、`build.log`、`test-output-windows-unit.txt`、`test-output-windows-integration.txt`，以及 `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`。
 - 两份 JUnit 必须可解析、测试数量非零，failures、errors、skipped 均为 0。
 - PASS 还要求 CMake、Ninja、Python、MSVC、Qt、GStreamer 环境事实可从构建缓存/实际可执行文件解析；MSVC PATH 编译器若可用，必须与 CMake 缓存编译器路径一致。
 - 若调用方请求 PASS 但证据不完整，脚本仍先生成诊断 ZIP 和 SHA-256，再将归档验证结果降为 FAIL 并使 CI 步骤失败；不得生成缺报告的 PASS 归档。

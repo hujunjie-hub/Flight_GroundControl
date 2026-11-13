@@ -39,6 +39,10 @@ inputs:
     description: 'Use qt-cmake instead of cmake'
     required: false
     default: 'true'
+  output-file:
+    description: 'Optional file to capture configure output'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -75,7 +79,12 @@ runs:
         [[ "${INPUTS_STABLE}" == "true" ]] && ARGS+=(--stable)
         [[ "${INPUTS_USE_QT_CMAKE}" != "true" ]] && ARGS+=(--no-qt-cmake)
         [[ -n "$EXTRA_ARGS" ]] && ARGS+=("--extra-args=$EXTRA_ARGS")
-        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+        if [[ -n "${INPUTS_OUTPUT_FILE}" ]]; then
+          mkdir -p "$(dirname "${INPUTS_OUTPUT_FILE}")"
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}" 2>&1 | tee "${INPUTS_OUTPUT_FILE}"
+        else
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+        fi
       env:
         INPUTS_EXTRA_ARGS: ${{ inputs.extra-args }}
         INPUTS_SOURCE_DIR: ${{ inputs.source-dir }}
@@ -86,3 +95,4 @@ runs:
         INPUTS_COVERAGE: ${{ inputs.coverage }}
         INPUTS_STABLE: ${{ inputs.stable }}
         INPUTS_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
+        INPUTS_OUTPUT_FILE: ${{ inputs.output-file }}

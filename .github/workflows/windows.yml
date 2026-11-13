@@ -94,6 +94,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           testing: 'true'
+          output-file: ${{ runner.temp }}/build/configure.log
           extra-args: -DQGC_ENABLE_GST_VIDEOSTREAMING=ON
 
       - name: Resolve GStreamer root
@@ -118,6 +119,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          output-file: build.log
 
       - name: Run Unit Tests (parallel)
         id: unit_tests
