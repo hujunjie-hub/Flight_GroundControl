@@ -39,6 +39,7 @@
 7. [本地验收报告模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)：每轮开发和验收结果必须按此输出。
 8. [FCU 遥测接口说明](../doc/gcs/FCU_TELEMETRY.md)：13 类遥测消息、FactGroup、有效性、边界和当前固件发布端限制。
 9. 根目录 [AGENTS.md](../AGENTS.md)、[test/README.md](../test/README.md)、[tools/README.md](../tools/README.md) 和 [.github/ci-overview.md](../.github/ci-overview.md)：代码风格、测试框架和 CI 实现细节。
+10. [FGC-0031 FlightTelemetry 页面状态验收记录](validation/FGC-0031/README.md)：遥测时间戳、重启代次、刷新/失效及 QML 展示验收。
 
 ## 4. 当前固定工程约束
 
