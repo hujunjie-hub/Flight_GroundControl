@@ -53,14 +53,19 @@ void QGCMapEngine::shutdown()
     // Tear down whenever a worker exists, even if init() failed partway and
     // cleared m_initialized - otherwise the worker thread would leak.
     if (m_worker) {
+        qCInfo(QGCMapEngineLog) << "shutdown: disconnecting and stopping cache worker" << m_worker
+                                << "running:" << m_worker->isRunning();
         (void) disconnect(m_worker);
         m_worker->stop();
+        qCInfo(QGCMapEngineLog) << "shutdown: stop() returned; waiting up to" << kWorkerShutdownTimeoutMs << "ms";
 
         // Bounded wait (FGC-0035). The worker may be inside a SQLite call it cannot abandon, so
         // an unbounded wait() can hang the process forever - including in a static destructor,
         // where nothing can recover. The contract is: shutdown gives the worker
         // kWorkerShutdownTimeoutMs to finish, then reports it and stops owning the thread.
-        if (m_worker->wait(kWorkerShutdownTimeoutMs)) {
+        const bool workerStopped = m_worker->wait(kWorkerShutdownTimeoutMs);
+        qCInfo(QGCMapEngineLog) << "shutdown: worker wait completed; stopped:" << workerStopped;
+        if (workerStopped) {
             delete m_worker;
         } else {
             // Deliberately do NOT delete the worker: it is still running and may still be using
