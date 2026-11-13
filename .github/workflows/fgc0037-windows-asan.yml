@@ -345,13 +345,14 @@ jobs:
 
           $env:QT_QPA_PLATFORM = 'offscreen'
           $env:QT_QUICK_BACKEND = 'software'
+          $env:LIBGL_ALWAYS_SOFTWARE = '1'
           $env:QT_QPA_FONTDIR = 'C:/WINDOWS/Fonts'
           $env:QT_LOGGING_RULES = '*.debug=false'
 
           $passed = 0
           for ($iteration = 1; $iteration -le 20; $iteration++) {
             $logPath = Join-Path $evidenceDir ("geotag-controller-run-{0:D2}.log" -f $iteration)
-            if (Test-Path $qtestXml) {
+            if (Test-Path -LiteralPath $qtestXml) {
               Remove-Item -LiteralPath $qtestXml -Force
             }
             Write-Host "=== GeoTagControllerTest ASan iteration $iteration / 20 ==="
@@ -360,19 +361,21 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               throw "GeoTagControllerTest failed on ASan iteration $iteration."
             }
-            if (-not (Test-Path $qtestXml)) {
+            if (-not (Test-Path -LiteralPath $qtestXml)) {
               throw "GeoTagControllerTest QtTest XML was not generated on iteration $iteration."
             }
 
-            $xmlText = Get-Content $qtestXml -Raw
-            $testFunctionCount = [regex]::Matches($xmlText, '<TestFunction\b').Count
-            $xmlFailureCount = [regex]::Matches($xmlText, '<Incident\b[^>]*\btype="(?:fail|fatal)"').Count
-            if ($xmlText -notmatch '<TestCase\b' -or $testFunctionCount -eq 0 -or $xmlFailureCount -gt 0) {
-              throw "GeoTagControllerTest QtTest XML is incomplete or reports failures on iteration $iteration."
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $rootName = $xmlDocument.DocumentElement.LocalName
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
+            if ($rootName -notin @('testsuite', 'testsuites') -or $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $null -eq $stressCase) {
+              throw "GeoTagControllerTest XML is incomplete, failed, or missing the concurrency regression case on iteration $iteration."
             }
 
-            Copy-Item $qtestXml (Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
-            "iteration=$iteration result=PASS test_functions=$testFunctionCount" |
+            Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $perRunDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
+            "iteration=$iteration result=PASS test_cases=$($testCases.Count) stress_case=PASS" |
               Add-Content (Join-Path $evidenceDir 'geotag-controller-test-summary.txt')
             $passed++
           }
