@@ -34,7 +34,8 @@ $worker = {
         [int] $InstanceNumber,
         [string] $ReleaseSignal,
         [int] $TimeoutSeconds,
-        [int] $BarrierTimeoutSeconds
+        [int] $BarrierTimeoutSeconds,
+        [bool] $RequireStressCase
     )
 
     Set-StrictMode -Version Latest
@@ -216,7 +217,7 @@ for ($round = 1; $round -le $Rounds; $round++) {
 
     for ($instance = 1; $instance -le $Instances; $instance++) {
         $jobName = "fgc0029-r{0:D2}-i{1:D2}" -f $round, $instance
-        $job = Start-Job -Name $jobName -ScriptBlock $worker -ArgumentList @($exePath, $workingDirPath, $outputRoot, $round, $instance, $releaseSignal, $ProcessTimeoutSeconds, $ReadyTimeoutSeconds)
+        $job = Start-Job -Name $jobName -ScriptBlock $worker -ArgumentList @($exePath, $workingDirPath, $outputRoot, $round, $instance, $releaseSignal, $ProcessTimeoutSeconds, $ReadyTimeoutSeconds, $RequireStressCase)
         $jobRecords.Add([pscustomobject]@{
             Job = $job
             Instance = $instance
@@ -254,6 +255,9 @@ for ($round = 1; $round -le $Rounds; $round++) {
     $null = Wait-Job -Job $jobList
 
     foreach ($record in $jobRecords) {
+        # Capture the job error stream before Receive-Job consumes it.
+        $jobErrors = @($record.Job.ChildJobs[0].Error | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+        $jobState = [string] $record.Job.State
         $received = @(Receive-Job -Job $record.Job -ErrorAction SilentlyContinue)
         $candidate = $null
         foreach ($item in $received) {
@@ -264,7 +268,6 @@ for ($round = 1; $round -le $Rounds; $round++) {
         }
 
         if ($null -eq $candidate) {
-            $jobErrors = @($record.Job.ChildJobs[0].Error | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
             $results.Add([pscustomobject]@{
                 round = $round
                 instance = $record.Instance
@@ -284,7 +287,7 @@ for ($round = 1; $round -le $Rounds; $round++) {
                 ready_count = $readyCount
                 result = 'FAIL'
                 output_dir = Join-Path $roundRoot ("instance-{0:D2}" -f $record.Instance)
-                exception = "Worker job did not return a result. $jobErrors"
+                exception = "Worker job did not return a result. state=$jobState $jobErrors"
             })
             continue
         }
