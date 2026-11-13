@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: fgc0029-pre-fix-pageheap-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -170,42 +170,85 @@ jobs:
       - name: Install Windows Desktop Debuggers (GFlags)
         run: |
           $ErrorActionPreference = 'Stop'
-          $debuggersRoot = Join-Path \${env:ProgramFiles(x86)} 'Windows Kits\10\Debuggers'
-          $gflagsPath = Join-Path $debuggersRoot 'x64\gflags.exe'
-          if (Test-Path -LiteralPath $gflagsPath) {
-            Write-Host "GFlags already installed: $gflagsPath"
-            exit 0
+          $programFilesX86 = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFilesX86)
+          $debuggersRoot = Join-Path $programFilesX86 'Windows Kits\10\Debuggers'
+          $gflags = Get-ChildItem -Path $debuggersRoot -Filter 'gflags.exe' -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\gflags\.exe$' } |
+            Select-Object -First 1
+
+          $installerSource = 'preinstalled'
+          $installerPath = $null
+          if (-not $gflags) {
+            # Prefer the locally cached signed SDK bundle when available.
+            $sdkEntries = @(Get-ItemProperty -Path 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.DisplayName -match 'Windows Software Development Kit' -and
+                $_.BundleCachePath -and
+                (Test-Path -LiteralPath $_.BundleCachePath)
+              } |
+              Sort-Object DisplayVersion -Descending)
+
+            if ($sdkEntries.Count -gt 0) {
+              $installerPath = $sdkEntries[0].BundleCachePath
+              $installerSource = 'cached-sdk-bundle'
+            } else {
+              # Official Microsoft Windows 11 SDK 10.0.26100.9457 bootstrapper.
+              # Verify its Authenticode publisher before executing the installer.
+              $downloadRoot = Join-Path $env:RUNNER_TEMP 'fgc0029-windows-sdk'
+              New-Item -ItemType Directory -Force -Path $downloadRoot | Out-Null
+              $installerPath = Join-Path $downloadRoot 'winsdksetup.exe'
+              $downloadUri = 'https://download.microsoft.com/download/46742ab5-6592-4968-a793-129e7f3bc55a/KIT_BUNDLE_WINDOWSSDK_MEDIACREATION/winsdksetup.exe'
+              Invoke-WebRequest -Uri $downloadUri -OutFile $installerPath -MaximumRedirection 10
+              $installerSource = 'official-microsoft-download'
+            }
+
+            if (-not (Test-Path -LiteralPath $installerPath)) {
+              throw "Windows SDK installer was not found: $installerPath"
+            }
+            $installerSignature = Get-AuthenticodeSignature -FilePath $installerPath
+            if ($installerSignature.Status -ne 'Valid' -or
+                $installerSignature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') {
+              throw "Windows SDK installer signature is not valid or is not from Microsoft: $($installerSignature.Status) / $($installerSignature.SignerCertificate.Subject)"
+            }
+            $installerHash = (Get-FileHash -Path $installerPath -Algorithm SHA256).Hash
+
+            Write-Host "Installing Windows Desktop Debuggers from $installerSource"
+            $installProcess = Start-Process -FilePath $installerPath -ArgumentList @(
+              '/features',
+              'OptionId.WindowsDesktopDebuggers',
+              '/quiet',
+              '/norestart'
+            ) -Wait -PassThru
+            if ($installProcess.ExitCode -notin @(0, 3010)) {
+              throw "Windows Desktop Debuggers installation failed with exit code $($installProcess.ExitCode)."
+            }
+
+            $gflags = Get-ChildItem -Path $debuggersRoot -Filter 'gflags.exe' -File -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match '\\x64\\gflags\.exe$' } |
+              Select-Object -First 1
+            if (-not $gflags) {
+              throw "Windows Desktop Debuggers installer completed but GFlags was not found under $debuggersRoot."
+            }
+          } else {
+            $installerHash = 'not-downloaded-gflags-preinstalled'
           }
 
-          # GitHub's windows-2022 image includes the Windows SDK but not the
-          # optional Windows Desktop Debuggers feature. Reuse the signed SDK
-          # bundle already cached by the Visual Studio/SDK installation.
-          $sdkEntries = @(Get-ItemProperty -Path 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.DisplayName -match 'Windows Software Development Kit' -and
-              $_.BundleCachePath -and
-              (Test-Path -LiteralPath $_.BundleCachePath)
-            } |
-            Sort-Object DisplayVersion -Descending)
-          if ($sdkEntries.Count -eq 0) {
-            throw 'Windows SDK bundle cache was not found; cannot install Windows Desktop Debuggers.'
+          $gflagsSignature = Get-AuthenticodeSignature -FilePath $gflags.FullName
+          if ($gflagsSignature.Status -ne 'Valid' -or
+              $gflagsSignature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') {
+            throw "GFlags signature is not valid or is not from Microsoft: $($gflagsSignature.Status) / $($gflagsSignature.SignerCertificate.Subject)"
           }
-
-          $sdkInstaller = $sdkEntries[0].BundleCachePath
-          Write-Host "Installing Windows Desktop Debuggers from: $sdkInstaller"
-          $installProcess = Start-Process -FilePath $sdkInstaller -ArgumentList @(
-            '/features',
-            'OptionId.WindowsDesktopDebuggers',
-            '/q',
-            '/norestart'
-          ) -Wait -PassThru
-          if ($installProcess.ExitCode -notin @(0, 3010)) {
-            throw "Windows Desktop Debuggers installation failed with exit code $($installProcess.ExitCode)."
-          }
-          if (-not (Test-Path -LiteralPath $gflagsPath)) {
-            throw "Windows Desktop Debuggers installer completed but GFlags was not found: $gflagsPath"
-          }
-          Write-Host "GFlags installed: $gflagsPath"
+          $gflagsHash = (Get-FileHash -Path $gflags.FullName -Algorithm SHA256).Hash
+          $evidenceDir = $env:FGC0029_BASELINE_EVIDENCE_DIR
+          @(
+            "installer_source=$installerSource"
+            "installer_sha256=$installerHash"
+            "gflags_path=$($gflags.FullName)"
+            "gflags_sha256=$gflagsHash"
+            "gflags_authenticode=$($gflagsSignature.Status)"
+            "gflags_signer=$($gflagsSignature.SignerCertificate.Subject)"
+          ) | Set-Content -Path (Join-Path $evidenceDir 'debugger-install.txt')
+          Write-Host "GFlags verified: $($gflags.FullName)"
 
       - name: Enable targeted PageHeap, UST and WER full dumps
         run: |
@@ -216,7 +259,8 @@ jobs:
             throw 'PageHeap requires an elevated Windows runner; current token is not an Administrator.'
           }
 
-          $debuggersRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Debuggers'
+          $programFilesX86 = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFilesX86)
+          $debuggersRoot = Join-Path $programFilesX86 'Windows Kits\10\Debuggers'
           $gflags = Get-ChildItem -Path $debuggersRoot -Filter 'gflags.exe' -File -Recurse -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -match '\\x64\\gflags\.exe$' } |
             Select-Object -First 1
