@@ -43,12 +43,15 @@ bool readDecimal(std::string_view text, size_t& pos, size_t minDigits, size_t ma
 /// Deliberately does not use QDateTime::fromString().
 ///
 /// FGC-0029: concurrent GeoTagController runs previously ended in STATUS_HEAP_CORRUPTION.
-/// The captured exception stack terminated in QDateTime::fromString/QDateTimeParser::locale,
-/// but that was the detection/free site and did not establish the first invalid access or free.
+/// ASan confirmed a double-free in Qt's QSystemLocalePrivate::zeroDigit() formatting path, with
+/// QDateTime::fromString higher in the call stack. Qt 6.11.1 sets C locale for the explicit-format
+/// NumericData parse path, so that parse-side route is short-circuited; R19 runtime QueryType
+/// capture nevertheless recorded system ZeroDigit queries during the overall fromString call.
+/// The exact internal caller/QLocale instance that reaches the formatting path remains unresolved.
 ///
 /// EXIF timestamps are locale-independent and have a fixed format. Parse that format directly
-/// rather than invoking locale-dependent QDateTime::fromString on QtConcurrent worker threads.
-/// The concurrent controller regression test exercises this path under parallel EXIF workloads.
+/// to remove the general-purpose Qt date-time parser and its associated formatting path from
+/// QtConcurrent workers. This is a mitigation, not a claim that the first invalid free is proven.
 /// Leading zeroes are mandated by the specification but not emitted by every camera, so one or
 /// two digits are accepted for all fields but the year.
 QDateTime parseExifTimestamp(std::string_view text)

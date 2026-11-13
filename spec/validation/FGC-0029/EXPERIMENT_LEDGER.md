@@ -585,3 +585,17 @@ FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mi
 - FGC-0037 GPS Version ID malformed-entry guard: **VERIFIED** on this code HEAD; Issue #37 closed.
 - FGC-0029 bounded EXIF parser/concurrency mitigation: regression gates passed, but **root cause remains BLOCKED / S1 / OPEN**. The historical first invalid operation is not directly proven; do not close Issue #29.
 - The R26 code HEAD is the validated code baseline. Any later documentation-only commit must not be described as a newly ASan-tested code HEAD unless its own workflow completes.
+
+
+---
+
+## E-42 — Qt 6.11.1 explicit-format and formatting-path clarification — 2026-11-13
+
+- R26 ASan artifact CMakeCache confirms Qt 6.11.1.
+- The original explicit-format `QDateTime::fromString(..., QStringLiteral(...))` sets the parser's default locale to `QLocale::c()`; the `NumericData` parse-side `ZeroDigit` route short-circuits.
+- R19 QueryType instrumentation nevertheless recorded 60 `ZeroDigit` queries on the first overall `QDateTime::fromString()` call and about 20 on subsequent calls. The ASan stack directly captures the separate formatting path `QLocale::toString(qlonglong)` → `longLongToString` → `zeroDigit` → `systemLocaleString` → `query(ZeroDigit)`.
+- The unsynchronized Windows `QSystemLocalePrivate::zero` cache remains a strong candidate mechanism. The exact internal caller/locale instance connecting the overall parser call to that formatting path, the first invalid reference-count operation and the precise interleaving remain unproven.
+- Source comment in `ExifParser.cc`, README and [ROOT_CAUSE_AUDIT_20261113.md](ROOT_CAUSE_AUDIT_20261113.md) are aligned to this distinction.
+- Diagnostic-only historical baseline workflow [43364448297](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43364448297) is running on exact reproducer commit `c746af2`; its result is pending.
+
+**Status remains OPEN / S1 / BLOCKED.** The bounded parser is a mitigation with R26 regression evidence; neither a clean baseline ASan result nor the current source audit alone closes the first-invalid-operation requirement.
