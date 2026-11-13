@@ -6,6 +6,7 @@ on:
       - diag/fgc0029-pre-fix-asan
     paths:
       - .github/workflows/fgc0029-pre-fix-asan.yml
+      - tools/validation/Invoke-Fgc0029AsanStress.ps1
   workflow_dispatch:
 
 concurrency:
