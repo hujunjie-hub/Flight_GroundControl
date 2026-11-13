@@ -67,3 +67,13 @@ Issue #37 is VERIFIED and closed on validated code HEAD `d38eaeb6c449ca887fa34bb
 The exact-head ASan run [43365258406](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43365258406) did not pass: `ExifParserTest` passed 20/20 and `GeoTagControllerTest` passed its first 18 repetitions, but repetition 19 wrote a complete 19-case QtTest XML report (0 failures/errors/skips; 0.952 s) and then the process failed to exit before CTest's 60 s timeout. No ASan memory error signature was found in the captured logs. This is a post-test process-shutdown hang, not a failed QtTest assertion. It resembles FGC-0028; the precise blocking call remains unproven. FGC-0029 remains **OPEN / S1 / BLOCKED**.
 
 The follow-up diagnostic adds QtTest per-function verbosity, map-engine shutdown begin/end and worker stop/wait markers, and preserves the XML report on CTest failure. Its exact-head retest is pending; do not infer a pass from the earlier R26 run.
+
+
+## R30 exact-head regression revalidation — 2026-11-13
+
+The current clean branch HEAD `73404fc90bbde92ae111d1f5706d7a7f7ef33985` was revalidated after the R29 documentation and workflow updates:
+
+- MSVC ASan [43380452713](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380452713): **SUCCESS**; ExifParserTest 20/20; GeoTagControllerTest 20/20; 12 processes × 3 rounds 36/36; no ASan finding.
+- Windows x64 MSVC Release [43380455799](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380455799): **SUCCESS**; Unit 198/198; Integration 70/70; executable, installer and installed executable verification all passed.
+
+This revalidates the malformed GPS Version ID guard on the current exact branch head. Issue #37 remains VERIFIED/closed. FGC-0029 remains a separate OPEN / S1 / BLOCKED root-cause investigation; the current mitigation passes do not prove its historical first invalid operation.

@@ -1,12 +1,12 @@
-# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R26 状态）
+# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R30 状态）
 
 | 项目 | 内容 |
 |---|---|
 | Issue | https://github.com/hujunjie-hub/Flight_GroundControl/issues/29（**OPEN**） |
 | 等级 | S1 |
-| 分支 | `codex/phase2-fcu-telemetry` |
+| 分支 | `fix/fgc-0037-clean` |
 | 根因修复提交 | `8295dc05b52bcf2e839bc2bcf2be38bb9109aadb`（保留，未回退） |
-| validated_code_head | `89e2914ff1445e1b86aa2851d6fd7fb8c5a30206`（产品 `src/` 的最后一个相关 HEAD） |
+| exact_validation_head（R30） | `73404fc90bbde92ae111d1f5706d7a7f7ef33985`（MSVC ASan + Windows Release 均通过） |
 | final_head（R21） | `f00966791ae06327aee4beb3e620b43d78f93015` |
 | R21 Windows CI | **43077208284 SUCCESS**（Unit 198/198、Integration 70/70、Installer 与安装后验证通过） |
 | R21 Check Links | **43077207915 SUCCESS**（`Errors = 0`） |
@@ -213,3 +213,41 @@ This is exact-head mitigation/regression evidence for the bounded, locale-indepe
 The same-head Windows Release run [43374431985](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374431985) was still in progress when this entry was recorded; installer creation, clean-install verification, installed executable verification and final attestation/upload remained pending.
 
 **FGC-0029 remains OPEN / S1 / BLOCKED.** Do not close the root-cause issue based on post-fix stress passes alone.
+
+
+---
+
+## R30 — exact-head MSVC ASan and Windows Release — 2026-11-13
+
+**Exact validation HEAD:** `73404fc90bbde92ae111d1f5706d7a7f7ef33985` on `fix/fgc-0037-clean`.
+
+### Dedicated MSVC ASan — [43380452713](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380452713) — SUCCESS
+
+- Full compile/link `/fsanitize=address` instrumentation verification: PASS.
+- `ExifParserTest`: 20/20 sequential repetitions PASS.
+- `GeoTagControllerTest`: 20/20 sequential repetitions PASS; every XML report executed the concurrent-controller regression.
+- Multi-process stress: 12 isolated processes × 3 synchronized rounds = **36/36 PASS**; 0 timeouts, 0 skipped cases, 0 ASan findings.
+- Evidence artifact: `fgc0037-windows-msvc-asan-73404fc90bbde92ae111d1f5706d7a7f7ef33985` (artifact ID `14017173585`).
+
+### Windows x64 MSVC Release — [43380455799](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380455799) — SUCCESS
+
+- Configure and Release build: PASS.
+- Unit: **198/198 PASS**, 0 failed, 0 skipped.
+- Integration: **70/70 PASS**, 0 failed, 0 skipped.
+- Executable verification: PASS.
+- Installer creation, silent installation, installed executable verification: PASS.
+- Installer artifact `QGroundControl-installer-AMD64`: artifact ID `14019345686`, SHA-256 `086626ae3f6dd27ace04355a3c62d344250ab10e991efda2ba1df901e798e527`.
+
+### Historical pre-fix differential — [43376096363](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43376096363) — SUCCESS / NO REPRODUCTION
+
+The diagnostic rebuilt historical source `c746af2608de6c51e8632dd75775fef4dac6d97d`, injected only the current controller-concurrency test, and preserved the historical `QDateTime::fromString` parser:
+
+- Historical `GeoTagControllerTest`: 20/20 PASS.
+- 12 processes × 3 rounds: 36/36 PASS.
+- No ASan diagnostic; artifact `14015786417` records every process exit code 0 and `asan_finding_count=0`.
+
+This is a non-reproducing ASan sample, not evidence that the historical defect never existed. The follow-up 12-process × 10-round diagnostic [43385432403](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43385432403) is running on diagnostic branch HEAD `bc0348f5d40024ab2f17caa23e7c34ad5ca8d706`.
+
+### Disposition
+
+The current bounded EXIF parser mitigation has exact-head ASan and full Windows Release acceptance. The historical first invalid write/free remains uncaptured, and the historical pre-fix ASan sample did not reproduce. FGC-0029 therefore remains **OPEN / S1 / BLOCKED**. Do not close it based on the clean post-fix matrix or the non-reproducing historical sample.

@@ -687,3 +687,41 @@ The corrected workflow and this ledger update are committed together. The next e
 - Same-head Windows Release run [43374431985](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374431985) was still in progress at documentation time; no full Release/installer acceptance is claimed here.
 
 **Interpretation:** strong post-fix mitigation/regression evidence only. The historical first invalid write/free and precise Qt-side reference-count corruption remain unobserved. FGC-0029 stays **OPEN / S1 / BLOCKED**.
+
+
+---
+
+## E-47 — R30 exact-head mitigation and Windows Release acceptance — 2026-11-13
+
+- Exact validation HEAD: `73404fc90bbde92ae111d1f5706d7a7f7ef33985` on `fix/fgc-0037-clean`.
+- MSVC ASan [43380452713](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380452713): **SUCCESS**.
+  - Complete C/C++ compile and link `/fsanitize=address` instrumentation: PASS.
+  - `ExifParserTest`: 20/20 PASS.
+  - `GeoTagControllerTest`: 20/20 PASS; concurrency regression executed in each XML report.
+  - 12 isolated processes × 3 synchronized rounds: **36/36 PASS**; no timeout, skipped test or ASan finding.
+  - Evidence artifact ID: `14017173585`.
+- Windows x64 MSVC Release [43380455799](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43380455799): **SUCCESS**.
+  - Unit: **198/198 PASS**; Integration: **70/70 PASS**.
+  - Configure, build, executable check, installer creation, silent installation and installed executable verification: PASS.
+  - Installer artifact ID: `14019345686`; SHA-256: `086626ae3f6dd27ace04355a3c62d344250ab10e991efda2ba1df901e798e527`.
+- This completes current-code mitigation validation on the exact branch head. It does not prove the historical first invalid operation.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** The first invalid write/free and exact Qt-side reference-count corruption are still unobserved.
+
+---
+
+## E-48 — Historical pre-fix ASan differential did not reproduce — 2026-11-13
+
+- Historical product source: `c746af2608de6c51e8632dd75775fef4dac6d97d`.
+- Diagnostic branch HEAD: `26c744a6078d88fbb6e39987a191f8560ab6ab01`.
+- Workflow [43376096363](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43376096363): **SUCCESS / NO REPRODUCTION**.
+- The diagnostic injected only the current `_concurrentControllersExifStressTest` into the historical source and verified that the original `QDateTime::fromString(dateTimeDigitized, ...)` parser remained present.
+- Historical controller suite: 20/20 PASS.
+- 12-process × 3-round synchronized matrix: 36/36 PASS; all process exit codes 0; no timeout, skipped case or ASan signature.
+- Evidence artifact ID: `14015786417`; worker-level process records were inspected.
+
+This clean sample does not negate the original local Release reproductions (2/36) or the six historical ASan reports from earlier controlled probes. ASan timing can perturb the race. It does mean that the current historical CI diagnostic has not independently reproduced the fault.
+
+A higher-sample historical ASan run [43385432403](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43385432403) is in progress on diagnostic HEAD `bc0348f5d40024ab2f17caa23e7c34ad5ca8d706`, expanding the synchronized matrix to 12 processes × 10 rounds = 120 process runs. Do not interpret a clean result as proof of absence.
+
+**FGC-0029 remains OPEN / S1 / BLOCKED.** Next required evidence remains timing-preserving historical Release reproduction with first-fault provenance, or an independently reviewed causal closure that explicitly accepts the residual limitation.
