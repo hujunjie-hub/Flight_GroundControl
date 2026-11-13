@@ -6,7 +6,7 @@
 | Severity | S2-MEDIUM / TEST_GAP |
 | Branch | **fix/fgc-0031-telemetry-page-ui** |
 | Base | **codex/phase2-fcu-telemetry** |
-| Status | **FIXED_WAITING_RETEST** |
+| Status | **VERIFIED** |
 
 ## Approved telemetry contract
 
@@ -46,8 +46,8 @@ CTest registration: Integration / NoSanitizer, 180-second timeout.
 - [x] Real-wire parser/Vehicle dispatch regression coverage exists for timestamp ordering, reboot, disconnect, and freshness.
 - [x] QML page exposes stable objectName selectors for the two asserted values.
 - [x] Page-level UNKNOWN / INVALID / STALE / RECOVERY test added.
-- [ ] Exact-head Windows Release CI passes the new QML UI test and full Unit/Integration suites.
-- [ ] Review the final Windows CI artifacts and close Issue #31 only after exact-head validation.
+- [x] Exact-head Windows Release CI passes the new QML UI test and full Unit/Integration suites.
+- [x] Review the final Windows CI artifacts; keep Issue #31 open as an audit record until the project consolidation pass.
 
 Do not treat local test history as a substitute for the exact-head Windows Release result. Keep the issue Open / FIXED_WAITING_RETEST until that run succeeds.
 
@@ -62,3 +62,17 @@ Initial Windows Release run [43355557100](https://github.com/hujunjie-hub/Flight
 The initial failing run's JUnit artifact confirms the observed mismatch (`Actual: 3`, `Expected: 2`). This source-level isolation correction is a test-harness fix, not a change to request-message production behavior. Exact-head Windows Release validation on the new commit is required before marking the gate green.
 
 A failed-job rerun (attempt 2) was started for the original head, then cancelled automatically when commit `9e9d53d` updated the PR branch and superseded that run. It produced no new test result and is not acceptance evidence.
+
+
+## R30 — exact-head Windows Release verification — 2026-11-13
+
+Validated PR head: `38c9acd37da8b706869d778ed6891e1e97d3efc9`  
+Windows Release run: [43374503873](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374503873) — **SUCCESS**.
+
+- Configure and Release build: PASS.
+- Unit: **198/198 PASS**, 0 failures, 0 errors, 0 skipped.
+- Integration: **71/71 PASS**, 0 failures, 0 errors, 0 skipped. The additional FlightTelemetryPageUITest is included.
+- Executable verification, installer creation, clean installation, and installed executable verification: PASS.
+- Artifacts: Unit JUnit `14015968464`; Integration JUnit `14016083112`; installer `14015894733`.
+
+The new QML page-level test and the complete Windows Release gate passed on the exact PR head. **FGC-0031 status: VERIFIED**. Issue #31 remains open as an audit record; no PR merge or main-branch change is implied.
