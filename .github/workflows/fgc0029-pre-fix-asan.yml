@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/fgc0029-pre-fix-asan.yml
       - tools/validation/Invoke-Fgc0029AsanStress.ps1
+      - tools/validation/Prepare-Fgc0029HistoricalStressSource.ps1
   workflow_dispatch:
 
 concurrency:
@@ -42,6 +43,17 @@ jobs:
           ref: c746af2608de6c51e8632dd75775fef4dac6d97d
           path: baseline
           persist-credentials: false
+
+      - name: Checkout current controller stress test source
+        uses: actions/checkout@v7
+        with:
+          ref: 119edd4af97af4e159050650317fd945e4e03ecc
+          path: stress-source
+          persist-credentials: false
+
+      - name: Inject current concurrency regression into historical source
+        run: |
+          & .\tools\validation\Prepare-Fgc0029HistoricalStressSource.ps1 -BaselineRoot (Join-Path $env:GITHUB_WORKSPACE 'baseline') -StressSourceRoot (Join-Path $env:GITHUB_WORKSPACE 'stress-source') -ExpectedBaselineCommit 'c746af2608de6c51e8632dd75775fef4dac6d97d' -ExpectedStressSourceCommit '119edd4af97af4e159050650317fd945e4e03ecc'
 
       - name: Build Setup
         uses: ./.github/actions/build-setup
@@ -124,6 +136,9 @@ jobs:
             "compiler=MSVC x64"
             "sanitizer=/fsanitize=address"
             "source_call=QDateTime::fromString(dateTimeDigitized, QStringLiteral(...))"
+            "stress_test_source_commit=$env:FGC0029_STRESS_TEST_SOURCE_SHA"
+            "stress_test_case=$env:FGC0029_STRESS_TEST_NAME"
+            "historical_parser_preserved=TRUE"
           ) | Set-Content -Path (Join-Path $evidenceDir 'validation-metadata.txt')
 
       - name: Resolve GStreamer runtime
@@ -268,7 +283,73 @@ jobs:
             if (Test-Path -LiteralPath $qtestXml) {
               Remove-Item -LiteralPath $qtestXml -Force
             }
-            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --output-on-failure -V 2>&1 |
+            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest
+              Tee-Object -FilePath $logPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Historical GeoTagControllerTest failed on ASan iteration $iteration."
+            }
+            if (-not (Test-Path -LiteralPath $qtestXml)) {
+              throw "Historical GeoTagControllerTest QtTest XML missing on iteration $iteration."
+            }
+
+            [xml] $xmlDocument = Get-Content -LiteralPath $qtestXml -Raw
+            $testCases = @($xmlDocument.SelectNodes('//testcase'))
+            $failures = @($xmlDocument.SelectNodes('//failure | //error'))
+            $skippedNodes = @($xmlDocument.SelectNodes('//skipped'))
+            $skippedAttributeCount = 0
+            foreach ($suite in @($xmlDocument.SelectNodes('//testsuite'))) {
+              $suiteSkipped = 0
+              if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+              }
+            }
+            $skippedCount = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            $stressCase = $xmlDocument.SelectSingleNode("//testcase[@name='_concurrentControllersExifStressTest']")
+            $stressCaseExecuted = ($null -ne $stressCase -and $null -eq $stressCase.SelectSingleNode('./skipped'))
+            if ($xmlDocument.DocumentElement.LocalName -notin @('testsuite', 'testsuites') -or
+                $testCases.Count -eq 0 -or $failures.Count -gt 0 -or $skippedCount -gt 0 -or -not $stressCaseExecuted) {
+              throw "Historical GeoTagControllerTest XML incomplete/failed/skipped or missing the concurrency case on iteration $iteration."
+            }
+
+            Copy-Item -LiteralPath $qtestXml -Destination (Join-Path $evidenceDir ("GeoTagControllerTest-{0:D2}.xml" -f $iteration))
+            "iteration=$iteration result=PASS test_cases=$($testCases.Count) stress_case=EXECUTED" |
+              Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+            $passed++
+          }
+
+          "sequential_controller_runs=$passed" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+          "sequential_stress_case_runs=$passed" | Add-Content (Join-Path $evidenceDir 'test-summary.txt')
+          if ($passed -ne 20) {
+            throw "Expected 20 sequential historical controller runs, observed $passed."
+          }
+
+          $asanPattern = '(?i)(ERROR: AddressSanitizer|AddressSanitizer:|heap-buffer-overflow|stack-buffer-overflow|heap-use-after-free|stack-use-after-return|double-free|use-after-free)'
+          $findings = Get-ChildItem -Path $evidenceDir -Filter 'geotag-controller-run-*.log' -File | Select-String -Pattern $asanPattern
+          if ($findings) {
+            $findings | Out-String | Set-Content (Join-Path $evidenceDir 'sequential-asan-findings.txt')
+            throw 'AddressSanitizer findings were emitted by sequential historical controller tests.'
+          }
+
+      - name: Run historical 12-process x 3-round FGC-0029 ASan stress
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Get-ChildItem -Path $env:FGC0029_BASELINE_BUILD_DIR -Filter 'QGroundControl.exe' -File -Recurse |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw 'Historical ASan QGroundControl.exe is missing.'
+          }
+
+          & .\tools\validation\Invoke-Fgc0029AsanStress.ps1 -Executable $exe.FullName -WorkingDirectory $env:FGC0029_BASELINE_BUILD_DIR -OutputDirectory (Join-Path $env:FGC0029_BASELINE_EVIDENCE_DIR 'fgc0029-multiprocess-stress') -Instances 12 -Rounds 3 -ProcessTimeoutSeconds 300 -ReadyTimeoutSeconds 120 -RequireStressCase $true
+
+      - name: Upload historical baseline ASan evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fgc0029-historical-baseline-asan-c746af2
+          path: ${{ runner.temp }}/fgc0029-baseline-asan-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+ --timeout 180 --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               throw "Historical GeoTagControllerTest failed on ASan iteration $iteration."
