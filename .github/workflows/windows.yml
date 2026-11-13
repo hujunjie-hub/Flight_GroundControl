@@ -185,12 +185,14 @@ jobs:
           build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
+        id: installer
         uses: ./.github/actions/cmake-install
         with:
           build-dir: ${{ runner.temp }}\\build
           build-type: ${{ matrix.build_type }}
 
       - name: Install and verify installer
+        id: install_verify
         if: matrix.build_type == 'Release'
         shell: pwsh
         run: |
@@ -232,6 +234,7 @@ jobs:
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify installed executable
+        id: verify_installed
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
         env:
@@ -250,3 +253,61 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+      - name: Archive Windows Release validation evidence
+        if: always() && !cancelled()
+        shell: pwsh
+        env:
+          BUILD_RESULT: ${{ steps.build.conclusion || 'skipped' }}
+          UNIT_RESULT: ${{ steps.unit_tests.conclusion || 'skipped' }}
+          INTEGRATION_RESULT: ${{ steps.integration_tests.conclusion || 'skipped' }}
+          INSTALLER_RESULT: ${{ steps.installer.conclusion || 'skipped' }}
+          INSTALL_VERIFY_RESULT: ${{ steps.install_verify.conclusion || 'skipped' }}
+          INSTALLED_VERIFY_RESULT: ${{ steps.verify_installed.conclusion || 'skipped' }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildDir = Join-Path $env:RUNNER_TEMP 'build'
+          $evidenceDir = Join-Path $env:GITHUB_WORKSPACE 'work/validation/current'
+          New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+
+          foreach ($name in @('test-output-windows-unit.txt', 'test-output-windows-integration.txt')) {
+            $source = Join-Path $buildDir $name
+            if (Test-Path -LiteralPath $source) {
+              Copy-Item -LiteralPath $source -Destination $evidenceDir -Force
+            }
+          }
+
+          $gateResults = @(
+            $env:BUILD_RESULT,
+            $env:UNIT_RESULT,
+            $env:INTEGRATION_RESULT,
+            $env:INSTALLER_RESULT,
+            $env:INSTALL_VERIFY_RESULT,
+            $env:INSTALLED_VERIFY_RESULT
+          )
+          if ($gateResults -contains 'failure' -or $gateResults -contains 'cancelled') {
+            $result = 'FAIL'
+          } elseif ($gateResults -contains 'skipped' -or $gateResults -contains '') {
+            $result = 'PARTIAL'
+          } else {
+            $result = 'PASS'
+          }
+
+          $headShort = (git rev-parse --short=12 HEAD).Trim()
+          $runId = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfffZ') + '_' + $headShort
+          "WINDOWS_ARCHIVE_NAME=$runId" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Windows Release evidence result: $result"
+          Write-Host "Build=$env:BUILD_RESULT Unit=$env:UNIT_RESULT Integration=$env:INTEGRATION_RESULT Installer=$env:INSTALLER_RESULT Install=$env:INSTALL_VERIFY_RESULT Runtime=$env:INSTALLED_VERIFY_RESULT"
+
+          & .\tools\validation\Archive-WindowsReleaseRun.ps1 -RunId $runId -Result $result -EvidenceDirectory $evidenceDir -BuildDirectory $buildDir
+
+      - name: Upload Windows Release validation archive
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-release-validation-${{ github.sha }}
+          path: |
+            work/validation/archives/${{ env.WINDOWS_ARCHIVE_NAME }}.zip
+            work/validation/archives/${{ env.WINDOWS_ARCHIVE_NAME }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

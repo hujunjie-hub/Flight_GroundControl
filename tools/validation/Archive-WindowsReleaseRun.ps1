@@ -28,8 +28,15 @@ $archiveName = if ($Round -gt 0) {
     $RunId
 }
 
-$evidencePath = Join-Path $repoRoot $EvidenceDirectory
-$buildPath = Join-Path $repoRoot $BuildDirectory
+function Resolve-InputPath([string]$Path) {
+    if ([System.IO.Path]::IsPathRooted($Path)) {
+        return [System.IO.Path]::GetFullPath($Path)
+    }
+    return [System.IO.Path]::GetFullPath((Join-Path $repoRoot $Path))
+}
+
+$evidencePath = Resolve-InputPath $EvidenceDirectory
+$buildPath = Resolve-InputPath $BuildDirectory
 $archiveRoot = Join-Path $repoRoot 'work/validation/archives'
 $runDirectory = Join-Path $archiveRoot $archiveName
 $zipPath = Join-Path $archiveRoot "$archiveName.zip"
@@ -50,11 +57,75 @@ New-Item -ItemType Directory -Force $runDirectory | Out-Null
 # Copy current logs/reports. Never copy the complete build tree.
 Get-ChildItem -LiteralPath $evidencePath -Force | Copy-Item -Destination $runDirectory -Recurse -Force
 
-# Copy standardized CTest XML reports from the build directory when present.
+# Copy standardized CTest XML reports and record their actual test counts.
+# A PASS archive is not permitted unless both reports exist, parse, and contain
+# non-zero tests with no failures, errors, or skipped cases.
+function Get-JUnitSummary([string]$Path, [string]$Name) {
+    try {
+        [xml] $document = Get-Content -LiteralPath $Path -Raw
+        $testCases = @($document.SelectNodes('//testcase'))
+        $failures = @($document.SelectNodes('//failure'))
+        $errors = @($document.SelectNodes('//error'))
+        $skippedNodes = @($document.SelectNodes('//skipped'))
+        $skippedAttributeCount = 0
+        foreach ($suite in @($document.SelectNodes('//testsuite'))) {
+            $suiteSkipped = 0
+            if ([int]::TryParse($suite.GetAttribute('skipped'), [ref]$suiteSkipped)) {
+                $skippedAttributeCount += $suiteSkipped
+            }
+        }
+        return [ordered]@{
+            name = $Name
+            present = $true
+            tests = $testCases.Count
+            failures = $failures.Count
+            errors = $errors.Count
+            skipped = [Math]::Max($skippedNodes.Count, $skippedAttributeCount)
+            parse_error = $null
+        }
+    } catch {
+        return [ordered]@{
+            name = $Name
+            present = $true
+            tests = 0
+            failures = 0
+            errors = 0
+            skipped = 0
+            parse_error = $_.Exception.Message
+        }
+    }
+}
+
+$validationErrors = @()
+$junitSummaries = @()
 foreach ($name in @('junit-results-windows-unit.xml', 'junit-results-windows-integration.xml')) {
     $source = Join-Path $buildPath $name
-    if (Test-Path $source) {
+    if (Test-Path -LiteralPath $source) {
         Copy-Item -LiteralPath $source -Destination $runDirectory -Force
+        $summary = Get-JUnitSummary -Path $source -Name $name
+    } else {
+        $summary = [ordered]@{
+            name = $name
+            present = $false
+            tests = 0
+            failures = 0
+            errors = 0
+            skipped = 0
+            parse_error = 'Report file is missing.'
+        }
+    }
+
+    $junitSummaries += $summary
+    if ($Result -eq 'PASS') {
+        if (-not $summary.present) {
+            $validationErrors += "Required JUnit report is missing: $name"
+        } elseif ($summary.parse_error) {
+            $validationErrors += "JUnit report could not be parsed: $name — $($summary.parse_error)"
+        } elseif ($summary.tests -le 0) {
+            $validationErrors += "JUnit report contains zero test cases: $name"
+        } elseif ($summary.failures -gt 0 -or $summary.errors -gt 0 -or $summary.skipped -gt 0) {
+            $validationErrors += "JUnit report is not clean: $name (failures=$($summary.failures), errors=$($summary.errors), skipped=$($summary.skipped))."
+        }
     }
 }
 
@@ -128,35 +199,40 @@ $cmakeResolved = Get-ResolvedValue (Get-ExeVersion $cacheCmake @('--version')) '
     (Get-CommandVersion 'cmake' @('--version')) 'PATH'
 $ninjaResolved = Get-ResolvedValue (Get-ExeVersion $cacheNinja @('--version')) 'CMakeCache:CMAKE_MAKE_PROGRAM' `
     (Get-CommandVersion 'ninja' @('--version')) 'PATH'
-$pythonResolved = Get-ResolvedValue $env:PYTHON_EXE 'environment:PYTHON_EXE' `
+$pythonFromEnvironment = $null
+if ($env:PYTHON_EXE -and (Test-Path -LiteralPath $env:PYTHON_EXE)) {
+    $pythonFromEnvironment = Get-ExeVersion $env:PYTHON_EXE @('--version')
+}
+$pythonResolved = Get-ResolvedValue $pythonFromEnvironment 'environment:PYTHON_EXE' `
     (Get-ExeVersion $cachePython @('--version')) 'CMakeCache:Python3_EXECUTABLE'
-$clFromPath = Get-CommandVersion 'cl' @('/Bv')
+
+$pathClCommand = Get-Command 'cl' -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+$pathCl = if ($pathClCommand) { $pathClCommand.Source } else { $null }
+$clFromPath = Get-ExeVersion $pathCl @('/Bv')
 $clFromCache = Get-ExeVersion $cacheCompiler @('/Bv')
 $msvcVersionText = if ($clFromCache) { $clFromCache } elseif ($clFromPath) { $clFromPath } else { $null }
-$msvcResolved = Get-ResolvedValue $msvcVersionText $(if ($clFromCache) { 'CMakeCache:CMAKE_CXX_COMPILER' } else { 'PATH' }) `
+$msvcSource = if ($clFromCache) { 'CMakeCache:CMAKE_CXX_COMPILER' } else { 'PATH' }
+$msvcResolved = Get-ResolvedValue $msvcVersionText $msvcSource `
     $cacheCompilerVersion 'CMakeCache:CMAKE_CXX_COMPILER_VERSION'
-$qtResolved = Get-ResolvedValue $env:QT_ROOT_DIR 'environment:QT_ROOT_DIR' $qtRootFromCache 'CMakeCache:Qt6_DIR'
-$gstResolved = Get-ResolvedValue $env:GSTREAMER_1_0_ROOT_MSVC_X86_64 'environment:GSTREAMER_1_0_ROOT_MSVC_X86_64' `
-    $cacheGstRoot 'CMakeCache:GStreamer_ROOT_DIR'
 
-# Confirm that the probed compiler is the one the build recorded.
+# Compare the compiler found on PATH with the exact compiler path recorded by CMake.
+# Running the cached compiler proves its version; it does not prove PATH resolves to it.
 $compilerConsistency = 'UNVERIFIED'
-if ($cacheCompiler) {
-    $normalizedCacheCompiler = $cacheCompiler -replace '/', '\'
-    $probedCompilerPath = $null
-    if ($clFromCache) {
-        $probedCompilerPath = $normalizedCacheCompiler
-    } elseif ($clFromPath) {
-        $probedCompilerPath = (Get-Command 'cl' -ErrorAction SilentlyContinue).Source -replace '/', '\'
-    }
-    if ($probedCompilerPath) {
-        $compilerConsistency = if ($probedCompilerPath -ieq $normalizedCacheCompiler) { 'MATCH' } else { 'MISMATCH' }
-    }
+if ($cacheCompiler -and $pathCl) {
+    $normalizedCacheCompiler = [System.IO.Path]::GetFullPath($cacheCompiler) -replace '/', '\'
+    $normalizedPathCompiler = [System.IO.Path]::GetFullPath($pathCl) -replace '/', '\'
+    $compilerConsistency = if ($normalizedPathCompiler -ieq $normalizedCacheCompiler) { 'MATCH' } else { 'MISMATCH' }
+} elseif ($cacheCompiler -and $clFromCache) {
+    $compilerConsistency = 'PATH_UNAVAILABLE_CACHE_COMPILER_VERIFIED'
 }
 
 # The configured toolset id/version live in CMakeCXXCompiler.cmake, not in CMakeCache.
-$compilerDetailFile = Get-ChildItem -LiteralPath $buildPath -Recurse -Filter 'CMakeCXXCompiler.cmake' -File -ErrorAction SilentlyContinue |
-    Select-Object -First 1
+$compilerDetailFile = $null
+if (Test-Path -LiteralPath $buildPath) {
+    $compilerDetailFile = Get-ChildItem -LiteralPath $buildPath -Recurse -Filter 'CMakeCXXCompiler.cmake' -File -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+}
 if ($compilerDetailFile) {
     $compilerDetail = Get-Content -LiteralPath $compilerDetailFile.FullName -Raw
     if (-not $cacheCompilerId) {
@@ -183,13 +259,38 @@ $environment = [ordered]@{
     msvc_cache_compiler = if ($cacheCompiler) { $cacheCompiler } else { 'UNVERIFIED' }
     msvc_cache_compiler_id = if ($cacheCompilerId) { $cacheCompilerId } else { 'UNVERIFIED' }
     msvc_cache_compiler_version = if ($cacheCompilerVersion) { $cacheCompilerVersion } else { 'UNVERIFIED' }
+    msvc_path_compiler = if ($pathCl) { $pathCl } else { 'UNVERIFIED' }
     msvc_probe_consistency = $compilerConsistency
+    github_run_id = if ($env:GITHUB_RUN_ID) { $env:GITHUB_RUN_ID } else { 'UNAVAILABLE' }
+    github_run_attempt = if ($env:GITHUB_RUN_ATTEMPT) { $env:GITHUB_RUN_ATTEMPT } else { 'UNAVAILABLE' }
+    github_ref = if ($env:GITHUB_REF) { $env:GITHUB_REF } else { 'UNAVAILABLE' }
+    github_head_ref = if ($env:GITHUB_HEAD_REF) { $env:GITHUB_HEAD_REF } else { 'UNAVAILABLE' }
+    github_sha = if ($env:GITHUB_SHA) { $env:GITHUB_SHA } else { 'UNAVAILABLE' }
     qt_root_dir = $qtResolved.value
     qt_source = $qtResolved.source
     gstreamer_root = $gstResolved.value
     gstreamer_source = $gstResolved.source
     build_directory = $buildPath
 }
+if ($Result -eq 'PASS') {
+    foreach ($field in @('cmake_version', 'ninja_version', 'python_version', 'msvc_version', 'qt_root_dir', 'gstreamer_root')) {
+        if (-not $environment[$field] -or $environment[$field] -eq 'UNVERIFIED') {
+            $validationErrors += "Required environment field is UNVERIFIED: $field"
+        }
+    }
+    if ($environment.msvc_cache_compiler_id -ne 'MSVC') {
+        $validationErrors += "CMake did not record MSVC as the compiler: $($environment.msvc_cache_compiler_id)"
+    }
+    if ($environment.msvc_cache_compiler_version -eq 'UNVERIFIED') {
+        $validationErrors += 'CMake compiler version is UNVERIFIED.'
+    }
+    if ($environment.msvc_probe_consistency -eq 'MISMATCH') {
+        $validationErrors += 'PATH cl.exe does not match CMAKE_CXX_COMPILER.'
+    }
+}
+
+$validatedResult = if ($Result -eq 'PASS' -and $validationErrors.Count -gt 0) { 'FAIL' } else { $Result }
+
 $environment | ConvertTo-Json -Depth 5 |
     Set-Content -LiteralPath (Join-Path $runDirectory 'environment.json') -Encoding utf8
 
@@ -222,21 +323,40 @@ $fileHashes = @(
         }
 )
 
+$branchName = if ($env:GITHUB_HEAD_REF) {
+    $env:GITHUB_HEAD_REF
+} elseif ($env:GITHUB_REF_NAME) {
+    $env:GITHUB_REF_NAME
+} else {
+    Get-GitValue @('branch', '--show-current')
+}
+$workingTreeStatus = Get-GitValue @('status', '--short')
+$workingTreeStatus = ($workingTreeStatus -split "\r?\n" |
+    Where-Object { $_ -and $_ -notmatch '^\?\? work/validation/(current|archives)/' }) -join [Environment]::NewLine
+
 $manifest = [ordered]@{
     schema = 'flight-groundcontrol-local-run/1.0'
     run_id = $RunId
     round = $Round
     archive_name = $archiveName
     result_entered_by_agent = $Result
-    archive_created_utc = [DateTime]::UtcNow.ToString('o')
+    result_validated = $validatedResult
+    validation_errors = $validationErrors
+    archive_created_utc = [DateTime]::UtcNow().ToString('o')
     repository_root = $repoRoot
-    branch = Get-GitValue @('branch', '--show-current')
+    branch = $branchName
     commit = Get-GitValue @('rev-parse', 'HEAD')
-    working_tree_status = Get-GitValue @('status', '--short')
+    working_tree_status = $workingTreeStatus
     environment = $environment
+    junit_reports = $junitSummaries
     installer_candidates = $installerInfo
     evidence_file_hashes = $fileHashes
-    note = 'This script packages evidence only. Result is supplied by the operator and is not independently validated by this script.'
+    github_run_id = $environment.github_run_id
+    github_run_attempt = $environment.github_run_attempt
+    github_ref = $environment.github_ref
+    github_head_ref = $environment.github_head_ref
+    github_sha = $environment.github_sha
+    note = 'The caller supplies the requested result. PASS is accepted only when both JUnit reports and required build-environment facts are independently validated.'
 }
 
 $manifest | ConvertTo-Json -Depth 8 |
@@ -251,4 +371,9 @@ Write-Host "Validation archive created:"
 Write-Host "  Directory: $runDirectory"
 Write-Host "  ZIP:       $zipPath"
 Write-Host "  SHA-256:   $zipHash"
-Write-Host "  Result:    $Result"
+Write-Host "  Result requested: $Result"
+Write-Host "  Result validated: $validatedResult"
+if ($validationErrors.Count -gt 0) {
+    $validationErrors | ForEach-Object { Write-Error $_ }
+    throw 'Validation archive was created, but the requested PASS result failed evidence validation.'
+}
