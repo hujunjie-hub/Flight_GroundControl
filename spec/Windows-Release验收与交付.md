@@ -212,3 +212,17 @@ CI 归档 Artifact 名称为 `windows-release-validation-<github.sha>`，包含�
 - `<RUN_ID>.zip.sha256`
 
 此门禁用于验证 FGC-0004（JUnit 报告完整性）和 FGC-0019（构建环境证据真实性）。上传成功不代表测试 PASS；必须检查归档 manifest 中的 `result_validated` 和各项 JUnit 统计。
+
+
+## 2026-11-13 — R30 exact-head archive verification (FGC-0004 / FGC-0019)
+
+Validated PR head: `3c1a94c71ba6bfca0d056e3b98d54fbe14d286d4`.  
+Windows Release run: [43374510099](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43374510099) — **SUCCESS**.
+
+- Configure, Release build, Unit, Integration, executable verification, installer creation, clean installation, and installed executable verification: PASS.
+- Unit JUnit: **198 tests**, 0 failures, 0 errors, 0 skipped.
+- Integration JUnit: **70 tests**, 0 failures, 0 errors, 0 skipped.
+- Archive artifact: `14016102905`; the nested run archive's `run-manifest.json` reports `result_validated=PASS` and an empty `validation_errors` list.
+- The manifest records both JUnit reports, non-zero test counts, installer candidate and SHA-256. ZIP sidecar SHA-256 was independently recomputed and matched: `f941fda31539b0be4b73d80ea00567023579e5d262bdbdcb2ac7c416601b9c5b`.
+
+The downstream non-English-host PR #42 run [43375081098](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43375081098) also exercised this archive gate on its combined PR head and validated the archive as PASS. **FGC-0004 and FGC-0019 status: VERIFIED** on the exact PR #41 head. Issues remain open as audit records; this evidence does not authorize merging.
