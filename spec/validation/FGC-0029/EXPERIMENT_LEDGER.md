@@ -532,3 +532,40 @@ E-37、E-38 原文全部保留，本节仅追加。
 | 4 | R23a 最终 HEAD 与 CI | 一次性文档提交取得 R23a final HEAD；Windows / Check Links / pre-commit 结果写入 R23a 交付 ZIP 的 `CI-RESULT-R23a.md`，**不再为记录 CI 结果追加提交** |
 
 - 未修改 `src/`，未重跑 R17/R19 实验，未改 Qt，未改 main，未合并 PR，未关闭 Issue，未删除任何历史证据。
+
+
+---
+
+# E-40 — Current-head FGC-0029 ASan concurrency gate correction
+
+**Branch:** `fix/fgc-0037-clean`  
+**Code/workflow head before this ledger-only commit:** `8068391c2bb24f29aa00a2b88c551c687887abae`
+
+| Commit | Evidence change |
+|---|---|
+| `c57c9d4a` | Restore the real controller-level concurrency regression: 8 controllers × 24 JPEGs per controller, started before waiting so EXIF parsing overlaps |
+| `56007c8c` | Register the stress slot in `GeoTagControllerTest.h` |
+| `b880c879` | Parse actual JUnit-style QtTest XML in the multi-process harness; require the concurrency test case |
+| `8068391c` | Parse the same XML format in the sequential ASan gate; keep the 12-process × 3-round stress job enabled |
+
+## Validation design
+
+- Build and verify complete MSVC `/fsanitize=address` compile/link instrumentation.
+- Run `ExifParserTest` 20 times.
+- Run `GeoTagControllerTest` 20 times and assert the XML contains `_concurrentControllersExifStressTest`.
+- Run 12 separate QGroundControl processes concurrently for 3 rounds. Each process has isolated `APPDATA`, `LOCALAPPDATA`, `TEMP`, `TMP`, stdout, stderr and XML output. A ready/start barrier prevents a round from starting before all 12 workers are ready.
+- Record every process exit code, timeout, XML test/failure count, stress-case presence and ASan diagnostic count.
+
+## Previous-head evidence and limitation
+
+Run `43275152519` on head `9b22bab756139bd46174515dfb724c0e0120bfdd`:
+- Instrumented build/link verification: passed.
+- `ExifParserTest`: 20/20 passed.
+- `GeoTagControllerTest`: CTest 1/1 passed.
+- Workflow result: failed at a stale assertion requiring a test slot absent from that branch. No ASan diagnostic was emitted before the assertion stopped the job. The 12-process matrix was not executed.
+
+## Current status
+
+The new source, XML parser and workflow gates are committed. The exact-head CI result is **PENDING** at this ledger update. Do not treat the prior workflow failure as a product memory error, and do not treat the 1/1 sequential controller run as concurrency acceptance.
+
+FGC-0029 remains **BLOCKED / S1 / OPEN**. Even a clean 12 × 3 ASan matrix is mitigation regression evidence, not proof of the historical first invalid write/free or the exact Qt-side refcount interleaving. No root-cause closure is claimed.
