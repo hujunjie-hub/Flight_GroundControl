@@ -50,3 +50,15 @@ CTest registration: Integration / NoSanitizer, 180-second timeout.
 - [ ] Review the final Windows CI artifacts and close Issue #31 only after exact-head validation.
 
 Do not treat local test history as a substitute for the exact-head Windows Release result. Keep the issue Open / FIXED_WAITING_RETEST until that run succeeds.
+
+
+## 2026-11-13 — exact-head Windows gate failure triage
+
+Initial Windows Release run [43355557100](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43355557100), PR head `16b7941e3859ff02f1bdf403c8a416b79205bf42`, completed build successfully. The new `FlightTelemetryPageUITest` passed; the overall gate did not:
+
+- Unit: 197/198. `SurveyComplexItemTest` hit its 60-second CTest timeout during the 12-way parallel Unit run. No product assertion failure was recorded. This remains a separate retest item; do not increase the timeout or classify it as fixed without repeat evidence.
+- Integration: 70/71. `RequestMessageTest::_duplicateWhileQueued` observed 3 `MAV_CMD_REQUEST_MESSAGE` commands where the test expected 2. Its exact-count test paths did not disable the GimbalController and CameraManager, although the shared `_testCaseWorker` explicitly disables both because they issue background message requests. The direct duplicate/queue test paths are now isolated in commit [9e9d53d](https://github.com/hujunjie-hub/Flight_GroundControl/commit/9e9d53d26b7a8e545adb25f5cf764e5766df03d1) by disabling both background requesters in `_duplicateCommand`, `_duplicateWhileQueued`, and `_compIdAllFailure`.
+
+The initial failing run's JUnit artifact confirms the observed mismatch (`Actual: 3`, `Expected: 2`). This source-level isolation correction is a test-harness fix, not a change to request-message production behavior. Exact-head Windows Release validation on the new commit is required before marking the gate green.
+
+A failed-job rerun (attempt 2) was also started for the original head to distinguish transient runner/test contention from a persistent failure. Its result is not acceptance evidence for commit `9e9d53d`.
