@@ -144,7 +144,7 @@ $RunId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssfffZ") + "_" + (g
 pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Result PASS
 ```
 
-只有全部 Gate 通过时才填 PASS。脚本仅归档，不会替代验收判断。
+只有全部 Gate 通过时才填 PASS。归档脚本会独立校验报告、日志、环境与安装包证据的完整性；它不能替代 G0–G10 的实际验收，也不会把缺失或跳过的测试转为 PASS。
 
 ## 7. 问题登记和关闭
 
@@ -198,6 +198,7 @@ Windows Release workflow 在 Unit、Integration、Installer、干净安装和安
 - 只有 Build、Unit、Integration、Installer、Install Verify、Installed Runtime Verify 全部成功时，CI 才请求 `Result=PASS`。
 - PASS 必须同时包含非空的 `configure.log`、`build.log`、`test-output-windows-unit.txt`、`test-output-windows-integration.txt`，以及 `junit-results-windows-unit.xml`、`junit-results-windows-integration.xml`。
 - 两份 JUnit 必须可解析、测试数量非零，failures、errors、skipped 均为 0。
+- Qt/GStreamer 根目录优先采用存在的 `QT_ROOT_DIR` / `GSTREAMER_1_0_ROOT_MSVC_X86_64` 环境目录；缺失或无效时，分别回退到 CMakeCache 的 `Qt6_DIR`（解析到 Qt 安装根目录）和 `GStreamer_ROOT_DIR`。目录不存在时记录 `UNVERIFIED`。
 - PASS 还要求 CMake、Ninja、Python、MSVC、Qt、GStreamer 环境事实可从构建缓存/实际可执行文件解析；MSVC PATH 编译器若可用，必须与 CMake 缓存编译器路径一致。
 - 若调用方请求 PASS 但证据不完整，脚本仍先生成诊断 ZIP 和 SHA-256，再将归档验证结果降为 FAIL 并使 CI 步骤失败；不得生成缺报告的 PASS 归档。
 - FAIL / PARTIAL 仍保留本轮可获得的日志、JUnit、环境摘要和清单，便于定位失败。
