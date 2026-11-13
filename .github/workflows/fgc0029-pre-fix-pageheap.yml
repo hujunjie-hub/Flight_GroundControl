@@ -426,14 +426,7 @@ jobs:
 
           $summary = @{}
           foreach ($line in Get-Content -LiteralPath $summaryPath) {
-            if ($line -match '^([^=]+)=(.*)        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: fgc0029-historical-release-pageheap-${{ github.sha }}
-          path: ${{ runner.temp }}/fgc0029-baseline-pageheap-evidence/
-          if-no-files-found: error
-          retention-days: 30
-) {
+            if ($line -match '^([^=]+)=(.*)$') {
               $summary[$Matches[1]] = $Matches[2]
             }
           }
@@ -465,6 +458,8 @@ jobs:
             [int]$_.xml_failure_count -ne 0 -or
             [int]$_.xml_skipped_count -ne 0 -or
             $_.stress_case_executed -ne 'True' -or
+            [int]$_.test_case_count -lt 19 -or
+            [int]$_.asan_finding_count -ne 0 -or
             $_.ready_barrier_complete -ne 'True'
           })
           if ($invalidRows.Count -gt 0) {
@@ -477,3 +472,4 @@ jobs:
           }
 
           Write-Host "PageHeap acceptance passed: $expectedProcesses/$expectedProcesses process runs, 3/3 barriers, no heap-corruption dumps."
+
