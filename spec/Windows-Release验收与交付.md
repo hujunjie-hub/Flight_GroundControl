@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：1.5  
+版本：1.6  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -248,3 +248,29 @@ CI 归档 Artifact 名称为 `windows-release-validation-<github.sha>`，包含�
 - 最近一次完整成功的 Windows Release：run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588)，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer/clean install/installed runtime PASS。
 - 工具栏变更进入基线 `77563b1` 后触发的 Windows run [43571983530](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步只改文档、不改产品源码；新的精确 HEAD 验收由本次 push 触发，必须以 [GitHub Actions](https://github.com/hujunjie-hub/Flight_GroundControl/actions) 的实时状态为准，不能预先标记 PASS。
 - 因此，不能把 37035 的完整验收结果直接标记为 77563 的结果；需等待精确 HEAD 的 Windows run 完成。
+
+
+## 12. Latest exact-main CI diagnosis — 2026-11-14
+
+Diagnostic HEAD: `866a8fbc9518249daf8824a850c017ebd487b188`.
+
+Windows Release run [43598886092](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43598886092):
+
+| Gate / stage | Result | Evidence |
+|---|---|---|
+| Configure | PASS | Windows x64 MSVC Release |
+| Build | PASS | Release compile/link completed |
+| Unit | PASS | 198/198 |
+| Integration | FAIL | 69/72; three UI tests failed |
+| Installer / clean install / installed runtime | NOT_RUN | Skipped because Integration failed |
+| Validation archive | PARTIAL | Diagnostic archive uploaded; does not represent PASS |
+
+Integration failures and corrective action:
+
+1. `FlightTelemetryPageUITest`: RC throttle `0.40F` was compared to a double literal with exact equality. Change the four normalized-axis assertions to a 1e-4 tolerance; production RC values and rendering are unchanged.
+2. `FlightRadioPageUITest`: the test expected calibration to remain enabled with only three received channels. Product guard correctly requires at least four channels. Verify enabled at eight channels and disabled at three; do not relax product guard.
+3. `ToolbarIndicatorUITest`: APM RemoteID drawer expand capability was not found within the old 500 ms wait. Wait for the loaded page's `_showExpand` capability and then for the button; log page `showExpand` and `expandedComponent` state if absent. New exact-HEAD run must establish whether this is timing or a real page issue.
+
+Pre-commit run [43598886118](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43598886118): SUCCESS.
+
+This run is diagnostic evidence for the failed HEAD only. The fixes require a fresh exact-main Windows Release run. No Installer, clean-install, installed-runtime or overall PASS is claimed until all gates execute successfully.

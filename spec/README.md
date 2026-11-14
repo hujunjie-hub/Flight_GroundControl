@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 2.3
+- 版本 2.4
 - 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -112,8 +112,18 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。
-- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 RETESTING；第二阶段 QML 已实现飞行态势、导航估计、RC 四轴、13 类健康矩阵和 1 Hz/60 点 GCS 趋势；导航精度显示与趋势按 capability mask 门控，active Vehicle/boot epoch 缓冲清理均有 UI Integration 回归；Phase 2.1 将矩阵优化为 7/4/2/1 列并增加单元边界断言，同时压缩摘要/趋势/主视觉卡片留白；新 main HEAD 的 Windows Release 与 Integration 验收待完成。
-- FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 IN_PROGRESS；保留原截图的双圆形摇杆示意图，重点验证 RC 通道变化时摇杆指示点实时跟随，校准业务逻辑保持不变。
+- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 RETESTING；Phase 2.1 已将 13 类状态矩阵优化为 7/4/2/1 列，并压缩摘要/趋势/主视觉卡片留白。main@866a8fb 的 Windows Release 构建和 Unit 198/198 通过，但 Integration 69/72；FlightTelemetryPageUITest 的 float/double 精确比较失败已定位，修复后等待新 HEAD 复测。
+- FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 
 动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节只记录有明确 HEAD 和 run ID 的验收快照。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。
+
+
+### 最新 Windows CI 诊断快照（main@866a8fb，2026-11-14）
+
+- Windows Release run [43598886092](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43598886092)：FAIL。Configure / Build PASS；Unit 198/198 PASS；Integration 69/72，失败为 ToolbarIndicatorUITest、FlightTelemetryPageUITest、FlightRadioPageUITest；Installer、clean-install、installed-runtime 因 Integration 失败而跳过。
+- pre-commit run [43598886118](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43598886118)：SUCCESS。
+- FlightTelemetryPageUITest：MAVLink float 被转为 double 后使用精确相等比较，已改为容差断言。
+- FlightRadioPageUITest：测试把 3 路通道场景误当作允许开始校准，已改为验证 8 路可用、3 路禁用。
+- ToolbarIndicatorUITest：APMCopter RemoteID 展开能力未在原 500 ms 内出现；测试改为等待页面 `_showExpand` 能力并输出组件诊断，待新 HEAD 验证是加载时序还是页面能力问题。
+- 本次旧 HEAD 的失败证据保留，不沿用为新 HEAD 结果；所有修复必须在新 HEAD 重新运行完整 Windows Release。
