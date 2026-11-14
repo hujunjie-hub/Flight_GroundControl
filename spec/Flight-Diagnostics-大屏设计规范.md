@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.1
+- 版本：2.2
 - 日期：2026-11-14
-- 状态：第二阶段 QML 与 MockLink Integration 测试已实现，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
+- 状态：第二阶段 QML 与 MockLink Integration 测试已实现；补齐摘要过期值门控与计时器驱动测试，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -239,7 +239,7 @@
 3. operation family 超时后显示数据超时。
 4. 新的严格递增帧到达后恢复已接收。
 5. storage validity mask 无效时显示无效，不能显示 payload 中的伪有效数值。
-6. 摘要字段必须受对应 family availability 保护。
+6. 摘要字段必须受对应 family availability 和 freshness 保护；过期后显示“数据超时”，不得继续把最后一次有效值显示成当前值。
 7. 失效保护摘要和详情行的颜色必须跟随 operation family freshness；过期的最后值不得继续显示为绿色。
 
 ### 8.3 响应式布局

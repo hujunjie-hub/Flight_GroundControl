@@ -258,8 +258,9 @@ SetupPage {
     }
 
     function _operationHeadline() {
-        if (!_fact("operationAvailable")) {
-            return qsTr("等待遥测")
+        const familyStatus = _familyStatus("operationAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return familyStatus
         }
         return _enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
                + " · " +
@@ -744,8 +745,9 @@ SetupPage {
                     Layout.fillWidth: true
                     titleText: qsTr("飞行状态")
                     valueText: root._operationHeadline()
-                    detailText: qsTr("控制权：%1 · %2").arg(root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
-                                                       .arg(root._familyStatus("operationAvailable"))
+                    detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                ? qsTr("控制权：%1").arg(root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
+                                : root._familyStatus("operationAvailable")
                     accentColor: root._familyStatusColor("operationAvailable")
                 }
 
@@ -753,11 +755,12 @@ SetupPage {
                     objectName: "flightTelemetry_summaryFailsafe"
                     Layout.fillWidth: true
                     titleText: qsTr("失效保护等级")
-                    valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
-                    detailText: root._fact("operationAvailable")
-                                ? qsTr("%1 · %2").arg(root._reasonText(0, root._fact("operationReasonCode")))
-                                                  .arg(root._familyStatus("operationAvailable"))
-                                : qsTr("等待 operation 遥测")
+                    valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                               ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                               : root._fact("operationAvailable") ? root._familyStatus("operationAvailable") : qsTr("未上报")
+                    detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                ? root._reasonText(0, root._fact("operationReasonCode"))
+                                : root._familyStatus("operationAvailable")
                     accentColor: root._failsafeColor()
                 }
 
@@ -765,12 +768,14 @@ SetupPage {
                     objectName: "flightTelemetry_summaryNavigation"
                     Layout.fillWidth: true
                     titleText: qsTr("导航估计")
-                    valueText: root._fact("navigationAvailable")
-                                ? qsTr("位置 %1").arg(root._number("positionStdM", 3, " m")) : qsTr("未上报")
-                    detailText: qsTr("速度 %1 · 航向 %2 · %3")
-                                .arg(root._number("velocityStdMps", 3, " m/s"))
-                                .arg(root._number("headingStdRad", 3, " rad"))
-                                .arg(root._familyStatus("navigationAvailable"))
+                    valueText: root._familyStatus("navigationAvailable") === qsTr("已接收")
+                               ? qsTr("位置 %1").arg(root._number("positionStdM", 3, " m"))
+                               : root._fact("navigationAvailable") ? root._familyStatus("navigationAvailable") : qsTr("未上报")
+                    detailText: root._familyStatus("navigationAvailable") === qsTr("已接收")
+                                ? qsTr("速度 %1 · 航向 %2")
+                                  .arg(root._number("velocityStdMps", 3, " m/s"))
+                                  .arg(root._number("headingStdRad", 3, " rad"))
+                                : root._familyStatus("navigationAvailable")
                     accentColor: root._familyStatusColor("navigationAvailable")
                 }
             }
@@ -1942,9 +1947,9 @@ SetupPage {
                     font.pointSize: ScreenTools.defaultFontPointSize * 0.70
                 }
                 QGCLabel {
-                    text: plotCard.sampleCount === 0 ? qsTr("WAIT")
+                    text: plotCard.validSampleCount === 0 ? qsTr("WAIT")
                           : plotCard.lastSampleValid ? qsTr("NOW") : qsTr("GAP")
-                    color: plotCard.sampleCount === 0 ? "#8298A2"
+                    color: plotCard.validSampleCount === 0 ? "#8298A2"
                            : plotCard.lastSampleValid ? "#45D39A" : "#F0B94B"
                     font.pointSize: ScreenTools.defaultFontPointSize * 0.70
                     font.bold: true

@@ -395,8 +395,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             uint64_t lastOperationTime = 1000;
             // Keep the live session fresh while the 1 Hz page sampler records real Fact values.
+            int previousAgeRefreshTick = page->property("_ageRefreshTick").toInt();
             for (int sample = 0; sample < 8; ++sample) {
-                QTest::qWait(350);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    page->property("_ageRefreshTick").toInt() > previousAgeRefreshTick, 1500);
+                previousAgeRefreshTick = page->property("_ageRefreshTick").toInt();
                 lastOperationTime += 1000;
                 sendOperationStatus(lastOperationTime, bootId);
                 sendNavigationStatus(lastOperationTime + 100, bootId, 0.12F, 0.08F, 0.02F);
@@ -432,6 +435,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
                                       QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFailsafe->property("text").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendPosition->property("lastSampleValid").toBool(), 3000);
 
             // A strictly newer frame restores the fresh state on the same boot epoch.
