@@ -241,10 +241,8 @@ private:
     void _resetMessageTimestamps();
     void _resetTelemetryAvailability();
     void _markFamilyReceived(const QString &family);
-    /// Recomputes the nearest stale deadline and arms the single staleness timer.
-    void _rescheduleStaleDeadline();
-    /// Emits familyReceiveAgeMsChanged only when the set of stale families actually changed.
-    void _notifyIfStaleSetChanged();
+    /// Updates the stale set and nearest timer deadline from the same clock reading.
+    void _updateStaleDeadline(bool receiveStateChanged = false);
 
     QElapsedTimer _receiveClock;
     int _familyStaleThresholdMs = kDefaultFamilyStaleThresholdMs;

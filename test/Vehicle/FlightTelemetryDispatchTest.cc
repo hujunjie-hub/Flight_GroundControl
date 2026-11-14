@@ -1022,29 +1022,50 @@ void FlightTelemetryDispatchTest::_mockLinkDropsFramesDeterministically()
     QVERIFY(telemetry);
     telemetry->setFamilyStaleThresholdMs(5000);
 
-    MockLink::FaultInjection injection;
-    injection.seed = 12345;
-    injection.dropEveryNth = 2;   // drop sequences 2, 4, 6, ...
-    mockLink->setFaultInjection(injection);
-
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
     const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
     const uint64_t boot = 0x4A4A4A4A4A4A4A4AULL;
 
     Fact *operationTime = telemetry->getFact(QStringLiteral("opTimeBootUs"));
     QVERIFY(operationTime);
+    QSignalSpy acceptedTimes(operationTime, &Fact::rawValueChanged);
+
+    MockLink::FaultInjection injection;
+    injection.seed = 12345;
+    injection.dropEveryNth = 2;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
+
+    // Leave an odd count in the previous run to verify that re-enabling resets the modulo phase.
+    mockLink->setFaultInjection(injection);
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 500, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 500ULL, TestTimeout::mediumMs());
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(1));
+    acceptedTimes.clear();
+    mockLink->setFaultInjection(injection);
+
+    mavlink_message_t heartbeat{};
+    mavlink_msg_heartbeat_pack(sysId, compId, &heartbeat, MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_GENERIC, 0, 0,
+                               MAV_STATE_STANDBY);
 
     for (int i = 1; i <= 10; ++i) {
         mockLink->respondWithMavlinkMessage(
             operationStatusMessage(sysId, compId, boot, static_cast<uint64_t>(i) * 1000, 1));
+        mockLink->respondWithMavlinkMessage(heartbeat);
     }
 
-    // Sequences 1,3,5,7,9 were delivered; 10 was dropped, so the newest accepted frame is 9000.
-    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 9000ULL, TestTimeout::longMs());
-    QCOMPARE(mockLink->injectedSequence(), quint64(10));
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(10));
     QCOMPARE(mockLink->faultInjection().dropEveryNth, 2);
 
     mockLink->clearFaultInjection();
+    // The final frame passes through the same parser, after any incorrectly delivered drop frames.
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 11000, 1));
+    QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 11000ULL, TestTimeout::longMs());
+    const QList<qulonglong> expectedTimes{1000, 3000, 5000, 7000, 9000, 11000};
+    QList<qulonglong> actualTimes;
+    for (const auto& args : acceptedTimes) {
+        actualTimes.append(args.at(0).toULongLong());
+    }
+    QCOMPARE(actualTimes, expectedTimes);
 }
 
 void FlightTelemetryDispatchTest::_mockLinkDelaysFramesWithoutLosingThem()
@@ -1064,6 +1085,7 @@ void FlightTelemetryDispatchTest::_mockLinkDelaysFramesWithoutLosingThem()
     injection.seed = 777;
     injection.delayEveryNth = 1;  // every frame is delayed
     injection.delayMs = 30;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
@@ -1077,8 +1099,7 @@ void FlightTelemetryDispatchTest::_mockLinkDelaysFramesWithoutLosingThem()
 
     // A delayed frame must still arrive (nothing is lost), just later.
     QTRY_COMPARE_WITH_TIMEOUT(operationTime->rawValue().toULongLong(), 4200ULL, TestTimeout::longMs());
-    // MockLink also drives heartbeats through the same path, so only "at least our frame" holds.
-    QVERIFY(mockLink->injectedSequence() >= 1);
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(1));
 
     mockLink->clearFaultInjection();
 }
@@ -1211,7 +1232,7 @@ void FlightTelemetryDispatchTest::_thresholdChangeReschedulesDeadline()
     QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
 }
 
-void FlightTelemetryDispatchTest::_multipleFamiliesGoStaleInOneNotification()
+void FlightTelemetryDispatchTest::_multipleFamiliesNotifyWhenStale()
 {
     Vehicle *vehicle = createMockLinkAndWaitForVehicle(
         QStringLiteral("Stale notify multi"), MAV_AUTOPILOT_GENERIC);
@@ -1222,26 +1243,35 @@ void FlightTelemetryDispatchTest::_multipleFamiliesGoStaleInOneNotification()
     QVERIFY(mockLink);
     FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
     QVERIFY(telemetry);
-    telemetry->setFamilyStaleThresholdMs(250);
+    telemetry->setFamilyStaleThresholdMs(500);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
     const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
     const uint64_t boot = 0x6565656565656565ULL;
 
-    // Both families are received back to back, so their deadlines are ~equal and both become
-    // stale within the same timer expiry.
+    const QString operation = QStringLiteral("operation");
+    const QString navigation = QStringLiteral("navigation");
+    bool operationNotified = false;
+    bool navigationNotified = false;
+    bool bothFresh = false;
+    QObject signalContext;
+    connect(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged, &signalContext, [&]() {
+        const auto stale = telemetry->familyStale();
+        const bool opStale = stale.value(operation).toBool();
+        const bool navStale = stale.value(navigation).toBool();
+        if (bothFresh) {
+            operationNotified |= opStale;
+            navigationNotified |= navStale;
+        }
+        bothFresh |= !opStale && !navStale;
+    });
+
+    // Back-to-back frames can land on either side of a receive-clock tick. Observe both
+    // transitions in the notify signal itself, including when the timer coalesces them.
     mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
     mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, boot, 1010, 8));
-    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
-                             TestTimeout::mediumMs());
-    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("navigation")).toBool(),
-                             TestTimeout::mediumMs());
-
-    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
-    staleNotifies.clear();
-    QVERIFY(staleNotifies.wait(TestTimeout::longMs()));
-    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
-    QVERIFY(telemetry->familyStale().value(QStringLiteral("navigation")).toBool());
+    QTRY_VERIFY_WITH_TIMEOUT(bothFresh, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(operationNotified && navigationNotified, TestTimeout::longMs());
 }
 
 void FlightTelemetryDispatchTest::_staleNotificationDoesNotDisturbFreshFamily()
@@ -1403,6 +1433,7 @@ void FlightTelemetryDispatchTest::_duplicateFrameDoesNotUpdateFactTwice()
     injection.seed = 4242;
     injection.duplicateEveryNth = 1;   // every injected frame is delivered twice
     injection.duplicateCount = 1;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     mockLink->respondWithMavlinkMessage(operationStatusMessage(
@@ -1438,6 +1469,7 @@ void FlightTelemetryDispatchTest::_reorderedFramesKeepNewestValue()
     MockLink::FaultInjection injection;
     injection.seed = 99;
     injection.reorderWindow = 2;   // buffer two frames, then deliver them newest-first
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
@@ -1470,6 +1502,7 @@ void FlightTelemetryDispatchTest::_disconnectDropsBufferedFrames()
     MockLink::FaultInjection injection;
     injection.seed = 7;
     injection.reorderWindow = 4;   // frames stay buffered until the window fills
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
@@ -1544,15 +1577,14 @@ void FlightTelemetryDispatchTest::_injectedSequenceBaselineSurvivesHandshake()
     MockLink::FaultInjection injection;
     injection.seed = 1;
     injection.dropEveryNth = 2;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
     QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(0));
 
-    const quint64 before = mockLink->injectedSequenceSinceEnable();
     mockLink->respondWithMavlinkMessage(operationStatusMessage(
         static_cast<uint8_t>(vehicle->id()), static_cast<uint8_t>(vehicle->compId()),
         0x6F6F6F6F6F6F6F6FULL, 1000, 1));
-    // At least our frame advanced the counter; heartbeats may advance it further.
-    QVERIFY(mockLink->injectedSequenceSinceEnable() >= before + 1);
+    QCOMPARE(mockLink->injectedSequenceSinceEnable(), quint64(1));
 
     mockLink->clearFaultInjection();
 }
@@ -1614,6 +1646,7 @@ void FlightTelemetryDispatchTest::_scenarioADelayReorderDuplicate()
     injection.reorderWindow = 3;
     injection.duplicateEveryNth = 1;
     injection.duplicateCount = 1;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
@@ -1647,6 +1680,7 @@ void FlightTelemetryDispatchTest::_scenarioBDropDisconnectReconnect()
     MockLink::FaultInjection injection;
     injection.seed = 2002;
     injection.dropEveryNth = 2;
+    injection.messageId = MAVLINK_MSG_ID_FCU_OPERATION_STATUS;
     mockLink->setFaultInjection(injection);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
@@ -1700,7 +1734,7 @@ void FlightTelemetryDispatchTest::_scenarioCOldEpochDelayedPlusNewEpoch()
     QCOMPARE(operationTime->rawValue().toULongLong(), 100ULL);
 }
 
-void FlightTelemetryDispatchTest::_scenarioDMultipleFamiliesExpireTogether()
+void FlightTelemetryDispatchTest::_scenarioDRecoveryLeavesOtherFamilyStale()
 {
     Vehicle *vehicle = createMockLinkAndWaitForVehicle(
         QStringLiteral("Scenario D"), MAV_AUTOPILOT_GENERIC);
@@ -1711,22 +1745,36 @@ void FlightTelemetryDispatchTest::_scenarioDMultipleFamiliesExpireTogether()
     QVERIFY(mockLink);
     FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
     QVERIFY(telemetry);
-    telemetry->setFamilyStaleThresholdMs(250);
+    telemetry->setFamilyStaleThresholdMs(500);
 
     const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
     const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
     const uint64_t boot = 0x7400000000000001ULL;
 
+    const QString operation = QStringLiteral("operation");
+    const QString navigation = QStringLiteral("navigation");
+    bool bothFresh = false;
+    bool bothExpired = false;
+    bool onlyOperationRecovered = false;
+    bool operationExpiredAgain = false;
+    QObject signalContext;
+    connect(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged, &signalContext, [&]() {
+        const auto stale = telemetry->familyStale();
+        const bool opStale = stale.value(operation).toBool();
+        const bool navStale = stale.value(navigation).toBool();
+        operationExpiredAgain |= onlyOperationRecovered && opStale && navStale;
+        onlyOperationRecovered |= bothExpired && !opStale && navStale;
+        bothExpired |= bothFresh && opStale && navStale;
+        bothFresh |= !opStale && !navStale;
+    });
+
     mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 1000, 1));
     mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, boot, 1000, 8));
-    QTRY_VERIFY_WITH_TIMEOUT(!telemetry->familyStale().value(QStringLiteral("operation")).toBool(),
-                             TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(bothExpired, TestTimeout::longMs());
 
-    QSignalSpy staleNotifies(telemetry, &FlightTelemetryFactGroup::familyReceiveAgeMsChanged);
-    staleNotifies.clear();
-    QVERIFY(staleNotifies.wait(TestTimeout::longMs()));
-    QVERIFY(telemetry->familyStale().value(QStringLiteral("operation")).toBool());
-    QVERIFY(telemetry->familyStale().value(QStringLiteral("navigation")).toBool());
+    mockLink->respondWithMavlinkMessage(operationStatusMessage(sysId, compId, boot, 2000, 1));
+    QTRY_VERIFY_WITH_TIMEOUT(onlyOperationRecovered, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(operationExpiredAgain, TestTimeout::longMs());
 }
 
 void FlightTelemetryDispatchTest::_buildInfoChunksCompleteInAnyOrder()

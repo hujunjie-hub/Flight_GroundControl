@@ -34,7 +34,7 @@ private slots:
     void _staleNotifyIsEmittedOnlyOnce();
     void _freshFrameNotifiesImmediately();
     void _thresholdChangeReschedulesDeadline();
-    void _multipleFamiliesGoStaleInOneNotification();
+    void _multipleFamiliesNotifyWhenStale();
     void _staleNotificationDoesNotDisturbFreshFamily();
     void _disconnectedVehicleStillNotifiesStale();
     void _qmlBindingObservesStaleTransition();
@@ -47,7 +47,7 @@ private slots:
     void _scenarioADelayReorderDuplicate();
     void _scenarioBDropDisconnectReconnect();
     void _scenarioCOldEpochDelayedPlusNewEpoch();
-    void _scenarioDMultipleFamiliesExpireTogether();
+    void _scenarioDRecoveryLeavesOtherFamilyStale();
     void _buildInfoChunksCompleteInAnyOrder();
     void _buildInfoDuplicateChunkIsIdempotent();
     void _buildInfoNewSnapshotClearsPreviousHashes();

@@ -1064,93 +1064,101 @@ void MockLink::_sendDistanceSensors()
 
 void MockLink::setFaultInjection(const FaultInjection &config)
 {
+    const QMutexLocker lock(&_faultInjectionMutex);
     _faultInjection = config;
-    _injectSequenceBase = _injectSequence;
+    _injectSequence = 0;
     _reorderBuffer.clear();
 }
 
 void MockLink::clearFaultInjection()
 {
+    const QMutexLocker lock(&_faultInjectionMutex);
     _faultInjection = FaultInjection{};
     _reorderBuffer.clear();
 }
 
+MockLink::FaultInjection MockLink::faultInjection() const
+{
+    const QMutexLocker lock(&_faultInjectionMutex);
+    return _faultInjection;
+}
+
+quint64 MockLink::injectedSequenceSinceEnable() const
+{
+    const QMutexLocker lock(&_faultInjectionMutex);
+    return _injectSequence;
+}
+
 void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
 {
-    if (!_commLost) {
-        uint8_t buffer[MAVLINK_MAX_PACKET_LEN]{};
-        const int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
-        const QByteArray bytes(reinterpret_cast<char*>(buffer), cBuffer);
-
-        const bool injectionActive = _faultInjection.dropEveryNth > 0 ||
-                                     (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0) ||
-                                     _faultInjection.duplicateEveryNth > 0 || _faultInjection.reorderWindow > 0;
-        if (injectionActive) {
-            const quint64 sequence = ++_injectSequence;
-            if (_faultInjection.dropEveryNth > 0 &&
-                (sequence % static_cast<quint64>(_faultInjection.dropEveryNth)) == 0) {
-                qCDebug(MockLinkLog) << "fault injection: drop sequence" << sequence
-                                     << "seed" << _faultInjection.seed;
-                return;
-            }
-            if (_faultInjection.reorderWindow > 0) {
-                // Buffer deterministically and flush the window in reverse order.
-                _reorderBuffer.append(bytes);
-                qCDebug(MockLinkLog) << "fault injection: buffer sequence" << sequence
-                                     << "seed" << _faultInjection.seed
-                                     << "buffered" << _reorderBuffer.size();
-                if (_reorderBuffer.size() >= _faultInjection.reorderWindow) {
-                    // Reversed flush; duplication still applies so a combined reorder+duplicate
-                    // scenario exercises both faults in one pass.
-                    const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
-                    const bool duplicate = _faultInjection.duplicateEveryNth > 0;
-                    for (int i = _reorderBuffer.size() - 1; i >= 0; --i) {
-                        const int total = duplicate ? copies : 1;
-                        for (int c = 0; c < total; ++c) {
-                            qCDebug(MockLinkLog) << "fault injection: flush index" << i << "copy" << c
-                                                 << "seed" << _faultInjection.seed;
-                            emit bytesReceived(this, _reorderBuffer.at(i));
-                        }
-                    }
-                    _reorderBuffer.clear();
-                }
-                return;
-            }
-            const auto deliver = [this](const QByteArray &payload, const char *why, quint64 sequence) {
-                const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
-                const bool duplicate = _faultInjection.duplicateEveryNth > 0 &&
-                                       (sequence % static_cast<quint64>(_faultInjection.duplicateEveryNth)) == 0;
-                const int total = duplicate ? copies : 1;
-                for (int c = 0; c < total; ++c) {
-                    qCDebug(MockLinkLog) << "fault injection:" << why << "sequence" << sequence
-                                         << "copy" << c << "seed" << _faultInjection.seed;
-                    emit bytesReceived(this, payload);
-                }
-            };
-            if (_faultInjection.delayEveryNth > 0 && _faultInjection.delayMs > 0 &&
-                (sequence % static_cast<quint64>(_faultInjection.delayEveryNth)) == 0) {
-                qCDebug(MockLinkLog) << "fault injection: delay sequence" << sequence
-                                     << "by" << _faultInjection.delayMs << "ms seed" << _faultInjection.seed;
-                const QByteArray payload = bytes;
-                QTimer::singleShot(_faultInjection.delayMs, this, [this, payload, sequence]() {
-                    const int copies = 1 + qMax(0, _faultInjection.duplicateCount);
-                    const bool duplicate = _faultInjection.duplicateEveryNth > 0 &&
-                                           (sequence % static_cast<quint64>(_faultInjection.duplicateEveryNth)) == 0;
-                    const int total = duplicate ? copies : 1;
-                    for (int c = 0; c < total; ++c) {
-                        qCDebug(MockLinkLog) << "fault injection: delayed delivery sequence" << sequence
-                                             << "copy" << c;
-                        emit bytesReceived(this, payload);
-                    }
-                });
-                return;
-            }
-            deliver(bytes, "deliver", sequence);
-            return;
-        }
-
-        emit bytesReceived(this, bytes);
+    if (_commLost) {
+        return;
     }
+
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN]{};
+    const int size = mavlink_msg_to_send_buffer(buffer, &msg);
+    const QByteArray bytes(reinterpret_cast<const char*>(buffer), size);
+
+    FaultInjection config;
+    quint64 sequence = 0;
+    QVector<QByteArray> reorderWindow;
+    {
+        const QMutexLocker lock(&_faultInjectionMutex);
+        config = _faultInjection;
+        const bool matches = !config.messageId || *config.messageId == msg.msgid;
+        const bool active = config.dropEveryNth > 0 || (config.delayEveryNth > 0 && config.delayMs > 0) ||
+                            config.duplicateEveryNth > 0 || config.reorderWindow > 0;
+        if (matches && active) {
+            sequence = ++_injectSequence;
+            if (config.dropEveryNth > 0 && (sequence % static_cast<quint64>(config.dropEveryNth)) == 0) {
+                qCDebug(MockLinkLog) << "fault injection: drop sequence" << sequence << "seed" << config.seed;
+                return;
+            }
+            if (config.reorderWindow > 0) {
+                _reorderBuffer.append(bytes);
+                if (_reorderBuffer.size() < config.reorderWindow) {
+                    return;
+                }
+                reorderWindow.swap(_reorderBuffer);
+            }
+        }
+    }
+
+    // Signal delivery can call back into the link, so emit after releasing the injector lock.
+    if (sequence == 0) {
+        emit bytesReceived(this, bytes);
+        return;
+    }
+
+    const int extraCopies = qMax(0, config.duplicateCount);
+    if (!reorderWindow.isEmpty()) {
+        const int copies = 1 + (config.duplicateEveryNth > 0 ? extraCopies : 0);
+        for (auto it = reorderWindow.crbegin(); it != reorderWindow.crend(); ++it) {
+            for (int copy = 0; copy < copies; ++copy) {
+                qCDebug(MockLinkLog) << "fault injection: flush sequence" << sequence << "copy" << copy;
+                emit bytesReceived(this, *it);
+            }
+        }
+        return;
+    }
+
+    const bool duplicate =
+        config.duplicateEveryNth > 0 && (sequence % static_cast<quint64>(config.duplicateEveryNth)) == 0;
+    const int copies = 1 + (duplicate ? extraCopies : 0);
+    const auto deliver = [this, bytes, sequence, copies]() {
+        for (int copy = 0; copy < copies; ++copy) {
+            qCDebug(MockLinkLog) << "fault injection: deliver sequence" << sequence << "copy" << copy;
+            emit bytesReceived(this, bytes);
+        }
+    };
+    if (config.delayEveryNth > 0 && config.delayMs > 0 &&
+        (sequence % static_cast<quint64>(config.delayEveryNth)) == 0) {
+        qCDebug(MockLinkLog) << "fault injection: delay sequence" << sequence << "by" << config.delayMs << "ms seed"
+                             << config.seed;
+        QTimer::singleShot(config.delayMs, this, deliver);
+        return;
+    }
+    deliver();
 }
 
 void MockLink::_writeBytes(const QByteArray &bytes)

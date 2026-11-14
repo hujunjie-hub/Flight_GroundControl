@@ -1,22 +1,22 @@
 #pragma once
 
-#include "PX4/px4_custom_mode.h"
-#include "LinkInterface.h"
-#include "MAVLinkEnums.h"
-#include "MAVLinkMessageType.h"
-#include "QGCMAVLinkTypes.h"
-#include "MockConfiguration.h"
-#include "MockLinkPX4Calibration.h"
-#include "MockLinkMissionItemHandler.h"
-
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
 #include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
-
 #include <array>
 #include <atomic>
+#include <optional>
+
+#include "LinkInterface.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "MockConfiguration.h"
+#include "MockLinkMissionItemHandler.h"
+#include "MockLinkPX4Calibration.h"
+#include "PX4/px4_custom_mode.h"
+#include "QGCMAVLinkTypes.h"
 
 class MockLinkCamera;
 class MockLinkFTP;
@@ -57,10 +57,8 @@ public:
     bool signingEnabled() const { return _signingEnabled; }
 
     /// Sends the specified mavlink message to QGC
-    /// Deterministic fault injection for tests (FGC-0032). Each respondWithMavlinkMessage() call
-    /// takes the next sequence number and every decision is a pure function of
-    /// (sequence, seed, config), so a run is reproducible from the seed and the sequence numbers
-    /// logged at debug level. Defaults are all-off, so existing tests are unaffected.
+    /// Deterministic fault injection for tests (FGC-0032). Matching frames are numbered from
+    /// one each time injection is enabled. Defaults are all-off.
     struct FaultInjection
     {
         quint32 seed = 0;
@@ -70,16 +68,13 @@ public:
         int duplicateEveryNth = 0;   ///< 0 disables duplicating
         int duplicateCount = 1;      ///< extra copies delivered per duplicated frame
         int reorderWindow = 0;       ///< 0 disables; otherwise buffer this many frames and flush reversed
+        std::optional<uint32_t> messageId;  ///< If unset, match every MAVLink message
     };
 
     void setFaultInjection(const FaultInjection &config);
     void clearFaultInjection();
-    FaultInjection faultInjection() const { return _faultInjection; }
-    /// Sequence number of the last frame since the injector was last enabled. This is what tests
-    /// must assert on: the handshake consumes sequence numbers before the injector is enabled, so
-    /// an absolute counter never starts at a value a test can predict (round 14 bug).
-    quint64 injectedSequenceSinceEnable() const { return _injectSequence - _injectSequenceBase; }
-    quint64 injectedSequence() const { return _injectSequence; }
+    FaultInjection faultInjection() const;
+    quint64 injectedSequenceSinceEnable() const;
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 
     /// Sends a STATUSTEXT message to QGC
@@ -262,9 +257,9 @@ private slots:
     void _writeBytesQueued(const QByteArray &bytes);
 
 private:
+    mutable QMutex _faultInjectionMutex;
     FaultInjection _faultInjection;
     quint64 _injectSequence = 0;
-    quint64 _injectSequenceBase = 0;
     QVector<QByteArray> _reorderBuffer;
 
     typedef struct {
