@@ -278,7 +278,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
