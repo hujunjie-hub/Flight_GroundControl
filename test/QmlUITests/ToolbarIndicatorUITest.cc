@@ -8,8 +8,6 @@
 
 #include "MockLink.h"
 
-#include <QtCore/QPointer>
-
 UT_REGISTER_TEST(ToolbarIndicatorUITest, TestLabel::Integration)
 
 // ---------------------------------------------------------------------------
@@ -58,9 +56,32 @@ bool ToolbarIndicatorUITest::_exerciseIndicator(QQuickItem *indicatorItem, const
     // 2. Expand — verify the expand button is present when expected, and that
     //    expanded content appears after clicking it
     if (expectExpand) {
-        QQuickItem *expandBtn = findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerExpandButton"), 500);
+        QQuickItem *drawerLoader = findItem(_rootItem, QStringLiteral("indicatorDrawerLoader"));
+        if (!drawerLoader) {
+            qWarning() << indicatorName << ": drawer loader disappeared before expand";
+            return false;
+        }
+
+        QObject *drawerPage = nullptr;
+        if (!waitForCondition(
+                [&] {
+                    drawerPage = drawerLoader->property("item").value<QObject *>();
+                    return drawerPage && drawerPage->property("_showExpand").toBool();
+                },
+                2000,
+                QStringLiteral("%1 drawer page expand capability").arg(indicatorName))) {
+            qWarning() << indicatorName << ": drawer page did not expose expand capability"
+                       << "page:" << drawerPage
+                       << "showExpand:" << (drawerPage ? drawerPage->property("showExpand") : QVariant())
+                       << "expandedComponentValid:"
+                       << (drawerPage ? drawerPage->property("expandedComponent").isValid() : false);
+            return false;
+        }
+
+        QQuickItem *expandBtn = findVisibleItem(
+            _rootItem, QStringLiteral("indicatorDrawerExpandButton"), 2000);
         if (!expandBtn) {
-            qWarning() << indicatorName << ": expand button not found but was expected";
+            qWarning() << indicatorName << ": expand capability is ready but button is not visible";
             return false;
         }
         const QPointF expandCenter = expandBtn->mapToScene(

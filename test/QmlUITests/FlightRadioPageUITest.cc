@@ -122,6 +122,10 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
             mockLink->respondWithMavlinkMessage(message);
 
             QTRY_COMPARE_WITH_TIMEOUT(channelMonitor->property("channelCount").toInt(), 8, 3000);
+            QQuickItem *startCalibration = findVisibleItem(
+                _rootItem, QStringLiteral("flightRadio_startCalibration"), 3000);
+            QVERIFY(startCalibration);
+            QTRY_VERIFY_WITH_TIMEOUT(startCalibration->property("enabled").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(leftGimbal->property("liveDataAvailable").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightGimbal->property("liveDataAvailable").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(leftMarker->isVisible(), 3000);
@@ -323,13 +327,12 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
                 &channels);
             mockLink->respondWithMavlinkMessage(message);
             QTRY_COMPARE_WITH_TIMEOUT(channelMonitor->property("channelCount").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!startCalibration->property("enabled").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!leftGimbal->property("liveDataAvailable").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightGimbal->property("liveDataAvailable").toBool(), 3000);
             QVERIFY(!leftMarker->isVisible());
             QVERIFY(rightMarker->isVisible());
 
-            QQuickItem *startCalibration = findVisibleItem(
-                _rootItem, QStringLiteral("flightRadio_startCalibration"), 3000);
             QQuickItem *saveCalibration = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_saveCalibration"), 3000);
             QQuickItem *cancelCalibration = findVisibleItem(
@@ -343,7 +346,7 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
             QVERIFY(cancelCalibration);
             QVERIFY(bindCrsf);
             QVERIFY(copyTrims);
-            QVERIFY(startCalibration->property("enabled").toBool());
+            QVERIFY(!startCalibration->property("enabled").toBool());
             QVERIFY(!saveCalibration->property("enabled").toBool());
             QVERIFY(!cancelCalibration->property("enabled").toBool());
         });

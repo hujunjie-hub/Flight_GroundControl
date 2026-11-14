@@ -439,10 +439,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisThrottle->property("valid").toBool(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(axisRoll->property("normalizedValue").toDouble(), 0.25, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(axisPitch->property("normalizedValue").toDouble(), -0.25, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(axisYaw->property("normalizedValue").toDouble(), 0.50, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(axisThrottle->property("normalizedValue").toDouble(), 0.40, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisRoll->property("normalizedValue").toDouble() - 0.25) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisPitch->property("normalizedValue").toDouble() - -0.25) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisYaw->property("normalizedValue").toDouble() - 0.50) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisThrottle->property("normalizedValue").toDouble() - 0.40) < 0.0001, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
