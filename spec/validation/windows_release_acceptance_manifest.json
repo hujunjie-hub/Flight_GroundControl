@@ -1,5 +1,5 @@
 {
-  "schema": "flight-groundcontrol-windows-release-acceptance/1.1",
+  "schema": "flight-groundcontrol-windows-release-acceptance/1.2",
   "repository": "hujunjie-hub/Flight_GroundControl",
   "branch": "main",
   "delivery": {
@@ -193,6 +193,20 @@
         "unit_application_language_is_English",
         "English_culture_restored_before_integration_and_archive"
       ]
+    },
+    {
+      "id": "G13",
+      "name": "flight_telemetry_dashboard_ui",
+      "required": true,
+      "pass": [
+        "dashboard_header_and_read_only_indicator_render",
+        "four_summary_tiles_render_with_family_availability_gating",
+        "responsive_grid_uses_12_6_1_columns_at_1450_and_760_px_breakpoints",
+        "all_existing_diagnostic_families_and_object_names_remain_available",
+        "per_family_freshness_badges_do_not_infer_global_health",
+        "unknown_invalid_stale_and_recovery_states_are_preserved",
+        "no_synthetic_trend_charts_or_control_actions"
+      ]
     }
   ],
   "telemetry_test_matrix": [
@@ -250,5 +264,18 @@
     "toolbar_indicator_drawers_remain_clickable_and_expandable",
     "unavailable_altitude_hold_mode_is_visible_but_disabled"
   ],
-  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification."
+  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13.",
+  "flight_telemetry_dashboard_ui_matrix": [
+    "dashboard_header_and_read_only_indicator_render",
+    "telemetry_summary_shows_waiting_without_fcu_frames",
+    "operation_summary_is_gated_by_operation_available",
+    "failsafe_summary_maps_only_known_protocol_enums",
+    "navigation_summary_is_gated_by_navigation_available",
+    "responsive_grid_uses_12_6_1_columns_at_1450_and_760_px_breakpoints",
+    "diagnostic_cards_show_independent_family_freshness_badges",
+    "all_existing_diagnostic_families_and_object_names_remain_available",
+    "unknown_invalid_stale_and_recovery_states_are_preserved",
+    "no_global_health_score_or_synthetic_time_series",
+    "diagnostic_page_remains_read_only"
+  ]
 }

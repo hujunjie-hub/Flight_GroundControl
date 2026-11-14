@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：1.1  
+版本：1.2  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -31,8 +31,9 @@
 | G10 | 静态质量 | lint/pre-commit/CI checks | 适用检查通过；不触发其他平台产品构建 |
 | G11 | 证据交付 | RUN_ID、ZIP、SHA-256、报告 | 文件齐全、哈希可复核、commit 对齐 |
 | G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
+| G13 | 飞控诊断大屏 UI | FlightTelemetryPageUITest、JUnit、页面布局断言 | 标题/摘要/卡片结构存在；12/6/1 列断点正确；UNKNOWN/INVALID/STALE/RECOVERY 语义正确；只读边界保持 |
 
-只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前阶段完整 Windows Release 交付要求 G0–G12 全部满足。
+只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前阶段完整 Windows Release 交付要求 G0–G13 全部满足。
 
 ## 3. 单元和集成测试要求
 
@@ -87,6 +88,18 @@ CI 排除 Flaky/Network 是固定规则，不代表这些场景自动获得覆�
 - 事件历史有界，显示内容与消息 ID/时间一致。
 - Build info 仅显示遥测摘要，不把 hash 当作签名或可信固件来源证明。
 - 页面只读；不得产生 ARM、模式切换、Permit 或执行器授权。
+
+### 4.4 高级大屏 UI（FGC-0044）
+
+正式视觉、信息架构和响应式规则见 [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)。
+
+- 顶部展示 FCU 遥测接收、飞行状态、失效保护等级和导航估计四张摘要卡；摘要字段必须受对应 family availability 保护。
+- 主诊断区使用 12/6/1 列响应式网格，断点为 1450 px 和 760 px；卡片跨度按设计规范执行。
+- 每张诊断卡显示本 family 的接收状态徽标；不能把单一 family 的接收状态扩展成全局健康结论。
+- 颜色必须与状态文字同时呈现；UNKNOWN/未上报为灰色、STALE 为黄色、明确的故障/无效为红色。
+- 保留所有现有诊断卡片、字段、validity gating、per-instance 年龄和稳定 objectName。
+- `FlightTelemetryPageUITest` 必须验证标题、摘要、关键卡片、响应式列数和真实 MockLink wire path 上的 UNKNOWN/INVALID/STALE/RECOVERY。
+- 第一阶段不添加虚构趋势图、综合健康分或任何控制操作。
 
 ## 5. MAVLink 网络和真实固件互操作专项验收
 
