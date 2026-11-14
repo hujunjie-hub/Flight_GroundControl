@@ -165,6 +165,15 @@ Item {
                 Layout.fillWidth: true
             }
 
+            QGCButton {
+                objectName: "toolbar_altitudeHoldUnavailable"
+                text: qsTranslate("FlightFirmwarePlugin", "Altitude Hold")
+                visible: control._linkAvailable && activeVehicle !== null && activeVehicle.flightTelemetry !== null
+                         && !activeVehicle.flightModes.includes(text)
+                enabled: false
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 id:     modeRepeater
                 model:  _canChangeMode ? activeVehicle.flightModes : []

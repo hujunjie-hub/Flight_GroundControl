@@ -100,6 +100,12 @@ Item {
                         Layout.fillHeight:  true
                         visible:            _activeVehicle
                     }
+
+                    FlyViewToolBarIndicators {
+                        visible:           implicitWidth > 0
+                        gpsAndBattery:     true
+                        Layout.fillHeight: true
+                    }
                 }
             }
             Item {

@@ -18,3 +18,9 @@
 Flight 的 `task_gcs.c` 在 Host SIL 中已运行。缺失的是虚拟电台输出到 Ground SIL UDP 的转发。验证补丁只改独立 Flight 工作树中的三个 `tests/simulation` 文件，复用现有 UDP 发送路径、序号和 CRC，未进入 Flight 分支。构建时还在该工作树刷新了由换行差异引起的参数目录输入摘要，参数内容相同。传感器实例 ID 的 ICD 与发布顺序差异仍待 Flight 确认。
 
 本地归档 `work/validation/archives/20261114T062051460Z_cccf82a-udp-sil-geotag.zip`，SHA-256 `603fc3f8964f2476789473404d724d8485460f79ccf6af2bf1e4b7d6e3dc2dc2`。内含原始版本的报文计数、转发后抓包、GCS 接收日志、解码统计、断流计数和 Flight SIL 转发补丁。补丁 SHA-256 `05b5c005ab8763dd158a63c7ec66bb974757b37a2fdbd4289b4ac1eb6cf9e4e3`，GCS 接收日志 SHA-256 `c6ef0f8fad2eb22c458a1a56657322da5065ee32ba5605c468d01a6508da5e4f`。
+
+## 飞行视图显示
+
+- 卫星和电池位于当前飞行模式右侧，分别保留各自的详情入口。
+- 达到电池设置的上阈值时使用绿色，默认上阈值为 80%，85% 显示绿图标。中间档使用黄色，低于下阈值使用橙色，飞控报告的严重和紧急电池状态优先于百分比。
+- Flight SIL 版本 `1c7a72a` 将「定高」标为不可选，地面站在飞行模式菜单中以禁用项显示。其余模式沿用已有选择和确认流程。

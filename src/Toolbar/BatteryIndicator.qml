@@ -35,7 +35,6 @@ Item {
     readonly property var _batteryAppearance: ({
         unknown:    { icon: "Battery.svg",            color: qgcPal.text },
         green:      { icon: "BatteryGreen.svg",       color: qgcPal.colorGreen },
-        yellowGreen: { icon: "BatteryYellowGreen.svg", color: qgcPal.colorYellowGreen },
         yellow:     { icon: "BatteryYellow.svg",      color: qgcPal.colorYellow },
         low:        { icon: "BatteryOrange.svg",      color: qgcPal.colorOrange },
         critical:   { icon: "BatteryCritical.svg",    color: qgcPal.colorRed },
@@ -53,11 +52,8 @@ Item {
         }
 
         if (isFinite(percent) && percent >= 0 && percent <= 100) {
-            if (percent === 100) {
-                return "green"
-            }
             if (percent >= threshold1) {
-                return "yellowGreen"
+                return "green"
             }
             return percent >= threshold2 ? "yellow" : "low"
         }
@@ -504,12 +500,6 @@ Item {
                         RowLayout {
                             spacing: ScreenTools.defaultFontPixelWidth / 4
                             BatteryIcon { level: "green"; height: batteryIconHeight }
-                            QGCLabel { text: qsTr("100%") }
-                        }
-
-                        RowLayout {
-                            spacing: ScreenTools.defaultFontPixelWidth / 4
-                            BatteryIcon { level: "yellowGreen"; height: batteryIconHeight }
                             ThresholdValue { fact: _batterySettings.threshold1 }
                         }
 

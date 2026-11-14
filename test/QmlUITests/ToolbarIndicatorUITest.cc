@@ -114,6 +114,45 @@ void ToolbarIndicatorUITest::_runIndicatorTest(
         QCoreApplication::processEvents();
     }
 
+    QQuickItem* const mode = findVisibleItem(_rootItem, QStringLiteral("toolbar_flightModeIndicator"), 2000);
+    QQuickItem* const gps = findVisibleItem(_rootItem, QStringLiteral("toolbar_gpsIndicator"), 2000);
+    QQuickItem* const battery = findVisibleItem(_rootItem, QStringLiteral("toolbar_batteryIndicator"), 2000);
+    QVERIFY(mode && gps && battery);
+    const auto panelFor = [](QQuickItem* indicator) -> QQuickItem* {
+        for (auto* parent = indicator->parentItem(); parent; parent = parent->parentItem()) {
+            if (parent->objectName() == QStringLiteral("flyViewGpsAndBatteryIndicators")) {
+                return parent;
+            }
+        }
+        return nullptr;
+    };
+    QVERIFY(panelFor(gps));
+    QCOMPARE(panelFor(battery), panelFor(gps));
+    QVERIFY(gps->mapToScene(QPointF{}).x() >= mode->mapToScene(QPointF{mode->width(), 0}).x());
+    QVERIFY(battery->mapToScene(QPointF{}).x() > gps->mapToScene(QPointF{}).x());
+
+    const int highThreshold = battery->property("threshold1").toInt();
+    const int mediumThreshold = battery->property("threshold2").toInt();
+    const struct
+    {
+        int percent;
+        int state;
+        const char* color;
+    } colors[] = {
+        {85, MAV_BATTERY_CHARGE_STATE_OK, "green"},
+        {highThreshold, MAV_BATTERY_CHARGE_STATE_OK, "green"},
+        {highThreshold - 1, MAV_BATTERY_CHARGE_STATE_OK, "yellow"},
+        {mediumThreshold, MAV_BATTERY_CHARGE_STATE_OK, "yellow"},
+        {mediumThreshold - 1, MAV_BATTERY_CHARGE_STATE_OK, "low"},
+        {85, MAV_BATTERY_CHARGE_STATE_CRITICAL, "critical"},
+    };
+    for (const auto& [percent, state, expected] : colors) {
+        QVariant color;
+        QVERIFY(QMetaObject::invokeMethod(battery, "batteryLevel", Q_RETURN_ARG(QVariant, color),
+                                          Q_ARG(QVariant, QVariant(percent)), Q_ARG(QVariant, QVariant(state))));
+        QCOMPARE(color.toString(), QString::fromLatin1(expected));
+    }
+
     // -------------------------------------------------------------------------
     // Table of indicators to exercise: { objectName, displayName, expectExpand }
     // -------------------------------------------------------------------------
