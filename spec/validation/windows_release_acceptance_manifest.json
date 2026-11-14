@@ -223,6 +223,23 @@
         "calibration_save_cancel_bind_and_trim_controls_keep_existing_guards",
         "visualization_test_sends_no_calibration_or_flight_control_commands"
       ]
+    },
+    {
+      "id": "G15",
+      "name": "flight_telemetry_command_center_phase2",
+      "required": true,
+      "pass": [
+        "flight_state_navigation_and_rc_hero_panels_render_from_real_facts",
+        "rc_axis_bars_follow_rc_valid_axes_mask_and_axis_ranges",
+        "thirteen_family_health_matrix_shows_independent_status_and_receive_age",
+        "four_trend_panels_use_only_fresh_finite_non_negative_live_facts",
+        "trend_sampling_is_1hz_bounded_to_60_points_and_uses_existing_page_timer",
+        "stale_or_invalid_samples_create_gaps_without_interpolation",
+        "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
+        "no_attitude_instrument_without_real_attitude_angle_telemetry",
+        "all_existing_diagnostic_cards_and_object_names_remain_available",
+        "dashboard_remains_read_only_without_new_control_actions"
+      ]
     }
   ],
   "telemetry_test_matrix": [
@@ -294,7 +311,14 @@
     "no_global_health_score_or_synthetic_time_series",
     "diagnostic_page_remains_read_only",
     "failsafe_summary_and_detail_color_follow_operation_freshness",
-    "dashboard_card_order_matches_information_architecture"
+    "dashboard_card_order_matches_information_architecture",
+    "phase2_hero_panels_use_real_operation_navigation_and_rc_facts",
+    "rc_axis_visualization_obeys_valid_axes_mask",
+    "thirteen_family_health_matrix_shows_independent_freshness",
+    "gcs_trends_sample_live_facts_at_1hz_with_60_point_bound",
+    "stale_invalid_trend_samples_create_gaps",
+    "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
+    "no_artificial_horizon_without_attitude_telemetry"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

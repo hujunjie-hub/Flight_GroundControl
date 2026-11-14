@@ -21,6 +21,7 @@ operations dashboard with a header, four family-gated summary tiles, and a respo
 [`spec/Flight-Diagnostics-大屏设计规范.md`](../../spec/Flight-Diagnostics-大屏设计规范.md).
 The page retains operation, navigation, sensor health, control, actuator, link, storage,
 resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history.
+The Phase 2 dashboard adds a flight-state hero, numeric navigation-accuracy metrics, RC input bars gated by `rcValidAxesMask`, a 13-family freshness matrix, and bounded 1 Hz GCS-side trend samples for position/velocity/heading standard deviation and control solve time. Trend samples are observations of current Facts, not FCU-native history; stale/invalid samples create gaps, and buffers are reset when the active Vehicle or operation boot ID changes. The current 13 FCU message families do not publish aircraft roll/pitch/yaw attitude angles, so no artificial-horizon instrument is shown.
 Sensor health is shown per sensor instance, communication state per RC/GCS/Companion
 link instance, and resource records are keyed by task ID. The current Flight publisher
 leaves `task_id` at zero and fills the deadline-miss count from the global

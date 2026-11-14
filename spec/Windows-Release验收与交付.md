@@ -99,7 +99,11 @@ CI 排除 Flaky/Network 是固定规则，不代表这些场景自动获得覆�
 - 颜色必须与状态文字同时呈现；UNKNOWN/未上报为灰色、STALE 为黄色、明确的故障/无效为红色。
 - 保留所有现有诊断卡片、字段、validity gating、per-instance 年龄和稳定 objectName。
 - `FlightTelemetryPageUITest` 必须验证标题、摘要、关键卡片、响应式列数和真实 MockLink wire path 上的 UNKNOWN/INVALID/STALE/RECOVERY。
-- 第一阶段不添加虚构趋势图、综合健康分或任何控制操作。
+- 第二阶段增加真实 Fact 的 GCS 本地 1 Hz 趋势采样（最近 60 点、有界、freshness gating、缺失断点、Vehicle/boot epoch 清空），必须标注为 GCS sample，不能冒充 FCU 原生历史。
+- 增加 13 个遥测 family 的独立健康/接收年龄矩阵，不生成综合健康分。
+- 增加真实 RC 输入轴条，严格遵守 `rcValidAxesMask`；不把 RC 输入称为飞机姿态。
+- 当前协议没有飞机姿态角，禁止绘制虚构人工地平仪。
+- 页面仍只读，不增加控制操作。
 
 ## 5. MAVLink 网络和真实固件互操作专项验收
 

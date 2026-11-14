@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：1.0
+- 版本：2.0
 - 日期：2026-11-14
-- 状态：第一阶段已实现，等待精确 main HEAD Windows Release 验收
+- 状态：第二阶段设计已批准，QML 实施中；第一阶段和第二阶段均需按精确 main HEAD 验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -28,7 +28,8 @@
 - 不修改 MAVLink 消息、Flight ICD、FactGroup 数据结构或解码/分发逻辑。
 - 不添加 ARM、解锁、模式切换、Permit、Failsafe 清除、执行器输出等控制操作。
 - 不生成“综合健康分”“安全百分比”或单一绿灯结论。
-- 当前遥测接口没有提供可用于绘图的历史时序缓存；第一阶段不制作虚构折线、趋势火花线、仪表动画或预测曲线。
+- 当前遥测接口没有提供 FCU 原生历史时序缓存。第二阶段允许地面站在页面可见时，对当前已接收且新鲜的真实 Fact 做 1 Hz 有界采样；图表必须明确标注“地面站采样”，不能冒充 FCU 原生历史、不能插值跨越无效/超时区间，也不能用于飞行安全判断。
+- 当前 13 类遥测不包含飞行器姿态角（roll/pitch/yaw）遥测；不得使用 RC 输入或导航标准差伪造人工地平仪/姿态仪。
 - 不在地面站推断传感器实例 ID 的物理类型。Flight 发布端与 ICD 的传感器 ID 顺序未统一前，继续展示原始实例 ID。
 - 不将 MockLink / Host UI 通过解释为 Flight UDP SIL、H723 实机或真实飞行验收。
 
@@ -81,6 +82,44 @@
 
 不得因卡片重新布局而删除原有字段、Validity 检查、原因码解释或 per-instance 接收年龄。
 
+### 2.4 指挥中心主视觉区（Phase 2）
+
+在四张摘要卡之后、完整诊断卡片之前增加三块真实数据驱动的主视觉面板：
+
+| 面板 | 主要数据 | 展示方式 | 限制 |
+|---|---|---|---|
+| 飞行态势 | armState、flightMode、authority、failsafeLevel、operation family 状态 | 大字号模式/解锁状态、控制权和失效保护等级 | 不模拟姿态，不将遥测接收等同于可飞 |
+| 导航估计 | positionStdM、velocityStdMps、headingStdRad、navigation family 状态 | 三个并列精度指标，显示原始值和单位 | 没有 ICD 阈值时不显示“优/良/差”或可靠度评分 |
+| RC 输入 | rcRollNorm、rcPitchNorm、rcYawNorm、rcThrottleNorm、rcValidAxesMask | 四轴真实输入条；横滚/俯仰/偏航以 0 为中心，油门按 0..1 显示 | 严格按 valid-axis mask 显示；无效轴不画成零；明确标记为“遥控输入”，不能称为飞行器姿态 |
+
+桌面 12 列时三块面板各占 4 列；6 列时各占 3 列；窄屏单列。主视觉区只突出已收到的数据，所有未知/无效/超时值保留其原有状态语义。
+
+### 2.5 13 类遥测健康矩阵（Phase 2）
+
+增加一张全宽状态矩阵，逐项显示 operation、navigation、sensor health、control、actuator、link、storage、resource、time、event、pre-arm、RC input、build info 共 13 个数据域。每项独立显示状态文字、接收年龄和对应状态色。
+
+- 这是消息域接收/新鲜度矩阵，不是系统健康评分。
+- event 为异步事件域，不使用周期数据超时语义。
+- 传感器、链路和资源列表仍须保留实例级接收年龄；family 状态不得掩盖实例超时。
+- 任意单项正常不得推导其他数据域正常。
+
+### 2.6 遥测趋势（Phase 2）
+
+增加地面站本地采样趋势区，使用现有页面 500 ms 年龄刷新 Timer 的每第二次 tick 采样（1 Hz），不新增 Timer。最多保留最近 60 个采样点，页面隐藏时停止采样。
+
+| 趋势 | 来源 | 采样准入 |
+|---|---|---|
+| 位置标准差 | positionStdM | navigation family 新鲜、数值有限且非负 |
+| 速度标准差 | velocityStdMps | navigation family 新鲜、数值有限且非负 |
+| 航向标准差 | headingStdRad | navigation family 新鲜、数值有限且非负 |
+| 控制求解耗时 | controlSolveTimeUs | control family 新鲜、数值有限且非负 |
+
+- 每个采样点附带有效/缺失状态；family 未收到、超时、Fact 无效或数值非法时写入断点。
+- 图表不得跨断点连线，不得用 0、上一次有效值或插值填补缺失样本。
+- 缓冲区最多 60 点；切换 Vehicle 或检测到 opBootIdHex 启动 epoch 变化时清空，禁止跨飞行器/启动周期拼接曲线。
+- 图表标题和说明必须明确标注“地面站 1 Hz 采样 / 最近 60 点”；采样点是 GCS 观察值，不是 FCU 原生历史时间序列。
+- 样本不足 2 个有效点时显示“采集中”，不能画出貌似完整的趋势。
+- 趋势仅供诊断观察，不构成安全阈值、告警或控制依据。
 ## 3. 响应式布局规范
 
 布局依据 `SetupPage.availableWidth`，不是屏幕物理分辨率。页面在已有 SetupView 可用区域内自适应。
@@ -171,13 +210,18 @@
 - 页面为只读诊断视图，不出现可发送飞控命令的按钮。
 - 卡片内容全部可见且可纵向滚动；不得因窗口缩窄而横向裁切。
 - 诊断信息使用统一卡片头、状态徽标和字段行。
-- 第一阶段不增加图表交互、告警确认或状态清除操作；这些功能需要独立的产品需求和权限审查。
+- 第二阶段趋势图为只读静态绘制，不增加图表交互、告警确认或状态清除操作；这些功能需要独立的产品需求和权限审查。
+- RC 轴可视化仅显示真实 FCU 遥测输入，不提供摇杆控制或校准入口。
 
 ## 8. 测试与验收
 
 ### 8.1 页面结构
 
 - 页面标题、只读标识、四张摘要卡、主诊断 GridLayout 和主要卡片具有稳定 `objectName`。
+- Phase 2 飞行态势、导航估计、RC 输入、13 类健康矩阵和四个趋势面板均有稳定 `objectName`，由 UI Integration 测试断言。
+- RC 四轴面板按有效轴掩码显示；无效轴必须显示“无效/未上报”且不绘制有效填充。
+- 健康矩阵必须覆盖 13 个 family，逐项显示独立状态和接收年龄；event 按异步域处理。
+- 趋势区明确标注 GCS 1 Hz 采样/最近 60 点，不得标注为 FCU 原生历史。
 - 桌面 12 列布局中，解锁前检查与最新事件并排；资源/存储/时间同步并排；遥控输入与最近事件历史并排；固件与版本位于底部全宽。
 - 原有 `flightTelemetry_page`、`flightTelemetry_operationMessageStatus`、`flightTelemetry_storageFreeKib` 等测试选择器必须保留。
 - 页面完整保留所有现有诊断卡片和字段。
@@ -200,12 +244,22 @@
 
 ### 8.3 响应式布局
 
+- 主视觉区在 12/6/1 列布局下按设计跨度排列；健康矩阵和趋势图在宽/中/窄布局下均不横向裁切。
 - 1600 px 页面宽度使用 12 列。
 - 1000 px 页面宽度使用 6 列。
 - 700 px 页面宽度使用 1 列。
 - 改变宽度时卡片跨度同步改变，不能出现 0 列、负跨度或超出列数的跨度。
 
-### 8.4 安全与回归
+### 8.4 趋势采样与状态矩阵
+
+- 无遥测时趋势采样不生成有效点，矩阵所有未收到 family 显示等待/未收到。
+- 真实导航/控制帧进入 MockLink wire path 后，趋势有效样本计数增加，数值与 Fact 一致。
+- family 超时/无效后写入断点；Canvas 不跨断点连线。
+- 样本上限为 60；Vehicle/boot epoch 变化清空历史。
+- 页面隐藏时停止采样，不增加额外 Timer。
+- RC 有效轴按 mask 显示，清除 mask 位后对应轴不得继续显示最后有效位置。
+
+### 8.5 安全与回归
 
 - 不新增任何控制命令或写入路径。
 - 既有 13 类遥测解码、分发、freshness、timestamp、boot epoch、profile 和多 Vehicle 隔离测试必须继续通过。
@@ -223,16 +277,28 @@
 - 保留所有现有诊断字段和数据语义。
 - 扩展 `FlightTelemetryPageUITest` 验证页面结构、摘要未知态和响应式列数。
 
-### Phase 2 — 后续独立评估
+### Phase 2 — 指挥中心视觉与真实数据可视化（当前实施）
 
-只有当 GroundControl 获得有界、可信的遥测历史采样源后，才评估导航标准差、链路质量、CPU/WCET 等真实趋势图。不得从单次当前值伪造历史趋势。
+- 新增飞行态势、导航估计和 RC 输入三块主视觉面板；只使用现有有效 Fact 和 validity mask。
+- 新增 13 类 family 独立状态/接收年龄矩阵，不生成综合健康分。
+- 基于当前真实 Fact 增加 1 Hz GCS 本地采样趋势，最多 60 点；使用现有 500 ms Timer 的每第二个 tick，不创建新 Timer。
+- 趋势数据严格 freshness/finite/non-negative gating；无效/超时样本形成断点，切换 Vehicle/boot epoch 清空缓冲。
+- 重新建立主视觉层级、紧凑摘要带、健康矩阵、趋势区和原有详细诊断卡片之间的版式。
+- 保留全部 14 张诊断卡片、字段、FactGroup、原有 objectName 和 MockLink wire-path 测试。
+- 没有姿态角遥测，因此不绘制人工地平仪；RC 输入条不能被误认为飞机姿态。
+
+### Phase 3 — 原生姿态/更多时序遥测（未来独立评估）
+
+只有 Flight ICD 和发布端提供真实姿态角、原生采样时间序列及明确有效性语义后，才评估真实人工地平仪、航迹/姿态曲线和更多原生趋势。必须先完成 Flight 与 GroundControl 的协议一致性及回归测试。
 
 ## 10. 变更边界
 
-第一阶段允许修改：
+第二阶段允许修改：
 
 - `src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - `test/QmlUITests/FlightTelemetryPageUITest.cc`
+- `doc/gcs/FCU_TELEMETRY.md`
+- 本设计规范、Windows Release 验收规范和机器可读 manifest
 - 必要的 QML UI 测试辅助文件
 - `doc/gcs/FCU_TELEMETRY.md`
 - 本设计规范、验收规范和机器可读 manifest
