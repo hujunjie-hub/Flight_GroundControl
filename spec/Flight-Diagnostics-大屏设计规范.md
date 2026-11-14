@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.6
+- 版本：2.7
 - 日期：2026-11-14
-- 状态：第二阶段功能已实现；Phase 2.1 已压缩状态矩阵与卡片留白；精确 main HEAD 的 Windows Release / Unit / Integration / Installer 验收待完成
+- 状态：第二阶段功能与 Phase 2.1 紧凑布局已实现；main@866a8fb 的 Windows Release 构建和 Unit 通过，但 Integration 3/72 失败；大屏测试失败已定位为 float/double 精确比较问题，修复后等待新 HEAD 复测
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -348,3 +348,17 @@
 - FlightTelemetryPageUITest 增加 1600/1000/700/400 px 四档矩阵列数断言，并逐项检查 13 个单元未越出矩阵网格边界。
 - 本轮仅调整 QML 展示密度和 UI 回归，不改变 FactGroup、MAVLink/ICD、遥测 freshness、validity/capability mask、趋势采样和只读安全边界。
 - 精确 main HEAD 的 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和归档证据仍须等待新提交的 CI/本地结果；不沿用旧 HEAD 的取消或成功结果。
+
+
+## 13. Phase 2.2 Windows Integration 失败定位与测试修正（2026-11-14）
+
+main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
+
+- Configure：PASS。
+- Release Build：PASS。
+- Unit：198/198 PASS。
+- Integration：69/72 PASS，失败项为 ToolbarIndicatorUITest、FlightTelemetryPageUITest、FlightRadioPageUITest。
+- FlightTelemetryPageUITest 的失败断言是 `normalizedValue` 将 MAVLink `float` 转为 `double` 后仍使用精确相等比较；实际油门值 0.40000000596 与期望 0.40 在数值语义上相符。测试改为 1e-4 容差，不改变 RC 数据或 QML 显示逻辑。
+- ToolbarIndicatorUITest 的 APM RemoteID 展开按钮在 500 ms 内未出现。测试现在先等待 Loader 页面确实提供 `_showExpand` 能力，再等待按钮可见；若失败会输出 `showExpand` 和 `expandedComponent` 诊断，避免把页面加载时序误判成产品缺陷。
+- 本轮仅修正测试精度、测试时序和验收断言；不修改飞控诊断 QML、遥测 FactGroup、MAVLink/ICD 或只读边界。
+- 新 HEAD 必须重新通过 FlightTelemetryPageUITest、ToolbarIndicatorUITest、FlightRadioPageUITest 和完整 Windows Release 门禁；本次旧 HEAD 的 Integration 失败不能被覆盖或标记为通过。
