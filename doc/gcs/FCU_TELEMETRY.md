@@ -250,8 +250,8 @@ with the corresponding bit rather than interpreting a zero as a valid value.
   and in [0, 1].
 - Control DOF masks: bit 0 total thrust, bit 1 roll torque, bit 2 pitch torque,
   bit 3 yaw torque.
-- Navigation capability bits are the Flight navigation capability mask; do
-  not infer position/velocity capability from numeric accuracy fields alone.
+- Navigation capability bits mirror Flight `NavigationCapability.capability_mask`: bit 2 HEADING, bit 3 HORIZONTAL_POSITION, bit 5 HORIZONTAL_VELOCITY, bit 6 VERTICAL_VELOCITY. Do not infer position/velocity capability from numeric accuracy fields alone.
+- `FCU_NAV_STATUS.position_std_m` is the horizontal-position standard deviation and requires bit 3; `velocity_std_mps` is displayed only when both bits 5 and 6 are set; `heading_std_rad` requires bit 2. A fresh navigation message with a missing capability bit is still a fresh family message, but the affected metric is unavailable and its GCS trend sample must be a gap.
 
 ## Deliberate limitations
 

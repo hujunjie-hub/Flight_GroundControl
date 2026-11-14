@@ -82,6 +82,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"), 3000);
             QQuickItem *summaryNavigation = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+            QQuickItem *metricPosition = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_metricPosition"), 3000);
+            QQuickItem *metricVelocity = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_metricVelocity"), 3000);
+            QQuickItem *metricHeading = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_metricHeading"), 3000);
+            QQuickItem *navigationPositionDetail = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationPositionStd"));
+            QQuickItem *navigationVelocityDetail = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationVelocityStd"));
+            QQuickItem *navigationHeadingDetail = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationHeadingStd"));
             QQuickItem *dashboardGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
             QQuickItem *heroGrid = findVisibleItem(
@@ -148,6 +160,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryOperation);
             QVERIFY(summaryFailsafe);
             QVERIFY(summaryNavigation);
+            QVERIFY(metricPosition);
+            QVERIFY(metricVelocity);
+            QVERIFY(metricHeading);
+            QVERIFY(navigationPositionDetail);
+            QVERIFY(navigationVelocityDetail);
+            QVERIFY(navigationHeadingDetail);
             QVERIFY(dashboardGrid);
             QVERIFY(heroGrid);
             QVERIFY(heroFlight);
@@ -292,6 +310,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             };
 
             auto sendNavigationStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
+                                            uint32_t capabilityMask,
                                             float positionStd, float velocityStd, float headingStd) {
                 mavlink_fcu_nav_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -299,7 +318,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 payload.profile_id = profileId;
                 payload.state_epoch = 8;
                 payload.origin_id = 12;
-                payload.capability_mask = 0x7F;
+                payload.capability_mask = capabilityMask;
                 payload.position_std_m = positionStd;
                 payload.velocity_std_mps = velocityStd;
                 payload.heading_std_rad = headingStd;
@@ -364,7 +383,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // Fresh raw MAVLink frames traverse MockLink -> MAVLinkProtocol -> Vehicle -> FactGroup -> QML.
             sendOperationStatus(1000, bootId);
-            sendNavigationStatus(1100, bootId, 0.12F, 0.08F, 0.02F);
+            sendNavigationStatus(1100, bootId, 0x7F, 0.12F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
             sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
@@ -380,6 +399,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("正常"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOperation->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthNavigation->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("0.120"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(), QStringLiteral("0.080"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(), QStringLiteral("0.020"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(), QStringLiteral("0.120 m"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(), QStringLiteral("0.080 m/s"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(), QStringLiteral("0.020 rad"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisRoll->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
@@ -402,7 +430,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 previousAgeRefreshTick = page->property("_ageRefreshTick").toInt();
                 lastOperationTime += 1000;
                 sendOperationStatus(lastOperationTime, bootId);
-                sendNavigationStatus(lastOperationTime + 100, bootId, 0.12F, 0.08F, 0.02F);
+                sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.12F, 0.08F, 0.02F);
                 sendControlStatus(lastOperationTime + 200, bootId, static_cast<uint32_t>(1800 + sample * 100));
             }
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
@@ -413,6 +441,95 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(page->property("_trendSamples").toList().size() <= 60);
             QVERIFY(!findItem(_rootItem, QStringLiteral("flightTelemetry_attitudeIndicator")));
             QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("0.120 m"), 3000);
+
+            // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
+            // the capability mask gates each value independently.
+            auto waitForCapabilityTrendSample = [&](uint32_t capabilityMask, int previousSampleCount) {
+                int previousTick = page->property("_ageRefreshTick").toInt();
+                for (int attempt = 0; attempt < 5 &&
+                     trendPosition->property("sampleCount").toInt() <= previousSampleCount; ++attempt) {
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        page->property("_ageRefreshTick").toInt() > previousTick, 1500);
+                    previousTick = page->property("_ageRefreshTick").toInt();
+                    if (trendPosition->property("sampleCount").toInt() > previousSampleCount) {
+                        break;
+                    }
+                    lastOperationTime += 1000;
+                    sendOperationStatus(lastOperationTime, bootId);
+                    sendNavigationStatus(lastOperationTime + 100, bootId, capabilityMask,
+                                          0.12F, 0.08F, 0.02F);
+                    sendControlStatus(lastOperationTime + 200, bootId, 2300);
+                }
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    trendPosition->property("sampleCount").toInt() > previousSampleCount, 3000);
+            };
+
+            const QString unavailableCapabilityText = translatedTelemetryText("未具备");
+
+            int positionSamplesBeforeGap = trendPosition->property("sampleCount").toInt();
+            lastOperationTime += 1000;
+            sendOperationStatus(lastOperationTime, bootId);
+            sendNavigationStatus(lastOperationTime + 100, bootId, 0x77, 0.12F, 0.08F, 0.02F);
+            sendControlStatus(lastOperationTime + 200, bootId, 2300);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(),
+                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(),
+                                      QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            waitForCapabilityTrendSample(0x77, positionSamplesBeforeGap);
+            if (QTest::currentTestFailed()) return;
+            QVERIFY(!trendPosition->property("lastSampleValid").toBool());
+            QVERIFY(trendVelocity->property("lastSampleValid").toBool());
+            QVERIFY(trendHeading->property("lastSampleValid").toBool());
+
+            int velocitySamplesBeforeGap = trendPosition->property("sampleCount").toInt();
+            lastOperationTime += 1000;
+            sendOperationStatus(lastOperationTime, bootId);
+            // Only vertical velocity is present. The scalar velocity metric requires
+            // both horizontal and vertical capability bits, so it remains unavailable.
+            sendNavigationStatus(lastOperationTime + 100, bootId, 0x5F, 0.12F, 0.08F, 0.02F);
+            sendControlStatus(lastOperationTime + 200, bootId, 2300);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(),
+                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(),
+                                      QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            waitForCapabilityTrendSample(0x5F, velocitySamplesBeforeGap);
+            if (QTest::currentTestFailed()) return;
+            QVERIFY(!trendVelocity->property("lastSampleValid").toBool());
+            QVERIFY(trendPosition->property("lastSampleValid").toBool());
+            QVERIFY(trendHeading->property("lastSampleValid").toBool());
+
+            int headingSamplesBeforeGap = trendPosition->property("sampleCount").toInt();
+            lastOperationTime += 1000;
+            sendOperationStatus(lastOperationTime, bootId);
+            sendNavigationStatus(lastOperationTime + 100, bootId, 0x7B, 0.12F, 0.08F, 0.02F);
+            sendControlStatus(lastOperationTime + 200, bootId, 2300);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(),
+                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(),
+                                      QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            waitForCapabilityTrendSample(0x7B, headingSamplesBeforeGap);
+            if (QTest::currentTestFailed()) return;
+            QVERIFY(!trendHeading->property("lastSampleValid").toBool());
+            QVERIFY(trendPosition->property("lastSampleValid").toBool());
+            QVERIFY(trendVelocity->property("lastSampleValid").toBool());
+
+            lastOperationTime += 1000;
+            sendOperationStatus(lastOperationTime, bootId);
+            sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.12F, 0.08F, 0.02F);
+            sendControlStatus(lastOperationTime + 200, bootId, 2300);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
 
             // Clearing one validity bit must hide the last RC axis value rather than drawing it as zero.
             sendRcInputStatus(lastOperationTime + 300, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F);
@@ -443,19 +560,68 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             // A strictly newer frame restores the fresh state on the same boot epoch.
             lastOperationTime += 1000;
             sendOperationStatus(lastOperationTime, bootId);
-            sendNavigationStatus(lastOperationTime + 100, bootId, 0.14F, 0.09F, 0.03F);
+            sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.14F, 0.09F, 0.03F);
             sendControlStatus(lastOperationTime + 200, bootId, 2100);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
 
             // A new FCU boot epoch clears the local trend buffer before new-session samples are appended.
-            const int previousTrendSampleCount = trendPosition->property("sampleCount").toInt();
+            const int previousBootTrendSampleCount = trendPosition->property("sampleCount").toInt();
             constexpr uint64_t nextBootId = 0x8877665544332211ULL;
             sendOperationStatus(1000, nextBootId);
-            sendNavigationStatus(1100, nextBootId, 0.20F, 0.10F, 0.04F);
+            sendNavigationStatus(1100, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
             sendControlStatus(1200, nextBootId, 1900);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(),
                                       QStringLiteral("8877665544332211"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
-                trendPosition->property("sampleCount").toInt() < previousTrendSampleCount, 3000);
+                trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount, 3000);
+
+            // Repopulate the current Vehicle's buffer, then reconnect a new Vehicle.
+            // The next Vehicle must not inherit any sample from the previous one.
+            uint64_t nextBootTime = 1000;
+            int previousTickAfterBoot = page->property("_ageRefreshTick").toInt();
+            for (int sample = 0; sample < 6; ++sample) {
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    page->property("_ageRefreshTick").toInt() > previousTickAfterBoot, 1500);
+                previousTickAfterBoot = page->property("_ageRefreshTick").toInt();
+                nextBootTime += 1000;
+                sendOperationStatus(nextBootTime, nextBootId);
+                sendNavigationStatus(nextBootTime + 100, nextBootId, 0x7F,
+                                     0.20F, 0.10F, 0.04F);
+                sendControlStatus(nextBootTime + 200, nextBootId, 1900 + sample * 100);
+            }
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
+            const int previousVehicleTrendSampleCount = trendPosition->property("sampleCount").toInt();
+            const quintptr previousVehicleIdentity = reinterpret_cast<quintptr>(vehicle);
+
+            disconnectMockLink(mockLink);
+            Vehicle *replacementVehicle = nullptr;
+            QPointer<MockLink> replacementMockLink = connectMockLinkAndWaitReady(
+                []() { return MockLink::startGenericMockLink(); }, replacementVehicle);
+            QVERIFY(replacementMockLink);
+            QVERIFY(replacementVehicle);
+            QVERIFY(reinterpret_cast<quintptr>(replacementVehicle) != previousVehicleIdentity);
+
+            QQuickItem *replacementPage = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+            if (!replacementPage) {
+                navigateToConfigureView();
+                if (QTest::currentTestFailed()) return;
+                const QString replacementComponentButton = flightTelemetryComponentButtonName(replacementVehicle);
+                QVERIFY2(!replacementComponentButton.isEmpty(),
+                         "Replacement Vehicle FlightTelemetry component was not registered");
+                QVERIFY(clickSidebarButton(replacementComponentButton));
+                replacementPage = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+            }
+            QVERIFY(replacementPage);
+            QQuickItem *replacementTrendPosition = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
+            QVERIFY(replacementTrendPosition);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount,
+                5000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
+            disconnectMockLink(replacementMockLink);
         });
 }

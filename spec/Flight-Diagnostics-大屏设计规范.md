@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.3
+- 版本：2.4
 - 日期：2026-11-14
 - 状态：第二阶段 QML 与 MockLink Integration 测试已实现；摘要过期值门控保留 family 状态说明，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -109,12 +109,12 @@
 
 | 趋势 | 来源 | 采样准入 |
 |---|---|---|
-| 位置标准差 | positionStdM | navigation family 新鲜、数值有限且非负 |
-| 速度标准差 | velocityStdMps | navigation family 新鲜、数值有限且非负 |
-| 航向标准差 | headingStdRad | navigation family 新鲜、数值有限且非负 |
+| 水平位置标准差 | positionStdM | navigation family 新鲜、能力 bit3 HORIZONTAL_POSITION 存在、数值有限且非负 |
+| 速度标准差 | velocityStdMps | navigation family 新鲜、能力 bit5 HORIZONTAL_VELOCITY 与 bit6 VERTICAL_VELOCITY 同时存在、数值有限且非负 |
+| 航向标准差 | headingStdRad | navigation family 新鲜、能力 bit2 HEADING 存在、数值有限且非负 |
 | 控制求解耗时 | controlSolveTimeUs | control family 新鲜、数值有限且非负 |
 
-- 每个采样点附带有效/缺失状态；family 未收到、超时、Fact 无效或数值非法时写入断点。
+- 每个采样点附带有效/缺失状态；family 未收到、超时、Fact 无效、对应导航能力 bit 缺失或数值非法时写入断点。
 - 图表不得跨断点连线，不得用 0、上一次有效值或插值填补缺失样本。
 - 缓冲区最多 60 点；切换 Vehicle 或检测到 opBootIdHex 启动 epoch 变化时清空，禁止跨飞行器/启动周期拼接曲线。
 - 图表标题和说明必须明确标注“地面站 1 Hz 采样 / 最近 60 点”；采样点是 GCS 观察值，不是 FCU 原生历史时间序列。
@@ -254,8 +254,9 @@
 
 - 无遥测时趋势采样不生成有效点，矩阵所有未收到 family 显示等待/未收到。
 - 真实导航/控制帧进入 MockLink wire path 后，趋势有效样本计数增加，数值与 Fact 一致。
-- family 超时/无效后写入断点；Canvas 不跨断点连线。
-- 样本上限为 60；Vehicle/boot epoch 变化清空历史。
+- family 超时/无效或对应导航能力 bit 缺失后写入断点；Canvas 不跨断点连线。
+- 水平位置标准差要求 bit3，速度标准差要求 bit5 与 bit6 同时置位，航向标准差要求 bit2；新鲜消息但能力缺失时显示“未具备”，不显示数值。
+- 样本上限为 60；通过切换 active Vehicle 和 boot epoch 两种真实路径验证清空历史。
 - 页面隐藏时停止采样，不增加额外 Timer。
 - RC 有效轴按 mask 显示，清除 mask 位后对应轴不得继续显示最后有效位置。
 
@@ -282,7 +283,8 @@
 - 新增飞行态势、导航估计和 RC 输入三块主视觉面板；只使用现有有效 Fact 和 validity mask。
 - 新增 13 类 family 独立状态/接收年龄矩阵，不生成综合健康分。
 - 基于当前真实 Fact 增加 1 Hz GCS 本地采样趋势，最多 60 点；使用现有 500 ms Timer 的每第二个 tick，不创建新 Timer。
-- 趋势数据严格 freshness/finite/non-negative gating；无效/超时样本形成断点，切换 Vehicle/boot epoch 清空缓冲。
+- 趋势数据严格 freshness/finite/non-negative gating；导航指标还必须遵守 capability mask：水平位置 bit3、水平+垂直速度 bit5+bit6、航向 bit2；缺失能力显示“未具备”并形成断点。
+- 通过 active Vehicle 切换与 boot epoch 变化两条 Integration 路径验证趋势缓冲清空。
 - 重新建立主视觉层级、紧凑摘要带、健康矩阵、趋势区和原有详细诊断卡片之间的版式。
 - 保留全部 14 张诊断卡片、字段、FactGroup、原有 objectName 和 MockLink wire-path 测试。
 - 没有姿态角遥测，因此不绘制人工地平仪；RC 输入条不能被误认为飞机姿态。
@@ -312,7 +314,8 @@
 
 - `FlightTelemetry.qml`：增加飞行态势、导航估计、四轴 RC 输入、13 类遥测域矩阵和 4 个趋势卡片；页面采用深色指挥中心视觉体系。
 - 趋势采样复用现有 500 ms 页面 Timer 的每第二次 tick，采样频率 1 Hz；仅保留最近 60 个 GCS 观察点。
-- 趋势采样必须同时满足 operation boot epoch 新鲜、对应 family 新鲜、Fact 有效、数值有限且非负；不满足时写入断点。
+- 趋势采样必须同时满足 operation boot epoch 新鲜、对应 family 新鲜、Fact 有效、数值有限且非负；导航精度还必须满足水平位置 bit3、速度 bit5+bit6、航向 bit2；不满足时写入断点。
+- `FlightTelemetryPageUITest` 验证 capability mask 缺失时摘要/主视觉/详细行不显示数值，并验证对应趋势断线；另验证切换 active Vehicle 后缓存清空。
 - Vehicle 或 operation boot ID 变化时清空本地趋势缓存；不跨飞行器或启动周期连接曲线。
 - RC 输入按四轴有效位掩码显示；无效轴不绘制填充，不将无效值当作 0。
 - `FlightTelemetryPageUITest` 通过 MockLink 原始 MAVLink wire path 验证四轴数值、mask 清除、13 类 family 展示、四条趋势数据、过期断点和 boot epoch 缓存重置。

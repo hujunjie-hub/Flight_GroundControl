@@ -242,7 +242,13 @@
         "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
         "no_attitude_instrument_without_real_attitude_angle_telemetry",
         "all_existing_diagnostic_cards_and_object_names_remain_available",
-        "dashboard_remains_read_only_without_new_control_actions"
+        "dashboard_remains_read_only_without_new_control_actions",
+        "navigation_summary_hero_detail_and_trends_obey_navigation_capability_mask",
+        "horizontal_position_std_requires_capability_bit_3",
+        "velocity_std_requires_capability_bits_5_and_6",
+        "heading_std_requires_capability_bit_2",
+        "missing_navigation_capability_displays_unavailable_and_creates_trend_gap",
+        "trend_buffer_reset_is_verified_after_active_vehicle_switch"
       ]
     }
   ],
@@ -324,7 +330,10 @@
     "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
     "no_artificial_horizon_without_attitude_telemetry",
     "ui_test_confirms_no_attitude_indicator_without_attitude_angle_facts",
-    "summary_values_show_timeout_instead_of_stale_last_values"
+    "summary_values_show_timeout_instead_of_stale_last_values",
+    "navigation_accuracy_metrics_follow_capability_mask_bits_2_3_5_6",
+    "missing_navigation_capability_shows_unavailable_and_breaks_matching_trend",
+    "ui_test_switches_active_vehicle_and_confirms_trend_buffer_reset"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

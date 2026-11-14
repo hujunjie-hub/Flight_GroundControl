@@ -32,6 +32,11 @@ SetupPage {
     property var _trendVehicle: null
     property string _trendBootId: ""
     property int _trendSampleSequence: 0
+    readonly property int _navCapabilityHeading: 0x04
+    readonly property int _navCapabilityHorizontalPosition: 0x08
+    readonly property int _navCapabilityHorizontalVelocity: 0x20
+    readonly property int _navCapabilityVerticalVelocity: 0x40
+    readonly property int _navCapabilityVelocity: 0x60
     readonly property var _healthDomains: [
         { label: qsTr("飞行操作"), family: "operation", available: "operationAvailable" },
         { label: qsTr("导航估计"), family: "navigation", available: "navigationAvailable" },
@@ -178,7 +183,7 @@ SetupPage {
                 value.indexOf(qsTr("兼容：")) === 0 || value.indexOf(qsTr("匹配")) === 0) {
             return "#45D39A"
         }
-        if ([qsTr("未上报"), qsTr("未收到"), qsTr("等待遥测"), qsTr("未知"), qsTr("未验证")].indexOf(value) >= 0 ||
+        if ([qsTr("未上报"), qsTr("未收到"), qsTr("等待遥测"), qsTr("未知"), qsTr("未验证"), qsTr("未具备")].indexOf(value) >= 0 ||
                 value.indexOf(qsTr("未知")) === 0 || value.indexOf(qsTr("未收到")) === 0 ||
                 value.indexOf(qsTr("等待")) === 0) {
             return "#8A9A94"
@@ -283,8 +288,62 @@ SetupPage {
         }
     }
 
-    function _trendSampleValue(availableName, factName) {
-        if (_familyStatus(availableName) !== qsTr("已接收")) {
+    function _navigationMetricStatus(requiredMask) {
+        const familyStatus = _familyStatus("navigationAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return familyStatus
+        }
+        const rawMask = _fact("navigationCapabilities")
+        const mask = Number(rawMask)
+        if (!Number.isInteger(mask) || mask < 0 || mask > 0xFF) {
+            return qsTr("未知")
+        }
+        return (mask & requiredMask) === requiredMask ? qsTr("已接收") : qsTr("未具备")
+    }
+
+    function _navigationMetricText(factName, requiredMask, decimals, suffix) {
+        const status = _navigationMetricStatus(requiredMask)
+        return status === qsTr("已接收") ? _number(factName, decimals, suffix) : status
+    }
+
+    function _navigationMetricValue(factName, requiredMask, decimals) {
+        const status = _navigationMetricStatus(requiredMask)
+        return status === qsTr("已接收") ? _number(factName, decimals, "") : "—"
+    }
+
+    function _navigationMetricColor(requiredMask) {
+        const status = _navigationMetricStatus(requiredMask)
+        if (status === qsTr("已接收")) {
+            return "#45D39A"
+        }
+        if (status === qsTr("数据超时")) {
+            return "#F0B94B"
+        }
+        return "#8A9A94"
+    }
+
+    // Detailed rows retain a last-known value under the card's stale badge,
+    // but never expose a number when the corresponding capability is absent.
+    function _navigationMetricDetailValue(factName, requiredMask, decimals, suffix) {
+        if (!_fact("navigationAvailable")) {
+            return qsTr("未上报")
+        }
+        const rawMask = _fact("navigationCapabilities")
+        const mask = Number(rawMask)
+        if (!Number.isInteger(mask) || mask < 0 || mask > 0xFF) {
+            return qsTr("未知")
+        }
+        if ((mask & requiredMask) !== requiredMask) {
+            return qsTr("未具备")
+        }
+        return _number(factName, decimals, suffix)
+    }
+
+    function _trendSampleValue(availableName, factName, requiredCapabilityMask) {
+        const status = requiredCapabilityMask === undefined
+                       ? _familyStatus(availableName)
+                       : _navigationMetricStatus(requiredCapabilityMask)
+        if (status !== qsTr("已接收")) {
             return null
         }
         const raw = _fact(factName)
@@ -318,16 +377,18 @@ SetupPage {
                              _familyStatus("operationAvailable") === qsTr("已接收")
         const sample = {
             sequence: ++_trendSampleSequence,
-            position: sessionFresh ? _trendSampleValue("navigationAvailable", "positionStdM") : null,
-            velocity: sessionFresh ? _trendSampleValue("navigationAvailable", "velocityStdMps") : null,
-            heading: sessionFresh ? _trendSampleValue("navigationAvailable", "headingStdRad") : null,
+            position: sessionFresh ? _trendSampleValue("navigationAvailable", "positionStdM", _navCapabilityHorizontalPosition) : null,
+            velocity: sessionFresh ? _trendSampleValue("navigationAvailable", "velocityStdMps", _navCapabilityVelocity) : null,
+            heading: sessionFresh ? _trendSampleValue("navigationAvailable", "headingStdRad", _navCapabilityHeading) : null,
             control: sessionFresh ? _trendSampleValue("controlAvailable", "controlSolveTimeUs") : null
         }
         _trendSamples = _trendSamples.concat([sample]).slice(-_trendSampleLimit)
     }
 
-    function _trendDisplayValue(availableName, factName, decimals, suffix) {
-        const status = _familyStatus(availableName)
+    function _trendDisplayValue(availableName, factName, decimals, suffix, requiredCapabilityMask) {
+        const status = requiredCapabilityMask === undefined
+                       ? _familyStatus(availableName)
+                       : _navigationMetricStatus(requiredCapabilityMask)
         return status === qsTr("已接收") ? _number(factName, decimals, suffix) : status
     }
 
@@ -772,16 +833,18 @@ SetupPage {
                     objectName: "flightTelemetry_summaryNavigation"
                     Layout.fillWidth: true
                     titleText: qsTr("导航估计")
-                    valueText: root._familyStatus("navigationAvailable") === qsTr("已接收")
-                               ? qsTr("位置 %1").arg(root._number("positionStdM", 3, " m"))
-                               : root._fact("navigationAvailable") ? root._familyStatus("navigationAvailable") : qsTr("未上报")
+                    valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) === qsTr("已接收")
+                               ? qsTr("水平位置 %1").arg(root._number("positionStdM", 3, " m"))
+                               : root._fact("navigationAvailable")
+                                 ? root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
+                                 : qsTr("未上报")
                     detailText: root._familyStatus("navigationAvailable") === qsTr("已接收")
                                 ? qsTr("速度 %1 · 航向 %2 · %3")
-                                  .arg(root._number("velocityStdMps", 3, " m/s"))
-                                  .arg(root._number("headingStdRad", 3, " rad"))
+                                  .arg(root._navigationMetricText("velocityStdMps", root._navCapabilityVelocity, 3, " m/s"))
+                                  .arg(root._navigationMetricText("headingStdRad", root._navCapabilityHeading, 3, " rad"))
                                   .arg(root._familyStatus("navigationAvailable"))
                                 : root._familyStatus("navigationAvailable")
-                    accentColor: root._familyStatusColor("navigationAvailable")
+                    accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
                 }
             }
 
@@ -893,27 +956,27 @@ SetupPage {
                         columnSpacing: 8
                         MetricReadout {
                             objectName: "flightTelemetry_metricPosition"
-                            labelText: qsTr("位置 σ")
-                            valueText: root._number("positionStdM", 3, "")
+                            labelText: qsTr("水平位置 σ")
+                            valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3)
                             unitText: "m"
-                            statusText: root._familyStatus("navigationAvailable")
-                            accentColor: root._familyStatusColor("navigationAvailable")
+                            statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
+                            accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
                         }
                         MetricReadout {
                             objectName: "flightTelemetry_metricVelocity"
                             labelText: qsTr("速度 σ")
-                            valueText: root._number("velocityStdMps", 3, "")
+                            valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3)
                             unitText: "m/s"
-                            statusText: root._familyStatus("navigationAvailable")
-                            accentColor: root._familyStatusColor("navigationAvailable")
+                            statusText: root._navigationMetricStatus(root._navCapabilityVelocity)
+                            accentColor: root._navigationMetricColor(root._navCapabilityVelocity)
                         }
                         MetricReadout {
                             objectName: "flightTelemetry_metricHeading"
                             labelText: qsTr("航向 σ")
-                            valueText: root._number("headingStdRad", 3, "")
+                            valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3)
                             unitText: "rad"
-                            statusText: root._familyStatus("navigationAvailable")
-                            accentColor: root._familyStatusColor("navigationAvailable")
+                            statusText: root._navigationMetricStatus(root._navCapabilityHeading)
+                            accentColor: root._navigationMetricColor(root._navCapabilityHeading)
                         }
                     }
                     QGCLabel {
@@ -1010,8 +1073,8 @@ SetupPage {
                     rowSpacing: 10
                     TrendCard {
                         objectName: "flightTelemetry_trend_position"
-                        titleText: qsTr("位置标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m")
+                        titleText: qsTr("水平位置标准差")
+                        valueText: root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m", root._navCapabilityHorizontalPosition)
                         unitText: "m"
                         valueKey: "position"
                         lineColor: "#49C7E7"
@@ -1020,7 +1083,7 @@ SetupPage {
                     TrendCard {
                         objectName: "flightTelemetry_trend_velocity"
                         titleText: qsTr("速度标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s")
+                        valueText: root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s", root._navCapabilityVelocity)
                         unitText: "m/s"
                         valueKey: "velocity"
                         lineColor: "#52D5B1"
@@ -1029,7 +1092,7 @@ SetupPage {
                     TrendCard {
                         objectName: "flightTelemetry_trend_heading"
                         titleText: qsTr("航向标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad")
+                        valueText: root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad", root._navCapabilityHeading)
                         unitText: "rad"
                         valueKey: "heading"
                         lineColor: "#A99AF2"
@@ -1155,9 +1218,21 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("navigation") }
                     TelemetryRow { labelText: qsTr("状态代次 / 原点 ID"); valueText: root._integer("navStateEpoch") + " / " + root._integer("originId") }
                     TelemetryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
-                    TelemetryRow { labelText: qsTr("位置标准差"); valueText: root._number("positionStdM", 3, " m") }
-                    TelemetryRow { labelText: qsTr("速度标准差"); valueText: root._number("velocityStdMps", 3, " m/s") }
-                    TelemetryRow { labelText: qsTr("航向标准差"); valueText: root._number("headingStdRad", 3, " rad") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPositionStd"
+                        labelText: qsTr("水平位置标准差")
+                        valueText: root._navigationMetricDetailValue("positionStdM", root._navCapabilityHorizontalPosition, 3, " m")
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationVelocityStd"
+                        labelText: qsTr("速度标准差")
+                        valueText: root._navigationMetricDetailValue("velocityStdMps", root._navCapabilityVelocity, 3, " m/s")
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationHeadingStd"
+                        labelText: qsTr("航向标准差")
+                        valueText: root._navigationMetricDetailValue("headingStdRad", root._navCapabilityHeading, 3, " rad")
+                    }
                     TelemetryRow { labelText: qsTr("数据年龄"); valueText: root._ageUsFact("navigationAgeUs") }
                     TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
                     TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("navTimeBootUs") }
