@@ -47,7 +47,7 @@ void JoystickTest::_pumpEvents()
 }
 
 // Seeds a stored button action assignment as if it was saved by a previous session
-void JoystickTest::_seedButtonActionSetting(const QString &joystickName, int buttonIndex, const QString &actionName)
+bool JoystickTest::_seedButtonActionSetting(const QString& joystickName, int buttonIndex, const QString& actionName)
 {
     QSettings settings;
     settings.beginGroup(QStringLiteral("JoystickSettingsV2/%1").arg(joystickName));
@@ -55,6 +55,8 @@ void JoystickTest::_seedButtonActionSetting(const QString &joystickName, int but
     settings.beginGroup(QString::number(buttonIndex));
     settings.setValue(QStringLiteral("actionName"), actionName);
     settings.setValue(QStringLiteral("repeat"), false);
+    settings.sync();
+    return settings.status() == QSettings::NoError;
 }
 
 //-----------------------------------------------------------------------------
@@ -858,9 +860,9 @@ void JoystickTest::_buttonActionUnknownActionPreservedTest()
     const QString knownAction2 = QStringLiteral("Disarm");
 
     // Seed settings as if a previous session assigned three buttons while a vehicle was connected
-    _seedButtonActionSetting(joystickName, 0, knownAction1);
-    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
-    _seedButtonActionSetting(joystickName, 2, knownAction2);
+    QVERIFY2(_seedButtonActionSetting(joystickName, 0, knownAction1), "Failed to persist button 0 settings");
+    QVERIFY2(_seedButtonActionSetting(joystickName, 1, vehicleOnlyAction), "Failed to persist button 1 settings");
+    QVERIFY2(_seedButtonActionSetting(joystickName, 2, knownAction2), "Failed to persist button 2 settings");
 
     // Create the joystick with no active vehicle: flight-mode actions are not in the available list
     _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
@@ -905,7 +907,7 @@ void JoystickTest::_buttonActionUnknownActionSaveRoundTripTest()
     const QString actionNameKey = QStringLiteral("actionName");
     const QString vehicleOnlyAction = QStringLiteral("Position");
 
-    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
+    QVERIFY2(_seedButtonActionSetting(joystickName, 1, vehicleOnlyAction), "Failed to persist button 1 settings");
 
     _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
     QVERIFY(_mockJoystick->isValid());
@@ -933,7 +935,7 @@ void JoystickTest::_buttonActionAvailableListRebuildTest()
     const QString joystickName = QStringLiteral("List Rebuild Test");
     const QString vehicleOnlyAction = QStringLiteral("Position");
 
-    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
+    QVERIFY2(_seedButtonActionSetting(joystickName, 1, vehicleOnlyAction), "Failed to persist button 1 settings");
 
     _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
     QVERIFY(_mockJoystick->isValid());
