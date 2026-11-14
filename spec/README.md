@@ -39,7 +39,7 @@
 9. 根目录 [AGENTS.md](../AGENTS.md)、[test/README.md](../test/README.md)、[tools/README.md](../tools/README.md) 和 [.github/ci-overview.md](../.github/ci-overview.md)：代码风格、测试框架和 CI 实现细节。
 10. [主线评估与优化路线图](主线评估与优化路线图.md)：合并后的基线、优先级、实施顺序和验收标准。
 11. [Flight ↔ GroundControl UDP SIL 验证记录](validation/Flight-UDP-SIL-20261114.md)：跨仓库互操作的实际结果与未执行矩阵。
-12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。
+12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。FGC-0043 的 EXIF typed-reader 专项验收见 [FGC-0043](validation/FGC-0043/README.md)。
 13. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。
 14. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
 
@@ -111,7 +111,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 本轮飞控诊断大屏改造开始时的 main 基线为 `64061a9e49f6d2ddeafcf588e60a4069470f75c6`。该基线的 pre-commit run [43574188042](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188042) 已成功；Windows Release run [43574188036](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188036) 在本轮开始检查时仍为 IN_PROGRESS；Build Results run [43574834468](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574834468) SUCCESS。后续 SPEC/产品提交触发的 CI 必须按新 HEAD 重新核对。
 
 - 当前长期分支策略为 **只保留 `main`**。
-- FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。
+- FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
 - FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 RETESTING；Phase 2.1 已将 13 类状态矩阵优化为 7/4/2/1 列，并压缩摘要/趋势/主视觉卡片留白。main@866a8fb 的 Windows Release 构建和 Unit 198/198 通过，但 Integration 69/72；FlightTelemetryPageUITest 的 float/double 精确比较失败已定位，修复后等待新 HEAD 复测。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
