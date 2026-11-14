@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QVariant>
+#include <QtGui/QColor>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -85,6 +86,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
             QQuickItem *operationCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
+            QQuickItem *failsafeRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
             QVERIFY(readOnlyBadge);
             QVERIFY(summaryTelemetry);
@@ -93,6 +96,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryNavigation);
             QVERIFY(dashboardGrid);
             QVERIFY(operationCard);
+            QVERIFY(failsafeRow);
 
             const char *diagnosticCards[] = {
                 "flightTelemetry_card_operation",
@@ -188,10 +192,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("解锁中 · 定点"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(),
                                       translatedTelemetryText("正常"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
 
             // The storage family is available, but validity bit 2 is clear: free space must be shown as invalid.
             sendInvalidStorageStatus(1100);
@@ -201,6 +213,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), staleText, 5000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
 
             // A strictly newer frame restores the fresh state on the same boot epoch.
             sendOperationStatus(2000);

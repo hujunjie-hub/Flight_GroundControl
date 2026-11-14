@@ -164,7 +164,18 @@ SetupPage {
         return ""
     }
 
-    function _sensorHealthColor(state) {
+    function _sensorHealthColor(state, receiveAgeMs) {
+        const familyStatus = _familyStatus("sensorHealthAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return _familyStatusColor("sensorHealthAvailable")
+        }
+        const ageMs = Number(receiveAgeMs)
+        if (!Number.isFinite(ageMs) || ageMs < 0) {
+            return "#8A9A94"
+        }
+        if (ageMs > _familyFreshnessLimitMs("sensorHealth")) {
+            return "#F0B94B"
+        }
         switch (Number(state)) {
         case 2: return "#45D39A"
         case 3: return "#F0B94B"
@@ -176,7 +187,18 @@ SetupPage {
         }
     }
 
-    function _linkStateColor(state) {
+    function _linkStateColor(state, receiveAgeMs) {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return _familyStatusColor("linkAvailable")
+        }
+        const ageMs = Number(receiveAgeMs)
+        if (!Number.isFinite(ageMs) || ageMs < 0) {
+            return "#8A9A94"
+        }
+        if (ageMs > _familyFreshnessLimitMs("link")) {
+            return "#F0B94B"
+        }
         switch (Number(state)) {
         case 2: return "#45D39A"
         case 3:
@@ -187,10 +209,28 @@ SetupPage {
     }
 
     function _prearmStateColor(state) {
+        const familyStatus = _familyStatus("prearmAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return _familyStatusColor("prearmAvailable")
+        }
         switch (Number(state)) {
         case 1: return "#45D39A"
         case 2: return "#F06464"
         case 3: return "#F0B94B"
+        default: return "#8A9A94"
+        }
+    }
+
+    function _rcLinkStateColor(state) {
+        const familyStatus = _familyStatus("rcInputAvailable")
+        if (familyStatus !== qsTr("已接收")) {
+            return _familyStatusColor("rcInputAvailable")
+        }
+        switch (Number(state)) {
+        case 2: return "#45D39A"
+        case 3:
+        case 5: return "#F0B94B"
+        case 4: return "#F06464"
         default: return "#8A9A94"
         }
     }
@@ -641,40 +681,48 @@ SetupPage {
                 }
             }
 
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 14
+                spacing: 5
+
+                GridLayout {
+                    objectName: "flightTelemetry_statusLegendGrid"
+                    Layout.fillWidth: true
+                    columns: root._summaryColumns
+                    columnSpacing: 14
+                    rowSpacing: 6
+
+                    QGCLabel {
+                        text: qsTr("状态说明")
+                        color: "#8A9A94"
+                        font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                    }
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#45D39A" }
+                        QGCLabel { text: qsTr("已接收"); color: "#AFC1B9" }
+                    }
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#F0B94B" }
+                        QGCLabel { text: qsTr("数据超时"); color: "#AFC1B9" }
+                    }
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#8A9A94" }
+                        QGCLabel { text: qsTr("等待 / 未上报"); color: "#AFC1B9" }
+                    }
+                }
 
                 QGCLabel {
-                    text: qsTr("状态说明")
-                    color: "#8A9A94"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.82
-                }
-
-                RowLayout {
-                    spacing: 6
-                    Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#45D39A" }
-                    QGCLabel { text: qsTr("已接收"); color: "#AFC1B9" }
-                }
-
-                RowLayout {
-                    spacing: 6
-                    Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#F0B94B" }
-                    QGCLabel { text: qsTr("数据超时"); color: "#AFC1B9" }
-                }
-
-                RowLayout {
-                    spacing: 6
-                    Rectangle { Layout.preferredWidth: 7; Layout.preferredHeight: 7; radius: 4; color: "#8A9A94" }
-                    QGCLabel { text: qsTr("等待 / 未上报"); color: "#AFC1B9" }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                QGCLabel {
+                    Layout.fillWidth: true
                     text: qsTr("颜色与文字同时表达状态，不构成安全放行结论")
                     color: "#73857E"
                     font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                    wrapMode: Text.WordWrap
                 }
             }
 
@@ -700,7 +748,12 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("解锁状态"); valueText: root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")]) }
                     TelemetryRow { labelText: qsTr("飞行模式"); valueText: root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")]) }
                     TelemetryRow { labelText: qsTr("控制权"); valueText: root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]) }
-                    TelemetryRow { labelText: qsTr("失效保护等级"); valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")]) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_failsafeValue"
+                        labelText: qsTr("失效保护等级")
+                        valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                        valueColor: root._failsafeColor()
+                    }
                     TelemetryRow { labelText: qsTr("任务状态"); valueText: root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]) }
                     TelemetryRow {
                         labelText: qsTr("启动 ID（HEX）/ 配置 ID")
@@ -770,7 +823,7 @@ SetupPage {
                                 QGCLabel {
                                     Layout.fillWidth: true
                                     text: root._enumValue(modelData.healthState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")])
-                                    color: root._sensorHealthColor(modelData.healthState)
+                                    color: root._sensorHealthColor(modelData.healthState, modelData.receiveAgeMs)
                                 }
                                 QGCLabel { text: qsTr("动作 %1").arg(modelData.action) }
                             }
@@ -858,7 +911,7 @@ SetupPage {
                                 QGCLabel {
                                     Layout.fillWidth: true
                                     text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
-                                    color: root._linkStateColor(modelData.linkState)
+                                    color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs)
                                 }
                                 QGCLabel {
                                     text: root._reasonText(0, modelData.reasonCode)
@@ -1106,7 +1159,11 @@ SetupPage {
                     }
                     TelemetryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
                     TelemetryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
-                    TelemetryRow { labelText: qsTr("链路状态"); valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]) }
+                    TelemetryRow {
+                        labelText: qsTr("链路状态")
+                        valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                        valueColor: root._rcLinkStateColor(root._fact("rcLinkState"))
+                    }
                     TelemetryRow { labelText: qsTr("输入年龄"); valueText: root._ageUsFact("rcAgeUs") }
                     TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
                 }

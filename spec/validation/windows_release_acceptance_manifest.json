@@ -205,7 +205,8 @@
         "all_existing_diagnostic_families_and_object_names_remain_available",
         "per_family_freshness_badges_do_not_infer_global_health",
         "unknown_invalid_stale_and_recovery_states_are_preserved",
-        "no_synthetic_trend_charts_or_control_actions"
+        "no_synthetic_trend_charts_or_control_actions",
+        "failsafe_summary_and_detail_color_follow_operation_freshness"
       ]
     }
   ],
@@ -276,6 +277,7 @@
     "all_existing_diagnostic_families_and_object_names_remain_available",
     "unknown_invalid_stale_and_recovery_states_are_preserved",
     "no_global_health_score_or_synthetic_time_series",
-    "diagnostic_page_remains_read_only"
+    "diagnostic_page_remains_read_only",
+    "failsafe_summary_and_detail_color_follow_operation_freshness"
   ]
 }

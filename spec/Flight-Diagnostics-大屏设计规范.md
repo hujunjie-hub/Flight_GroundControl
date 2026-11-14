@@ -195,6 +195,7 @@
 4. 新的严格递增帧到达后恢复已接收。
 5. storage validity mask 无效时显示无效，不能显示 payload 中的伪有效数值。
 6. 摘要字段必须受对应 family availability 保护。
+7. 失效保护摘要和详情行的颜色必须跟随 operation family freshness；过期的最后值不得继续显示为绿色。
 
 ### 8.3 响应式布局
 
