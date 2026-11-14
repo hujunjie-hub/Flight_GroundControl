@@ -1,6 +1,6 @@
 # 遥控器双摇杆实时监视设计规范
 
-- 版本：1.1
+- 版本：1.2
 - 日期：2026-11-14
 - 状态：按用户反馈调整为简洁双摇杆示意图，等待 Windows x64 Release 本地验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`

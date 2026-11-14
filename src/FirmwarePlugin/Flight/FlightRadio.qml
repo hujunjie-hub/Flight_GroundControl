@@ -176,8 +176,8 @@ SetupPage {
                 }
 
                 ColumnLayout {
-                    id: transmitterPanel
-                    objectName: "flightRadio_transmitterPanel"
+                    id: stickMonitorPanel
+                    objectName: "flightRadio_stickMonitorPanel"
                     Layout.preferredWidth: 480
                     Layout.minimumWidth: 320
                     Layout.fillWidth: availableWidth < 1080
@@ -219,8 +219,8 @@ SetupPage {
                     }
 
                     Rectangle {
-                        id: transmitterCard
-                        objectName: "flightRadio_transmitterCard"
+                        id: gimbalCard
+                        objectName: "flightRadio_gimbalCard"
                         Layout.fillWidth: true
                         implicitHeight: Math.max(220, Math.min(width, 520) * 420 / 900 + 16)
                         Layout.preferredHeight: implicitHeight
@@ -230,8 +230,8 @@ SetupPage {
                         border.width: 1
 
                         Item {
-                            id: transmitterStage
-                            objectName: "flightRadio_transmitterStage"
+                            id: gimbalStage
+                            objectName: "flightRadio_gimbalStage"
                             width: Math.min(parent.width, 520)
                             height: width * 420 / 900
                             anchors.centerIn: parent
@@ -250,19 +250,19 @@ SetupPage {
                                 objectName: "flightRadio_leftGimbal"
                                 horizontalChannel: root.stickChannels[0]
                                 verticalChannel: root.stickChannels[1]
-                                width: transmitterStage.width * (310 / 900)
+                                width: gimbalStage.width * (310 / 900)
                                 height: width
-                                x: transmitterStage.width * (245 / 900) - width / 2
-                                y: transmitterStage.height * (210 / 420) - height / 2
+                                x: gimbalStage.width * (245 / 900) - width / 2
+                                y: gimbalStage.height * (210 / 420) - height / 2
                             }
                             GimbalOverlay {
                                 objectName: "flightRadio_rightGimbal"
                                 horizontalChannel: root.stickChannels[2]
                                 verticalChannel: root.stickChannels[3]
-                                width: transmitterStage.width * (310 / 900)
+                                width: gimbalStage.width * (310 / 900)
                                 height: width
-                                x: transmitterStage.width * (655 / 900) - width / 2
-                                y: transmitterStage.height * (210 / 420) - height / 2
+                                x: gimbalStage.width * (655 / 900) - width / 2
+                                y: gimbalStage.height * (210 / 420) - height / 2
                             }
                         }
                     }

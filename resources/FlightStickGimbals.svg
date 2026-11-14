@@ -14,9 +14,6 @@
       <stop offset="0.5" stop-color="#43584F"/>
       <stop offset="1" stop-color="#70857A"/>
     </linearGradient>
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="7"/>
-    </filter>
   </defs>
   <rect x="1" y="1" width="898" height="418" rx="18" fill="url(#panel)" stroke="#263A31" stroke-width="2"/>
   <path d="M450 38 V382" stroke="#31443A" stroke-width="1.5" stroke-dasharray="4 9" opacity=".6"/>

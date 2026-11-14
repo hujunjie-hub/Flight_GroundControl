@@ -146,9 +146,21 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
 
             QQuickItem *channelOneValue = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_channelValue_1"), 3000);
+            QQuickItem *leftReadout = findVisibleItem(
+                _rootItem, QStringLiteral("flightRadio_leftGimbalReadout"), 3000);
+            QQuickItem *rightReadout = findVisibleItem(
+                _rootItem, QStringLiteral("flightRadio_rightGimbalReadout"), 3000);
             QVERIFY(channelOneValue);
+            QVERIFY(leftReadout);
+            QVERIFY(rightReadout);
             QTRY_VERIFY_WITH_TIMEOUT(
                 channelOneValue->property("text").toString().contains(QStringLiteral("1600")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                leftReadout->property("text").toString().contains(QStringLiteral("1700")) &&
+                leftReadout->property("text").toString().contains(QStringLiteral("1300")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                rightReadout->property("text").toString().contains(QStringLiteral("1600")) &&
+                rightReadout->property("text").toString().contains(QStringLiteral("1400")), 3000);
 
             // Move the physical transmitter sticks and verify both overlays follow
             // the second RC_CHANNELS frame instead of remaining at their first position.
@@ -176,8 +188,20 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
                 qAbs((leftMarker->x() + leftMarker->width() / 2) / leftGimbal->width() - 0.724) < 0.02,
                 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs((leftMarker->y() + leftMarker->height() / 2) / leftGimbal->height() - 0.724) < 0.02,
+                3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
                 qAbs((rightMarker->x() + rightMarker->width() / 2) / rightGimbal->width() - 0.332) < 0.02,
                 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs((rightMarker->y() + rightMarker->height() / 2) / rightGimbal->height() - 0.332) < 0.02,
+                3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                leftReadout->property("text").toString().contains(QStringLiteral("1900")) &&
+                leftReadout->property("text").toString().contains(QStringLiteral("1100")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                rightReadout->property("text").toString().contains(QStringLiteral("1200")) &&
+                rightReadout->property("text").toString().contains(QStringLiteral("1800")), 3000);
 
             QQuickItem *startCalibration = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_startCalibration"), 3000);

@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 1.4
+- 版本 1.5
 - 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -40,7 +40,8 @@
 10. [主线评估与优化路线图](主线评估与优化路线图.md)：合并后的基线、优先级、实施顺序和验收标准。
 11. [Flight ↔ GroundControl UDP SIL 验证记录](validation/Flight-UDP-SIL-20261114.md)：跨仓库互操作的实际结果与未执行矩阵。
 12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。
-13. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。\n14. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
+13. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。
+14. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
 
 ## 4. 当前固定工程约束
 
@@ -111,7 +112,8 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。
-- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；先完成 SPEC 设计，再进行 QML 和 UI 测试实现。\n- FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 IN_PROGRESS；保留原截图的双圆形摇杆示意图，重点验证 RC 通道变化时摇杆指示点实时跟随，校准业务逻辑保持不变。
+- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；先完成 SPEC 设计，再进行 QML 和 UI 测试实现。
+- FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 IN_PROGRESS；保留原截图的双圆形摇杆示意图，重点验证 RC 通道变化时摇杆指示点实时跟随，校准业务逻辑保持不变。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 
 动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节记录的是本轮改造开始时的精确基线，不代表后续提交的验收结果。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。
