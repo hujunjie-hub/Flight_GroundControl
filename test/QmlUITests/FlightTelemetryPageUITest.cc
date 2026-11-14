@@ -500,6 +500,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("—"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                summaryNavigation->property("detailText").toString().contains(
+                    QStringLiteral("速度 ") + unavailableCapabilityText), 3000);
             waitForCapabilityTrendSample(0x5F, velocitySamplesBeforeGap);
             if (QTest::currentTestFailed()) return;
             QVERIFY(!trendVelocity->property("lastSampleValid").toBool());
@@ -517,6 +520,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("—"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                summaryNavigation->property("detailText").toString().contains(
+                    QStringLiteral("航向 ") + unavailableCapabilityText), 3000);
             waitForCapabilityTrendSample(0x7B, headingSamplesBeforeGap);
             if (QTest::currentTestFailed()) return;
             QVERIFY(!trendHeading->property("lastSampleValid").toBool());
@@ -591,15 +597,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             }
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
             const int previousVehicleTrendSampleCount = trendPosition->property("sampleCount").toInt();
-            const quintptr previousVehicleIdentity = reinterpret_cast<quintptr>(vehicle);
+            QPointer<Vehicle> previousVehicleGuard(vehicle);
 
             disconnectMockLink(mockLink);
+            QTRY_VERIFY_WITH_TIMEOUT(previousVehicleGuard.isNull(), 5000);
             Vehicle *replacementVehicle = nullptr;
             QPointer<MockLink> replacementMockLink = connectMockLinkAndWaitReady(
                 []() { return MockLink::startGenericMockLink(); }, replacementVehicle);
             QVERIFY(replacementMockLink);
             QVERIFY(replacementVehicle);
-            QVERIFY(reinterpret_cast<quintptr>(replacementVehicle) != previousVehicleIdentity);
 
             QQuickItem *replacementPage = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_page"), 3000);
