@@ -275,6 +275,7 @@ SetupPage {
                             Layout.fillWidth: true
                             spacing: 3
                             QGCLabel {
+                                objectName: "flightRadio_leftGimbalChannels"
                                 text: qsTr("左摇杆 · CH%1 / CH%2")
                                           .arg(root.stickChannels[0] + 1)
                                           .arg(root.stickChannels[1] + 1)
@@ -292,6 +293,7 @@ SetupPage {
                             Layout.fillWidth: true
                             spacing: 3
                             QGCLabel {
+                                objectName: "flightRadio_rightGimbalChannels"
                                 text: qsTr("右摇杆 · CH%1 / CH%2")
                                           .arg(root.stickChannels[2] + 1)
                                           .arg(root.stickChannels[3] + 1)

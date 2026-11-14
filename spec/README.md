@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 1.5
+- 版本 1.6
 - 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`

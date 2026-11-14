@@ -217,9 +217,13 @@
       "pass": [
         "original_dual_gimbal_diagram_svg_is_registered_and_rendered",
         "left_and_right_stick_markers_are_hidden_without_valid_rc_channel_data",
-        "live_stick_markers_follow_current_stick_mode_channel_mapping",
-        "second_RC_CHANNELS_frame_moves_both_stick_markers_to_new_positions",
-        "channel_monitor_displays_received_channel_count_and_pwm_values",
+        "mode_1_mapping_is_verified_for_both_sticks_and_both_axes",
+        "mode_2_mapping_is_verified_for_both_sticks_and_both_axes",
+        "mode_3_mapping_is_verified_for_both_sticks_and_both_axes",
+        "channel_labels_and_pwm_readouts_match_each_selected_stick_mode",
+        "second_RC_CHANNELS_frame_moves_both_markers_in_all_three_stick_modes",
+        "1500us_RC_CHANNELS_frame_centres_both_markers_in_all_three_stick_modes",
+        "invalid_axis_channel_hides_only_the_affected_stick_marker",
         "calibration_save_cancel_bind_and_trim_controls_keep_existing_guards",
         "visualization_test_sends_no_calibration_or_flight_control_commands"
       ]
@@ -297,7 +301,7 @@
     "toolbar_indicator_drawers_remain_clickable_and_expandable",
     "unavailable_altitude_hold_mode_is_visible_but_disabled"
   ],
-  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13. Flight radio transmitter visualization acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio dual-gimbal live-monitor acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14.",
+  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13. Flight radio transmitter visualization acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio dual-gimbal live-monitor acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio acceptance explicitly exercises Mode 1, Mode 2 and Mode 3 with two distinct RC_CHANNELS frames, centre return and per-stick invalid-channel handling.",
   "flight_telemetry_dashboard_ui_matrix": [
     "dashboard_header_and_read_only_indicator_render",
     "telemetry_summary_shows_waiting_without_fcu_frames",
@@ -323,10 +327,13 @@
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
     "no_stick_marker_without_valid_RC_CHANNELS_data",
-    "first_RC_CHANNELS_frame_updates_both_stick_marker_positions",
-    "second_RC_CHANNELS_frame_moves_both_markers_again",
-    "Japanese_American_and_Chinese_hand_channel_mapping_is_preserved",
-    "channel_readout_and_monitor_show_real_PWM_values",
+    "Mode_1_maps_left_CH4_CH2_and_right_CH1_CH3",
+    "Mode_2_maps_left_CH4_CH3_and_right_CH1_CH2",
+    "Mode_3_maps_left_CH1_CH2_and_right_CH4_CH3",
+    "channel_labels_and_pwm_readouts_follow_the_selected_mode",
+    "two_distinct_RC_CHANNELS_frames_move_both_markers_in_all_modes",
+    "1500us_on_CH1_to_CH4_centres_both_markers_in_all_modes",
+    "invalid_axis_channel_hides_only_its_affected_stick",
     "calibration_and_binding_controls_preserve_existing_enabled_guards",
     "visualization_does_not_send_calibration_or_flight_commands"
   ]

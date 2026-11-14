@@ -128,42 +128,139 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
             QTRY_VERIFY_WITH_TIMEOUT(leftMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightMarker->isVisible(), 3000);
 
-            // Default American-hand mapping: left CH4/CH3, right CH1/CH2.
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(leftGimbal->property("horizontalFraction").toReal() - 0.7) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(leftGimbal->property("verticalFraction").toReal() - 0.3) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(rightGimbal->property("horizontalFraction").toReal() - 0.6) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(rightGimbal->property("verticalFraction").toReal() - 0.4) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((leftMarker->x() + leftMarker->width() / 2) / leftGimbal->width() - 0.612) < 0.02,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((leftMarker->y() + leftMarker->height() / 2) / leftGimbal->height() - 0.612) < 0.02,
-                3000);
-
             QQuickItem *channelOneValue = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_channelValue_1"), 3000);
             QQuickItem *leftReadout = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_leftGimbalReadout"), 3000);
             QQuickItem *rightReadout = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_rightGimbalReadout"), 3000);
+            QQuickItem *leftChannels = findVisibleItem(
+                _rootItem, QStringLiteral("flightRadio_leftGimbalChannels"), 3000);
+            QQuickItem *rightChannels = findVisibleItem(
+                _rootItem, QStringLiteral("flightRadio_rightGimbalChannels"), 3000);
             QVERIFY(channelOneValue);
             QVERIFY(leftReadout);
             QVERIFY(rightReadout);
+            QVERIFY(leftChannels);
+            QVERIFY(rightChannels);
+
+            const auto channelPwm = [&channels](int channel) -> int {
+                switch (channel) {
+                case 0: return channels.chan1_raw;
+                case 1: return channels.chan2_raw;
+                case 2: return channels.chan3_raw;
+                case 3: return channels.chan4_raw;
+                default: return 1500;
+                }
+            };
+            const auto channelFraction = [&channelPwm](int channel) -> qreal {
+                return qBound(0.0, (channelPwm(channel) - 1000) / 1000.0, 1.0);
+            };
+
+            // Exercise all three stick modes against the same received RC_CHANNELS
+            // frame. Channel values are deliberately distinct so swapped axes or
+            // swapped sticks cannot accidentally pass.
+            const auto verifyModeMapping = [&](int mode,
+                                               int leftHorizontalChannel,
+                                               int leftVerticalChannel,
+                                               int rightHorizontalChannel,
+                                               int rightVerticalChannel) {
+                const QString buttonName =
+                    QStringLiteral("flightRadio_stickMode_%1").arg(mode);
+                QVERIFY(clickButton(buttonName));
+                QQuickItem *modeButton = findVisibleItem(_rootItem, buttonName, 3000);
+                QVERIFY(modeButton);
+                QTRY_VERIFY_WITH_TIMEOUT(modeButton->property("checked").toBool(), 3000);
+
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    leftGimbal->property("horizontalChannel").toInt(), leftHorizontalChannel, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    leftGimbal->property("verticalChannel").toInt(), leftVerticalChannel, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    rightGimbal->property("horizontalChannel").toInt(), rightHorizontalChannel, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    rightGimbal->property("verticalChannel").toInt(), rightVerticalChannel, 3000);
+
+                const qreal leftHorizontal = channelFraction(leftHorizontalChannel);
+                const qreal leftVertical = channelFraction(leftVerticalChannel);
+                const qreal rightHorizontal = channelFraction(rightHorizontalChannel);
+                const qreal rightVertical = channelFraction(rightVerticalChannel);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs(leftGimbal->property("horizontalFraction").toReal() - leftHorizontal) < 0.01,
+                    3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs(leftGimbal->property("verticalFraction").toReal() - leftVertical) < 0.01,
+                    3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs(rightGimbal->property("horizontalFraction").toReal() - rightHorizontal) < 0.01,
+                    3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs(rightGimbal->property("verticalFraction").toReal() - rightVertical) < 0.01,
+                    3000);
+
+                // Assert the rendered marker coordinates too, including the
+                // inverted screen Y axis (low PWM is visually lower on the gimbal).
+                const qreal expectedLeftX = 0.5 + 0.56 * (leftHorizontal - 0.5);
+                const qreal expectedLeftY = 0.5 + 0.56 * (0.5 - leftVertical);
+                const qreal expectedRightX = 0.5 + 0.56 * (rightHorizontal - 0.5);
+                const qreal expectedRightY = 0.5 + 0.56 * (0.5 - rightVertical);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs((leftMarker->x() + leftMarker->width() / 2) / leftGimbal->width() -
+                         expectedLeftX) < 0.02, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs((leftMarker->y() + leftMarker->height() / 2) / leftGimbal->height() -
+                         expectedLeftY) < 0.02, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs((rightMarker->x() + rightMarker->width() / 2) / rightGimbal->width() -
+                         expectedRightX) < 0.02, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    qAbs((rightMarker->y() + rightMarker->height() / 2) / rightGimbal->height() -
+                         expectedRightY) < 0.02, 3000);
+
+                const QString expectedLeftChannels =
+                    QStringLiteral("CH%1 / CH%2")
+                        .arg(leftHorizontalChannel + 1)
+                        .arg(leftVerticalChannel + 1);
+                const QString expectedRightChannels =
+                    QStringLiteral("CH%1 / CH%2")
+                        .arg(rightHorizontalChannel + 1)
+                        .arg(rightVerticalChannel + 1);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    leftChannels->property("text").toString().contains(expectedLeftChannels), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    rightChannels->property("text").toString().contains(expectedRightChannels), 3000);
+
+                const QString expectedLeftHorizontal =
+                    QString::number(channelPwm(leftHorizontalChannel));
+                const QString expectedLeftVertical =
+                    QString::number(channelPwm(leftVerticalChannel));
+                const QString expectedRightHorizontal =
+                    QString::number(channelPwm(rightHorizontalChannel));
+                const QString expectedRightVertical =
+                    QString::number(channelPwm(rightVerticalChannel));
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    leftReadout->property("text").toString().contains(expectedLeftHorizontal) &&
+                    leftReadout->property("text").toString().contains(expectedLeftVertical), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    rightReadout->property("text").toString().contains(expectedRightHorizontal) &&
+                    rightReadout->property("text").toString().contains(expectedRightVertical), 3000);
+            };
+
             QTRY_VERIFY_WITH_TIMEOUT(
                 channelOneValue->property("text").toString().contains(QStringLiteral("1600")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                leftReadout->property("text").toString().contains(QStringLiteral("1700")) &&
-                leftReadout->property("text").toString().contains(QStringLiteral("1300")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                rightReadout->property("text").toString().contains(QStringLiteral("1600")) &&
-                rightReadout->property("text").toString().contains(QStringLiteral("1400")), 3000);
 
-            // Move the physical transmitter sticks and verify both overlays follow
-            // the second RC_CHANNELS frame instead of remaining at their first position.
+            // Mode 1 (Japan): left CH4/CH2, right CH1/CH3.
+            verifyModeMapping(1, 3, 1, 0, 2);
+            if (QTest::currentTestFailed()) return;
+            // Mode 2 (US): left CH4/CH3, right CH1/CH2.
+            verifyModeMapping(2, 3, 2, 0, 1);
+            if (QTest::currentTestFailed()) return;
+            // Mode 3 (China): left CH1/CH2, right CH4/CH3.
+            verifyModeMapping(3, 0, 1, 3, 2);
+            if (QTest::currentTestFailed()) return;
+
+            // Change all four received stick channels in a new RC_CHANNELS frame.
+            // Repeat all mode assertions so every mapping is verified against live changes.
             channels.time_boot_ms = 2000;
             channels.chan1_raw = 1200;
             channels.chan2_raw = 1800;
@@ -175,33 +272,49 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
                 &message,
                 &channels);
             mockLink->respondWithMavlinkMessage(message);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                channelOneValue->property("text").toString().contains(QStringLiteral("1200")), 3000);
+            verifyModeMapping(1, 3, 1, 0, 2);
+            if (QTest::currentTestFailed()) return;
+            verifyModeMapping(2, 3, 2, 0, 1);
+            if (QTest::currentTestFailed()) return;
+            verifyModeMapping(3, 0, 1, 3, 2);
+            if (QTest::currentTestFailed()) return;
 
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(leftGimbal->property("horizontalFraction").toReal() - 0.9) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(leftGimbal->property("verticalFraction").toReal() - 0.1) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(rightGimbal->property("horizontalFraction").toReal() - 0.2) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(rightGimbal->property("verticalFraction").toReal() - 0.8) < 0.01, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((leftMarker->x() + leftMarker->width() / 2) / leftGimbal->width() - 0.724) < 0.02,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((leftMarker->y() + leftMarker->height() / 2) / leftGimbal->height() - 0.724) < 0.02,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((rightMarker->x() + rightMarker->width() / 2) / rightGimbal->width() - 0.332) < 0.02,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs((rightMarker->y() + rightMarker->height() / 2) / rightGimbal->height() - 0.332) < 0.02,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                leftReadout->property("text").toString().contains(QStringLiteral("1900")) &&
-                leftReadout->property("text").toString().contains(QStringLiteral("1100")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                rightReadout->property("text").toString().contains(QStringLiteral("1200")) &&
-                rightReadout->property("text").toString().contains(QStringLiteral("1800")), 3000);
+            // Centre all axes. Regardless of the selected hand mode, both markers
+            // must return to the centre of their respective circular gimbals.
+            channels.time_boot_ms = 3000;
+            channels.chan1_raw = 1500;
+            channels.chan2_raw = 1500;
+            channels.chan3_raw = 1500;
+            channels.chan4_raw = 1500;
+            mavlink_msg_rc_channels_encode(
+                static_cast<uint8_t>(vehicle->id()),
+                static_cast<uint8_t>(vehicle->compId()),
+                &message,
+                &channels);
+            mockLink->respondWithMavlinkMessage(message);
+            verifyModeMapping(1, 3, 1, 0, 2);
+            if (QTest::currentTestFailed()) return;
+            verifyModeMapping(2, 3, 2, 0, 1);
+            if (QTest::currentTestFailed()) return;
+            verifyModeMapping(3, 0, 1, 3, 2);
+            if (QTest::currentTestFailed()) return;
+
+            // In Mode 3 CH1 is the left stick's horizontal axis. An invalid CH1
+            // value must hide the left marker while the right stick remains live.
+            channels.time_boot_ms = 4000;
+            channels.chan1_raw = unusedChannel;
+            mavlink_msg_rc_channels_encode(
+                static_cast<uint8_t>(vehicle->id()),
+                static_cast<uint8_t>(vehicle->compId()),
+                &message,
+                &channels);
+            mockLink->respondWithMavlinkMessage(message);
+            QTRY_VERIFY_WITH_TIMEOUT(!leftGimbal->property("liveDataAvailable").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightGimbal->property("liveDataAvailable").toBool(), 3000);
+            QVERIFY(!leftMarker->isVisible());
+            QVERIFY(rightMarker->isVisible());
 
             QQuickItem *startCalibration = findVisibleItem(
                 _rootItem, QStringLiteral("flightRadio_startCalibration"), 3000);
