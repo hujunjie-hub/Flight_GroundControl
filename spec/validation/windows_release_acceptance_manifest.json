@@ -330,6 +330,8 @@
     "rc_axis_visualization_obeys_valid_axes_mask",
     "thirteen_family_health_matrix_shows_independent_freshness",
     "gcs_trends_sample_live_facts_at_1hz_with_60_point_bound",
+    "read_only_badge_moves_below_the_title_at_400_px",
+    "trend_cards_display_the_sample_range_and_units_after_two_valid_samples",
     "stale_invalid_trend_samples_create_gaps",
     "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
     "no_artificial_horizon_without_attitude_telemetry",

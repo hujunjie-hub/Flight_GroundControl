@@ -18,15 +18,15 @@ UT_REGISTER_TEST(FlightTelemetryPageUITest, TestLabel::Integration)
 
 namespace {
 
-QString flightTelemetryComponentButtonName(Vehicle *vehicle)
+QString flightTelemetryComponentButtonName(Vehicle* vehicle)
 {
     if (!vehicle || !vehicle->autopilotPlugin()) {
         return {};
     }
 
     const QVariantList components = vehicle->autopilotPlugin()->vehicleComponents();
-    for (const QVariant &componentVariant : components) {
-        auto *component = componentVariant.value<VehicleComponent *>();
+    for (const QVariant& componentVariant : components) {
+        auto* component = componentVariant.value<VehicleComponent*>();
         if (!component || !component->setupSource().toString().contains(QStringLiteral("FlightTelemetry.qml"))) {
             continue;
         }
@@ -39,23 +39,22 @@ QString flightTelemetryComponentButtonName(Vehicle *vehicle)
     return {};
 }
 
-QString translatedTelemetryText(const char *sourceText)
+QString translatedTelemetryText(const char* sourceText)
 {
     return QCoreApplication::translate("FlightTelemetry", sourceText);
 }
 
-} // namespace
+}  // namespace
 
 void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 {
-    ignoreLogMessage(
-        "ComponentInformation.RequestMetaDataTypeStateMachine",
-        QtWarningMsg,
-        QRegularExpression(QStringLiteral("COMP_METADATA_TYPE_GENERAL : failed to load metadata \\(primary and fallback\\)")));
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "COMP_METADATA_TYPE_GENERAL : failed to load metadata \\(primary and fallback\\)")));
 
     runWithMockLink(
         []() { return MockLink::startGenericMockLink(); },
-        [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+        [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
             QVERIFY(mockLink);
             QVERIFY(vehicle);
 
@@ -68,94 +67,82 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             }
             QVERIFY(clickSidebarButton(componentButtonName));
 
-            QQuickItem *page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+            QQuickItem* page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             QVERIFY2(page, "FlightTelemetry setup page did not load");
 
-            QQuickItem *dashboardHeader = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_dashboardHeader"), 3000);
-            QQuickItem *readOnlyBadge = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
-            QQuickItem *summaryTelemetry = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"), 3000);
-            QQuickItem *summaryOperation = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
-            QQuickItem *summaryFailsafe = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"), 3000);
-            QQuickItem *summaryNavigation = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
-            QQuickItem *metricPosition = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_metricPosition"), 3000);
-            QQuickItem *metricVelocity = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_metricVelocity"), 3000);
-            QQuickItem *metricHeading = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_metricHeading"), 3000);
-            QQuickItem *navigationPositionDetail = findItem(
-                _rootItem, QStringLiteral("flightTelemetry_navigationPositionStd"));
-            QQuickItem *navigationVelocityDetail = findItem(
-                _rootItem, QStringLiteral("flightTelemetry_navigationVelocityStd"));
-            QQuickItem *navigationHeadingDetail = findItem(
-                _rootItem, QStringLiteral("flightTelemetry_navigationHeadingStd"));
-            QQuickItem *dashboardGrid = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
-            QQuickItem *heroGrid = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_heroGrid"), 3000);
-            QQuickItem *heroFlight = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
-            QQuickItem *heroNavigation = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
-            QQuickItem *heroRcInput = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
-            QQuickItem *healthMatrix = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_healthMatrix"), 3000);
-            QQuickItem *healthMatrixGrid = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_healthMatrixGrid"), 3000);
-            QQuickItem *trendPanel = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000);
-            QQuickItem *trendGrid = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trendGrid"), 3000);
-            QQuickItem *trendPosition = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
-            QQuickItem *trendVelocity = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trend_velocity"), 3000);
-            QQuickItem *trendHeading = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trend_heading"), 3000);
-            QQuickItem *trendControl = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trend_control"), 3000);
-            QQuickItem *healthOperation = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_health_operation"), 3000);
-            QQuickItem *healthNavigation = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_health_navigation"), 3000);
-            QQuickItem *heroFailsafe = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_heroFailsafe"), 3000);
-            QQuickItem *axisRoll = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_rcAxis_roll"), 3000);
-            QQuickItem *axisPitch = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_rcAxis_pitch"), 3000);
-            QQuickItem *axisYaw = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_rcAxis_yaw"), 3000);
-            QQuickItem *axisThrottle = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_rcAxis_throttle"), 3000);
-            QQuickItem *operationCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
-            QQuickItem *prearmCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
-            QQuickItem *latestEventCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_latestEvent"), 3000);
-            QQuickItem *resourcesCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
-            QQuickItem *storageCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
-            QQuickItem *timeCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_time"), 3000);
-            QQuickItem *rcCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_rcInput"), 3000);
-            QQuickItem *eventHistoryCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_eventHistory"), 3000);
-            QQuickItem *buildInfoCard = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_card_buildInfo"), 3000);
-            QQuickItem *failsafeRow = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
+            QQuickItem* dashboardHeader =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardHeader"), 3000);
+            QQuickItem* dashboardTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
+            QQuickItem* readOnlyBadge =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
+            QQuickItem* summaryTelemetry =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"), 3000);
+            QQuickItem* summaryOperation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
+            QQuickItem* summaryFailsafe =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"), 3000);
+            QQuickItem* summaryNavigation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+            QQuickItem* metricPosition =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_metricPosition"), 3000);
+            QQuickItem* metricVelocity =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_metricVelocity"), 3000);
+            QQuickItem* metricHeading =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_metricHeading"), 3000);
+            QQuickItem* navigationPositionDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPositionStd"));
+            QQuickItem* navigationVelocityDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationVelocityStd"));
+            QQuickItem* navigationHeadingDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationHeadingStd"));
+            QQuickItem* dashboardGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
+            QQuickItem* heroGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroGrid"), 3000);
+            QQuickItem* heroFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
+            QQuickItem* heroNavigation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
+            QQuickItem* heroRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
+            QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMatrix"), 3000);
+            QQuickItem* healthMatrixGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMatrixGrid"), 3000);
+            QQuickItem* trendPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000);
+            QQuickItem* trendGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendGrid"), 3000);
+            QQuickItem* trendPosition =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
+            QQuickItem* trendVelocity =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_velocity"), 3000);
+            QQuickItem* trendHeading =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_heading"), 3000);
+            QQuickItem* trendControl =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_control"), 3000);
+            QQuickItem* healthOperation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_health_operation"), 3000);
+            QQuickItem* healthNavigation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_health_navigation"), 3000);
+            QQuickItem* heroFailsafe = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafe"), 3000);
+            QQuickItem* axisRoll = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_roll"), 3000);
+            QQuickItem* axisPitch = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_pitch"), 3000);
+            QQuickItem* axisYaw = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_yaw"), 3000);
+            QQuickItem* axisThrottle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_throttle"), 3000);
+            QQuickItem* operationCard =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
+            QQuickItem* prearmCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
+            QQuickItem* latestEventCard =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_latestEvent"), 3000);
+            QQuickItem* resourcesCard =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
+            QQuickItem* storageCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
+            QQuickItem* timeCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_time"), 3000);
+            QQuickItem* rcCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_rcInput"), 3000);
+            QQuickItem* eventHistoryCard =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_eventHistory"), 3000);
+            QQuickItem* buildInfoCard =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_buildInfo"), 3000);
+            QQuickItem* failsafeRow = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
+            QVERIFY(dashboardTitle);
             QVERIFY(readOnlyBadge);
             QVERIFY(summaryTelemetry);
             QVERIFY(summaryOperation);
@@ -188,11 +175,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(axisYaw);
             QVERIFY(axisThrottle);
 
-            const char *healthDomains[] = {
-                "operation", "navigation", "sensorHealth", "control", "actuator", "link",
-                "storage", "resource", "time", "event", "prearm", "rcInput", "buildInfo"
-            };
-            QQuickItem *healthCells[13]{};
+            const char* healthDomains[] = {"operation", "navigation", "sensorHealth", "control", "actuator",
+                                           "link",      "storage",    "resource",     "time",    "event",
+                                           "prearm",    "rcInput",    "buildInfo"};
+            QQuickItem* healthCells[13]{};
             for (int index = 0; index < 13; ++index) {
                 const QString objectName =
                     QStringLiteral("flightTelemetry_health_") + QString::fromLatin1(healthDomains[index]);
@@ -210,38 +196,39 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(buildInfoCard);
             QVERIFY(failsafeRow);
 
-            const auto healthMatrixFits = [&]() {
-                for (QQuickItem *cell : healthCells) {
-                    if (!cell) {
-                        return false;
-                    }
-                    const QPointF topLeft = cell->mapToItem(healthMatrixGrid, 0, 0);
-                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
-                            topLeft.x() + cell->width() > healthMatrixGrid->width() + 1.0 ||
-                            topLeft.y() + cell->height() > healthMatrixGrid->height() + 1.0) {
+            const auto headerItemsFit = [&]() {
+                for (QQuickItem* item : {dashboardTitle, readOnlyBadge}) {
+                    const QPointF topLeft = item->mapToItem(dashboardHeader, 0, 0);
+                    if (topLeft.x() < 0 || topLeft.y() < 0 || topLeft.x() + item->width() > dashboardHeader->width() ||
+                        topLeft.y() + item->height() > dashboardHeader->height()) {
                         return false;
                     }
                 }
                 return true;
             };
 
-            const char *diagnosticCards[] = {
-                "flightTelemetry_card_operation",
-                "flightTelemetry_card_navigation",
-                "flightTelemetry_card_sensors",
-                "flightTelemetry_card_control",
-                "flightTelemetry_card_actuator",
-                "flightTelemetry_card_links",
-                "flightTelemetry_card_storage",
-                "flightTelemetry_card_resources",
-                "flightTelemetry_card_time",
-                "flightTelemetry_card_latestEvent",
-                "flightTelemetry_card_eventHistory",
-                "flightTelemetry_card_prearm",
-                "flightTelemetry_card_rcInput",
-                "flightTelemetry_card_buildInfo"
+            const auto healthMatrixFits = [&]() {
+                for (QQuickItem* cell : healthCells) {
+                    if (!cell) {
+                        return false;
+                    }
+                    const QPointF topLeft = cell->mapToItem(healthMatrixGrid, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + cell->width() > healthMatrixGrid->width() + 1.0 ||
+                        topLeft.y() + cell->height() > healthMatrixGrid->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
             };
-            for (const char *cardName : diagnosticCards) {
+
+            const char* diagnosticCards[] = {
+                "flightTelemetry_card_operation",   "flightTelemetry_card_navigation",   "flightTelemetry_card_sensors",
+                "flightTelemetry_card_control",     "flightTelemetry_card_actuator",     "flightTelemetry_card_links",
+                "flightTelemetry_card_storage",     "flightTelemetry_card_resources",    "flightTelemetry_card_time",
+                "flightTelemetry_card_latestEvent", "flightTelemetry_card_eventHistory", "flightTelemetry_card_prearm",
+                "flightTelemetry_card_rcInput",     "flightTelemetry_card_buildInfo"};
+            for (const char* cardName : diagnosticCards) {
                 QVERIFY2(findVisibleItem(_rootItem, QString::fromLatin1(cardName), 3000), cardName);
             }
 
@@ -249,6 +236,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const qreal originalPageWidth = page->width();
             QVERIFY(originalPageWidth > 0);
             page->setWidth(1600);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
+                                        dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
+                3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
@@ -279,6 +270,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).y() >=
+                                        dashboardTitle->mapToItem(dashboardHeader, 0, dashboardTitle->height()).y(),
+                3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 1, 3000);
@@ -288,10 +283,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
                                       page->property("_dashboardColumns").toInt(), 3000);
 
-            QQuickItem *operationRow = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_operationMessageStatus"), 3000);
-            QQuickItem *storageFreeRow = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_storageFreeKib"), 3000);
+            QQuickItem* operationRow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_operationMessageStatus"), 3000);
+            QQuickItem* storageFreeRow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_storageFreeKib"), 3000);
             QVERIFY(operationRow);
             QVERIFY(storageFreeRow);
 
@@ -312,6 +307,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(healthNavigation->property("statusText").toString(), waitingText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
+            QQuickItem* trendPositionScale =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_scale"));
+            QVERIFY(trendPositionScale);
+            QCOMPARE(trendPositionScale->property("text").toString(),
+                     translatedTelemetryText("采集中 · %1/60 有效点").arg(0));
             QCOMPARE(page->property("_trendSampleLimit").toInt(), 60);
             QTRY_COMPARE_WITH_TIMEOUT(storageFreeRow->property("valueText").toString(), notReportedText, 3000);
 
@@ -336,8 +336,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
-            auto sendNavigationStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
-                                            uint32_t capabilityMask,
+            auto sendNavigationStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint32_t capabilityMask,
                                             float positionStd, float velocityStd, float headingStd) {
                 mavlink_fcu_nav_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -374,9 +373,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
-            auto sendRcInputStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
-                                         uint8_t validAxesMask, float roll, float pitch,
-                                         float yaw, float throttle) {
+            auto sendRcInputStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint8_t validAxesMask, float roll,
+                                         float pitch, float yaw, float throttle) {
                 mavlink_fcu_rc_input_status_t payload{};
                 payload.time_boot_us = timeBootUs;
                 payload.boot_id = sessionBootId;
@@ -410,16 +408,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // Fresh raw MAVLink frames traverse MockLink -> MAVLinkProtocol -> Vehicle -> FactGroup -> QML.
             sendOperationStatus(1000, bootId);
-            sendNavigationStatus(1100, bootId, 0x7F, 0.12F, 0.08F, 0.02F);
+            sendNavigationStatus(1100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
             sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
-                                      QStringLiteral("#45D39A"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(), QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("解锁中 · 定点"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(),
@@ -429,43 +425,36 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("0.120"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("0.125"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(), QStringLiteral("0.080"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(), QStringLiteral("0.020"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(), QStringLiteral("0.120 m"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(), QStringLiteral("0.080 m/s"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(), QStringLiteral("0.020 rad"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(),
+                                      QStringLiteral("0.125 m"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(),
+                                      QStringLiteral("0.080 m/s"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(),
+                                      QStringLiteral("0.020 rad"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisRoll->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisThrottle->property("valid").toBool(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(axisRoll->property("normalizedValue").toDouble() - 0.25) < 0.0001,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(axisPitch->property("normalizedValue").toDouble() + 0.25) < 0.0001,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(axisYaw->property("normalizedValue").toDouble() - 0.50) < 0.0001,
-                3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                qAbs(axisThrottle->property("normalizedValue").toDouble() - 0.40) < 0.0001,
-                3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisRoll->property("normalizedValue").toDouble() - 0.25) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisPitch->property("normalizedValue").toDouble() + 0.25) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisYaw->property("normalizedValue").toDouble() - 0.50) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisThrottle->property("normalizedValue").toDouble() - 0.40) < 0.0001, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
-                                      QStringLiteral("#45D39A"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(), QStringLiteral("#45D39A"), 3000);
 
             uint64_t lastOperationTime = 1000;
             // Keep the live session fresh while the 1 Hz page sampler records real Fact values.
             int previousAgeRefreshTick = page->property("_ageRefreshTick").toInt();
             for (int sample = 0; sample < 8; ++sample) {
-                QTRY_VERIFY_WITH_TIMEOUT(
-                    page->property("_ageRefreshTick").toInt() > previousAgeRefreshTick, 1500);
+                QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > previousAgeRefreshTick, 1500);
                 previousAgeRefreshTick = page->property("_ageRefreshTick").toInt();
                 lastOperationTime += 1000;
                 sendOperationStatus(lastOperationTime, bootId);
-                sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.12F, 0.08F, 0.02F);
+                sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
                 sendControlStatus(lastOperationTime + 200, bootId, static_cast<uint32_t>(1800 + sample * 100));
             }
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
@@ -475,28 +464,33 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(trendPosition->property("sampleCount").toInt() <= 60);
             QVERIFY(page->property("_trendSamples").toList().size() <= 60);
             QVERIFY(!findItem(_rootItem, QStringLiteral("flightTelemetry_attitudeIndicator")));
-            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("0.120 m"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("0.125 m"), 3000);
+            QCOMPARE(trendPositionScale->property("text").toString(),
+                     translatedTelemetryText("刻度 %1–%2 %3")
+                         .arg(QStringLiteral("0.125"), QStringLiteral("0.126"), QStringLiteral("m")));
+            const QVariantMap controlScale = trendControl->property("plotScale").toMap();
+            QVERIFY(controlScale.value(QStringLiteral("lower")).toDouble() >= 1800.0);
+            QVERIFY(controlScale.value(QStringLiteral("upper")).toDouble() <= 2500.0);
+            QVERIFY(controlScale.value(QStringLiteral("lower")).toDouble() <
+                    controlScale.value(QStringLiteral("upper")).toDouble());
 
             // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
             // the capability mask gates each value independently.
             auto waitForCapabilityTrendSample = [&](uint32_t capabilityMask, int previousSampleCount) {
                 int previousTick = page->property("_ageRefreshTick").toInt();
-                for (int attempt = 0; attempt < 5 &&
-                     trendPosition->property("sampleCount").toInt() <= previousSampleCount; ++attempt) {
-                    QTRY_VERIFY_WITH_TIMEOUT(
-                        page->property("_ageRefreshTick").toInt() > previousTick, 1500);
+                for (int attempt = 0;
+                     attempt < 5 && trendPosition->property("sampleCount").toInt() <= previousSampleCount; ++attempt) {
+                    QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > previousTick, 1500);
                     previousTick = page->property("_ageRefreshTick").toInt();
                     if (trendPosition->property("sampleCount").toInt() > previousSampleCount) {
                         break;
                     }
                     lastOperationTime += 1000;
                     sendOperationStatus(lastOperationTime, bootId);
-                    sendNavigationStatus(lastOperationTime + 100, bootId, capabilityMask,
-                                          0.12F, 0.08F, 0.02F);
+                    sendNavigationStatus(lastOperationTime + 100, bootId, capabilityMask, 0.12F, 0.08F, 0.02F);
                     sendControlStatus(lastOperationTime + 200, bootId, 2300);
                 }
-                QTRY_VERIFY_WITH_TIMEOUT(
-                    trendPosition->property("sampleCount").toInt() > previousSampleCount, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("sampleCount").toInt() > previousSampleCount, 3000);
             };
 
             const QString unavailableCapabilityText = translatedTelemetryText("未具备");
@@ -505,21 +499,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendOperationStatus(lastOperationTime, bootId);
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x77, 0.12F, 0.08F, 0.02F);
             sendControlStatus(lastOperationTime + 200, bootId, 2300);
-            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(),
-                                      unavailableCapabilityText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(),
-                                      QStringLiteral("—"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(),
-                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), unavailableCapabilityText,
+                                      3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), unavailableCapabilityText,
+                                      3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(),
-                                      unavailableCapabilityText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), unavailableCapabilityText, 3000);
             // Anchor the sample count after the new capability mask reaches QML.
             // A timer tick before the wire frame is decoded must not satisfy this gap check.
             const int positionSamplesAfterMask = trendPosition->property("sampleCount").toInt();
             waitForCapabilityTrendSample(0x77, positionSamplesAfterMask);
-            if (QTest::currentTestFailed()) return;
+            if (QTest::currentTestFailed())
+                return;
             QVERIFY(!trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendVelocity->property("lastSampleValid").toBool());
             QVERIFY(trendHeading->property("lastSampleValid").toBool());
@@ -530,20 +523,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             // both horizontal and vertical capability bits, so it remains unavailable.
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x5F, 0.12F, 0.08F, 0.02F);
             sendControlStatus(lastOperationTime + 200, bootId, 2300);
-            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(),
-                                      unavailableCapabilityText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(),
-                                      QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), unavailableCapabilityText,
+                                      3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(), QStringLiteral("—"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                summaryNavigation->property("detailText").toString().contains(
-                    QStringLiteral("速度 ") + unavailableCapabilityText), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(),
-                                      unavailableCapabilityText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryNavigation->property("detailText")
+                                         .toString()
+                                         .contains(QStringLiteral("速度 ") + unavailableCapabilityText),
+                                     3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(), unavailableCapabilityText, 3000);
             const int velocitySamplesAfterMask = trendPosition->property("sampleCount").toInt();
             waitForCapabilityTrendSample(0x5F, velocitySamplesAfterMask);
-            if (QTest::currentTestFailed()) return;
+            if (QTest::currentTestFailed())
+                return;
             QVERIFY(!trendVelocity->property("lastSampleValid").toBool());
             QVERIFY(trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendHeading->property("lastSampleValid").toBool());
@@ -552,20 +545,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendOperationStatus(lastOperationTime, bootId);
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x7B, 0.12F, 0.08F, 0.02F);
             sendControlStatus(lastOperationTime + 200, bootId, 2300);
-            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(),
-                                      unavailableCapabilityText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(),
-                                      QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), unavailableCapabilityText,
+                                      3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(), QStringLiteral("—"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationHeadingDetail->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                summaryNavigation->property("detailText").toString().contains(
-                    QStringLiteral("航向 ") + unavailableCapabilityText), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(trendHeading->property("valueText").toString(),
-                                      unavailableCapabilityText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryNavigation->property("detailText")
+                                         .toString()
+                                         .contains(QStringLiteral("航向 ") + unavailableCapabilityText),
+                                     3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendHeading->property("valueText").toString(), unavailableCapabilityText, 3000);
             const int headingSamplesAfterMask = trendPosition->property("sampleCount").toInt();
             waitForCapabilityTrendSample(0x7B, headingSamplesAfterMask);
-            if (QTest::currentTestFailed()) return;
+            if (QTest::currentTestFailed())
+                return;
             QVERIFY(!trendHeading->property("lastSampleValid").toBool());
             QVERIFY(trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendVelocity->property("lastSampleValid").toBool());
@@ -592,12 +585,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // The operation frame ages past the page's 1000 ms freshness limit without a new frame.
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), staleText, 5000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(),
-                                      QStringLiteral("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(), QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFailsafe->property("text").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), staleText, 3000);
@@ -617,23 +608,21 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendOperationStatus(1000, nextBootId);
             sendNavigationStatus(1100, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
             sendControlStatus(1200, nextBootId, 1900);
-            QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(),
-                                      QStringLiteral("8877665544332211"), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(
-                trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(), QStringLiteral("8877665544332211"),
+                                      3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount,
+                                     3000);
 
             // Repopulate the current Vehicle's buffer, then reconnect a new Vehicle.
             // The next Vehicle must not inherit any sample from the previous one.
             uint64_t nextBootTime = 1000;
             int previousTickAfterBoot = page->property("_ageRefreshTick").toInt();
             for (int sample = 0; sample < 6; ++sample) {
-                QTRY_VERIFY_WITH_TIMEOUT(
-                    page->property("_ageRefreshTick").toInt() > previousTickAfterBoot, 1500);
+                QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > previousTickAfterBoot, 1500);
                 previousTickAfterBoot = page->property("_ageRefreshTick").toInt();
                 nextBootTime += 1000;
                 sendOperationStatus(nextBootTime, nextBootId);
-                sendNavigationStatus(nextBootTime + 100, nextBootId, 0x7F,
-                                     0.20F, 0.10F, 0.04F);
+                sendNavigationStatus(nextBootTime + 100, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
                 sendControlStatus(nextBootTime + 200, nextBootId, 1900 + sample * 100);
             }
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
@@ -642,33 +631,30 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             disconnectMockLink(mockLink);
             QTRY_VERIFY_WITH_TIMEOUT(previousVehicleGuard.isNull(), 5000);
-            Vehicle *replacementVehicle = nullptr;
-            QPointer<MockLink> replacementMockLink = connectMockLinkAndWaitReady(
-                []() { return MockLink::startGenericMockLink(); }, replacementVehicle);
+            Vehicle* replacementVehicle = nullptr;
+            QPointer<MockLink> replacementMockLink =
+                connectMockLinkAndWaitReady([]() { return MockLink::startGenericMockLink(); }, replacementVehicle);
             QVERIFY(replacementMockLink);
             QVERIFY(replacementVehicle);
 
-            QQuickItem *replacementPage = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+            QQuickItem* replacementPage = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             if (!replacementPage) {
                 navigateToConfigureView();
-                if (QTest::currentTestFailed()) return;
+                if (QTest::currentTestFailed())
+                    return;
                 const QString replacementComponentButton = flightTelemetryComponentButtonName(replacementVehicle);
                 QVERIFY2(!replacementComponentButton.isEmpty(),
                          "Replacement Vehicle FlightTelemetry component was not registered");
                 QVERIFY(clickSidebarButton(replacementComponentButton));
-                replacementPage = findVisibleItem(
-                    _rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+                replacementPage = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             }
             QVERIFY(replacementPage);
-            QQuickItem *replacementTrendPosition = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
+            QQuickItem* replacementTrendPosition =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
             QVERIFY(replacementTrendPosition);
             QTRY_VERIFY_WITH_TIMEOUT(
-                replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount,
-                5000);
-            QTRY_COMPARE_WITH_TIMEOUT(
-                replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
+                replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount, 5000);
+            QTRY_COMPARE_WITH_TIMEOUT(replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
             disconnectMockLink(replacementMockLink);
         });
 }

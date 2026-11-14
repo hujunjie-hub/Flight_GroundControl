@@ -701,13 +701,16 @@ SetupPage {
                 border.width: 1
                 border.color: "#29414B"
 
-                RowLayout {
+                GridLayout {
                     id: headerRow
                     anchors.fill: parent
                     anchors.margins: 12
-                    spacing: 16
+                    columns: root.availableWidth < 420 ? 2 : 3
+                    columnSpacing: 12
+                    rowSpacing: 8
 
                     Rectangle {
+                        Layout.rowSpan: headerRow.columns === 2 ? 2 : 1
                         Layout.preferredWidth: 4
                         Layout.fillHeight: true
                         radius: 2
@@ -719,30 +722,28 @@ SetupPage {
                         spacing: 3
 
                         QGCLabel {
-                            text: "FLIGHT CONTROL  /  LIVE DIAGNOSTICS"
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            text: "FLIGHT DIAGNOSTICS"
                             color: "#57C8DA"
                             font.pointSize: ScreenTools.defaultFontPointSize * 0.82
                             font.bold: true
                         }
 
                         QGCLabel {
+                            objectName: "flightTelemetry_dashboardTitle"
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
                             text: qsTr("飞控诊断中心")
                             color: "#E7F0F4"
                             font.pointSize: ScreenTools.largeFontPointSize * 1.35
                             font.bold: true
                         }
-
-                        QGCLabel {
-                            Layout.fillWidth: true
-                            text: qsTr("实时遥测 · 飞行态势 · 系统健康矩阵 · 只读监控")
-                            color: "#91A8B2"
-                            wrapMode: Text.WordWrap
-                        }
                     }
 
                     Rectangle {
                         objectName: "flightTelemetry_readOnlyBadge"
-                        Layout.alignment: Qt.AlignVCenter
+                        Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                         radius: 8
                         color: "#172F36"
                         border.color: "#32606B"
@@ -1076,6 +1077,7 @@ SetupPage {
                         titleText: qsTr("水平位置标准差")
                         valueText: root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m", root._navCapabilityHorizontalPosition)
                         unitText: "m"
+                        decimals: 3
                         valueKey: "position"
                         lineColor: "#49C7E7"
                         samples: root._trendSamples
@@ -1085,6 +1087,7 @@ SetupPage {
                         titleText: qsTr("速度标准差")
                         valueText: root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s", root._navCapabilityVelocity)
                         unitText: "m/s"
+                        decimals: 3
                         valueKey: "velocity"
                         lineColor: "#52D5B1"
                         samples: root._trendSamples
@@ -1094,6 +1097,7 @@ SetupPage {
                         titleText: qsTr("航向标准差")
                         valueText: root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad", root._navCapabilityHeading)
                         unitText: "rad"
+                        decimals: 3
                         valueKey: "heading"
                         lineColor: "#A99AF2"
                         samples: root._trendSamples
@@ -1908,32 +1912,36 @@ SetupPage {
         required property color lineColor
         required property var samples
 
-        readonly property int sampleCount: samples ? samples.length : 0
-        readonly property int validSampleCount: {
-            let count = 0
-            const data = samples || []
-            for (let i = 0; i < data.length; i++) {
-                const value = data[i][valueKey]
-                if (value !== null && value !== undefined && Number.isFinite(Number(value))) {
-                    count += 1
-                }
+        property int decimals: 0
+
+        readonly property var plotValues: (samples || []).map(sample => sample[valueKey])
+        readonly property var validValues: plotValues.filter(value => Number.isFinite(value))
+        readonly property int sampleCount: plotValues.length
+        readonly property int validSampleCount: validValues.length
+        readonly property bool lastSampleValid: Number.isFinite(plotValues[sampleCount - 1])
+        readonly property var plotScale: {
+            if (validSampleCount < 2) {
+                return null
             }
-            return count
+            const min = Math.min(...validValues)
+            const max = Math.max(...validValues)
+            const factor = Math.pow(10, decimals)
+            const lower = Math.floor(min * factor) / factor
+            const upper = Math.ceil(max * factor) / factor
+            const minimumRange = Math.max(1 / factor, Math.abs(max) * 1e-12)
+            return { lower: lower, upper: Math.max(lower + minimumRange, upper) }
         }
-        readonly property bool lastSampleValid: sampleCount > 0 &&
-                                                samples[sampleCount - 1][valueKey] !== null &&
-                                                samples[sampleCount - 1][valueKey] !== undefined
 
         Layout.fillWidth: true
         implicitWidth: 230
-        implicitHeight: 126
+        implicitHeight: Math.max(126, trendContent.implicitHeight + 16)
         radius: 8
         color: "#172831"
         border.width: 1
         border.color: "#29414B"
-        onSamplesChanged: plotCanvas.requestPaint()
 
         ColumnLayout {
+            id: trendContent
             anchors.fill: parent
             anchors.margins: 8
             spacing: 5
@@ -1942,6 +1950,7 @@ SetupPage {
                 QGCLabel {
                     Layout.fillWidth: true
                     text: plotCard.titleText
+                    wrapMode: Text.Wrap
                     color: "#A8BBC3"
                     font.pointSize: ScreenTools.defaultFontPointSize * 0.78
                 }
@@ -1960,6 +1969,10 @@ SetupPage {
                 Layout.preferredHeight: 56
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
+                Connections {
+                    target: plotCard
+                    function onPlotValuesChanged() { plotCanvas.requestPaint() }
+                }
                 onPaint: {
                     const ctx = getContext("2d")
                     if (!ctx) return
@@ -1979,36 +1992,24 @@ SetupPage {
                         ctx.stroke()
                     }
 
-                    const data = plotCard.samples || []
-                    const values = []
-                    for (let i = 0; i < data.length; i++) {
-                        const raw = data[i][plotCard.valueKey]
-                        if (raw !== null && raw !== undefined && Number.isFinite(Number(raw))) {
-                            values.push(Number(raw))
-                        }
+                    const scale = plotCard.plotScale
+                    if (!scale) {
+                        return
                     }
-                    if (values.length < 2 || data.length < 2) return
-
-                    let minValue = Math.min.apply(null, values)
-                    let maxValue = Math.max.apply(null, values)
-                    if (Math.abs(maxValue - minValue) < 0.000001) {
-                        const padding = Math.max(Math.abs(maxValue) * 0.05, 0.001)
-                        minValue -= padding
-                        maxValue += padding
-                    }
-                    const range = maxValue - minValue
+                    const values = plotCard.plotValues
+                    const range = scale.upper - scale.lower
                     ctx.beginPath()
                     ctx.strokeStyle = plotCard.lineColor.toString()
                     ctx.lineWidth = 2
                     let penDown = false
-                    for (let i = 0; i < data.length; i++) {
-                        const raw = data[i][plotCard.valueKey]
-                        if (raw === null || raw === undefined || !Number.isFinite(Number(raw))) {
+                    for (let i = 0; i < values.length; i++) {
+                        const value = values[i]
+                        if (!Number.isFinite(value)) {
                             penDown = false
                             continue
                         }
-                        const x = left + (right - left) * i / Math.max(1, data.length - 1)
-                        const y = bottom - (Number(raw) - minValue) / range * (bottom - top)
+                        const x = left + (right - left) * i / (values.length - 1)
+                        const y = bottom - (value - scale.lower) / range * (bottom - top)
                         if (penDown) ctx.lineTo(x, y)
                         else ctx.moveTo(x, y)
                         penDown = true
@@ -2019,11 +2020,15 @@ SetupPage {
             RowLayout {
                 Layout.fillWidth: true
                 QGCLabel {
+                    objectName: plotCard.objectName + "_scale"
                     Layout.fillWidth: true
-                    text: plotCard.validSampleCount < 2
-                          ? qsTr("采集中 · %1/60 有效点").arg(plotCard.validSampleCount)
-                          : qsTr("%1/60 有效点").arg(plotCard.validSampleCount)
+                    text: plotCard.plotScale
+                          ? qsTr("刻度 %1–%2 %3").arg(plotCard.plotScale.lower.toFixed(plotCard.decimals))
+                                                  .arg(plotCard.plotScale.upper.toFixed(plotCard.decimals))
+                                                  .arg(plotCard.unitText)
+                          : qsTr("采集中 · %1/60 有效点").arg(plotCard.validSampleCount)
                     color: "#8298A2"
+                    wrapMode: Text.Wrap
                     font.pointSize: ScreenTools.defaultFontPointSize * 0.70
                 }
                 QGCLabel {
