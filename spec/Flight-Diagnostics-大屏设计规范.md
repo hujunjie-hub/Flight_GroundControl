@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.0
+- 版本：2.1
 - 日期：2026-11-14
-- 状态：第二阶段设计已批准，QML 实施中；第一阶段和第二阶段均需按精确 main HEAD 验收
+- 状态：第二阶段 QML 与 MockLink Integration 测试已实现，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -268,7 +268,7 @@
 
 ## 9. 实施分期
 
-### Phase 1 — 当前实施
+### Phase 1 — 已实现（需随 main HEAD 持续回归）
 
 - 更新顶部标题与只读标识。
 - 增加四张摘要卡。
@@ -277,7 +277,7 @@
 - 保留所有现有诊断字段和数据语义。
 - 扩展 `FlightTelemetryPageUITest` 验证页面结构、摘要未知态和响应式列数。
 
-### Phase 2 — 指挥中心视觉与真实数据可视化（当前实施）
+### Phase 2 — 指挥中心视觉与真实数据可视化（代码已实现，验收待完成）
 
 - 新增飞行态势、导航估计和 RC 输入三块主视觉面板；只使用现有有效 Fact 和 validity mask。
 - 新增 13 类 family 独立状态/接收年龄矩阵，不生成综合健康分。
@@ -300,8 +300,6 @@
 - `doc/gcs/FCU_TELEMETRY.md`
 - 本设计规范、Windows Release 验收规范和机器可读 manifest
 - 必要的 QML UI 测试辅助文件
-- `doc/gcs/FCU_TELEMETRY.md`
-- 本设计规范、验收规范和机器可读 manifest
 
 未经单独批准，不修改：
 
@@ -309,3 +307,14 @@
 - MAVLink 消息定义、Flight ICD 和生成头文件
 - Flight firmware 发布端
 - 控制权限、ARM、FMS、Permit、Failsafe 或执行器逻辑
+
+## 11. Phase 2 实施记录（2026-11-14）
+
+- `FlightTelemetry.qml`：增加飞行态势、导航估计、四轴 RC 输入、13 类遥测域矩阵和 4 个趋势卡片；页面采用深色指挥中心视觉体系。
+- 趋势采样复用现有 500 ms 页面 Timer 的每第二次 tick，采样频率 1 Hz；仅保留最近 60 个 GCS 观察点。
+- 趋势采样必须同时满足 operation boot epoch 新鲜、对应 family 新鲜、Fact 有效、数值有限且非负；不满足时写入断点。
+- Vehicle 或 operation boot ID 变化时清空本地趋势缓存；不跨飞行器或启动周期连接曲线。
+- RC 输入按四轴有效位掩码显示；无效轴不绘制填充，不将无效值当作 0。
+- `FlightTelemetryPageUITest` 通过 MockLink 原始 MAVLink wire path 验证四轴数值、mask 清除、13 类 family 展示、四条趋势数据、过期断点和 boot epoch 缓存重置。
+- 当前阶段不提供姿态角遥测，因此明确不渲染人工地平仪；不新增任何飞行控制/校准/确认操作。
+- 当前状态：代码和测试已实现；Windows Release / Unit / Integration / Installer 等最终验收结果必须以本次提交对应的最新 CI 和本地 RUN_ID 证据为准。

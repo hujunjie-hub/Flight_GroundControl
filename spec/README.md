@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 1.7
+- 版本 1.8
 - 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -112,9 +112,8 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。
-- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；先完成 SPEC 设计，再进行 QML 和 UI 测试实现。
+- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；第二阶段 QML 已实现飞行态势、导航估计、RC 四轴、13 类健康矩阵和 1 Hz/60 点 GCS 趋势，等待最新 main HEAD 的 Windows Release 与 Integration 验收。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 IN_PROGRESS；保留原截图的双圆形摇杆示意图，重点验证 RC 通道变化时摇杆指示点实时跟随，校准业务逻辑保持不变。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 
-动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节记录的是本轮改造开始时的精确基线，不代表后续提交的验收结果。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。
 动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节只记录有明确 HEAD 和 run ID 的验收快照。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。

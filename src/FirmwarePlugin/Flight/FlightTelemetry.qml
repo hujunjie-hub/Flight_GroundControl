@@ -25,6 +25,28 @@ SetupPage {
                                              ? _telemetry.resourceStatuses : []
     readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 760 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1200 ? 4 : availableWidth >= 600 ? 2 : 1
+    readonly property int _healthColumns: availableWidth >= 1450 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property int _trendColumns: availableWidth >= 1450 ? 4 : availableWidth >= 760 ? 2 : 1
+    readonly property int _trendSampleLimit: 60
+    property var _trendSamples: []
+    property var _trendVehicle: null
+    property string _trendBootId: ""
+    property int _trendSampleSequence: 0
+    readonly property var _healthDomains: [
+        { label: qsTr("飞行操作"), family: "operation", available: "operationAvailable" },
+        { label: qsTr("导航估计"), family: "navigation", available: "navigationAvailable" },
+        { label: qsTr("传感器"), family: "sensorHealth", available: "sensorHealthAvailable" },
+        { label: qsTr("控制器"), family: "control", available: "controlAvailable" },
+        { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
+        { label: qsTr("通信链路"), family: "link", available: "linkAvailable" },
+        { label: qsTr("存储"), family: "storage", available: "storageAvailable" },
+        { label: qsTr("系统资源"), family: "resource", available: "resourceAvailable" },
+        { label: qsTr("时间同步"), family: "time", available: "timeAvailable" },
+        { label: qsTr("事件"), family: "event", available: "eventAvailable" },
+        { label: qsTr("解锁前检查"), family: "prearm", available: "prearmAvailable" },
+        { label: qsTr("遥控输入"), family: "rcInput", available: "rcInputAvailable" },
+        { label: qsTr("固件版本"), family: "buildInfo", available: "buildInfoAvailable" }
+    ]
     readonly property string _telemetryHeadline: !_vehicle ? qsTr("未连接")
                                                 : _telemetry && _telemetry.telemetryAvailable
                                                   ? qsTr("已收到 FCU 遥测") : qsTr("等待 FCU 遥测")
@@ -258,6 +280,54 @@ SetupPage {
         case 3: return "#F06464"
         default: return "#8A9A94"
         }
+    }
+
+    function _trendSampleValue(availableName, factName) {
+        if (_familyStatus(availableName) !== qsTr("已接收")) {
+            return null
+        }
+        const raw = _fact(factName)
+        if (raw === null || raw === undefined || raw === "") {
+            return null
+        }
+        const value = Number(raw)
+        return Number.isFinite(value) && value >= 0 ? value : null
+    }
+
+    function _sampleTrendData() {
+        const currentBootIdRaw = _fact("opBootIdHex")
+        const currentBootId = currentBootIdRaw === null || currentBootIdRaw === undefined
+                              ? "" : String(currentBootIdRaw)
+        if (_trendVehicle !== _vehicle ||
+                (currentBootId !== "" && _trendBootId !== "" && currentBootId !== _trendBootId)) {
+            _trendSamples = []
+            _trendSampleSequence = 0
+            _trendBootId = currentBootId
+            _trendVehicle = _vehicle
+        } else if (currentBootId !== "" && _trendBootId === "") {
+            _trendBootId = currentBootId
+        }
+
+        if (!_vehicle || !_telemetry) {
+            return
+        }
+
+        // The fresh operation boot ID is the session fence. Without it, append gaps.
+        const sessionFresh = currentBootId !== "" &&
+                             _familyStatus("operationAvailable") === qsTr("已接收")
+        const sample = {
+            sequence: ++_trendSampleSequence,
+            position: sessionFresh ? _trendSampleValue("navigationAvailable", "positionStdM") : null,
+            velocity: sessionFresh ? _trendSampleValue("navigationAvailable", "velocityStdMps") : null,
+            heading: sessionFresh ? _trendSampleValue("navigationAvailable", "headingStdRad") : null,
+            control: sessionFresh ? _trendSampleValue("controlAvailable", "controlSolveTimeUs") : null
+        }
+        _trendSamples = _trendSamples.concat([sample]).slice(-_trendSampleLimit)
+    }
+
+    function _trendDisplayValue(availableName, factName, decimals, suffix) {
+        const status = _familyStatus(availableName)
+        return status === qsTr("已接收") ? _number(factName, decimals, suffix) : status
     }
 
     function _instanceReceiveAgeText(ageMs) {
@@ -545,7 +615,12 @@ SetupPage {
         interval: 500
         repeat: true
         running: root.visible
-        onTriggered: root._ageRefreshTick += 1
+        onTriggered: {
+            root._ageRefreshTick += 1
+            if (root._ageRefreshTick % 2 === 0) {
+                root._sampleTrendData()
+            }
+        }
     }
 
     Component {
@@ -555,69 +630,88 @@ SetupPage {
             width: availableWidth
             spacing: 16
 
-            RowLayout {
+            Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
                 Layout.fillWidth: true
-                spacing: 16
+                implicitHeight: headerRow.implicitHeight + 28
+                radius: 10
+                color: "#14232B"
+                border.width: 1
+                border.color: "#29414B"
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 3
+                RowLayout {
+                    id: headerRow
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 16
 
-                    QGCLabel {
-                        text: "FLIGHT DIAGNOSTICS"
-                        color: "#42CFA8"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.82
-                        font.bold: true
+                    Rectangle {
+                        Layout.preferredWidth: 4
+                        Layout.fillHeight: true
+                        radius: 2
+                        color: "#45C6D9"
                     }
 
-                    QGCLabel {
-                        text: qsTr("飞控诊断")
-                        color: "#E7F0EC"
-                        font.pointSize: ScreenTools.largeFontPointSize * 1.25
-                        font.bold: true
-                    }
-
-                    QGCLabel {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: qsTr("FCU 实时遥测 · 只读监控 · 各消息组独立判定新鲜度")
-                        color: "#91A49C"
-                        wrapMode: Text.WordWrap
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    objectName: "flightTelemetry_readOnlyBadge"
-                    Layout.alignment: Qt.AlignVCenter
-                    radius: 6
-                    color: "#20332E"
-                    border.color: "#3B6558"
-                    implicitWidth: readOnlyContent.implicitWidth + 24
-                    implicitHeight: readOnlyContent.implicitHeight + 18
-
-                    RowLayout {
-                        id: readOnlyContent
-                        anchors.centerIn: parent
-                        spacing: 8
-
-                        Rectangle {
-                            Layout.preferredWidth: 7
-                            Layout.preferredHeight: 7
-                            radius: 4
-                            color: "#42CFA8"
-                        }
+                        spacing: 3
 
                         QGCLabel {
-                            text: qsTr("只读监控")
-                            color: "#BDE8D9"
+                            text: "FLIGHT CONTROL  /  LIVE DIAGNOSTICS"
+                            color: "#57C8DA"
+                            font.pointSize: ScreenTools.defaultFontPointSize * 0.82
                             font.bold: true
                         }
 
                         QGCLabel {
-                            text: "FCU / MAVLink"
-                            color: "#81958D"
+                            text: qsTr("飞控诊断中心")
+                            color: "#E7F0F4"
+                            font.pointSize: ScreenTools.largeFontPointSize * 1.35
+                            font.bold: true
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: qsTr("实时遥测 · 飞行态势 · 系统健康矩阵 · 只读监控")
+                            color: "#91A8B2"
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+
+                    Rectangle {
+                        objectName: "flightTelemetry_readOnlyBadge"
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 8
+                        color: "#172F36"
+                        border.color: "#32606B"
+                        implicitWidth: readOnlyContent.implicitWidth + 24
+                        implicitHeight: readOnlyContent.implicitHeight + 18
+
+                        RowLayout {
+                            id: readOnlyContent
+                            anchors.centerIn: parent
+                            spacing: 8
+
+                            Rectangle {
+                                Layout.preferredWidth: 7
+                                Layout.preferredHeight: 7
+                                radius: 4
+                                color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+                            }
+
+                            ColumnLayout {
+                                spacing: 1
+                                QGCLabel {
+                                    text: qsTr("只读监控")
+                                    color: "#BDE8D9"
+                                    font.bold: true
+                                }
+                                QGCLabel {
+                                    text: root._telemetryHeadline
+                                    color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+                                    font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                                }
+                            }
                         }
                     }
                 }
@@ -678,6 +772,275 @@ SetupPage {
                                 .arg(root._number("headingStdRad", 3, " rad"))
                                 .arg(root._familyStatus("navigationAvailable"))
                     accentColor: root._familyStatusColor("navigationAvailable")
+                }
+            }
+
+            GridLayout {
+                objectName: "flightTelemetry_heroGrid"
+                Layout.fillWidth: true
+                columns: root._dashboardColumns
+                columnSpacing: 12
+                rowSpacing: 12
+
+                HeroPanel {
+                    objectName: "flightTelemetry_heroFlight"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    eyebrow: "FLIGHT STATUS"
+                    titleText: qsTr("飞行态势")
+                    statusFamily: "operationAvailable"
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+                            QGCLabel {
+                                text: qsTr("当前飞行模式")
+                                color: "#91A8B2"
+                                font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_heroFlightMode"
+                                Layout.fillWidth: true
+                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                      ? root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")])
+                                      : root._familyStatus("operationAvailable")
+                                color: root._familyStatusColor("operationAvailable")
+                                font.pointSize: ScreenTools.largeFontPointSize * 1.35
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                        }
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 8
+                            color: "#1D3039"
+                            border.color: "#304C58"
+                            implicitWidth: armStateText.implicitWidth + 22
+                            implicitHeight: armStateText.implicitHeight + 16
+                            QGCLabel {
+                                id: armStateText
+                                anchors.centerIn: parent
+                                objectName: "flightTelemetry_heroArmState"
+                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                      ? root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
+                                      : root._familyStatus("operationAvailable")
+                                color: root._familyStatusColor("operationAvailable")
+                                font.bold: true
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: "#2B414B"
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 14
+                        rowSpacing: 8
+                        ColumnLayout {
+                            spacing: 2
+                            QGCLabel { text: qsTr("控制权"); color: "#91A8B2"; font.pointSize: ScreenTools.defaultFontPointSize * 0.78 }
+                            QGCLabel {
+                                objectName: "flightTelemetry_heroAuthority"
+                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                      ? root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")])
+                                      : root._familyStatus("operationAvailable")
+                                color: "#E1EDF1"
+                                font.bold: true
+                            }
+                        }
+                        ColumnLayout {
+                            spacing: 2
+                            QGCLabel { text: qsTr("失效保护"); color: "#91A8B2"; font.pointSize: ScreenTools.defaultFontPointSize * 0.78 }
+                            QGCLabel {
+                                objectName: "flightTelemetry_heroFailsafe"
+                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                      ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                                      : root._familyStatus("operationAvailable")
+                                color: root._failsafeColor()
+                                font.bold: true
+                            }
+                        }
+                    }
+                }
+
+                HeroPanel {
+                    objectName: "flightTelemetry_heroNavigation"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    eyebrow: "NAVIGATION ESTIMATE"
+                    titleText: qsTr("导航估计")
+                    statusFamily: "navigationAvailable"
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 3
+                        columnSpacing: 8
+                        MetricReadout {
+                            objectName: "flightTelemetry_metricPosition"
+                            labelText: qsTr("位置 σ")
+                            valueText: root._number("positionStdM", 3, "")
+                            unitText: "m"
+                            statusText: root._familyStatus("navigationAvailable")
+                            accentColor: root._familyStatusColor("navigationAvailable")
+                        }
+                        MetricReadout {
+                            objectName: "flightTelemetry_metricVelocity"
+                            labelText: qsTr("速度 σ")
+                            valueText: root._number("velocityStdMps", 3, "")
+                            unitText: "m/s"
+                            statusText: root._familyStatus("navigationAvailable")
+                            accentColor: root._familyStatusColor("navigationAvailable")
+                        }
+                        MetricReadout {
+                            objectName: "flightTelemetry_metricHeading"
+                            labelText: qsTr("航向 σ")
+                            valueText: root._number("headingStdRad", 3, "")
+                            unitText: "rad"
+                            statusText: root._familyStatus("navigationAvailable")
+                            accentColor: root._familyStatusColor("navigationAvailable")
+                        }
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("显示估计标准差原值；未定义阈值，不推断定位等级")
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                HeroPanel {
+                    objectName: "flightTelemetry_heroRcInput"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    eyebrow: "REMOTE CONTROL INPUT"
+                    titleText: qsTr("遥控输入")
+                    statusFamily: "rcInputAvailable"
+
+                    AxisGauge {
+                        objectName: "flightTelemetry_rcAxis_roll"
+                        axisName: qsTr("横滚")
+                        rawValue: root._fact("rcRollNorm")
+                        validityMask: root._fact("rcValidAxesMask")
+                        validityBit: 0
+                        centered: true
+                    }
+                    AxisGauge {
+                        objectName: "flightTelemetry_rcAxis_pitch"
+                        axisName: qsTr("俯仰")
+                        rawValue: root._fact("rcPitchNorm")
+                        validityMask: root._fact("rcValidAxesMask")
+                        validityBit: 1
+                        centered: true
+                    }
+                    AxisGauge {
+                        objectName: "flightTelemetry_rcAxis_yaw"
+                        axisName: qsTr("偏航")
+                        rawValue: root._fact("rcYawNorm")
+                        validityMask: root._fact("rcValidAxesMask")
+                        validityBit: 2
+                        centered: true
+                    }
+                    AxisGauge {
+                        objectName: "flightTelemetry_rcAxis_throttle"
+                        axisName: qsTr("油门")
+                        rawValue: root._fact("rcThrottleNorm")
+                        validityMask: root._fact("rcValidAxesMask")
+                        validityBit: 3
+                        centered: false
+                    }
+                }
+            }
+
+            StatusCard {
+                objectName: "flightTelemetry_healthMatrix"
+                eyebrow: "TELEMETRY DOMAIN STATUS"
+                title: qsTr("遥测域状态矩阵")
+                GridLayout {
+                    objectName: "flightTelemetry_healthMatrixGrid"
+                    Layout.fillWidth: true
+                    columns: root._healthColumns
+                    columnSpacing: 8
+                    rowSpacing: 8
+                    Repeater {
+                        model: root._healthDomains
+                        delegate: HealthCell {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_health_" + modelData.family
+                            labelText: modelData.label
+                            familyName: modelData.family
+                            availableFact: modelData.available
+                        }
+                    }
+                }
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: qsTr("各数据域独立判定；矩阵不构成综合健康评分。传感器/链路/资源实例年龄见下方详情。")
+                    color: "#8298A2"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            StatusCard {
+                objectName: "flightTelemetry_trendPanel"
+                eyebrow: "GCS LIVE SAMPLE  /  1 HZ  /  LAST 60 POINTS"
+                title: qsTr("实时遥测趋势")
+                GridLayout {
+                    objectName: "flightTelemetry_trendGrid"
+                    Layout.fillWidth: true
+                    columns: root._trendColumns
+                    columnSpacing: 10
+                    rowSpacing: 10
+                    TrendCard {
+                        objectName: "flightTelemetry_trend_position"
+                        titleText: qsTr("位置标准差")
+                        valueText: root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m")
+                        unitText: "m"
+                        valueKey: "position"
+                        lineColor: "#49C7E7"
+                        samples: root._trendSamples
+                    }
+                    TrendCard {
+                        objectName: "flightTelemetry_trend_velocity"
+                        titleText: qsTr("速度标准差")
+                        valueText: root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s")
+                        unitText: "m/s"
+                        valueKey: "velocity"
+                        lineColor: "#52D5B1"
+                        samples: root._trendSamples
+                    }
+                    TrendCard {
+                        objectName: "flightTelemetry_trend_heading"
+                        titleText: qsTr("航向标准差")
+                        valueText: root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad")
+                        unitText: "rad"
+                        valueKey: "heading"
+                        lineColor: "#A99AF2"
+                        samples: root._trendSamples
+                    }
+                    TrendCard {
+                        objectName: "flightTelemetry_trend_control"
+                        titleText: qsTr("控制求解耗时")
+                        valueText: root._trendDisplayValue("controlAvailable", "controlSolveTimeUs", 0, " μs")
+                        unitText: "μs"
+                        valueKey: "control"
+                        lineColor: "#E4B75A"
+                        samples: root._trendSamples
+                    }
+                }
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: qsTr("地面站本地 1 Hz 采样 · 最多 60 点 · 过期/无效数据断线 · 非 FCU 原生历史")
+                    color: "#8298A2"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                    wrapMode: Text.WordWrap
                 }
             }
 
@@ -1193,6 +1556,403 @@ SetupPage {
         }
     }
 
+    component HeroPanel: Rectangle {
+        id: hero
+        required property string titleText
+        property string eyebrow: "FLIGHT STATUS"
+        property string statusFamily: ""
+        readonly property color currentStatusColor: root._familyStatusColor(statusFamily)
+        default property alias contentData: bodyColumn.data
+
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        implicitWidth: 300
+        implicitHeight: heroColumn.implicitHeight + 26
+        radius: 10
+        color: "#14232B"
+        border.width: 1
+        border.color: "#29414B"
+
+        Rectangle {
+            width: 3
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.margins: 1
+            radius: 2
+            color: hero.currentStatusColor
+        }
+
+        ColumnLayout {
+            id: heroColumn
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: hero.eyebrow
+                        color: "#57C8DA"
+                        font.pointSize: ScreenTools.defaultFontPointSize * 0.74
+                        font.bold: true
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: hero.titleText
+                        color: "#E6F0F4"
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        font.bold: true
+                    }
+                }
+                Rectangle {
+                    radius: 10
+                    implicitWidth: heroStatusText.implicitWidth + 16
+                    implicitHeight: heroStatusText.implicitHeight + 10
+                    color: Qt.rgba(hero.currentStatusColor.r, hero.currentStatusColor.g, hero.currentStatusColor.b, 0.10)
+                    border.color: Qt.rgba(hero.currentStatusColor.r, hero.currentStatusColor.g, hero.currentStatusColor.b, 0.28)
+                    QGCLabel {
+                        id: heroStatusText
+                        anchors.centerIn: parent
+                        text: root._familyStatus(hero.statusFamily)
+                        color: hero.currentStatusColor
+                        font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                        font.bold: true
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: "#2B414B"
+            }
+
+            ColumnLayout {
+                id: bodyColumn
+                Layout.fillWidth: true
+                spacing: 9
+            }
+        }
+    }
+
+    component MetricReadout: ColumnLayout {
+        id: metric
+        required property string labelText
+        required property string valueText
+        required property string unitText
+        required property string statusText
+        property color accentColor: "#49C7E7"
+
+        Layout.fillWidth: true
+        spacing: 3
+
+        QGCLabel {
+            Layout.fillWidth: true
+            text: metric.labelText
+            color: "#91A8B2"
+            font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 3
+            QGCLabel {
+                Layout.fillWidth: true
+                text: metric.valueText
+                color: metric.accentColor
+                font.pointSize: ScreenTools.largeFontPointSize * 1.05
+                font.bold: true
+                elide: Text.ElideRight
+            }
+            QGCLabel {
+                text: metric.unitText
+                color: "#A8BBC3"
+                font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+            }
+        }
+        QGCLabel {
+            Layout.fillWidth: true
+            text: metric.statusText
+            color: metric.accentColor
+            font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+        }
+    }
+
+    component AxisGauge: ColumnLayout {
+        id: axis
+        required property string axisName
+        required property var rawValue
+        required property var validityMask
+        required property int validityBit
+        property bool centered: true
+
+        readonly property int maskState: root._rawMaskState(validityMask, validityBit)
+        readonly property real numericValue: Number(rawValue)
+        readonly property real normalizedValue: numericValue
+        readonly property bool familyFresh: root._familyStatus("rcInputAvailable") === qsTr("已接收")
+        readonly property bool inRange: centered ? numericValue >= -1 && numericValue <= 1
+                                                 : numericValue >= 0 && numericValue <= 1
+        readonly property bool valid: familyFresh && maskState === 1 &&
+                                      rawValue !== null && rawValue !== undefined &&
+                                      Number.isFinite(numericValue) && inRange
+        readonly property string displayValue: !familyFresh ? root._familyStatus("rcInputAvailable")
+                                                : maskState < 0 ? qsTr("未上报")
+                                                : maskState === 0 || !valid ? qsTr("无效")
+                                                : numericValue.toFixed(2)
+
+        Layout.fillWidth: true
+        spacing: 3
+
+        RowLayout {
+            Layout.fillWidth: true
+            QGCLabel {
+                Layout.fillWidth: true
+                text: axis.axisName
+                color: "#A8BBC3"
+                font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+            }
+            QGCLabel {
+                objectName: axis.objectName + "_value"
+                text: axis.displayValue
+                color: axis.valid ? "#E6F0F4" : "#F0B94B"
+                font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                font.bold: true
+            }
+        }
+
+        Rectangle {
+            id: axisTrack
+            Layout.fillWidth: true
+            Layout.preferredHeight: 9
+            radius: 5
+            color: "#243740"
+            border.color: "#304B57"
+            clip: true
+
+            Rectangle {
+                visible: axis.valid
+                x: axis.centered
+                   ? (axis.numericValue < 0 ? axisTrack.width / 2 + axis.numericValue * axisTrack.width / 2 : axisTrack.width / 2)
+                   : 0
+                width: !axis.valid ? 0
+                       : axis.centered ? Math.abs(axis.numericValue) * axisTrack.width / 2
+                                       : axis.numericValue * axisTrack.width
+                height: parent.height
+                radius: 5
+                color: "#49C7E7"
+            }
+            Rectangle {
+                visible: axis.centered
+                x: axisTrack.width / 2
+                width: 1
+                height: parent.height + 4
+                y: -2
+                color: "#91A8B2"
+                opacity: 0.65
+            }
+        }
+    }
+
+    component HealthCell: Rectangle {
+        id: healthCell
+        required property string labelText
+        required property string familyName
+        required property string availableFact
+
+        readonly property string statusText: root._familyStatus(availableFact)
+        readonly property color statusColor: root._familyStatusColor(availableFact)
+
+        implicitWidth: 150
+        implicitHeight: 64
+        radius: 7
+        color: "#172831"
+        border.width: 1
+        border.color: "#29414B"
+
+        Rectangle {
+            width: 3
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.margins: 1
+            radius: 2
+            color: healthCell.statusColor
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 9
+            spacing: 3
+            RowLayout {
+                Layout.fillWidth: true
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: healthCell.labelText
+                    color: "#DCE8ED"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.84
+                    font.bold: true
+                }
+                QGCLabel {
+                    text: healthCell.statusText
+                    color: healthCell.statusColor
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+                }
+            }
+            QGCLabel {
+                Layout.fillWidth: true
+                text: healthCell.familyName === "event"
+                      ? qsTr("异步事件 · %1").arg(root._receiveAgeText("event"))
+                      : qsTr("接收 %1").arg(root._receiveAgeText(healthCell.familyName))
+                color: "#8298A2"
+                font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+            }
+        }
+    }
+
+    component TrendCard: Rectangle {
+        id: plotCard
+        required property string titleText
+        required property string valueText
+        required property string unitText
+        required property string valueKey
+        required property color lineColor
+        required property var samples
+
+        readonly property int sampleCount: samples ? samples.length : 0
+        readonly property int validSampleCount: {
+            let count = 0
+            const data = samples || []
+            for (let i = 0; i < data.length; i++) {
+                const value = data[i][valueKey]
+                if (value !== null && value !== undefined && Number.isFinite(Number(value))) {
+                    count += 1
+                }
+            }
+            return count
+        }
+        readonly property bool lastSampleValid: sampleCount > 0 &&
+                                                samples[sampleCount - 1][valueKey] !== null &&
+                                                samples[sampleCount - 1][valueKey] !== undefined
+
+        Layout.fillWidth: true
+        implicitWidth: 230
+        implicitHeight: 142
+        radius: 8
+        color: "#172831"
+        border.width: 1
+        border.color: "#29414B"
+        onSamplesChanged: plotCanvas.requestPaint()
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 5
+            RowLayout {
+                Layout.fillWidth: true
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: plotCard.titleText
+                    color: "#A8BBC3"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                }
+                QGCLabel {
+                    text: plotCard.valueText
+                    color: plotCard.lineColor
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                    font.bold: true
+                }
+            }
+            Canvas {
+                id: plotCanvas
+                objectName: plotCard.objectName + "_canvas"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredHeight: 64
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                onPaint: {
+                    const ctx = getContext("2d")
+                    if (!ctx) return
+                    ctx.clearRect(0, 0, width, height)
+                    const left = 5
+                    const right = Math.max(left + 1, width - 5)
+                    const top = 5
+                    const bottom = Math.max(top + 1, height - 5)
+
+                    ctx.strokeStyle = "#2B414B"
+                    ctx.lineWidth = 1
+                    for (let line = 0; line < 3; line++) {
+                        const y = top + (bottom - top) * line / 2
+                        ctx.beginPath()
+                        ctx.moveTo(left, y)
+                        ctx.lineTo(right, y)
+                        ctx.stroke()
+                    }
+
+                    const data = plotCard.samples || []
+                    const values = []
+                    for (let i = 0; i < data.length; i++) {
+                        const raw = data[i][plotCard.valueKey]
+                        if (raw !== null && raw !== undefined && Number.isFinite(Number(raw))) {
+                            values.push(Number(raw))
+                        }
+                    }
+                    if (values.length < 2 || data.length < 2) return
+
+                    let minValue = Math.min.apply(null, values)
+                    let maxValue = Math.max.apply(null, values)
+                    if (Math.abs(maxValue - minValue) < 0.000001) {
+                        const padding = Math.max(Math.abs(maxValue) * 0.05, 0.001)
+                        minValue -= padding
+                        maxValue += padding
+                    }
+                    const range = maxValue - minValue
+                    ctx.beginPath()
+                    ctx.strokeStyle = plotCard.lineColor.toString()
+                    ctx.lineWidth = 2
+                    let penDown = false
+                    for (let i = 0; i < data.length; i++) {
+                        const raw = data[i][plotCard.valueKey]
+                        if (raw === null || raw === undefined || !Number.isFinite(Number(raw))) {
+                            penDown = false
+                            continue
+                        }
+                        const x = left + (right - left) * i / Math.max(1, data.length - 1)
+                        const y = bottom - (Number(raw) - minValue) / range * (bottom - top)
+                        if (penDown) ctx.lineTo(x, y)
+                        else ctx.moveTo(x, y)
+                        penDown = true
+                    }
+                    ctx.stroke()
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: plotCard.validSampleCount < 2
+                          ? qsTr("采集中 · %1/60 有效点").arg(plotCard.validSampleCount)
+                          : qsTr("%1/60 有效点").arg(plotCard.validSampleCount)
+                    color: "#8298A2"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.70
+                }
+                QGCLabel {
+                    text: plotCard.sampleCount === 0 ? qsTr("WAIT")
+                          : plotCard.lastSampleValid ? qsTr("NOW") : qsTr("GAP")
+                    color: plotCard.sampleCount === 0 ? "#8298A2"
+                           : plotCard.lastSampleValid ? "#45D39A" : "#F0B94B"
+                    font.pointSize: ScreenTools.defaultFontPointSize * 0.70
+                    font.bold: true
+                }
+            }
+        }
+    }
+
     component TelemetryRow: VehicleSummaryRow {
         id: telemetryRow
         valueColor: root._diagnosticValueColor(valueText)
@@ -1206,11 +1966,11 @@ SetupPage {
         property color accentColor: "#42CFA8"
 
         implicitWidth: 230
-        implicitHeight: 108
-        radius: 8
-        color: "#20332E"
+        implicitHeight: 88
+        radius: 10
+        color: "#14232B"
         border.width: 1
-        border.color: "#344A43"
+        border.color: "#29414B"
 
         RowLayout {
             anchors.fill: parent
@@ -1268,9 +2028,9 @@ SetupPage {
         implicitWidth: 300
         implicitHeight: cardColumn.implicitHeight + 28
         radius: 8
-        color: "#1B2A26"
+        color: "#14232B"
         border.width: 1
-        border.color: "#344A43"
+        border.color: "#29414B"
 
         Rectangle {
             width: 3
@@ -1299,8 +2059,8 @@ SetupPage {
                     QGCLabel {
                         Layout.fillWidth: true
                         text: card.eyebrow
-                        color: "#82968E"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                        color: "#57C8DA"
+                        font.pointSize: ScreenTools.defaultFontPointSize * 0.74
                         font.bold: true
                     }
 
@@ -1349,7 +2109,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#344A43"
+                color: "#2B414B"
             }
 
             ColumnLayout {

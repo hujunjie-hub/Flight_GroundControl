@@ -322,7 +322,8 @@
     "gcs_trends_sample_live_facts_at_1hz_with_60_point_bound",
     "stale_invalid_trend_samples_create_gaps",
     "trend_buffers_reset_on_vehicle_or_boot_epoch_change",
-    "no_artificial_horizon_without_attitude_telemetry"
+    "no_artificial_horizon_without_attitude_telemetry",
+    "ui_test_confirms_no_attitude_indicator_without_attitude_angle_facts"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
