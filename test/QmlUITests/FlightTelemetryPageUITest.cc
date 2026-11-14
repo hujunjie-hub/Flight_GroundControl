@@ -86,6 +86,22 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
             QQuickItem *operationCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
+            QQuickItem *prearmCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
+            QQuickItem *latestEventCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_latestEvent"), 3000);
+            QQuickItem *resourcesCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
+            QQuickItem *storageCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
+            QQuickItem *timeCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_time"), 3000);
+            QQuickItem *rcCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_rcInput"), 3000);
+            QQuickItem *eventHistoryCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_eventHistory"), 3000);
+            QQuickItem *buildInfoCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_buildInfo"), 3000);
             QQuickItem *failsafeRow = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
@@ -96,6 +112,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryNavigation);
             QVERIFY(dashboardGrid);
             QVERIFY(operationCard);
+            QVERIFY(prearmCard);
+            QVERIFY(latestEventCard);
+            QVERIFY(resourcesCard);
+            QVERIFY(storageCard);
+            QVERIFY(timeCard);
+            QVERIFY(rcCard);
+            QVERIFY(eventHistoryCard);
+            QVERIFY(buildInfoCard);
             QVERIFY(failsafeRow);
 
             const char *diagnosticCards[] = {
@@ -123,6 +147,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(originalPageWidth > 0);
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(prearmCard->y() < resourcesCard->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmCard->y(), latestEventCard->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(prearmCard->x() < latestEventCard->x(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(resourcesCard->y(), storageCard->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(resourcesCard->y(), timeCard->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcCard->y(), eventHistoryCard->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcCard->x() < eventHistoryCard->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             page->setWidth(700);

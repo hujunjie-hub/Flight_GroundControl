@@ -178,6 +178,7 @@
 ### 8.1 页面结构
 
 - 页面标题、只读标识、四张摘要卡、主诊断 GridLayout 和主要卡片具有稳定 `objectName`。
+- 桌面 12 列布局中，解锁前检查与最新事件并排；资源/存储/时间同步并排；遥控输入与最近事件历史并排；固件与版本位于底部全宽。
 - 原有 `flightTelemetry_page`、`flightTelemetry_operationMessageStatus`、`flightTelemetry_storageFreeKib` 等测试选择器必须保留。
 - 页面完整保留所有现有诊断卡片和字段。
 

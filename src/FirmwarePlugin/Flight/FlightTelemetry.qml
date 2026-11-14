@@ -935,31 +935,67 @@ SetupPage {
                 }
 
                 StatusCard {
-                    objectName: "flightTelemetry_card_storage"
-                    eyebrow: "STORAGE"
-                    statusFamily: "storageAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
-                    title: qsTr("存储状态")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
+                    objectName: "flightTelemetry_card_prearm"
+                    eyebrow: "PRE-ARM CHECKS"
+                    statusFamily: "prearmAvailable"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 8 : root._dashboardColumns >= 6 ? 6 : 1
+                    title: qsTr("解锁前检查")
+                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
+                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
+                    TelemetryRow { labelText: qsTr("检查代次"); valueText: root._integer("prearmCheckEpoch") }
                     TelemetryRow {
-                        labelText: qsTr("SD")
-                        valueText: root._validEnum("sdState", "storageValidityMask", 0, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                        labelText: qsTr("已接收检查项")
+                        valueText: root._fact("prearmAvailable") && root._telemetry
+                                   ? String(root._telemetry.prearmChecks.length) + " / 15" : qsTr("未上报")
                     }
-                    TelemetryRow {
-                        labelText: qsTr("NOR")
-                        valueText: root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                    TelemetryRow { labelText: qsTr("适用模式掩码"); valueText: root._mask("prearmModeMask") }
+                    TelemetryRow { labelText: qsTr("最新检查原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.prearmChecks.length === 0
+                        text: qsTr("当前检查代次暂无逐项结果")
                     }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_storageFreeKib"
-                        labelText: qsTr("剩余空间")
-                        valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
+                    Repeater {
+                        model: root._telemetry ? root._telemetry.prearmChecks : []
+                        delegate: RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 8
+                            QGCLabel {
+                                Layout.preferredWidth: 140
+                                text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
+                            }
+                            QGCLabel {
+                                Layout.preferredWidth: 56
+                                text: root._enumValue(modelData.checkState, [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")])
+                                color: root._prearmStateColor(modelData.checkState)
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                                      + " · " + qsTr("恢复条件：%1").arg(root._enumValue(modelData.recoveryCondition, [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]))
+                            }
+                        }
                     }
-                    TelemetryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
-                    TelemetryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
-                    TelemetryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("storageReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("storageTimeBootUs") }
+                }
+
+                StatusCard {
+                    objectName: "flightTelemetry_card_latestEvent"
+                    eyebrow: "LATEST EVENT"
+                    statusFamily: "eventAvailable"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 6 : 1
+                    title: qsTr("最新事件")
+                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("eventAvailable") }
+                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("event") }
+                    TelemetryRow { labelText: qsTr("事件 ID"); valueText: root._integer("eventId") }
+                    TelemetryRow { labelText: qsTr("严重度"); valueText: root._enum("eventSeverity", [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]) }
+                    TelemetryRow { labelText: qsTr("来源 ID"); valueText: root._integer("eventSourceId") }
+                    TelemetryRow { labelText: qsTr("原因命名空间"); valueText: root._enum("eventReasonNamespace", [qsTr("通用"), qsTr("制导"), qsTr("控制"), qsTr("传感器一致性")]) }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(root._fact("eventReasonNamespace"), root._fact("eventReasonCode")) }
+                    TelemetryRow { labelText: qsTr("本地接收序号"); valueText: root._integer("eventSequence") }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("eventTimeBootUs") }
                 }
 
                 StatusCard {
@@ -1016,6 +1052,34 @@ SetupPage {
                 }
 
                 StatusCard {
+                    objectName: "flightTelemetry_card_storage"
+                    eyebrow: "STORAGE"
+                    statusFamily: "storageAvailable"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    title: qsTr("存储状态")
+                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
+                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
+                    TelemetryRow {
+                        labelText: qsTr("SD")
+                        valueText: root._validEnum("sdState", "storageValidityMask", 0, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                    }
+                    TelemetryRow {
+                        labelText: qsTr("NOR")
+                        valueText: root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_storageFreeKib"
+                        labelText: qsTr("剩余空间")
+                        valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
+                    }
+                    TelemetryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
+                    TelemetryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
+                    TelemetryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("storageReasonCode")) }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("storageTimeBootUs") }
+                }
+
+                StatusCard {
                     objectName: "flightTelemetry_card_time"
                     eyebrow: "TIME SYNCHRONIZATION"
                     statusFamily: "timeAvailable"
@@ -1038,20 +1102,34 @@ SetupPage {
                 }
 
                 StatusCard {
-                    objectName: "flightTelemetry_card_latestEvent"
-                    eyebrow: "LATEST EVENT"
-                    statusFamily: "eventAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 6 : 1
-                    title: qsTr("最新事件")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("eventAvailable") }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("event") }
-                    TelemetryRow { labelText: qsTr("事件 ID"); valueText: root._integer("eventId") }
-                    TelemetryRow { labelText: qsTr("严重度"); valueText: root._enum("eventSeverity", [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]) }
-                    TelemetryRow { labelText: qsTr("来源 ID"); valueText: root._integer("eventSourceId") }
-                    TelemetryRow { labelText: qsTr("原因命名空间"); valueText: root._enum("eventReasonNamespace", [qsTr("通用"), qsTr("制导"), qsTr("控制"), qsTr("传感器一致性")]) }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(root._fact("eventReasonNamespace"), root._fact("eventReasonCode")) }
-                    TelemetryRow { labelText: qsTr("本地接收序号"); valueText: root._integer("eventSequence") }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("eventTimeBootUs") }
+                    objectName: "flightTelemetry_card_rcInput"
+                    eyebrow: "REMOTE CONTROL"
+                    statusFamily: "rcInputAvailable"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    title: qsTr("遥控输入")
+                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
+                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }
+                    TelemetryRow {
+                        labelText: qsTr("横滚 / 俯仰")
+                        valueText: root._validValue("rcRollNorm", "rcValidAxesMask", 0, 3, "")
+                                   + " / " +
+                                   root._validValue("rcPitchNorm", "rcValidAxesMask", 1, 3, "")
+                    }
+                    TelemetryRow {
+                        labelText: qsTr("偏航 / 油门")
+                        valueText: root._validValue("rcYawNorm", "rcValidAxesMask", 2, 3, "")
+                                   + " / " +
+                                   root._validValue("rcThrottleNorm", "rcValidAxesMask", 3, 3, "")
+                    }
+                    TelemetryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
+                    TelemetryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
+                    TelemetryRow {
+                        labelText: qsTr("链路状态")
+                        valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                        valueColor: root._rcLinkStateColor(root._fact("rcLinkState"))
+                    }
+                    TelemetryRow { labelText: qsTr("输入年龄"); valueText: root._ageUsFact("rcAgeUs") }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
                 }
 
                 StatusCard {
@@ -1091,84 +1169,6 @@ SetupPage {
                 }
 
                 StatusCard {
-                    objectName: "flightTelemetry_card_prearm"
-                    eyebrow: "PRE-ARM CHECKS"
-                    statusFamily: "prearmAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 8 : root._dashboardColumns >= 6 ? 6 : 1
-                    title: qsTr("解锁前检查")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
-                    TelemetryRow { labelText: qsTr("检查代次"); valueText: root._integer("prearmCheckEpoch") }
-                    TelemetryRow {
-                        labelText: qsTr("已接收检查项")
-                        valueText: root._fact("prearmAvailable") && root._telemetry
-                                   ? String(root._telemetry.prearmChecks.length) + " / 15" : qsTr("未上报")
-                    }
-                    TelemetryRow { labelText: qsTr("适用模式掩码"); valueText: root._mask("prearmModeMask") }
-                    TelemetryRow { labelText: qsTr("最新检查原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        visible: !root._telemetry || root._telemetry.prearmChecks.length === 0
-                        text: qsTr("当前检查代次暂无逐项结果")
-                    }
-                    Repeater {
-                        model: root._telemetry ? root._telemetry.prearmChecks : []
-                        delegate: RowLayout {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            spacing: 8
-                            QGCLabel {
-                                Layout.preferredWidth: 140
-                                text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
-                            }
-                            QGCLabel {
-                                Layout.preferredWidth: 56
-                                text: root._enumValue(modelData.checkState, [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")])
-                                color: root._prearmStateColor(modelData.checkState)
-                            }
-                            QGCLabel {
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                                text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
-                                      + " · " + qsTr("恢复条件：%1").arg(root._enumValue(modelData.recoveryCondition, [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]))
-                            }
-                        }
-                    }
-                }
-
-                StatusCard {
-                    objectName: "flightTelemetry_card_rcInput"
-                    eyebrow: "REMOTE CONTROL"
-                    statusFamily: "rcInputAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
-                    title: qsTr("遥控输入")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }
-                    TelemetryRow {
-                        labelText: qsTr("横滚 / 俯仰")
-                        valueText: root._validValue("rcRollNorm", "rcValidAxesMask", 0, 3, "")
-                                   + " / " +
-                                   root._validValue("rcPitchNorm", "rcValidAxesMask", 1, 3, "")
-                    }
-                    TelemetryRow {
-                        labelText: qsTr("偏航 / 油门")
-                        valueText: root._validValue("rcYawNorm", "rcValidAxesMask", 2, 3, "")
-                                   + " / " +
-                                   root._validValue("rcThrottleNorm", "rcValidAxesMask", 3, 3, "")
-                    }
-                    TelemetryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
-                    TelemetryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
-                    TelemetryRow {
-                        labelText: qsTr("链路状态")
-                        valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
-                        valueColor: root._rcLinkStateColor(root._fact("rcLinkState"))
-                    }
-                    TelemetryRow { labelText: qsTr("输入年龄"); valueText: root._ageUsFact("rcAgeUs") }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
-                }
-
-                StatusCard {
                     objectName: "flightTelemetry_card_buildInfo"
                     eyebrow: "FIRMWARE / BUILD"
                     statusFamily: "buildInfoAvailable"
@@ -1188,6 +1188,7 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("源码提交"); valueText: root._sourceCommitDisplay() }
                     TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("buildTimeBootUs") }
                 }
+
             }
         }
     }
