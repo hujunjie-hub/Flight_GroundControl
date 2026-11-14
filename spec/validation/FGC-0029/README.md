@@ -18,7 +18,14 @@
 | R23 | 仅文档收尾（归档根目录 README 修正、本 README 的 R22 登记、台账 E-38）；HEAD 与 CI 见 R23 交付的 `RUN-IDENTITY.txt` / `CI-RESULT-R23.md` |
 | PR #3 | **Merged**（`c26f20c8209838aeb404382ede506754ecc9f71c`） |
 
-## R31 最新验证（2026-11-13）
+## 当前版本复测（2026-11-14）
+
+- `main@cccf82a94682197349ed75afe08d8e8352d662fc` 的 Windows Release，EXE SHA-256 `3b8740af3f0423446553d93ef99b3d38ed8baa8d89d1ed329d3362d2432f9077`。
+- 使用同一 Release EXE 运行 `Invoke-Fgc0029AsanStress.ps1` 的 12 进程 × 3 轮同步矩阵。36/36 通过，每份 QtTest 报告 19 项，全部执行 `_concurrentControllersExifStressTest`，失败、跳过、超时和 `0xC0000374` 退出均为 0。本轮执行普通 Release 并发复测。
+- 本地运行目录 `work/validation/fgc0029-current-release-20261114T062304684Z`。`process-results.csv` SHA-256 `a5ce3a40b521db7be32b4bd86e598d3d2c5adc5bf34d652a82bb5b0e988b101b`。同提交完整验收 Unit 198/198、Integration 71/71、干净安装与安装后启动通过。
+- 当前主线在本轮条件下未复现。历史触发路径的缓解已验证，首次破坏引用计数的操作仍待证实，Issue #29 保持 OPEN / S1 / BLOCKED。
+
+## R31 验证（2026-11-13）
 
 - **当前 main 产品/测试基线**：测试 HEAD `0b8cb60953277be90d14dc630cd84678f3d333e0`；Windows Release run `43444900333` SUCCESS，Unit `198/198`、Integration `71/71`，非英文系统区域回归、可执行文件、Installer、干净安装及安装后启动验证全部通过。
 - **同 HEAD 的工程检查**：pre-commit `43444900133` SUCCESS；CI Scripts `43444900339` SUCCESS（Python 3.10/3.12）。
