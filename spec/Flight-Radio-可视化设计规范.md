@@ -114,7 +114,7 @@
 5. 将 CH1–CH4 全部设为 1500 µs，验证三个手型下左右指示点都回到圆心。
 6. 按 RC_CHANNELS 连续通道规则，在 Mode 1 下只发布 CH1–CH3（CH4–CH18 未使用），验证缺少左摇杆所需 CH4 时左摇杆隐藏、右摇杆仍显示。
 7. 开始校准、保存、取消、绑定、复制微调量控件仍存在且保留原有启用条件；8 路通道时开始校准可用，只有 CH1–CH3 时开始校准必须禁用。
-9. 测试不触发校准、绑定、解锁或飞行控制命令。
+8. 测试不触发校准、绑定、解锁或飞行控制命令。
 
 Windows x64 MSVC Release、Unit、Integration、Installer、Clean Install 和 Installed Runtime 验收仍按项目总规范执行。未实际执行的门禁必须记录为 NOT_RUN。
 
