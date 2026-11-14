@@ -2,7 +2,7 @@
 
 - 版本：1.0
 - 日期：2026-11-14
-- 状态：设计已批准，第一阶段实现中
+- 状态：第一阶段已实现，等待精确 main HEAD Windows Release 验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)

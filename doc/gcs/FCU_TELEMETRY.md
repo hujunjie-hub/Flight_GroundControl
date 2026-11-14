@@ -16,7 +16,10 @@ only authority for operational decisions.
 ## Ground station page
 
 The Flight Configure sidebar includes **飞控诊断** (`FlightTelemetry.qml`). It is a read-only
-view of operation, navigation, sensor health, control, actuator, link, storage,
+operations dashboard with a header, four family-gated summary tiles, and a responsive
+12/6/1-column diagnostic-card grid. Visual hierarchy and state semantics are specified in
+[`spec/Flight-Diagnostics-大屏设计规范.md`](../../spec/Flight-Diagnostics-大屏设计规范.md).
+The page retains operation, navigation, sensor health, control, actuator, link, storage,
 resource, time, event, pre-arm, RC input and build information, with a bounded recent-event history.
 Sensor health is shown per sensor instance, communication state per RC/GCS/Companion
 link instance, and resource records are keyed by task ID. The current Flight publisher

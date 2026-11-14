@@ -69,6 +69,64 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem *page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             QVERIFY2(page, "FlightTelemetry setup page did not load");
 
+            QQuickItem *dashboardHeader = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_dashboardHeader"), 3000);
+            QQuickItem *readOnlyBadge = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
+            QQuickItem *summaryTelemetry = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"), 3000);
+            QQuickItem *summaryOperation = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
+            QQuickItem *summaryFailsafe = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"), 3000);
+            QQuickItem *summaryNavigation = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+            QQuickItem *dashboardGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
+            QQuickItem *operationCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
+            QVERIFY(dashboardHeader);
+            QVERIFY(readOnlyBadge);
+            QVERIFY(summaryTelemetry);
+            QVERIFY(summaryOperation);
+            QVERIFY(summaryFailsafe);
+            QVERIFY(summaryNavigation);
+            QVERIFY(dashboardGrid);
+            QVERIFY(operationCard);
+
+            const char *diagnosticCards[] = {
+                "flightTelemetry_card_operation",
+                "flightTelemetry_card_navigation",
+                "flightTelemetry_card_sensors",
+                "flightTelemetry_card_control",
+                "flightTelemetry_card_actuator",
+                "flightTelemetry_card_links",
+                "flightTelemetry_card_storage",
+                "flightTelemetry_card_resources",
+                "flightTelemetry_card_time",
+                "flightTelemetry_card_latestEvent",
+                "flightTelemetry_card_eventHistory",
+                "flightTelemetry_card_prearm",
+                "flightTelemetry_card_rcInput",
+                "flightTelemetry_card_buildInfo"
+            };
+            for (const char *cardName : diagnosticCards) {
+                QVERIFY2(findVisibleItem(_rootItem, QString::fromLatin1(cardName), 3000), cardName);
+            }
+
+            // The responsive grid is based on the actual page content width.
+            const qreal originalPageWidth = page->width();
+            QVERIFY(originalPageWidth > 0);
+            page->setWidth(1600);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
+            page->setWidth(1000);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
+            page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
+            page->setWidth(originalPageWidth);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
+                                      page->property("_dashboardColumns").toInt(), 3000);
+
             QQuickItem *operationRow = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_operationMessageStatus"), 3000);
             QQuickItem *storageFreeRow = findVisibleItem(
@@ -77,6 +135,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(storageFreeRow);
 
             const QString waitingText = translatedTelemetryText("等待遥测");
+            const QString waitingFcuText = translatedTelemetryText("等待 FCU 遥测");
             const QString notReportedText = translatedTelemetryText("未上报");
             const QString receivedText = translatedTelemetryText("已接收");
             const QString staleText = translatedTelemetryText("数据超时");
@@ -84,6 +143,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // No FCU custom telemetry has arrived: the page must not present it as current data.
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(), waitingFcuText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), notReportedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), notReportedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(storageFreeRow->property("valueText").toString(), notReportedText, 3000);
 
             const uint8_t systemId = static_cast<uint8_t>(vehicle->id());
@@ -123,6 +186,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             // Fresh raw MAVLink frames traverse MockLink -> MAVLinkProtocol -> Vehicle -> FactGroup -> QML.
             sendOperationStatus(1000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
+                                      translatedTelemetryText("解锁中 · 定点"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(),
+                                      translatedTelemetryText("正常"), 3000);
 
             // The storage family is available, but validity bit 2 is clear: free space must be shown as invalid.
             sendInvalidStorageStatus(1100);
@@ -130,6 +199,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // The operation frame ages past the page's 1000 ms freshness limit without a new frame.
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), staleText, 5000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
 
             // A strictly newer frame restores the fresh state on the same boot epoch.
             sendOperationStatus(2000);
