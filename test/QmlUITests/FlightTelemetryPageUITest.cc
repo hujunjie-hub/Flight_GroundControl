@@ -466,7 +466,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             const QString unavailableCapabilityText = translatedTelemetryText("未具备");
 
-            int positionSamplesBeforeGap = trendPosition->property("sampleCount").toInt();
             lastOperationTime += 1000;
             sendOperationStatus(lastOperationTime, bootId);
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x77, 0.12F, 0.08F, 0.02F);
@@ -481,13 +480,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       unavailableCapabilityText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(),
                                       unavailableCapabilityText, 3000);
-            waitForCapabilityTrendSample(0x77, positionSamplesBeforeGap);
+            // Anchor the sample count after the new capability mask reaches QML.
+            // A timer tick before the wire frame is decoded must not satisfy this gap check.
+            const int positionSamplesAfterMask = trendPosition->property("sampleCount").toInt();
+            waitForCapabilityTrendSample(0x77, positionSamplesAfterMask);
             if (QTest::currentTestFailed()) return;
             QVERIFY(!trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendVelocity->property("lastSampleValid").toBool());
             QVERIFY(trendHeading->property("lastSampleValid").toBool());
 
-            int velocitySamplesBeforeGap = trendPosition->property("sampleCount").toInt();
             lastOperationTime += 1000;
             sendOperationStatus(lastOperationTime, bootId);
             // Only vertical velocity is present. The scalar velocity metric requires
@@ -503,13 +504,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 summaryNavigation->property("detailText").toString().contains(
                     QStringLiteral("速度 ") + unavailableCapabilityText), 3000);
-            waitForCapabilityTrendSample(0x5F, velocitySamplesBeforeGap);
+            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            const int velocitySamplesAfterMask = trendPosition->property("sampleCount").toInt();
+            waitForCapabilityTrendSample(0x5F, velocitySamplesAfterMask);
             if (QTest::currentTestFailed()) return;
             QVERIFY(!trendVelocity->property("lastSampleValid").toBool());
             QVERIFY(trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendHeading->property("lastSampleValid").toBool());
 
-            int headingSamplesBeforeGap = trendPosition->property("sampleCount").toInt();
             lastOperationTime += 1000;
             sendOperationStatus(lastOperationTime, bootId);
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x7B, 0.12F, 0.08F, 0.02F);
@@ -523,7 +526,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 summaryNavigation->property("detailText").toString().contains(
                     QStringLiteral("航向 ") + unavailableCapabilityText), 3000);
-            waitForCapabilityTrendSample(0x7B, headingSamplesBeforeGap);
+            QTRY_COMPARE_WITH_TIMEOUT(trendHeading->property("valueText").toString(),
+                                      unavailableCapabilityText, 3000);
+            const int headingSamplesAfterMask = trendPosition->property("sampleCount").toInt();
+            waitForCapabilityTrendSample(0x7B, headingSamplesAfterMask);
             if (QTest::currentTestFailed()) return;
             QVERIFY(!trendHeading->property("lastSampleValid").toBool());
             QVERIFY(trendPosition->property("lastSampleValid").toBool());
