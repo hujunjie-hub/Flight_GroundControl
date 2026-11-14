@@ -746,7 +746,9 @@ SetupPage {
                     titleText: qsTr("飞行状态")
                     valueText: root._operationHeadline()
                     detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                ? qsTr("控制权：%1").arg(root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
+                                ? qsTr("控制权：%1 · %2")
+                                  .arg(root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
+                                  .arg(root._familyStatus("operationAvailable"))
                                 : root._familyStatus("operationAvailable")
                     accentColor: root._familyStatusColor("operationAvailable")
                 }
@@ -759,7 +761,9 @@ SetupPage {
                                ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
                                : root._fact("operationAvailable") ? root._familyStatus("operationAvailable") : qsTr("未上报")
                     detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                ? root._reasonText(0, root._fact("operationReasonCode"))
+                                ? qsTr("%1 · %2")
+                                  .arg(root._reasonText(0, root._fact("operationReasonCode")))
+                                  .arg(root._familyStatus("operationAvailable"))
                                 : root._familyStatus("operationAvailable")
                     accentColor: root._failsafeColor()
                 }
@@ -772,9 +776,10 @@ SetupPage {
                                ? qsTr("位置 %1").arg(root._number("positionStdM", 3, " m"))
                                : root._fact("navigationAvailable") ? root._familyStatus("navigationAvailable") : qsTr("未上报")
                     detailText: root._familyStatus("navigationAvailable") === qsTr("已接收")
-                                ? qsTr("速度 %1 · 航向 %2")
+                                ? qsTr("速度 %1 · 航向 %2 · %3")
                                   .arg(root._number("velocityStdMps", 3, " m/s"))
                                   .arg(root._number("headingStdRad", 3, " rad"))
+                                  .arg(root._familyStatus("navigationAvailable"))
                                 : root._familyStatus("navigationAvailable")
                     accentColor: root._familyStatusColor("navigationAvailable")
                 }

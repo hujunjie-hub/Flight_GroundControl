@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 1.9
+- 版本 2.0
 - 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -112,7 +112,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。
-- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；第二阶段 QML 已实现飞行态势、导航估计、RC 四轴、13 类健康矩阵和 1 Hz/60 点 GCS 趋势；补齐摘要过期值门控与计时器驱动的趋势采样测试，等待最新 main HEAD 的 Windows Release 与 Integration 验收。
+- FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 IN_PROGRESS；第二阶段 QML 已实现飞行态势、导航估计、RC 四轴、13 类健康矩阵和 1 Hz/60 点 GCS 趋势；补齐摘要过期值门控、family 状态说明与计时器驱动的趋势采样测试，等待最新 main HEAD 的 Windows Release 与 Integration 验收。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 IN_PROGRESS；保留原截图的双圆形摇杆示意图，重点验证 RC 通道变化时摇杆指示点实时跟随，校准业务逻辑保持不变。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 

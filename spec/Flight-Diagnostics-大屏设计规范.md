@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.2
+- 版本：2.3
 - 日期：2026-11-14
-- 状态：第二阶段 QML 与 MockLink Integration 测试已实现；补齐摘要过期值门控与计时器驱动测试，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
+- 状态：第二阶段 QML 与 MockLink Integration 测试已实现；摘要过期值门控保留 family 状态说明，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -317,4 +317,4 @@
 - RC 输入按四轴有效位掩码显示；无效轴不绘制填充，不将无效值当作 0。
 - `FlightTelemetryPageUITest` 通过 MockLink 原始 MAVLink wire path 验证四轴数值、mask 清除、13 类 family 展示、四条趋势数据、过期断点和 boot epoch 缓存重置。
 - 当前阶段不提供姿态角遥测，因此明确不渲染人工地平仪；不新增任何飞行控制/校准/确认操作。
-- 当前状态：代码和测试已实现；Windows Release / Unit / Integration / Installer 等最终验收结果必须以本次提交对应的最新 CI 和本地 RUN_ID 证据为准。
+- 当前状态：代码和测试已实现；摘要在显示新鲜值时仍保留“已接收”状态说明，过期时改为“数据超时”；Windows Release / Unit / Integration / Installer 等最终验收结果必须以本次提交对应的最新 CI 和本地 RUN_ID 证据为准。
