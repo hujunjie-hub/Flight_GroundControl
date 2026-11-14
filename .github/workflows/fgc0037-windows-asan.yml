@@ -48,7 +48,7 @@ jobs:
         with:
           qt-host: windows
           qt-arch: win64_msvc2022_64
-          build-type: RelWithDebInfo
+          build-type: Release
           cache-variant: asan
           aqt-source: git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95
 
@@ -67,7 +67,7 @@ jobs:
 
           $configureArgs = @(
             '-B', $buildDir,
-            '-t', 'RelWithDebInfo',
+            '-t', 'Release',
             '--testing',
             '--qt-root', $env:QT_ROOT_DIR,
             '--',
@@ -76,6 +76,7 @@ jobs:
             '-DCMAKE_EXE_LINKER_FLAGS=/fsanitize=address',
             '-DCMAKE_SHARED_LINKER_FLAGS=/fsanitize=address',
             '-DQGC_ENABLE_HARDENING=OFF',
+            '-DQGC_DISABLE_IPO=ON',
             '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
             '-DQGC_ENABLE_GST_VIDEOSTREAMING=ON'
           )
@@ -91,7 +92,7 @@ jobs:
             "branch=$env:GITHUB_REF_NAME"
             "workflow_run_id=$env:GITHUB_RUN_ID"
             "qt_root=$env:QT_ROOT_DIR"
-            "build_type=RelWithDebInfo"
+            "build_type=Release"
             "compiler=MSVC x64"
             "sanitizer=/fsanitize=address"
           ) | Set-Content -Path (Join-Path $evidenceDir 'validation-metadata.txt')
@@ -239,7 +240,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-integration-list.txt'
-          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -L Integration -R '^ExifParserTest$' -V 2>&1 |
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C Release -N -L Integration -R '^ExifParserTest$' -V 2>&1 |
             Tee-Object -FilePath $listingPath
           if ($LASTEXITCODE -ne 0) {
             throw 'CTest listing command failed.'
@@ -281,7 +282,7 @@ jobs:
               Remove-Item -LiteralPath $qtestXml -Force
             }
             Write-Host "=== ExifParserTest ASan iteration $iteration / 20 ==="
-            & ctest --test-dir $buildDir -C RelWithDebInfo -L Integration -R '^ExifParserTest$' --output-on-failure -V 2>&1 |
+            & ctest --test-dir $buildDir -C Release -L Integration -R '^ExifParserTest$' --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               throw "ExifParserTest failed on ASan iteration $iteration."
@@ -341,7 +342,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-exif-utility-list.txt'
-          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -L Unit -R '^ExifUtilityTest$' -V 2>&1 |
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C Release -N -L Unit -R '^ExifUtilityTest$' -V 2>&1 |
             Tee-Object -FilePath $listingPath
           if ($LASTEXITCODE -ne 0) { throw 'CTest ExifUtilityTest listing failed.' }
           $listing = Get-Content $listingPath -Raw
@@ -352,7 +353,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $buildDir = $env:FGC0037_ASAN_BUILD_DIR
           $evidenceDir = $env:FGC0037_ASAN_EVIDENCE_DIR
-          $xmlPath = Join-Path $buildDir 'qtest-results/ExifUtilityTest.xml'
+          $xmlPath = Join-Path $buildDir 'qtest-results/ExifUtilityTest-ExifUtilityTest.xml'
           $xmlDir = Join-Path $evidenceDir 'exif-utility-qtest-results'
           New-Item -ItemType Directory -Force -Path $xmlDir | Out-Null
           $env:QT_QPA_PLATFORM = 'offscreen'
@@ -363,7 +364,7 @@ jobs:
           for ($i = 1; $i -le 20; $i++) {
             $log = Join-Path $evidenceDir ("exif-utility-run-{0:D2}.log" -f $i)
             if (Test-Path $xmlPath) { Remove-Item -LiteralPath $xmlPath -Force }
-            & ctest --test-dir $buildDir -C RelWithDebInfo -L Unit -R '^ExifUtilityTest$' --timeout 180 --output-on-failure -V 2>&1 | Tee-Object -FilePath $log
+            & ctest --test-dir $buildDir -C Release -L Unit -R '^ExifUtilityTest$' --timeout 180 --output-on-failure -V 2>&1 | Tee-Object -FilePath $log
             if ($LASTEXITCODE -ne 0) { throw "ExifUtilityTest ASan run $i failed." }
             if (-not (Test-Path $xmlPath)) { throw "ExifUtilityTest XML missing on run $i." }
             [xml] $doc = Get-Content -LiteralPath $xmlPath -Raw
@@ -383,7 +384,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $listingPath = Join-Path $env:FGC0037_ASAN_EVIDENCE_DIR 'ctest-geotag-controller-list.txt'
-          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C RelWithDebInfo -N -R '^GeoTagControllerTest$' -V 2>&1 |
+          & ctest --test-dir $env:FGC0037_ASAN_BUILD_DIR -C Release -N -R '^GeoTagControllerTest$' -V 2>&1 |
             Tee-Object -FilePath $listingPath
           if ($LASTEXITCODE -ne 0) {
             throw 'CTest GeoTagControllerTest listing command failed.'
@@ -418,7 +419,7 @@ jobs:
               Remove-Item -LiteralPath $qtestXml -Force
             }
             Write-Host "=== GeoTagControllerTest ASan iteration $iteration / 20 ==="
-            & ctest --test-dir $buildDir -C RelWithDebInfo -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
+            & ctest --test-dir $buildDir -C Release -R '^GeoTagControllerTest$' --timeout 180 --output-on-failure -V 2>&1 |
               Tee-Object -FilePath $logPath
             if ($LASTEXITCODE -ne 0) {
               if (Test-Path -LiteralPath $qtestXml) {
@@ -499,7 +500,7 @@ jobs:
             ${{ runner.temp }}/build-fgc0037-asan/compile_commands.json
             ${{ runner.temp }}/build-fgc0037-asan/CMakeCache.txt
             ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifParserTest-ExifParserTest.xml
-            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifUtilityTest.xml
+            ${{ runner.temp }}/build-fgc0037-asan/qtest-results/ExifUtilityTest-ExifUtilityTest.xml
             ${{ runner.temp }}/build-fgc0037-asan/qtest-results/GeoTagControllerTest-GeoTagControllerTest.xml
           if-no-files-found: warn
           retention-days: 14
