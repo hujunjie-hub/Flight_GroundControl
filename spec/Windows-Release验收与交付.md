@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：1.4  
+版本：1.5  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -32,7 +32,7 @@
 | G11 | 证据交付 | RUN_ID、ZIP、SHA-256、报告 | 文件齐全、哈希可复核、commit 对齐 |
 | G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
 | G13 | 飞控诊断大屏 UI（Phase 1） | FlightTelemetryPageUITest、JUnit、页面布局断言 | 标题/摘要/卡片结构存在；12/6/1 列断点正确；UNKNOWN/INVALID/STALE/RECOVERY 语义正确；只读边界保持 |
-| G15 | 飞控诊断指挥中心（Phase 2） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | 飞行态势/导航/RC 面板来自真实 Fact；RC validity mask 正确；导航水平位置 bit3、速度 bit5+bit6、航向 bit2 能力门控正确；13 类 family 独立状态；四趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；无虚构姿态仪；原 14 张卡片保留；只读 |
+| G15 | 飞控诊断指挥中心（Phase 2） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | 飞行态势/导航/RC 面板来自真实 Fact；RC validity mask 正确；导航水平位置 bit3、速度 bit5+bit6、航向 bit2 能力门控正确；13 类 family 独立状态矩阵在 1600/1000/700/400 px 下分别为 7/4/2/1 列且单元不越界；四趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；无虚构姿态仪；原 14 张卡片保留；只读 |
 
 只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G15 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
@@ -112,6 +112,7 @@ CI 排除 Flaky/Network 是固定规则，不代表这些场景自动获得覆�
 - 过期/无效样本必须形成断点，不允许插值或沿用最后有效值；Vehicle 或 boot epoch 变化清空缓存。
 - 没有姿态角遥测时禁止人工地平仪；不得将 RC 输入误称为飞行器姿态。
 - `FlightTelemetryPageUITest` 必须经 MockLink 原始 MAVLink wire path 验证真实 RC 值、mask 清除、导航 capability mask 缺失、对应趋势 gap、stale gap、boot epoch 与 active Vehicle reset 和无姿态指示器。
+- 遥测域矩阵在 1600/1000/700/400 px 下分别为 7/4/2/1 列；Integration 必须逐项确认所有矩阵单元的边界位于网格内部。
 
 ## 5. MAVLink 网络和真实固件互操作专项验收
 

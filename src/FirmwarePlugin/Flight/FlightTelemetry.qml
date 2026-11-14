@@ -25,7 +25,7 @@ SetupPage {
                                              ? _telemetry.resourceStatuses : []
     readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 760 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1200 ? 4 : availableWidth >= 600 ? 2 : 1
-    readonly property int _healthColumns: availableWidth >= 1450 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property int _healthColumns: availableWidth >= 1450 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1450 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
     property var _trendSamples: []
@@ -690,7 +690,7 @@ SetupPage {
 
         ColumnLayout {
             width: availableWidth
-            spacing: 16
+            spacing: 12
 
             Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
@@ -704,7 +704,7 @@ SetupPage {
                 RowLayout {
                     id: headerRow
                     anchors.fill: parent
-                    anchors.margins: 14
+                    anchors.margins: 12
                     spacing: 16
 
                     Rectangle {
@@ -1671,8 +1671,8 @@ SetupPage {
         ColumnLayout {
             id: heroColumn
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 10
+            anchors.margins: 12
+            spacing: 8
 
             RowLayout {
                 Layout.fillWidth: true
@@ -1853,7 +1853,7 @@ SetupPage {
         readonly property color statusColor: root._familyStatusColor(availableFact)
 
         implicitWidth: 150
-        implicitHeight: 64
+        implicitHeight: 54
         radius: 7
         color: "#172831"
         border.width: 1
@@ -1871,8 +1871,8 @@ SetupPage {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 9
-            spacing: 3
+            anchors.margins: 7
+            spacing: 2
             RowLayout {
                 Layout.fillWidth: true
                 QGCLabel {
@@ -1926,7 +1926,7 @@ SetupPage {
 
         Layout.fillWidth: true
         implicitWidth: 230
-        implicitHeight: 142
+        implicitHeight: 126
         radius: 8
         color: "#172831"
         border.width: 1
@@ -1935,7 +1935,7 @@ SetupPage {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: 8
             spacing: 5
             RowLayout {
                 Layout.fillWidth: true
@@ -1957,7 +1957,7 @@ SetupPage {
                 objectName: plotCard.objectName + "_canvas"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredHeight: 64
+                Layout.preferredHeight: 56
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
                 onPaint: {
@@ -2051,7 +2051,7 @@ SetupPage {
         property color accentColor: "#42CFA8"
 
         implicitWidth: 230
-        implicitHeight: 88
+        implicitHeight: 76
         radius: 10
         color: "#14232B"
         border.width: 1
@@ -2059,7 +2059,7 @@ SetupPage {
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: 10
             spacing: 12
 
             Rectangle {

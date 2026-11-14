@@ -1,6 +1,7 @@
 #include "FlightTelemetryPageUITest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QPointF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QVariant>
 #include <QtGui/QColor>
@@ -191,10 +192,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 "operation", "navigation", "sensorHealth", "control", "actuator", "link",
                 "storage", "resource", "time", "event", "prearm", "rcInput", "buildInfo"
             };
-            for (const char *domain : healthDomains) {
+            QQuickItem *healthCells[13]{};
+            for (int index = 0; index < 13; ++index) {
                 const QString objectName =
-                    QStringLiteral("flightTelemetry_health_") + QString::fromLatin1(domain);
-                QVERIFY2(findVisibleItem(_rootItem, objectName, 3000), qPrintable(objectName));
+                    QStringLiteral("flightTelemetry_health_") + QString::fromLatin1(healthDomains[index]);
+                healthCells[index] = findVisibleItem(_rootItem, objectName, 3000);
+                QVERIFY2(healthCells[index], qPrintable(objectName));
             }
             QVERIFY(operationCard);
             QVERIFY(prearmCard);
@@ -206,6 +209,21 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(eventHistoryCard);
             QVERIFY(buildInfoCard);
             QVERIFY(failsafeRow);
+
+            const auto healthMatrixFits = [&]() {
+                for (QQuickItem *cell : healthCells) {
+                    if (!cell) {
+                        return false;
+                    }
+                    const QPointF topLeft = cell->mapToItem(healthMatrixGrid, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                            topLeft.x() + cell->width() > healthMatrixGrid->width() + 1.0 ||
+                            topLeft.y() + cell->height() > healthMatrixGrid->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
 
             const char *diagnosticCards[] = {
                 "flightTelemetry_card_operation",
@@ -233,7 +251,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroNavigation->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroRcInput->y(), 3000);
@@ -250,13 +269,22 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 4, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
+            page->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
                                       page->property("_dashboardColumns").toInt(), 3000);

@@ -248,7 +248,8 @@
         "velocity_std_requires_capability_bits_5_and_6",
         "heading_std_requires_capability_bit_2",
         "missing_navigation_capability_displays_unavailable_and_creates_trend_gap",
-        "trend_buffer_reset_is_verified_after_active_vehicle_switch"
+        "trend_buffer_reset_is_verified_after_active_vehicle_switch",
+        "health_matrix_uses_7_4_2_1_columns_at_1600_1000_700_400_px_and_all_cells_fit_grid_bounds"
       ]
     }
   ],
@@ -333,7 +334,8 @@
     "summary_values_show_timeout_instead_of_stale_last_values",
     "navigation_accuracy_metrics_follow_capability_mask_bits_2_3_5_6",
     "missing_navigation_capability_shows_unavailable_and_breaks_matching_trend",
-    "ui_test_switches_active_vehicle_and_confirms_trend_buffer_reset"
+    "ui_test_switches_active_vehicle_and_confirms_trend_buffer_reset",
+    "health_matrix_uses_7_4_2_1_columns_at_1600_1000_700_400_px_and_all_cells_fit_grid_bounds"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

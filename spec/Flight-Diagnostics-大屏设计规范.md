@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：2.5
+- 版本：2.6
 - 日期：2026-11-14
-- 状态：第二阶段 QML 与 MockLink Integration 测试已实现；摘要过期值门控保留 family 状态说明，等待精确 main HEAD Windows Release 验收；第一阶段基线继续保留
+- 状态：第二阶段功能已实现；Phase 2.1 已压缩状态矩阵与卡片留白；精确 main HEAD 的 Windows Release / Unit / Integration / Installer 验收待完成
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -120,6 +120,23 @@
 - 图表标题和说明必须明确标注“地面站 1 Hz 采样 / 最近 60 点”；采样点是 GCS 观察值，不是 FCU 原生历史时间序列。
 - 样本不足 2 个有效点时显示“采集中”，不能画出貌似完整的趋势。
 - 趋势仅供诊断观察，不构成安全阈值、告警或控制依据。
+### 2.7 紧凑矩阵与首屏密度（Phase 2.1）
+
+在不删减诊断字段、不压缩正文可读性和不改变遥测语义的前提下，压缩首屏的垂直占用：
+
+| 可用宽度 | 遥测域矩阵列数 | 13 个状态单元排列 |
+|---|---:|---|
+| ≥ 1450 px | 7 | 2 行（7 + 6） |
+| 760–1449 px | 4 | 4 行（4 + 4 + 4 + 1） |
+| 420–759 px | 2 | 7 行（2 × 6 + 1） |
+| < 420 px | 1 | 13 行纵向排列 |
+
+- 矩阵单元建议高度 54 px、最小宽度 150 px；状态名称、状态文字和接收年龄必须同时保留。
+- 摘要卡高度 76 px；趋势卡高度 126 px，绘图区建议高度 56 px；主视觉卡内边距 12 px。
+- 页面区块垂直间距采用 12 px。紧凑化只调整卡片间距和内边距，不通过缩小诊断正文、隐藏单位或省略状态说明换取密度。
+- 宽屏首屏优先呈现标题/只读标识、摘要、三块主视觉、13 类状态矩阵和四条趋势；14 张完整诊断卡继续位于下方纵向滚动区，不为追求单屏而裁切字段。
+- UI Integration 必须在 1600/1000/700/400 px 页面宽度验证矩阵列数分别为 7/4/2/1，并确认所有状态单元边界均处于矩阵网格内部。
+
 ## 3. 响应式布局规范
 
 布局依据 `SetupPage.availableWidth`，不是屏幕物理分辨率。页面在已有 SetupView 可用区域内自适应。
@@ -220,7 +237,7 @@
 - 页面标题、只读标识、四张摘要卡、主诊断 GridLayout 和主要卡片具有稳定 `objectName`。
 - Phase 2 飞行态势、导航估计、RC 输入、13 类健康矩阵和四个趋势面板均有稳定 `objectName`，由 UI Integration 测试断言。
 - RC 四轴面板按有效轴掩码显示；无效轴必须显示“无效/未上报”且不绘制有效填充。
-- 健康矩阵必须覆盖 13 个 family，逐项显示独立状态和接收年龄；event 按异步域处理。
+- 健康矩阵必须覆盖 13 个 family，逐项显示独立状态和接收年龄；event 按异步域处理。宽/中/窄/极窄宽度分别使用 7/4/2/1 列，所有单元不得越出网格边界。
 - 趋势区明确标注 GCS 1 Hz 采样/最近 60 点，不得标注为 FCU 原生历史。
 - 桌面 12 列布局中，解锁前检查与最新事件并排；资源/存储/时间同步并排；遥控输入与最近事件历史并排；固件与版本位于底部全宽。
 - 原有 `flightTelemetry_page`、`flightTelemetry_operationMessageStatus`、`flightTelemetry_storageFreeKib` 等测试选择器必须保留。
@@ -248,6 +265,7 @@
 - 1600 px 页面宽度使用 12 列。
 - 1000 px 页面宽度使用 6 列。
 - 700 px 页面宽度使用 1 列。
+- 遥测域矩阵在 1600/1000/700/400 px 下分别使用 7/4/2/1 列；每个状态单元的 x/y/width/height 均位于矩阵网格边界内。
 - 改变宽度时卡片跨度同步改变，不能出现 0 列、负跨度或超出列数的跨度。
 
 ### 8.4 趋势采样与状态矩阵
@@ -285,7 +303,7 @@
 - 基于当前真实 Fact 增加 1 Hz GCS 本地采样趋势，最多 60 点；使用现有 500 ms Timer 的每第二个 tick，不创建新 Timer。
 - 趋势数据严格 freshness/finite/non-negative gating；导航指标还必须遵守 capability mask：水平位置 bit3、水平+垂直速度 bit5+bit6、航向 bit2；缺失能力显示“未具备”并形成断点。
 - 通过 active Vehicle 切换与 boot epoch 变化两条 Integration 路径验证趋势缓冲清空。
-- 重新建立主视觉层级、紧凑摘要带、健康矩阵、趋势区和原有详细诊断卡片之间的版式。
+- 重新建立主视觉层级、紧凑摘要带、健康矩阵、趋势区和原有详细诊断卡片之间的版式。Phase 2.1 将矩阵优化为 7/4/2/1 列，并压缩摘要卡、状态单元、趋势卡与主视觉卡留白。
 - 保留全部 14 张诊断卡片、字段、FactGroup、原有 objectName 和 MockLink wire-path 测试。
 - 没有姿态角遥测，因此不绘制人工地平仪；RC 输入条不能被误认为飞机姿态。
 
@@ -321,3 +339,11 @@
 - `FlightTelemetryPageUITest` 通过 MockLink 原始 MAVLink wire path 验证四轴数值、mask 清除、13 类 family 展示、四条趋势数据、过期断点和 boot epoch 缓存重置。
 - 当前阶段不提供姿态角遥测，因此明确不渲染人工地平仪；不新增任何飞行控制/校准/确认操作。
 - 当前状态：代码和测试已实现；摘要在显示新鲜值时仍保留“已接收”状态说明，过期时改为“数据超时”；Windows Release / Unit / Integration / Installer 等最终验收结果必须以本次提交对应的最新 CI 和本地 RUN_ID 证据为准。
+
+## 12. Phase 2.1 紧凑布局实施记录（2026-11-14）
+
+- 13 类遥测状态矩阵改为宽屏 7 列、中屏 4 列、窄屏 2 列、极窄屏 1 列，宽屏从 3 行压缩为 2 行。
+- 状态单元高度调整为 54 px；摘要卡高度 76 px；趋势卡高度 126 px、绘图区 56 px；主视觉卡内边距 12 px；页面区块垂直间距 12 px。
+- FlightTelemetryPageUITest 增加 1600/1000/700/400 px 四档矩阵列数断言，并逐项检查 13 个单元未越出矩阵网格边界。
+- 本轮仅调整 QML 展示密度和 UI 回归，不改变 FactGroup、MAVLink/ICD、遥测 freshness、validity/capability mask、趋势采样和只读安全边界。
+- 精确 main HEAD 的 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和归档证据仍须等待新提交的 CI/本地结果；不沿用旧 HEAD 的取消或成功结果。
