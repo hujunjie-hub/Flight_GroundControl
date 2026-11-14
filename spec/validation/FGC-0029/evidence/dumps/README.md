@@ -25,5 +25,4 @@ SYMBOL_NAME:         ucrtbase!free_base+0
 FAILURE_BUCKET_ID:   HEAP_CORRUPTION_ACTIONABLE_BlockNotBusy_DOUBLE_FREE_c0000374_ucrtbase.dll!free_base
 ```
 
-and the faulting thread is always a `QtConcurrent` pool thread inside Qt date/time parsing,
-reached from `ExifParser::readTime`.
+and the detected heap-corruption/free site is in the Qt date/time path reached from the historical `ExifParser::readTime`. These are detection stacks, not proof that this is the first invalid write/free or the operation that first corrupted the reference count.

@@ -128,9 +128,10 @@ CI 结论按 **HEAD** 区分，不得把某个 HEAD 的结果当作另一个 HEA
 
 ## 9. 未做 / 明确声明
 
-- Application Verifier、PageHeap、ETW **均未执行**（需要管理员权限，本会话审批被禁用）。
+- Application Verifier：NOT_RUN（需要管理员权限）；ETW：NOT_RUN（需要管理员权限）。
+- PageHeap：历史诊断 run `43444888358` 执行 36/36，未复现；follow-up run `43451171747` 为 CANCELLED。PageHeap 阴性结果不能定位首次非法操作，也不能关闭 Issue。
 - 没有用加锁、降并发、吞异常或跳过测试来“修复”问题。
-- 未修改 `main`，未强制推送，未合并 PR，未删除任何历史实验。
+- 本文记录的历史轮次没有修改 main；后续 mainline 修复和验收状态见 §11。
 
 ## 10. R19 补充：统一条件差分矩阵
 
@@ -151,3 +152,11 @@ C=**40040**、D=**0**。即 `QLocale::system()` 本身不触发 `ZeroDigit`，`Q
 每次触发约 20 次，修复后完全为 0。
 
 详见 `EXPERIMENT_LEDGER.md` E-28/E-29 与 `ASAN_STACK_ANALYSIS.md` §2。
+
+
+## 11. R32 mainline 状态（2026-11-14）
+
+- SPEC 同步前 main HEAD：`77563b118f8757c12e091ce9427ea369e0b9638d`。
+- 最近完整 Windows Release PASS：run `43567619588`，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71、Installer/clean install/installed runtime PASS。
+- 精确审查基线 Windows run `43571983530` 在本轮检查时仍为 IN_PROGRESS；因此不得将 37035 的结果提升为 77563 的完整验收结果。
+- FGC-0029 当前 Release 36/36 未复现和历史 PageHeap 36/36 未复现，均为限定条件下的阴性结果；首次非法操作仍未证实，Issue #29 保持 OPEN / S1 / BLOCKED。

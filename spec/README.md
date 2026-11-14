@@ -1,7 +1,7 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 1.0
-- 日期 2026-11-13
+- 版本 1.1
+- 日期 2026-11-14
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
 
@@ -38,6 +38,8 @@
 8. [FCU 遥测接口说明](../doc/gcs/FCU_TELEMETRY.md)：13 类遥测消息、FactGroup、有效性、边界和当前固件发布端限制。
 9. 根目录 [AGENTS.md](../AGENTS.md)、[test/README.md](../test/README.md)、[tools/README.md](../tools/README.md) 和 [.github/ci-overview.md](../.github/ci-overview.md)：代码风格、测试框架和 CI 实现细节。
 10. [主线评估与优化路线图](主线评估与优化路线图.md)：合并后的基线、优先级、实施顺序和验收标准。
+11. [Flight ↔ GroundControl UDP SIL 验证记录](validation/Flight-UDP-SIL-20261114.md)：跨仓库互操作的实际结果与未执行矩阵。
+12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。
 
 ## 4. 当前固定工程约束
 
@@ -102,6 +104,16 @@ work/validation/
 
 Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚本会将其复制到本轮归档目录。运行证据不提交 Git。每个问题引用发现它的 RUN_ID；修复后再生成新 RUN_ID 作为回归证据。把 ZIP 上传到对应 GitHub Issue；需要 ChatGPT 复核时，也可直接把 ZIP 上传到当前对话。
 
-## 8. 当前工作状态
+## 8. 当前工作状态（2026-11-14 快照）
 
-每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。
+本轮文档审查的代码基线为 `main@77563b118f8757c12e091ce9427ea369e0b9638d`（SPEC 同步提交之前）。本轮只同步规范，不改变产品实现。
+
+- 当前长期分支策略为 **只保留 `main`**；本次分支枚举仅发现 `main`。
+- 最近一次完整成功的 Windows Release 验收：[`43567619588`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588)，验证 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer、干净安装及安装后启动均通过。
+- 后续工具栏改动提交 `79d71792ac0078dffded7fa17ced74e21502f8f5` 已进入本轮代码基线，增加 GPS/电池分组、阈值颜色断言和工具栏布局断言。
+- 基线 HEAD `77563b118f8757c12e091ce9427ea369e0b9638d` 的 Windows Release run [`43571983530`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 在本次检查时仍为 `in_progress`；pre-commit run [`43571983531`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983531) 已成功，Build Results [`43572651148`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43572651148) 已成功。不得将尚未完成的 Windows run 写成 PASS。
+- FGC-0029 仍为 OPEN / S1 / BLOCKED；当前修复降低了复现风险，但首次破坏引用计数的具体操作尚未证实。
+- FGC-0043 的类型化 EXIF 读取保护和回归测试已进入 main，并包含在 HEAD `37035a3` 的成功完整 Windows 验收中；Issue 仍 Open，等待按关闭清单完成结案审查。
+- Flight UDP SIL 的原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
+
+动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节只记录有明确 HEAD 和 run ID 的验收快照。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。

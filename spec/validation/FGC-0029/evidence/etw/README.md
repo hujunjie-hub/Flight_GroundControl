@@ -3,10 +3,10 @@
 Status: **blocked by environment**. `wpr` / `wpr -profiles` requires administrator rights; round 16
 already confirmed this and this round does not claim ETW was completed.
 
-Justification for not retrying: the ASan evidence (E-10) already answers the question ETW was meant
-to answer (which operation first corrupted the heap, and for which object), and in more detail:
-it provides the allocation stack, the first-free stack with the **thread that performed it**, and the
-second-free stack, plus the exact 20-byte object identity.
+ASan E-10 provides allocation, first-free and second-free stacks, the participating thread IDs and the 20-byte object identity. It confirms a double-free, but does **not** answer which earlier operation first corrupted the heap or the reference count. ETW remains NOT_RUN; the root-cause question is still open.
 
 If ETW is required later, start from a real `wpr -profiles` listing on the target machine and record
 ETL + CSV + summary + lost-event counts, and only then mark it complete.
+
+
+Current status remains NOT_RUN. Do not describe ASan as having answered the first-corruption question. If ETW is later run, retain the ETL, provider/session configuration, lost-event counts and correlation with the exact tested binary/HEAD.

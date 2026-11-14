@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：1.0  
+版本：1.1  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -30,8 +30,9 @@
 | G9 | Installed Runtime | 启动验证日志 | 移除构建 SDK 的 PATH 后，安装版可执行文件仍能启动 |
 | G10 | 静态质量 | lint/pre-commit/CI checks | 适用检查通过；不触发其他平台产品构建 |
 | G11 | 证据交付 | RUN_ID、ZIP、SHA-256、报告 | 文件齐全、哈希可复核、commit 对齐 |
+| G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
 
-只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前阶段完整 Windows Release 交付要求 G0–G11 全部满足。
+只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前阶段完整 Windows Release 交付要求 G0–G12 全部满足。
 
 ## 3. 单元和集成测试要求
 
@@ -144,7 +145,7 @@ $RunId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssfffZ") + "_" + (g
 pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Result PASS
 ```
 
-只有全部 Gate 通过时才填 PASS。归档脚本会独立校验报告、日志、环境与安装包证据的完整性；它不能替代 G0–G10 的实际验收，也不会把缺失或跳过的测试转为 PASS。
+只有全部 Gate 通过时才填 PASS。归档脚本会独立校验报告、日志、环境与安装包证据的完整性；它不能替代 G0–G12 的实际验收，也不会把缺失或跳过的测试转为 PASS。
 
 ## 7. 问题登记和关闭
 
@@ -213,3 +214,11 @@ CI 归档 Artifact 名称为 `windows-release-validation-<github.sha>`，包含�
 - `<RUN_ID>.zip.sha256`
 
 此门禁用于验证 FGC-0004（JUnit 报告完整性）和 FGC-0019（构建环境证据真实性）。上传成功不代表测试 PASS；必须检查归档 manifest 中的 `result_validated` 和各项 JUnit 统计。
+
+
+## 11. 当前主线验收快照（2026-11-14）
+
+- SPEC 同步前审查基线：`77563b118f8757c12e091ce9427ea369e0b9638d`。
+- 最近一次完整成功的 Windows Release：run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588)，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer/clean install/installed runtime PASS。
+- 后续工具栏变更已进入审查基线；该基线对应 Windows run [43571983530](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 在本轮检查时仍为 IN_PROGRESS。pre-commit [43571983531](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983531) PASS。
+- 因此，不能把 37035 的完整验收结果直接标记为 77563 的结果；需等待精确 HEAD 的 Windows run 完成。

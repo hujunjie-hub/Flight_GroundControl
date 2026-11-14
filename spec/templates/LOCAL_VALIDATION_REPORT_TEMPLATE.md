@@ -7,8 +7,11 @@
 - 仓库：
 - 分支：
 - HEAD commit：
+- 本轮代码基线 HEAD（如与交付 HEAD 不同）：
+- 对应 Windows Release workflow run：
+- 对应 pre-commit workflow run：
 - 工作区状态（clean/dirty）：
-- 交付分支：`main`
+- 交付分支：`main`（main-only；不创建长期功能分支）
 - Agent：
 - 本轮目标：
 

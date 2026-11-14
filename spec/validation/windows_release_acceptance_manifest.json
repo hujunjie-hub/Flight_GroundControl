@@ -1,5 +1,5 @@
 {
-  "schema": "flight-groundcontrol-windows-release-acceptance/1.0",
+  "schema": "flight-groundcontrol-windows-release-acceptance/1.1",
   "repository": "hujunjie-hub/Flight_GroundControl",
   "branch": "main",
   "delivery": {
@@ -236,5 +236,19 @@
     "unit_qt_system_locale": "zh-CN",
     "unit_application_language": "English",
     "integration_and_archive_host_culture": "en-US"
-  }
+  },
+  "branch_policy": {
+    "primary_branch": "main",
+    "long_lived_feature_branches": false,
+    "force_push": false
+  },
+  "toolbar_ui_test_matrix": [
+    "gps_and_battery_panel_is_adjacent_to_flight_mode",
+    "gps_and_battery_indicators_share_dedicated_panel",
+    "battery_threshold_colors_follow_configured_thresholds",
+    "battery_critical_and_emergency_states_override_percentage",
+    "toolbar_indicator_drawers_remain_clickable_and_expandable",
+    "unavailable_altitude_hold_mode_is_visible_but_disabled"
+  ],
+  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification."
 }

@@ -1,6 +1,7 @@
 # 本地 Agent 操作总指南（Flight_GroundControl）
 
-- 版本 1.0
+- 版本 1.1
+- 对齐基线（SPEC 同步前）：`main@77563b118f8757c12e091ce9427ea369e0b9638d`
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前开发分支 `main`
 - 本地命令环境 PowerShell 7（`pwsh`）
@@ -30,7 +31,7 @@ Agent 只收到“扫描 spec 并继续”的指令时，也必须读取本列�
 - `spec/README.md` 是文档地图；本文件是 Agent 执行入口。
 - `spec/quality/` 只维护问题管理规则，不维护动态问题台账。
 - GitHub Issues 是动态问题状态的唯一台账；不得另建第二份 Markdown/CSV/Excel 问题状态表。
-- `spec/validation/` 保存版本化验收门槛和机器可读 manifest。
+- `spec/validation/` 保存版本化验收门槛和机器可读 manifest。历史诊断文档保留当时的证据边界，不得把旧 HEAD/run 结果改写成当前主线结果；只在其顶部/结尾追加新的状态快照。
 - `work/validation/` 保存本地日志、报告和证据 ZIP，已加入 Git 忽略规则，不提交运行产物。
 - GitHub Issue 模板位于 `.github/ISSUE_TEMPLATE/`；本地归档工具位于 `tools/validation/`。
 
@@ -181,7 +182,7 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 
 ## 10. 提交和分支规则
 
-- 在 `main` 上执行本地构建、验证和交付。
+- 在 `main` 上执行本地构建、验证和交付；当前仓库采用 main-only 策略，不创建长期功能分支，除非用户明确要求。
 - Conventional Commit 示例：`fix(Telemetry): reject stale FCU samples`、`test(Vehicle): cover FCU reconnect dispatch`、`docs(spec): add local Windows validation workflow`。
 - 每个 commit 说明修改内容；涉及 Issue 时在正文或提交说明中引用 FGC ID / GitHub Issue。
 - 推送前检查本地验收结果及待推送的修改，使用 `git push origin main`。

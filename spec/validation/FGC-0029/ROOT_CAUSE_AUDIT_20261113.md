@@ -63,4 +63,13 @@ GFlags confirmed `QGroundControl.exe: page heap enabled with flags (full size tr
 
 **Interpretation:** the historical Release/PageHeap workload did not reproduce. This is a valid non-reproduction under one CI timing window, not proof that the defect is absent and not first-invalid-operation evidence. FGC-0029 remains **OPEN / S1 / BLOCKED**.
 
-A follow-up workflow revision on main `1d117516f0744ec26126b2e23138c238caf1d101` and diagnostic branch `cf676641b062a062e1d68e48646d79b7accb49ea` adds a Windows Desktop Debuggers installation fallback and validates the actual `full size traces` GFlags output. Exact-head run `43451171747` is pending; do not claim that revision passed until its run completes.
+A follow-up workflow revision on main `1d117516f0744ec26126b2e23138c238caf1d101` and diagnostic branch `cf676641b062a062e1d68e48646d79b7accb49ea` adds a Windows Desktop Debuggers installation fallback and validates the actual `full size traces` GFlags output. Exact-head run `43451171747` ended **CANCELLED**; the added installation fallback and explicit GFlags output assertion have no successful exact-head evidence. Do not treat cancellation as PASS or FAIL.
+
+
+## R32 状态更正 — 2026-11-14
+
+- main 审查基线：`77563b118f8757c12e091ce9427ea369e0b9638d`。
+- 历史 Release PageHeap run `43444888358` 已成功执行 36/36，0 个 `0xC0000374`，但属于非复现结果，不是首次非法操作证据。
+- 后续 PageHeap workflow run `43451171747` 的最终状态为 **CANCELLED**。此前的 pending 表述已过期；该轮新增安装兜底与 GFlags 输出断言没有取得 exact-head 通过证据。
+- 当前 main 完整 Windows Release run `43571983530` 在本轮检查时仍为 IN_PROGRESS；上一完整成功 run `43567619588` 只适用于 HEAD `37035a3`。
+- Issue #29 保持 OPEN / S1 / BLOCKED。ASan 证明双重释放，不证明首次破坏引用计数的操作。

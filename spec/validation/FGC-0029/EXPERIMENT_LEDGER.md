@@ -555,4 +555,13 @@ E-37、E-38 原文全部保留，本节仅追加。
 
 - 早期 run `43387943510` 在 PageHeap 初始化前因 PowerShell `$env:ProgramFiles(x86)` 解析错误而失败；此轮未执行压力矩阵。修复为 `${env:ProgramFiles(x86)}`，提交 `0b8cb609` / 诊断分支 `91d368b1`。
 - 后续 workflow 加入 Windows Desktop Debuggers/GFlags 缺失时的 SDK bundle 安装兜底，并要求验证输出确认 `full size traces`，而非只检查 `QGroundControl.exe` 名称。main 提交 `1d117516`，诊断分支提交 `cf676641`。
-- 最新 exact-head workflow run `43451171747` 尚未完成；完成前不把新断言/安装兜底标记为已通过。历史 run `43444888358` 的实际 GFlags 输出已确认是 `full size traces`。
+- follow-up exact-head workflow run `43451171747` 最终状态为 **CANCELLED**；新增安装兜底和 GFlags 输出断言没有取得该轮通过证据。历史 run `43444888358` 的实际 GFlags 输出已确认是 `full size traces`，但只支持该历史 run 的结果。
+
+
+## E-43 R32 mainline / PageHeap 状态同步（2026-11-14）
+
+- main 审查基线（本轮 SPEC 修改前）：`77563b118f8757c12e091ce9427ea369e0b9638d`。
+- Windows Release run `43567619588` 在 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600` 上 SUCCESS：Unit 198/198、Integration 71/71、Installer/clean install/installed runtime 均通过。
+- 后续 HEAD `77563b1` 的 Windows run `43571983530` 在检查时仍为 IN_PROGRESS；pre-commit `43571983531` SUCCESS。不同 HEAD 的结果不得互相替代。
+- PageHeap follow-up run `43451171747` 为 CANCELLED。E-42 中的“尚未完成”更正为“已取消”；不得将其记作 PASS 或 FAIL。
+- 结论仍是：历史 double-free 已由 ASan 证实；首次破坏引用计数的操作、精确线程交错和 Qt 内部调用者仍未证实。Issue #29 继续 OPEN / S1 / BLOCKED。

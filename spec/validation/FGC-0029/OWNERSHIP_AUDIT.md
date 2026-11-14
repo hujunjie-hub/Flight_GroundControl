@@ -3,13 +3,13 @@
 审计基线：`8117cfe`（R16）。范围：`ExifParser`、`ExifUtility`、`GeoTagController`、
 `QtConcurrent`/`QFuture`/`QFutureWatcher`、`QByteArray`/`QString`、libexif、跨进程资源。
 
-结论概要（R31 当前结论）：
+结论概要（R32 当前结论；历史对象所有权审计仍以 R16 源码快照为基线）：
 
 - 当前产品代码的 `ExifParser::readTime()` 已对 EXIF ASCII 格式、component 数、缓冲区长度和 NUL 终止符做边界验证，并直接解析固定格式时间；不再经由 `QDateTime::fromString()`。
 - 历史 ASan 报告确认：20 字节 QString 数据块发生跨 worker 线程 double-free。首次破坏引用计数的具体操作、线程交错和 Qt 内部确切调用者仍未证实。
 - `QSystemLocalePrivate::zeroDigit()` 的 lazy-cache 路径是高度相关候选机制，不是已证明的 Qt 缺陷或唯一根因。不得将 `QDateTime::fromString()` 栈帧直接等同于首次非法操作。
 - FGC-0037 的 GPS Version ID 长度越界缺口已单独修复并关闭；该修复不构成 FGC-0029 的根因证据。
-- R31 历史 Release PageHeap run `43444888358` 在 16–32 B full PageHeap + UST 下完成 36/36，无复现；它是非复现证据，不是根因闭环。
+- R31 历史 Release PageHeap run `43444888358` 在 16–32 B full PageHeap + UST 下完成 36/36，无复现；后续 exact-head run `43451171747` 已取消。两者均不构成根因闭环。
 
 ## 1. ExifParser
 

@@ -1,6 +1,6 @@
 # Windows 本地开发、构建与调试指南
 
-- 版本 1.0
+- 版本 1.1
 - 适用目标 Windows x64、MSVC 2022、Release 和 PowerShell 7
 - 构建配置见 `.github/build-config.json`、`.github/workflows/windows.yml` 和对应的 Composite Actions
 
@@ -8,7 +8,7 @@
 
 把本地开发环境配置成与 GitHub Windows CI 尽可能一致的工具链，使本地 Agent 能快速完成代码扫描、C++/Qt/QML/CMake/MAVLink 问题定位、小范围增量编译、聚焦测试、完整 Release 验收和证据交付。
 
-本指南只定义 Windows x64 MSVC Release。不要使用 Debug、Linux、macOS 或其他产品目标。
+本指南只定义 Windows x64 MSVC Release 产品目标。不要使用 Debug、Linux、macOS 或其他产品目标。FGC-0029 的 ASan/RelWithDebInfo 配置仅属于隔离的诊断实验，不是产品构建、发布目标或 Windows Release 验收替代项；只有按对应 Issue 诊断指南执行时才允许使用。
 
 ## 2. 拉取仓库和切换分支
 
@@ -34,7 +34,7 @@ git switch main
 git pull --ff-only origin main
 ```
 
-如果本地有未提交修改，先让 Agent 检查并保护它们。禁止直接执行 `git reset --hard`、`git clean -fdx` 或覆盖式 checkout。
+如果本地有未提交修改，先让 Agent 检查并保护它们。禁止直接执行 `git reset --hard`、`git clean -fdx` 或覆盖式 checkout。项目长期分支策略为 main-only：默认只同步并交付 `main`，不创建长期功能分支。
 
 初始化子模块：
 

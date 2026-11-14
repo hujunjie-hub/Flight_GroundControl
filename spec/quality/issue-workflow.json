@@ -1,5 +1,5 @@
 {
-  "schema": "flight-groundcontrol-issue-workflow/1.0",
+  "schema": "flight-groundcontrol-issue-workflow/1.1",
   "issue_system_of_record": "GitHub Issues",
   "issue_id_format": "FGC-{github_issue_number:04d}",
   "no_duplicate_csv_or_markdown_ledger": true,
@@ -90,5 +90,12 @@
     "issue body and append-only status history updated"
   ],
   "issue_numbering_note": "GitHub Issues and Pull Requests share the repository issue-number sequence; derive FGC ID from the actual GitHub Issue number. Do not assume the first issue is #1.",
-  "zip_checksum_sidecar": "work/validation/archives/<RUN_ID>.zip.sha256"
+  "zip_checksum_sidecar": "work/validation/archives/<RUN_ID>.zip.sha256",
+  "delivery_branch_policy": {
+    "primary_branch": "main",
+    "long_lived_feature_branches": false,
+    "force_push": false,
+    "pr_flow": "only_when_explicitly_requested"
+  },
+  "issue_status_source_note": "Dynamic issue status is authoritative only in GitHub Issues; spec files define policy and preserve dated evidence snapshots, not a second live issue ledger."
 }

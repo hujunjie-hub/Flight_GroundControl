@@ -24,3 +24,12 @@ Flight 的 `task_gcs.c` 在 Host SIL 中已运行。缺失的是虚拟电台输�
 - 卫星和电池位于当前飞行模式右侧，分别保留各自的详情入口。
 - 达到电池设置的上阈值时使用绿色，默认上阈值为 80%，85% 显示绿图标。中间档使用黄色，低于下阈值使用橙色，飞控报告的严重和紧急电池状态优先于百分比。
 - Flight SIL 版本 `1c7a72a` 将「定高」标为不可选，地面站在飞行模式菜单中以禁用项显示。其余模式沿用已有选择和确认流程。
+
+
+## Mainline display follow-up — 2026-11-14
+
+- The Fly View toolbar grouping described above is implemented on main by `79d71792ac0078dffded7fa17ced74e21502f8f5`: GPS/RTK GPS and Battery indicators are grouped immediately to the right of Flight Mode; the remaining indicators stay in the right panel.
+- `BatteryIndicator.qml` uses configured `threshold1` / `threshold2`: green at/above the high threshold, yellow between thresholds, orange below the low threshold; CRITICAL and EMERGENCY/FAILED/UNHEALTHY firmware charge states override percentage styling.
+- `FlightModeIndicator.qml` presents unsupported Altitude Hold as a visible disabled entry when the Flight telemetry mode list does not advertise it.
+- `ToolbarIndicatorUITest` now checks panel membership/order, battery color boundaries and critical-state priority, and continues exercising indicator drawers. The exact-head Windows run `43571983530` for main `77563b1` was IN_PROGRESS at the time of this snapshot; do not claim this new UI regression suite has passed until that run completes.
+- This UI work does not change the UDP SIL evidence above: native Flight UDP output still failed to publish the 13 FCU families in the recorded run; the local forwarding patch was not merged into Flight.

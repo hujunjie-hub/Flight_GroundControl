@@ -1,4 +1,4 @@
-# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R31 状态）
+# FGC-0029 — GeoTag 并发 EXIF 解析堆内存破坏（R32 状态）
 
 | 项目 | 内容 |
 |---|---|
@@ -25,7 +25,7 @@
 - 本地运行目录 `work/validation/fgc0029-current-release-20261114T062304684Z`。`process-results.csv` SHA-256 `a5ce3a40b521db7be32b4bd86e598d3d2c5adc5bf34d652a82bb5b0e988b101b`。同提交完整验收 Unit 198/198、Integration 71/71、干净安装与安装后启动通过。
 - 当前主线在本轮条件下未复现。历史触发路径的缓解已验证，首次破坏引用计数的操作仍待证实，Issue #29 保持 OPEN / S1 / BLOCKED。
 
-## R31 验证（2026-11-13）
+## R31 验证（2026-11-13，历史快照）
 
 - **当前 main 产品/测试基线**：测试 HEAD `0b8cb60953277be90d14dc630cd84678f3d333e0`；Windows Release run `43444900333` SUCCESS，Unit `198/198`、Integration `71/71`，非英文系统区域回归、可执行文件、Installer、干净安装及安装后启动验证全部通过。
 - **同 HEAD 的工程检查**：pre-commit `43444900133` SUCCESS；CI Scripts `43444900339` SUCCESS（Python 3.10/3.12）。
@@ -34,7 +34,16 @@
 - **历史版本 Release PageHeap**：run `43444888358` SUCCESS，诊断分支 HEAD `91d368b1edfd485517a729cefcdfc34fe6c7b14d`；历史生产源码 `c746af2608de6c51e8632dd75775fef4dac6d97d`，仅注入当前并发回归用例（来源 `119edd4af97af4e159050650317fd945e4e03ecc`）。
 - PageHeap 对 `16..32` 字节分配启用 full-size traces（覆盖历史 `20 B` 块），UST 已启用，WER full dump 已配置。`12 × 3 = 36` 个进程全部通过；每份 XML 为 19 tests，包含并执行 `_concurrentControllersExifStressTest`；0 failure/error/skip/timeout，0 个 `0xC0000374`，0 个 WER dump。证据归档 `14049871972` 已逐项检查。
 - **判读**：这是历史 Release 时序下的有效非复现结果，不是根因闭环；不能据此关闭 Issue #29。
-- **下一轮诊断**：PageHeap workflow 最新修订在 main `1d117516`、诊断分支 `cf676641b062a062e1d68e48646d79b7accb49ea`；exact-head run `43451171747` 尚待完成。它增加缺失 Debuggers feature 的安装兜底，并校验 GFlags 的 `full size traces` 实际输出。
+- **下一轮诊断**：PageHeap workflow 最新修订在 main `1d117516`、诊断分支 `cf676641b062a062e1d68e48646d79b7accb49ea`；exact-head run `43451171747` 已取消（CANCELLED）。它增加缺失 Debuggers feature 的安装兜底，并校验 GFlags 的 `full size traces` 实际输出。
+
+## R32 mainline 快照（2026-11-14）
+
+- SPEC 同步前审查基线：`main@77563b118f8757c12e091ce9427ea369e0b9638d`。
+- 最近一次完整成功的 Windows Release：run `43567619588`，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer/clean install/installed runtime PASS。
+- 当前审查基线的 Windows Release run `43571983530` 对应 HEAD `77563b118f8757c12e091ce9427ea369e0b9638d`，在本次检查时仍为 IN_PROGRESS；pre-commit `43571983531` PASS。不能将前一 HEAD 的完整验收结论替代当前 run。
+- PageHeap follow-up run `43451171747` 已结束，结论为 CANCELLED，不是 pending，也不是 PASS。历史 PageHeap run `43444888358` 的 36/36 阴性结果仍只代表该历史时序未复现。
+- 本地 mainline Release 并发复测 `20261114T062304684Z` 的 36/36 结果是未复现证据，不证明根因闭环。
+- Issue #29 继续 OPEN / S1 / BLOCKED；ASan 确认历史 double-free，但首次破坏引用计数的操作和线程交错仍未证实。
 
 ## 1. 结论状态（不得过度表述）
 

@@ -1,4 +1,6 @@
-# FGC-0029 复现与验证指南
+# FGC-0029 复现与验证指南（历史诊断流程）
+
+> 本文件保留 R17/R19 诊断环境的历史命令。工作目录、二进制和诊断脚本位于本地 `work/validation/`，不保证存在于当前 main clone。ASan/RelWithDebInfo 仅是隔离诊断配置，不是产品构建目标或 Windows Release 验收替代项。执行前先核对对应 Issue、当前源码 HEAD 和脚本是否仍可用。
 
 本指南用于：复现修复前的崩溃、复跑修复后的回归。所有命令在仓库根目录执行。
 
@@ -117,7 +119,7 @@ ctest --test-dir build-win-release -L Integration --output-on-failure
 | 现象 | 判读 |
 |---|---|
 | 进程退出码 `0xC0000374` | 崩溃复现（修复前基线） |
-| `*.err` 含 `AddressSanitizer: attempting double-free` | ASan 捕获到根因 |
+| `*.err` 含 `AddressSanitizer: attempting double-free` | ASan 证实该 20-byte 块发生 double-free；不等于捕获首次破坏引用计数的操作 |
 | `exit=0` 且 `*.err` 为空 | 该次运行无异常 |
 | JUnit `failures="0"` 且 `tests>0` | 测试通过（0 个测试视为失败） |
 

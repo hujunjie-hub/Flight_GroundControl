@@ -1,6 +1,6 @@
 # 问题登记、证据归档与闭环规范（Flight_GroundControl）
 
-版本：1.0  
+版本：1.1  
 适用仓库：`hujunjie-hub/Flight_GroundControl`  
 唯一动态登记系统：GitHub Issues  
 项目问题 ID：`FGC-{github_issue_number:04d}`
@@ -151,7 +151,7 @@ Issue CLOSED 不代表 PR 可合并；PR 合并也不代表真实 Flight SIL 或
 1. 本地 Agent 发现问题，查询现有 Issues。
 2. 按模板创建/更新 Issue，登记发现 commit、RUN_ID、复现日志。
 3. Agent 本地修复并做聚焦 Release build/test。
-4. 提交修复到当前 PR 分支，Issue 进入 FIXED_WAITING_RETEST。
+4. 按当前 main-only 交付策略将修复提交到 `main`；只有用户明确要求 PR 流程时才使用 PR 分支。修复提交后 Issue 进入 FIXED_WAITING_RETEST。
 5. 执行完整 Unit/Integration/Installer 验收并生成新的 RUN_ID。
 6. 将 ZIP 关联到 Issue；用户或验收方复核。
 7. 通过则 VERIFIED/CLOSED；失败则原 Issue REOPENED。

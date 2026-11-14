@@ -1,8 +1,8 @@
 # FGC-0037 — GeoTag GPS Version ID malformed-entry write guard
 
-> Archived validation record: the write guard and its regression fixtures are now part of `main`
-> (commit `2a5cfed`). This file preserves the branch-scoped evidence history; current issue status
-> is tracked in GitHub Issue #37.
+> Archived validation record: the write guard and its regression fixtures are part of `main`.
+> GitHub Issue #37 is CLOSED / VERIFIED; this file preserves branch-scoped evidence history.
+> The old R27 FGC-0029 ASan shutdown observation below is historical and does not reopen FGC-0037.
 
 | Item | Value |
 |---|---|
@@ -13,6 +13,10 @@
 | Branch | **fix/fgc-0037-clean** (historical) |
 | Current validated code HEAD | **9b22bab756139bd46174515dfb724c0e0120bfdd** |
 | Issue status | **VERIFIED** (archived record) |
+
+## Current mainline status (2026-11-14)
+
+The GPS Version ID write guard remains in `main`; GitHub Issue #37 is CLOSED. Its scope is independent from FGC-0029. Historical R27 ASan process-shutdown evidence below is retained as-is and must not be read as the current status of Issue #37.
 
 ## Finding and implementation
 

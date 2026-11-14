@@ -20,3 +20,8 @@ so a buffer overflow *inside* Qt would not be detected by instrumentation; howev
 proves the ASan runtime still intercepts `malloc`/`free` for uninstrumented modules, so
 double free / invalid free inside Qt **are** detected. libexif and all QGC sources of interest
 (`ExifParser.cc`, `ExifUtility.cc`, `GeoTagController.cc`, `GeoTagControllerTest.cc`) are instrumented.
+
+
+## Evidence boundary
+
+The six ASan reports prove that the same 20-byte QString allocation in each independent run was freed by two worker threads. They do not identify the first operation that corrupted the reference count or prove the exact interleaving. The `QSystemLocalePrivate::zeroDigit()` path remains a strong candidate mechanism, not a fully proven root cause. See `ROOT_CAUSE_ANALYSIS.md` and `README.md` for the current conclusion.

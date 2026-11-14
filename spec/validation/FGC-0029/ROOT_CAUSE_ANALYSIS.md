@@ -1,5 +1,7 @@
 # FGC-0029 根因分析（R19 修订版）
 
+> R19 技术分析快照。当前 Issue #29 状态、最新 main HEAD 和 PageHeap/Release run 状态以 [`README.md`](README.md) 的 R32 mainline 快照为准。本文保留当时的源码/反汇编证据；不把历史 run 结果解释为当前 main 的验收结果。
+
 > 本文取代 R18 版本。历史文本完整保留：
 > - R17：`ROOT_CAUSE_ANALYSIS-R17-superseded.md`（SHA256 `DC51467D…20B30`）
 > - R18：`ROOT_CAUSE_ANALYSIS-R18-superseded.md`（SHA256 `2628DCAC…38F9F`）

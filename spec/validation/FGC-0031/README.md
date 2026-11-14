@@ -44,6 +44,10 @@ The test uses raw MAVLink messages through the production dispatch path. The add
 
 CTest registration: Integration / NoSanitizer, 180-second timeout.
 
+## Current mainline status (2026-11-14)
+
+The page-level test and the telemetry dispatch implementation are present on `main`. The last completed full Windows Release run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588) at HEAD `37035a38d8fcdecca6412b3696704d6416aa3600` passed Unit 198/198 and Integration 71/71. The later main baseline `77563b1` has a Windows Release run `43571983530` still IN_PROGRESS at the time of this snapshot. Issue #31 remains Open as an audit record; current dynamic status is in GitHub.
+
 ## Acceptance
 
 - [x] Approved per-family timestamp and boot-epoch contract implemented in phase-2.
