@@ -7,11 +7,11 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// Flight radio page, laid out like LGroundControl: stick travel rows on the
-/// left, mode selector + channel monitor on the right.  Calibration still runs
-/// on the firmware (PREFLIGHT_CALIBRATION param4, USER_2 save/cancel).
+/// Flight radio page: calibration controls on the left and a live RC transmitter
+/// visualization plus channel monitor on the right. Calibration remains firmware-owned.
 SetupPage {
     id: root
+    objectName: "flightRadio_page"
     pageComponent: pageComponent
     pageDescription: ""
 
@@ -21,6 +21,7 @@ SetupPage {
     readonly property int _state: vehicleComponent ? vehicleComponent.calibrationState : 0
     readonly property int _progress: vehicleComponent ? vehicleComponent.calibrationProgress : 0
     readonly property var _monitor: vehicleComponent ? vehicleComponent.rcMonitor : null
+    readonly property int _channelCount: _monitor ? _monitor.channelCount : 0
 
     readonly property var stickChannels: stickSettings.mode === 1 ? [3, 1, 0, 2] :
                                          stickSettings.mode === 3 ? [0, 1, 3, 2] : [3, 2, 0, 1]
@@ -34,22 +35,28 @@ SetupPage {
         id: pageComponent
 
         ColumnLayout {
-            width:   availableWidth
+            objectName: "flightRadio_content"
+            width: availableWidth
             spacing: ScreenTools.defaultFontPixelHeight * 0.6
 
-            QGCLabel { text: qsTr("遥控器 配置"); font.pointSize: ScreenTools.largeFontPointSize }
             QGCLabel {
-                Layout.fillWidth: true; wrapMode: Text.WordWrap
+                text: qsTr("遥控器配置")
+                font.pointSize: ScreenTools.largeFontPointSize
+            }
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
                 text: qsTr("查看横滚、俯仰、油门和偏航通道，并校准行程与中点。当前 Flight 使用固定通道顺序。")
             }
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: availableWidth >= 680 ? 2 : 1
+                columns: availableWidth >= 1080 ? 2 : 1
                 columnSpacing: 18
-                rowSpacing: 12
+                rowSpacing: 16
 
                 ColumnLayout {
+                    objectName: "flightRadio_calibrationPanel"
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     spacing: 12
@@ -66,12 +73,16 @@ SetupPage {
                         RowLayout {
                             required property var modelData
                             Layout.fillWidth: true
-                            QGCLabel { text: modelData.name; Layout.preferredWidth: 44 }
+                            QGCLabel {
+                                text: modelData.name
+                                Layout.preferredWidth: 44
+                            }
                             ChannelTrack { channel: modelData.channel }
                             QGCLabel {
-                                Layout.preferredWidth: 42
+                                Layout.preferredWidth: 54
                                 horizontalAlignment: Text.AlignRight
-                                text: root._channelValue(modelData.channel) < 0 ? "—" : root._channelValue(modelData.channel)
+                                text: root._channelValue(modelData.channel) < 0 ?
+                                          qsTr("无信号") : root._channelValue(modelData.channel)
                             }
                         }
                     }
@@ -79,32 +90,48 @@ SetupPage {
                     RowLayout {
                         spacing: ScreenTools.defaultFontPixelWidth
                         QGCButton {
+                            objectName: "flightRadio_startCalibration"
                             text: qsTr("开始校准")
                             primary: true
-                            enabled: root._canCalibrate && root._monitor && root._monitor.channelCount >= 4 && root._state !== 1
+                            enabled: root._canCalibrate && root._monitor &&
+                                     root._monitor.channelCount >= 4 && root._state !== 1
                             onClicked: vehicleComponent.startCalibration()
                         }
                         QGCButton {
+                            objectName: "flightRadio_saveCalibration"
                             text: qsTr("确认保存")
                             enabled: root._canCalibrate && root._state === 1
                             onClicked: vehicleComponent.saveCalibration()
                         }
                         QGCButton {
+                            objectName: "flightRadio_cancelCalibration"
                             text: qsTr("取消")
                             enabled: root._canCalibrate && root._state === 1
                             onClicked: vehicleComponent.cancelCalibration()
                         }
                     }
 
-                    ProgressBar { Layout.fillWidth: true; visible: root._state === 1; from: 0; to: 100; value: root._progress }
+                    ProgressBar {
+                        objectName: "flightRadio_calibrationProgress"
+                        Layout.fillWidth: true
+                        visible: root._state === 1
+                        from: 0
+                        to: 100
+                        value: root._progress
+                    }
                     QGCLabel {
+                        objectName: "flightRadio_calibrationDetail"
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
-                        text: vehicleComponent && vehicleComponent.calibrationDetail.length ? vehicleComponent.calibrationDetail :
-                              root._state === 1 ? qsTr("将各摇杆拨到两端，行程采满后将方向摇杆回中、油门降到底，再确认保存。") :
-                              root._state === 2 ? qsTr("遥控器 校准完成。") :
-                              root._state === 3 ? qsTr("遥控器 校准已结束，未应用改动。") :
-                              qsTr("校准前将方向摇杆回中、油门降到底。")
+                        text: vehicleComponent && vehicleComponent.calibrationDetail.length ?
+                                  vehicleComponent.calibrationDetail :
+                              root._state === 1 ?
+                                  qsTr("将各摇杆拨到两端，行程采满后将方向摇杆回中、油门降到底，再确认保存。") :
+                              root._state === 2 ?
+                                  qsTr("遥控器校准完成。") :
+                              root._state === 3 ?
+                                  qsTr("遥控器校准已结束，未应用改动。") :
+                                  qsTr("校准前将方向摇杆回中、油门降到底。")
                     }
 
                     Rectangle {
@@ -118,6 +145,7 @@ SetupPage {
                         Layout.fillWidth: true
                         spacing: 6
                         QGCButton {
+                            objectName: "flightRadio_bindCrsf"
                             text: qsTr("CRSF / ELRS 绑定")
                             enabled: root._canCalibrate && root._state !== 1
                             onClicked: QGroundControl.showMessageDialog(root, qsTr("CRSF 绑定"),
@@ -128,8 +156,10 @@ SetupPage {
                                 })
                         }
                         QGCButton {
+                            objectName: "flightRadio_copyTrims"
                             text: qsTr("复制微调量")
-                            enabled: root._canCalibrate && root._monitor && root._monitor.channelCount >= 4 && root._state === 2
+                            enabled: root._canCalibrate && root._monitor &&
+                                     root._monitor.channelCount >= 4 && root._state === 2
                             onClicked: QGroundControl.showMessageDialog(root, qsTr("复制微调量"),
                                 qsTr("确认方向摇杆已回中、油门已降到底？此操作将记录横滚、俯仰和偏航的中位。"),
                                 Dialog.Yes | Dialog.Cancel, function() {
@@ -146,14 +176,33 @@ SetupPage {
                 }
 
                 ColumnLayout {
-                    Layout.preferredWidth: 355
-                    Layout.fillWidth: availableWidth < 680
+                    id: transmitterPanel
+                    objectName: "flightRadio_transmitterPanel"
+                    Layout.preferredWidth: 480
+                    Layout.minimumWidth: 320
+                    Layout.fillWidth: availableWidth < 1080
                     Layout.alignment: Qt.AlignTop
-                    spacing: 8
+                    spacing: 10
 
-                    QGCLabel { text: qsTr("摇杆显示模式") }
                     RowLayout {
                         Layout.fillWidth: true
+                        QGCLabel {
+                            text: qsTr("遥控器实时状态")
+                            font.pointSize: ScreenTools.defaultFontPointSize
+                        }
+                        Item { Layout.fillWidth: true }
+                        QGCLabel {
+                            objectName: "flightRadio_channelStatus"
+                            text: root._channelCount > 0 ?
+                                      qsTr("已收到 %1 路通道").arg(root._channelCount) :
+                                      qsTr("等待通道数据")
+                            color: root._channelCount > 0 ? "#45D39A" : "#9BAAA5"
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
                         ButtonGroup { id: modes }
                         Repeater {
                             model: [qsTr("1 日本手"), qsTr("2 美国手"), qsTr("3 中国手")]
@@ -167,33 +216,107 @@ SetupPage {
                             }
                         }
                     }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 150
-                        radius: 3
-                        color: "#0d1211"
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 14
-                            StickPosition { horizontalChannel: root.stickChannels[0]; verticalChannel: root.stickChannels[1] }
-                            StickPosition { horizontalChannel: root.stickChannels[2]; verticalChannel: root.stickChannels[3] }
+                    Rectangle {
+                        id: transmitterCard
+                        objectName: "flightRadio_transmitterCard"
+                        Layout.fillWidth: true
+                        implicitHeight: Math.max(220, Math.min(width, 520) * 640 / 900)
+                        Layout.preferredHeight: implicitHeight
+                        radius: 8
+                        color: "#0D1512"
+                        border.color: "#344A43"
+                        border.width: 1
+
+                        Item {
+                            id: transmitterStage
+                            width: Math.min(parent.width, 520)
+                            height: width * 640 / 900
+                            anchors.centerIn: parent
+
+                            Image {
+                                id: transmitterArtwork
+                                objectName: "flightRadio_transmitterArtwork"
+                                anchors.fill: parent
+                                source: "qrc:/res/FlightTransmitter.svg"
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                mipmap: true
+                            }
+
+                            GimbalOverlay {
+                                objectName: "flightRadio_leftGimbal"
+                                horizontalChannel: root.stickChannels[0]
+                                verticalChannel: root.stickChannels[1]
+                                width: transmitterStage.width * 0.235
+                                height: width
+                                x: transmitterStage.width * (280 / 900) - width / 2
+                                y: transmitterStage.height * (405 / 640) - height / 2
+                            }
+                            GimbalOverlay {
+                                objectName: "flightRadio_rightGimbal"
+                                horizontalChannel: root.stickChannels[2]
+                                verticalChannel: root.stickChannels[3]
+                                width: transmitterStage.width * 0.235
+                                height: width
+                                x: transmitterStage.width * (620 / 900) - width / 2
+                                y: transmitterStage.height * (405 / 640) - height / 2
+                            }
                         }
                     }
-                    QGCLabel { text: qsTr("通道监视器") }
-                    GridLayout {
+
+                    RowLayout {
                         Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: 12
-                        rowSpacing: 4
-                        Repeater {
-                            model: root._monitor ? root._monitor.channelCount : 0
-                            RowLayout {
-                                required property int index
-                                Layout.fillWidth: true
-                                QGCLabel { text: index + 1; Layout.preferredWidth: 22 }
-                                ChannelTrack { channel: index }
+                        spacing: 8
+                        QGCLabel {
+                            text: qsTr("左摇杆  CH%1 / CH%2")
+                                      .arg(root.stickChannels[0] + 1)
+                                      .arg(root.stickChannels[1] + 1)
+                            color: "#B9C8C2"
+                        }
+                        Item { Layout.fillWidth: true }
+                        QGCLabel {
+                            text: qsTr("右摇杆  CH%1 / CH%2")
+                                      .arg(root.stickChannels[2] + 1)
+                                      .arg(root.stickChannels[3] + 1)
+                            color: "#B9C8C2"
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: channelMonitor
+                        objectName: "flightRadio_channelMonitor"
+                        readonly property int channelCount: root._channelCount
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        QGCLabel { text: qsTr("通道监视器") }
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 2
+                            columnSpacing: 12
+                            rowSpacing: 5
+                            Repeater {
+                                model: root._channelCount
+                                RowLayout {
+                                    required property int index
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    QGCLabel {
+                                        text: qsTr("CH%1").arg(index + 1)
+                                        Layout.preferredWidth: 34
+                                    }
+                                    ChannelTrack {
+                                        channel: index
+                                        Layout.fillWidth: true
+                                    }
+                                    QGCLabel {
+                                        objectName: "flightRadio_channelValue_" + (index + 1)
+                                        text: root._channelText(index)
+                                        Layout.preferredWidth: 62
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
                             }
                         }
                     }
@@ -227,55 +350,59 @@ SetupPage {
         }
     }
 
-    component StickPosition: Item {
-        id: stick
+    component GimbalOverlay: Item {
+        id: gimbal
         required property int horizontalChannel
         required property int verticalChannel
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+        readonly property real horizontalFraction: root._channelFraction(horizontalChannel)
+        readonly property real verticalFraction: root._channelFraction(verticalChannel)
+        readonly property bool liveDataAvailable: root._channelValue(horizontalChannel) >= 0 &&
+                                                  root._channelValue(verticalChannel) >= 0
+        readonly property real travelRadius: Math.min(width, height) * 0.32
+        readonly property real markerX: width / 2 + (horizontalFraction - 0.5) * 2 * travelRadius
+        readonly property real markerY: height / 2 + (0.5 - verticalFraction) * 2 * travelRadius
 
         Rectangle {
-            id: dial
-            anchors.centerIn: parent
-            width: Math.min(parent.width, parent.height)
+            objectName: "flightRadio_gimbalStickShaft"
+            x: gimbal.width / 2
+            y: gimbal.height / 2 - height / 2
+            width: Math.hypot(gimbal.markerX - gimbal.width / 2,
+                              gimbal.markerY - gimbal.height / 2)
+            height: 4
+            radius: 2
+            transformOrigin: Item.Left
+            rotation: Math.atan2(gimbal.markerY - gimbal.height / 2,
+                                 gimbal.markerX - gimbal.width / 2) * 180 / Math.PI
+            visible: gimbal.liveDataAvailable
+            color: "#D8E2DD"
+            opacity: 0.9
+        }
+        Rectangle {
+            objectName: "flightRadio_gimbalStickMarker"
+            width: 17
             height: width
             radius: width / 2
-            color: "transparent"
-            border.color: "#718481"
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width * 0.55
-                height: width
-                radius: width / 2
-                color: "transparent"
-                border.color: "#526460"
-            }
-            Rectangle { anchors.centerIn: parent; width: parent.width; height: 1; color: "#43524e" }
-            Rectangle { anchors.centerIn: parent; width: 1; height: parent.height; color: "#43524e" }
-            Rectangle {
-                readonly property real dx: root._channelFraction(stick.horizontalChannel) - 0.5
-                readonly property real dy: 0.5 - root._channelFraction(stick.verticalChannel)
-                readonly property real scaleToDial: (parent.width - width) / Math.max(1, 2 * Math.hypot(dx, dy))
-                visible: root._channelValue(stick.horizontalChannel) >= 0 && root._channelValue(stick.verticalChannel) >= 0
-                width: 10
-                height: width
-                radius: width / 2
-                x: (parent.width - width) / 2 + dx * scaleToDial
-                y: (parent.height - height) / 2 + dy * scaleToDial
-                color: "#e9c328"
-            }
+            x: gimbal.markerX - width / 2
+            y: gimbal.markerY - height / 2
+            visible: gimbal.liveDataAvailable
+            color: "#F1C84B"
+            border.color: "#FFF1B2"
+            border.width: 2
         }
     }
 
     function _channelValue(index) {
-        if (!_monitor || index >= _monitor.channelCount) return -1
+        if (!_monitor || index < 0 || index >= _monitor.channelCount) return -1
         return _monitor.channels[index]
     }
+
     function _channelFraction(index) {
-        const v = _channelValue(index)
-        return v < 0 ? 0 : Math.max(0, Math.min(1, (v - 1000) / 1000))
+        const value = _channelValue(index)
+        return value < 0 ? 0 : Math.max(0, Math.min(1, (value - 1000) / 1000))
     }
 
+    function _channelText(index) {
+        const value = _channelValue(index)
+        return value < 0 ? qsTr("无信号") : qsTr("%1 µs").arg(value)
+    }
 }
-
