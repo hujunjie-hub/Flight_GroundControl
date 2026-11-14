@@ -46,7 +46,7 @@ SetupPage {
             QGCLabel {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: qsTr("查看横滚、俯仰、油门和偏航通道，并校准行程与中点。当前 Flight 使用固定通道顺序。")
+                text: qsTr("查看遥控器各通道的实时输入，摇杆示意图会跟随实际遥控运动。可在此校准行程与中点。")
             }
 
             GridLayout {
@@ -187,7 +187,7 @@ SetupPage {
                     RowLayout {
                         Layout.fillWidth: true
                         QGCLabel {
-                            text: qsTr("遥控器实时状态")
+                            text: qsTr("摇杆实时监视")
                             font.pointSize: ScreenTools.defaultFontPointSize
                         }
                         Item { Layout.fillWidth: true }
@@ -209,6 +209,7 @@ SetupPage {
                             QGCRadioButton {
                                 required property int index
                                 required property string modelData
+                                objectName: "flightRadio_stickMode_" + (index + 1)
                                 ButtonGroup.group: modes
                                 text: modelData
                                 checked: stickSettings.mode === index + 1
@@ -221,7 +222,7 @@ SetupPage {
                         id: transmitterCard
                         objectName: "flightRadio_transmitterCard"
                         Layout.fillWidth: true
-                        implicitHeight: Math.max(220, Math.min(width, 520) * 640 / 900)
+                        implicitHeight: Math.max(220, Math.min(width, 520) * 420 / 900 + 16)
                         Layout.preferredHeight: implicitHeight
                         radius: 8
                         color: "#0D1512"
@@ -230,15 +231,16 @@ SetupPage {
 
                         Item {
                             id: transmitterStage
+                            objectName: "flightRadio_transmitterStage"
                             width: Math.min(parent.width, 520)
-                            height: width * 640 / 900
+                            height: width * 420 / 900
                             anchors.centerIn: parent
 
                             Image {
-                                id: transmitterArtwork
-                                objectName: "flightRadio_transmitterArtwork"
+                                id: gimbalArtwork
+                                objectName: "flightRadio_gimbalArtwork"
                                 anchors.fill: parent
-                                source: "qrc:/res/FlightTransmitter.svg"
+                                source: "qrc:/res/FlightStickGimbals.svg"
                                 fillMode: Image.PreserveAspectFit
                                 smooth: true
                                 mipmap: true
@@ -248,38 +250,60 @@ SetupPage {
                                 objectName: "flightRadio_leftGimbal"
                                 horizontalChannel: root.stickChannels[0]
                                 verticalChannel: root.stickChannels[1]
-                                width: transmitterStage.width * 0.235
+                                width: transmitterStage.width * (310 / 900)
                                 height: width
-                                x: transmitterStage.width * (280 / 900) - width / 2
-                                y: transmitterStage.height * (405 / 640) - height / 2
+                                x: transmitterStage.width * (245 / 900) - width / 2
+                                y: transmitterStage.height * (210 / 420) - height / 2
                             }
                             GimbalOverlay {
                                 objectName: "flightRadio_rightGimbal"
                                 horizontalChannel: root.stickChannels[2]
                                 verticalChannel: root.stickChannels[3]
-                                width: transmitterStage.width * 0.235
+                                width: transmitterStage.width * (310 / 900)
                                 height: width
-                                x: transmitterStage.width * (620 / 900) - width / 2
-                                y: transmitterStage.height * (405 / 640) - height / 2
+                                x: transmitterStage.width * (655 / 900) - width / 2
+                                y: transmitterStage.height * (210 / 420) - height / 2
                             }
                         }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
-                        QGCLabel {
-                            text: qsTr("左摇杆  CH%1 / CH%2")
-                                      .arg(root.stickChannels[0] + 1)
-                                      .arg(root.stickChannels[1] + 1)
-                            color: "#B9C8C2"
+                        spacing: 12
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+                            QGCLabel {
+                                text: qsTr("左摇杆 · CH%1 / CH%2")
+                                          .arg(root.stickChannels[0] + 1)
+                                          .arg(root.stickChannels[1] + 1)
+                                color: "#B9C8C2"
+                            }
+                            QGCLabel {
+                                objectName: "flightRadio_leftGimbalReadout"
+                                text: qsTr("横向 %1  纵向 %2")
+                                          .arg(root._channelText(root.stickChannels[0]))
+                                          .arg(root._channelText(root.stickChannels[1]))
+                                color: "#8FA39B"
+                            }
                         }
-                        Item { Layout.fillWidth: true }
-                        QGCLabel {
-                            text: qsTr("右摇杆  CH%1 / CH%2")
-                                      .arg(root.stickChannels[2] + 1)
-                                      .arg(root.stickChannels[3] + 1)
-                            color: "#B9C8C2"
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+                            QGCLabel {
+                                text: qsTr("右摇杆 · CH%1 / CH%2")
+                                          .arg(root.stickChannels[2] + 1)
+                                          .arg(root.stickChannels[3] + 1)
+                                color: "#B9C8C2"
+                            }
+                            QGCLabel {
+                                objectName: "flightRadio_rightGimbalReadout"
+                                text: qsTr("横向 %1  纵向 %2")
+                                          .arg(root._channelText(root.stickChannels[2]))
+                                          .arg(root._channelText(root.stickChannels[3]))
+                                color: "#8FA39B"
+                            }
                         }
                     }
 
@@ -358,27 +382,30 @@ SetupPage {
         readonly property real verticalFraction: root._channelFraction(verticalChannel)
         readonly property bool liveDataAvailable: root._channelValue(horizontalChannel) >= 0 &&
                                                   root._channelValue(verticalChannel) >= 0
-        readonly property real travelRadius: Math.min(width, height) * 0.32
+        readonly property real travelRadius: Math.min(width, height) * 0.28
         readonly property real markerX: width / 2 + (horizontalFraction - 0.5) * 2 * travelRadius
         readonly property real markerY: height / 2 + (0.5 - verticalFraction) * 2 * travelRadius
 
         Rectangle {
-            objectName: "flightRadio_gimbalStickShaft"
-            x: gimbal.width / 2
-            y: gimbal.height / 2 - height / 2
-            width: Math.hypot(gimbal.markerX - gimbal.width / 2,
-                              gimbal.markerY - gimbal.height / 2)
-            height: 4
-            radius: 2
-            transformOrigin: Item.Left
-            rotation: Math.atan2(gimbal.markerY - gimbal.height / 2,
-                                 gimbal.markerX - gimbal.width / 2) * 180 / Math.PI
+            objectName: gimbal.objectName + "_halo"
+            width: 30
+            height: width
+            radius: width / 2
+            x: gimbal.markerX - width / 2
+            y: gimbal.markerY - height / 2
             visible: gimbal.liveDataAvailable
-            color: "#D8E2DD"
-            opacity: 0.9
+            color: "#28F1C84B"
+            border.color: "#88F1C84B"
+            border.width: 1
+            Behavior on x {
+                NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+            }
+            Behavior on y {
+                NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+            }
         }
         Rectangle {
-            objectName: "flightRadio_gimbalStickMarker"
+            objectName: gimbal.objectName + "_marker"
             width: 17
             height: width
             radius: width / 2
@@ -388,12 +415,21 @@ SetupPage {
             color: "#F1C84B"
             border.color: "#FFF1B2"
             border.width: 2
+            Behavior on x {
+                NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+            }
+            Behavior on y {
+                NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+            }
         }
     }
 
     function _channelValue(index) {
         if (!_monitor || index < 0 || index >= _monitor.channelCount) return -1
-        return _monitor.channels[index]
+        const value = _monitor.channels[index]
+        // RC inputs outside the receiver PWM operating range are unavailable,
+        // not a valid stick position to be drawn at the edge of the gimbal.
+        return value >= 800 && value <= 2200 ? value : -1
     }
 
     function _channelFraction(index) {

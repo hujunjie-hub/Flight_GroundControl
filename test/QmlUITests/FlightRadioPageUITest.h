@@ -7,5 +7,5 @@ class FlightRadioPageUITest : public VehicleConfigUITestBase
     Q_OBJECT
 
 private slots:
-    void _testTransmitterArtworkAndLiveStickOverlay();
+    void _testDualGimbalDiagramTracksLiveRcInput();
 };

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101A16"/>
+      <stop offset="1" stop-color="#0A120F"/>
+    </linearGradient>
+    <radialGradient id="well" cx="50%" cy="42%" r="68%">
+      <stop offset="0" stop-color="#1B2923"/>
+      <stop offset="0.72" stop-color="#101A16"/>
+      <stop offset="1" stop-color="#0A120F"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#82958B"/>
+      <stop offset="0.5" stop-color="#43584F"/>
+      <stop offset="1" stop-color="#70857A"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+  <rect x="1" y="1" width="898" height="418" rx="18" fill="url(#panel)" stroke="#263A31" stroke-width="2"/>
+  <path d="M450 38 V382" stroke="#31443A" stroke-width="1.5" stroke-dasharray="4 9" opacity=".6"/>
+  <g id="left-gimbal">
+    <circle cx="245" cy="210" r="166" fill="#07100C" opacity=".6"/>
+    <circle cx="245" cy="210" r="154" fill="url(#well)" stroke="#23382E" stroke-width="8"/>
+    <circle cx="245" cy="210" r="151" fill="none" stroke="url(#ring)" stroke-width="2.5"/>
+    <circle cx="245" cy="210" r="112" fill="none" stroke="#30463B" stroke-width="1.5"/>
+    <circle cx="245" cy="210" r="91" fill="none" stroke="#647B6E" stroke-width="2"/>
+    <circle cx="245" cy="210" r="53" fill="none" stroke="#3D5548" stroke-width="1.5"/>
+    <circle cx="245" cy="210" r="28" fill="#101B15" stroke="#52695B" stroke-width="2"/>
+    <path d="M245 55 V365 M90 210 H400" stroke="#53695C" stroke-width="1.5" opacity=".72"/>
+    <path d="M245 59 V82 M245 338 V361 M94 210 H117 M373 210 H396" stroke="#A1B5A8" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+    <g stroke="#71877A" stroke-width="2" opacity=".68">
+      <path d="M138 103 L151 116 M339 304 L352 317 M138 317 L151 304 M339 116 L352 103"/>
+      <path d="M166 73 L173 88 M317 332 L324 347 M108 131 L123 138 M367 282 L382 289"/>
+      <path d="M166 347 L173 332 M317 88 L324 73 M108 289 L123 282 M367 138 L382 131"/>
+    </g>
+    <circle cx="245" cy="210" r="5" fill="#91A69A" opacity=".9"/>
+    <circle cx="245" cy="210" r="13" fill="none" stroke="#4A6254" stroke-width="1" opacity=".7"/>
+  </g>
+  <g id="right-gimbal">
+    <circle cx="655" cy="210" r="166" fill="#07100C" opacity=".6"/>
+    <circle cx="655" cy="210" r="154" fill="url(#well)" stroke="#23382E" stroke-width="8"/>
+    <circle cx="655" cy="210" r="151" fill="none" stroke="url(#ring)" stroke-width="2.5"/>
+    <circle cx="655" cy="210" r="112" fill="none" stroke="#30463B" stroke-width="1.5"/>
+    <circle cx="655" cy="210" r="91" fill="none" stroke="#647B6E" stroke-width="2"/>
+    <circle cx="655" cy="210" r="53" fill="none" stroke="#3D5548" stroke-width="1.5"/>
+    <circle cx="655" cy="210" r="28" fill="#101B15" stroke="#52695B" stroke-width="2"/>
+    <path d="M655 55 V365 M500 210 H810" stroke="#53695C" stroke-width="1.5" opacity=".72"/>
+    <path d="M655 59 V82 M655 338 V361 M504 210 H527 M783 210 H806" stroke="#A1B5A8" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+    <g stroke="#71877A" stroke-width="2" opacity=".68">
+      <path d="M548 103 L561 116 M749 304 L762 317 M548 317 L561 304 M749 116 L762 103"/>
+      <path d="M576 73 L583 88 M727 332 L734 347 M518 131 L533 138 M777 282 L792 289"/>
+      <path d="M576 347 L583 332 M727 88 L734 73 M518 289 L533 282 M777 138 L792 131"/>
+    </g>
+    <circle cx="655" cy="210" r="5" fill="#91A69A" opacity=".9"/>
+    <circle cx="655" cy="210" r="13" fill="none" stroke="#4A6254" stroke-width="1" opacity=".7"/>
+  </g>
+  <path d="M64 390 H836" stroke="#263A31" stroke-width="1" opacity=".55"/>
+</svg>
