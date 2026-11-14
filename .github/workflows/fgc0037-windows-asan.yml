@@ -73,8 +73,9 @@ jobs:
             '--',
             '-DCMAKE_C_FLAGS=/DWIN32 /D_WINDOWS /fsanitize=address',
             '-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc /fsanitize=address',
-            '-DCMAKE_EXE_LINKER_FLAGS=/fsanitize=address',
-            '-DCMAKE_SHARED_LINKER_FLAGS=/fsanitize=address',
+            '-DCMAKE_TRY_COMPILE_CONFIGURATION=Release',
+            '-DCMAKE_EXE_LINKER_FLAGS=/INFERASANLIBS /INCREMENTAL:NO',
+            '-DCMAKE_SHARED_LINKER_FLAGS=/INFERASANLIBS /INCREMENTAL:NO',
             '-DQGC_ENABLE_HARDENING=OFF',
             '-DQGC_DISABLE_IPO=ON',
             '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
@@ -194,45 +195,29 @@ jobs:
           }
 
           $cacheText = Get-Content $cachePath -Raw
-          foreach ($cacheKey in @(
-            'CMAKE_C_FLAGS:STRING',
-            'CMAKE_CXX_FLAGS:STRING',
-            'CMAKE_EXE_LINKER_FLAGS:STRING',
-            'CMAKE_SHARED_LINKER_FLAGS:STRING'
-          )) {
+          foreach ($cacheKey in @('CMAKE_C_FLAGS:STRING', 'CMAKE_CXX_FLAGS:STRING')) {
             $cacheLine = ($cacheText -split "\r?\n") | Where-Object { $_.StartsWith("$cacheKey=") } | Select-Object -First 1
             if (-not $cacheLine -or $cacheLine -notmatch '(?i)/fsanitize=address') {
               throw "CMake cache does not prove ASan flag on $cacheKey."
             }
-            Write-Host "ASan CMake flag verified: $cacheKey"
+            Write-Host "ASan CMake compiler flag verified: $cacheKey"
           }
 
-          $ninjaCommands = (& ninja -C $buildDir -t commands 2>&1 | Out-String)
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Unable to inspect Ninja link commands.'
-          }
-          $appLinkLines = @($ninjaCommands -split "\r?\n" | Where-Object {
-            $_ -match '(?i)link\.exe' -and $_ -match '(?i)QGroundControl\.exe'
-          })
-          if ($appLinkLines.Count -eq 0) {
-            throw 'Could not locate the QGroundControl.exe link command in Ninja output.'
-          }
-          if (($appLinkLines -join "\n") -notmatch '(?i)/fsanitize=address') {
-            throw 'QGroundControl.exe link command does not contain /fsanitize=address.'
-          }
-          Write-Host 'QGroundControl.exe link command contains /fsanitize=address.'
-
-          $exe = Get-ChildItem -Path $buildDir -Filter 'QGroundControl.exe' -File -Recurse |
-            Select-Object -First 1
-          if (-not $exe) {
+          $exe = Join-Path $buildDir 'Release/QGroundControl.exe'
+          if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
             throw 'ASan-instrumented QGroundControl.exe was not produced.'
           }
-          Write-Host "ASan executable: $($exe.FullName)"
+          $dependenciesPath = Join-Path $evidenceDir 'executable-dependencies.txt'
+          & dumpbin.exe /DEPENDENTS $exe 2>&1 | Tee-Object -FilePath $dependenciesPath
+          if ($LASTEXITCODE -ne 0 -or
+              (Get-Content -LiteralPath $dependenciesPath -Raw) -notmatch '(?i)clang_rt\.asan_dynamic-x86_64\.dll') {
+            throw 'QGroundControl.exe does not import the MSVC x64 AddressSanitizer runtime.'
+          }
 
           "compile_commands_total=$($entries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
           "cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
           "asan_instrumented_cpp_translation_units=$($cppEntries.Count)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
-          "app_executable=$($exe.FullName)" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
+          "app_executable=$exe" | Add-Content (Join-Path $evidenceDir 'validation-metadata.txt')
           Copy-Item $compileDb (Join-Path $evidenceDir 'compile_commands.json')
           Copy-Item $cachePath (Join-Path $evidenceDir 'CMakeCache.txt')
 
