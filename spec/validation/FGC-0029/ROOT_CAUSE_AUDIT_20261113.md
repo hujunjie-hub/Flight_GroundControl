@@ -71,5 +71,5 @@ A follow-up workflow revision on main `1d117516f0744ec26126b2e23138c238caf1d101`
 - main 审查基线：`77563b118f8757c12e091ce9427ea369e0b9638d`。
 - 历史 Release PageHeap run `43444888358` 已成功执行 36/36，0 个 `0xC0000374`，但属于非复现结果，不是首次非法操作证据。
 - 后续 PageHeap workflow run `43451171747` 的最终状态为 **CANCELLED**。此前的 pending 表述已过期；该轮新增安装兜底与 GFlags 输出断言没有取得 exact-head 通过证据。
-- 当前 main 完整 Windows Release run `43571983530` 在本轮检查时仍为 IN_PROGRESS；上一完整成功 run `43567619588` 只适用于 HEAD `37035a3`。
+- HEAD `77563b1` 的 Windows run `43571983530` 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步仅改文档、不改产品源码；当前最新精确 HEAD 的 CI 状态应从 GitHub Actions 实时读取。上一完整成功 run `43567619588` 只适用于 HEAD `37035a3`。
 - Issue #29 保持 OPEN / S1 / BLOCKED。ASan 证明双重释放，不证明首次破坏引用计数的操作。

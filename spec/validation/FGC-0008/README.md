@@ -29,7 +29,7 @@ Unit 测试包含英文用户界面文本断言。测试宿主使用非英语 Wi
 
 ## 当前验证状态（2026-11-14 mainline）
 
-FGC-0008 的代码和区域设置门禁已合入 `main`，状态为 VERIFIED；Issue #8 仍 Open，作为结案审计记录，不表示仍待代码合并。最近一次完整成功的 main Windows Release run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588) 在 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600` 上通过，Unit 198/198、Integration 71/71，包含 zh-CN 宿主/Qt locale 回归和 Integration 前恢复 en-US。后续 main HEAD `77563b1` 的 Windows run `43571983530` 在 2026-11-14 检查时仍为 IN_PROGRESS；不得将其写成已通过。
+FGC-0008 的代码和区域设置门禁已合入 `main`，状态为 VERIFIED；Issue #8 仍 Open，作为结案审计记录，不表示仍待代码合并。最近一次完整成功的 main Windows Release run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588) 在 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600` 上通过，Unit 198/198、Integration 71/71，包含 zh-CN 宿主/Qt locale 回归和 Integration 前恢复 en-US。后续 HEAD `77563b1` 的 Windows run `43571983530` 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC-only push 触发的最新精确 HEAD CI 状态以 GitHub Actions 实时结果为准；不得将其写成已通过。
 
 
 ## 2026-11-13 — R30 exact-head non-English host and Release verification

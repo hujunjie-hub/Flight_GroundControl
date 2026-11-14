@@ -158,5 +158,5 @@ C=**40040**、D=**0**。即 `QLocale::system()` 本身不触发 `ZeroDigit`，`Q
 
 - SPEC 同步前 main HEAD：`77563b118f8757c12e091ce9427ea369e0b9638d`。
 - 最近完整 Windows Release PASS：run `43567619588`，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71、Installer/clean install/installed runtime PASS。
-- 精确审查基线 Windows run `43571983530` 在本轮检查时仍为 IN_PROGRESS；因此不得将 37035 的结果提升为 77563 的完整验收结果。
+- HEAD `77563b1` 的 Windows run `43571983530` 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步仅改文档、不改产品源码；当前最新精确 HEAD 的验收状态以 GitHub Actions 实时结果为准。因此不得将 37035 的结果提升为当前 main HEAD 的完整验收结果。
 - FGC-0029 当前 Release 36/36 未复现和历史 PageHeap 36/36 未复现，均为限定条件下的阴性结果；首次非法操作仍未证实，Issue #29 保持 OPEN / S1 / BLOCKED。

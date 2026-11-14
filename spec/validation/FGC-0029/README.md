@@ -40,7 +40,7 @@
 
 - SPEC 同步前审查基线：`main@77563b118f8757c12e091ce9427ea369e0b9638d`。
 - 最近一次完整成功的 Windows Release：run `43567619588`，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer/clean install/installed runtime PASS。
-- 当前审查基线的 Windows Release run `43571983530` 对应 HEAD `77563b118f8757c12e091ce9427ea369e0b9638d`，在本次检查时仍为 IN_PROGRESS；pre-commit `43571983531` PASS。不能将前一 HEAD 的完整验收结论替代当前 run。
+- HEAD `77563b1` 的 Windows Release run `43571983530` 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步仅改文档、不改产品源码；最新精确 HEAD 的 CI 状态以 GitHub Actions 实时结果为准，不能将前一 HEAD 的完整验收结论替代当前 run。
 - PageHeap follow-up run `43451171747` 已结束，结论为 CANCELLED，不是 pending，也不是 PASS。历史 PageHeap run `43444888358` 的 36/36 阴性结果仍只代表该历史时序未复现。
 - 本地 mainline Release 并发复测 `20261114T062304684Z` 的 36/36 结果是未复现证据，不证明根因闭环。
 - Issue #29 继续 OPEN / S1 / BLOCKED；ASan 确认历史 double-free，但首次破坏引用计数的操作和线程交错仍未证实。

@@ -562,6 +562,6 @@ E-37、E-38 原文全部保留，本节仅追加。
 
 - main 审查基线（本轮 SPEC 修改前）：`77563b118f8757c12e091ce9427ea369e0b9638d`。
 - Windows Release run `43567619588` 在 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600` 上 SUCCESS：Unit 198/198、Integration 71/71、Installer/clean install/installed runtime 均通过。
-- 后续 HEAD `77563b1` 的 Windows run `43571983530` 在检查时仍为 IN_PROGRESS；pre-commit `43571983531` SUCCESS。不同 HEAD 的结果不得互相替代。
+- HEAD `77563b1` 的 Windows run `43571983530` 后被后续文档 push 取消（CANCELLED，非测试失败）；本轮 SPEC-only push 触发的最新 CI 状态以 GitHub Actions 实时结果为准。不同 HEAD 的结果不得互相替代。
 - PageHeap follow-up run `43451171747` 为 CANCELLED。E-42 中的“尚未完成”更正为“已取消”；不得将其记作 PASS 或 FAIL。
 - 结论仍是：历史 double-free 已由 ASan 证实；首次破坏引用计数的操作、精确线程交错和 Qt 内部调用者仍未证实。Issue #29 继续 OPEN / S1 / BLOCKED。

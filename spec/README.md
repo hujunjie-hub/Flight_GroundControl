@@ -111,7 +111,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 当前长期分支策略为 **只保留 `main`**；本次分支枚举仅发现 `main`。
 - 最近一次完整成功的 Windows Release 验收：[`43567619588`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588)，验证 HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer、干净安装及安装后启动均通过。
 - 后续工具栏改动提交 `79d71792ac0078dffded7fa17ced74e21502f8f5` 已进入本轮代码基线，增加 GPS/电池分组、阈值颜色断言和工具栏布局断言。
-- 基线 HEAD `77563b118f8757c12e091ce9427ea369e0b9638d` 的 Windows Release run [`43571983530`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 在本次检查时仍为 `in_progress`；pre-commit run [`43571983531`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983531) 已成功，Build Results [`43572651148`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43572651148) 已成功。不得将尚未完成的 Windows run 写成 PASS。
+- HEAD `77563b1` 的 Windows Release run [`43571983530`](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步为文档专用提交，不改变产品源码；每次 SPEC push 都会触发新的 CI，因此当前精确 HEAD 的 Windows/pre-commit/Build Results 状态以 [GitHub Actions](https://github.com/hujunjie-hub/Flight_GroundControl/actions) 实时结果为准。本规范不把尚未结束的 run 预写为 PASS。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；当前修复降低了复现风险，但首次破坏引用计数的具体操作尚未证实。
 - FGC-0043 的类型化 EXIF 读取保护和回归测试已进入 main，并包含在 HEAD `37035a3` 的成功完整 Windows 验收中；Issue 仍 Open，等待按关闭清单完成结案审查。
 - Flight UDP SIL 的原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。

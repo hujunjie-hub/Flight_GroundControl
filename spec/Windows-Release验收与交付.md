@@ -220,5 +220,5 @@ CI 归档 Artifact 名称为 `windows-release-validation-<github.sha>`，包含�
 
 - SPEC 同步前审查基线：`77563b118f8757c12e091ce9427ea369e0b9638d`。
 - 最近一次完整成功的 Windows Release：run [43567619588](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43567619588)，HEAD `37035a38d8fcdecca6412b3696704d6416aa3600`，Unit 198/198、Integration 71/71，Installer/clean install/installed runtime PASS。
-- 后续工具栏变更已进入审查基线；该基线对应 Windows run [43571983530](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 在本轮检查时仍为 IN_PROGRESS。pre-commit [43571983531](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983531) PASS。
+- 工具栏变更进入基线 `77563b1` 后触发的 Windows run [43571983530](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43571983530) 已因后续文档 push 被取消（CANCELLED，非测试失败）。本轮 SPEC 同步只改文档、不改产品源码；新的精确 HEAD 验收由本次 push 触发，必须以 [GitHub Actions](https://github.com/hujunjie-hub/Flight_GroundControl/actions) 的实时状态为准，不能预先标记 PASS。
 - 因此，不能把 37035 的完整验收结果直接标记为 77563 的结果；需等待精确 HEAD 的 Windows run 完成。
