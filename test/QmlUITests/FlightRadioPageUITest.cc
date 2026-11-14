@@ -92,7 +92,6 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
             mavlink_rc_channels_t channels{};
             channels.time_boot_ms = 1000;
             channels.chancount = 8;
-            channels.port = 0;
             channels.chan1_raw = 1600;
             channels.chan2_raw = 1400;
             channels.chan3_raw = 1300;
