@@ -300,16 +300,29 @@ void FlightRadioPageUITest::_testDualGimbalDiagramTracksLiveRcInput()
             verifyModeMapping(3, 0, 1, 3, 2);
             if (QTest::currentTestFailed()) return;
 
-            // In Mode 3 CH1 is the left stick's horizontal axis. An invalid CH1
-            // value must hide the left marker while the right stick remains live.
+            // RC_CHANNELS publishes a contiguous prefix of available channels.
+            // In Mode 1, CH4 is the left stick's horizontal axis while the right
+            // stick uses CH1/CH3. Publish only CH1-CH3 so only the left stick loses
+            // one of its mapped axes and the right stick remains fully available.
+            QVERIFY(clickButton(QStringLiteral("flightRadio_stickMode_1")));
+            QTRY_VERIFY_WITH_TIMEOUT(
+                findVisibleItem(
+                    _rootItem, QStringLiteral("flightRadio_stickMode_1"), 3000)
+                    ->property("checked").toBool(),
+                3000);
             channels.time_boot_ms = 4000;
-            channels.chan1_raw = unusedChannel;
+            channels.chan4_raw = unusedChannel;
+            channels.chan5_raw = unusedChannel;
+            channels.chan6_raw = unusedChannel;
+            channels.chan7_raw = unusedChannel;
+            channels.chan8_raw = unusedChannel;
             mavlink_msg_rc_channels_encode(
                 static_cast<uint8_t>(vehicle->id()),
                 static_cast<uint8_t>(vehicle->compId()),
                 &message,
                 &channels);
             mockLink->respondWithMavlinkMessage(message);
+            QTRY_COMPARE_WITH_TIMEOUT(channelMonitor->property("channelCount").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!leftGimbal->property("liveDataAvailable").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightGimbal->property("liveDataAvailable").toBool(), 3000);
             QVERIFY(!leftMarker->isVisible());
