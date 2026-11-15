@@ -4455,6 +4455,36 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(navigationBoundaryCapabilities);
             QVERIFY(navigationBoundaryTime);
             QVERIFY(navigationBoundaryDomains);
+            QQuickItem* navigationEstimateMetric = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000);
+            QQuickItem* navigationCapabilityMetric = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading"), 3000);
+            QQuickItem* navigationEstimateLabel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_label"), 3000);
+            QQuickItem* navigationCapabilityLabel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_label"), 3000);
+            QQuickItem* navigationEstimateStatus = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_status"), 3000);
+            QVERIFY(navigationEstimateMetric);
+            QVERIFY(navigationCapabilityMetric);
+            QVERIFY(navigationEstimateLabel);
+            QVERIFY(navigationCapabilityLabel);
+            QVERIFY(navigationEstimateStatus);
+            const qreal navigationCapabilityGridSpacing =
+                page->property("_navigationCapabilityGridSpacing").toReal();
+            const qreal navigationTimeColumnSpacing =
+                page->property("_navigationTimeColumnSpacing").toReal();
+            const qreal navigationTimeRowSpacing =
+                page->property("_navigationTimeRowSpacing").toReal();
+            const qreal navigationDomainGridSpacing =
+                page->property("_navigationDomainGridSpacing").toReal();
+            const qreal navigationMetricSpacing =
+                page->property("_dashboardMetricReadoutSpacing").toReal();
+            QVERIFY(navigationCapabilityGridSpacing > 0.0);
+            QVERIFY(navigationTimeColumnSpacing > 0.0);
+            QVERIFY(navigationTimeRowSpacing > 0.0);
+            QVERIFY(navigationDomainGridSpacing > 0.0);
+            QVERIFY(navigationMetricSpacing > 0.0);
             const int navigationBoundaryWidths[] = {1280, 1279, 760, 759};
             const int navigationExpectedColumns[] = {12, 6, 6, 1};
             for (int boundaryIndex = 0; boundaryIndex < 4; ++boundaryIndex) {
@@ -4468,6 +4498,25 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                           width >= 760 ? 2 : 1, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryDomains->property("columns").toInt(),
                                           width >= 760 ? 2 : 1, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryCapabilities->property("columnSpacing").toReal() -
+                                                   navigationCapabilityGridSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryCapabilities->property("rowSpacing").toReal() -
+                                                   navigationCapabilityGridSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryTime->property("columnSpacing").toReal() -
+                                                   navigationTimeColumnSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryTime->property("rowSpacing").toReal() -
+                                                   navigationTimeRowSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryDomains->property("columnSpacing").toReal() -
+                                                   navigationDomainGridSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationBoundaryDomains->property("rowSpacing").toReal() -
+                                                   navigationDomainGridSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationEstimateMetric->property("contentSpacing").toReal() -
+                                                   navigationMetricSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationCapabilityMetric->property("contentSpacing").toReal() -
+                                                   navigationMetricSpacing) < 1.0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateLabel->property("wrapMode").toInt() != 0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityLabel->property("wrapMode").toInt() != 0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatus->property("wrapMode").toInt() != 0, 3000);
                 if (width >= 1280) {
                     QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryPanels[0]->y(),
                                               navigationBoundaryPanels[1]->y(), 3000);
