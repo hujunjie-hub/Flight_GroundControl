@@ -664,6 +664,8 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                     false, MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("控制权状态超时"), 9000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 6500, 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 3500, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(rollValue->property("text").toString(),
                                       QStringLiteral("数据超时"), 1000);
             QVERIFY(!pitchSlider->property("enabled").toBool());
