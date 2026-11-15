@@ -736,6 +736,14 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
             QCOMPARE(pitchValue->property("text").toString(), secondPitchBeforeUnknownDevice);
 
+            vehicle->sendMavCommand(
+                MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE, false,
+                -2.0f, -2.0f, -1.0f, -1.0f, NAN, NAN, 200);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 800, 3000);
+            QVERIFY(secondGimbal->gimbalHaveControl());
+            QVERIFY(!activeGimbal->gimbalHaveControl());
+
             QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 6000);
