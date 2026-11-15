@@ -355,10 +355,13 @@ void ParameterEditorControllerTest::_onlineTuningRequiresRegisteredSilProfile()
 
     // The default MockLink fixture is not the explicitly identified Flight SIL profile.
     // Selecting a row is allowed, but the online write path must fail closed.
+    QSignalSpy confirmedWriteSpy(&controller, &ParameterEditorController::parameterWriteConfirmed);
+    QVERIFY(confirmedWriteSpy.isValid());
     QVERIFY(!controller.canApplySelectedValue());
     QVERIFY(!controller.canReadbackSelectedValue());
     QVERIFY(!controller.applySelectedValue(QVariant(4002)));
     QVERIFY(!manager->pendingWrites());
+    QCOMPARE(confirmedWriteSpy.count(), 0);
 }
 
 void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure()
