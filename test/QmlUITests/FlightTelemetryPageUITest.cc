@@ -1416,6 +1416,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rightStick->property("verticalValue").toDouble() + 0.25) < 0.0001, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#9DD9D0")), 3000);
+
+            // A set validity bit cannot make an out-of-range normalized axis usable.
+            sendRcInputStatus(1900, bootId, 0x0F, 1.50F, -0.25F, 0.50F, 0.40F, 0);
+            QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(axisRoll->property("displayValue").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!rightStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->property("text").toString().contains(invalidText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+
+            sendRcInputStatus(2000, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F, 0);
+            QTRY_VERIFY_WITH_TIMEOUT(axisRoll->property("valid").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#9DD9D0")), 3000);
+
             QQuickItem* overviewTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
