@@ -827,6 +827,11 @@ bool Fact::vehicleRebootRequired() const
     }
 }
 
+bool Fact::vehicleRebootRequiredKnown() const
+{
+    return _metaData && _metaData->vehicleRebootRequiredKnown();
+}
+
 bool Fact::qgcRebootRequired() const
 {
     if (_metaData) {
