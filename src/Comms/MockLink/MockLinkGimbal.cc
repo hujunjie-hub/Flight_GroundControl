@@ -129,7 +129,7 @@ bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
         (request.target_component != 0 && request.target_component != MAV_COMP_ID_AUTOPILOT1) ||
         (request.gimbal_device_id != 0 && request.gimbal_device_id != kGimbalCompId) ||
-        (request.flags & ~0x7Fu) != 0) {
+        (request.flags & ~0x7Cu) != 0) {
         return false;
     }
 
@@ -137,7 +137,8 @@ bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     // quaternion and expresses pitch/yaw rates in angular_velocity_y/z.
     if (!qIsNaN(request.q[0]) || !qIsNaN(request.q[1]) ||
         !qIsNaN(request.q[2]) || !qIsNaN(request.q[3]) ||
-        (!qIsNaN(request.angular_velocity_x) && !qIsFinite(request.angular_velocity_x)) ||
+        (!qIsNaN(request.angular_velocity_x) &&
+         (!qIsFinite(request.angular_velocity_x) || !qFuzzyIsNull(request.angular_velocity_x))) ||
         (!qIsNaN(request.angular_velocity_y) && !qIsFinite(request.angular_velocity_y)) ||
         (!qIsNaN(request.angular_velocity_z) && !qIsFinite(request.angular_velocity_z))) {
         return false;
