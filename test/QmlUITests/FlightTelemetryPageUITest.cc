@@ -2726,6 +2726,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenancePrearmSummary"), 3000);
             QQuickItem* maintenanceCpu = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceCpuLoad"), 3000);
+            QQuickItem* maintenanceWcet = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceWcet"), 3000);
+            QQuickItem* maintenanceStackFree = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStackFree"), 3000);
+            QQuickItem* maintenanceStorageFree = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStorageFree"), 3000);
+            QQuickItem* maintenanceResourceGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceResourceGrid"), 3000);
             QQuickItem* resourceCoverageRow = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_resourceCoverage"), 3000);
             QQuickItem* healthSafetyPrearm = findVisibleItem(
@@ -2768,6 +2776,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(maintenanceEvent);
             QVERIFY(maintenancePrearm);
             QVERIFY(maintenanceCpu);
+            QVERIFY(maintenanceWcet);
+            QVERIFY(maintenanceStackFree);
+            QVERIFY(maintenanceStorageFree);
+            QVERIFY(maintenanceResourceGrid);
             QVERIFY(resourceCoverageRow);
             QVERIFY(healthSafetyPrearm);
             QTRY_COMPARE_WITH_TIMEOUT(resourceCoverageRow->property("valueText").toString(),
@@ -2802,6 +2814,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmPrimary->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#8A9A94")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePrearm->property("text").toString().contains(
+                                         translatedTelemetryText("1 / 15 有效")), 3000);
+            QVERIFY(!maintenancePrearm->property("text").toString().contains(
+                translatedTelemetryText("通过")));
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceCpu->property("text").toString(),
+                                      translatedTelemetryText("CPU：45.0 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceWcet->property("text").toString(),
+                                      translatedTelemetryText("任务 WCET：1500 μs"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceStackFree->property("text").toString(),
+                                      translatedTelemetryText("系统栈剩余：4096 B"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenanceStorageFree->property("text").toString().contains(staleText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceWcet->property("color").value<QColor>(),
+                                      QColor("#49C7E7"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceStackFree->property("color").value<QColor>(),
+                                      QColor("#49C7E7"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceStorageFree->property("color").value<QColor>(),
+                                      QColor("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceResourceGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("detailText").toString(),
                                       translatedTelemetryText("%1 / 4 有效 · %2 超时 · %3 等待").arg(1).arg(0).arg(3),
                                       3000);
@@ -2902,7 +2932,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             sendPrearmStatus(2000, 1, 3, 2, 0);
             sendResourceStatus(2100, 0, 0x0F);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
-                                      QColor(QStringLiteral("#F06464")), 3000);
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceCpu->property("color").value<QColor>(),
@@ -2920,6 +2950,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             sendResourceStatus(2200, 0, 0x0B);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceCpu->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#8A9A94")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceWcet->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#49C7E7")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceStackFree->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#49C7E7")), 3000);
             resourceCpu = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceCpu_0"), 3000);
             resourceMetrics = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetrics_0"), 3000);
             QVERIFY(resourceCpu);
@@ -3030,6 +3064,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 }
                 return true;
             };
+            const auto maintenanceResourceMetricsFit = [&]() {
+                QQuickItem* metrics[] = {maintenanceCpu, maintenanceWcet, maintenanceStackFree, maintenanceStorageFree};
+                for (QQuickItem* metric : metrics) {
+                    if (!metric) return false;
+                    const QPointF topLeft = metric->mapToItem(maintenanceResourceGrid, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + metric->width() > maintenanceResourceGrid->width() + 1.0 ||
+                        topLeft.y() + metric->height() > maintenanceResourceGrid->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000));
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000));
@@ -3056,6 +3103,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), expectedDetailColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(maintenanceResourceGrid->property("columns").toInt(), 2, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(maintenanceResourceMetricsFit(), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(prearmRow->property("columns").toInt(), widthIndex < 2 ? 12 : 1, 3000);
                 if (widthIndex < 2) {
                     QTRY_COMPARE_WITH_TIMEOUT(prearmId->y(), prearmState->y(), 3000);
@@ -3315,6 +3364,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_prearmChecks").toList().size(), 15, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("text").toString(),
+                                      translatedTelemetryText("%1 / 15 有效 · %2 超时 · %3 未收到")
+                                          .arg(15).arg(0).arg(0), 3000);
             QVariant completePrearmSummary;
             QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
                                               Q_RETURN_ARG(QVariant, completePrearmSummary)));
@@ -3323,6 +3375,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                          .arg(15).arg(0).arg(0).arg(0));
             sendPrearmStatus(2320, 1, 15, 3, 0);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             page->setWidth(1600);
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
