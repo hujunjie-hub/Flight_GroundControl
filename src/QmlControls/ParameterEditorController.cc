@@ -216,7 +216,7 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
     if (_vehicle) {
         connect(_vehicle, &Vehicle::armedChanged, this, [this](bool armed) {
             if (armed) {
-                _invalidatePendingTuningOperation(tr("飞行器已解锁；本次调参结果需在解除锁定后重新回读。"));
+                _invalidatePendingTuningOperation(tr("飞行器解锁状态发生变化；本次调参结果需要重新回读确认。"));
             } else {
                 emit tuningStateChanged();
             }
@@ -936,7 +936,7 @@ void ParameterEditorController::_parameterReadSucceeded(int componentId, const Q
 {
     Q_UNUSED(paramIndex);
     if (!_selectedFact || componentId != _selectedFact->componentId() ||
-        paramName != _selectedFact->name() || (!_readbackPending && !_writeFailureNeedsReadback)) {
+        paramName != _selectedFact->name() || !_readbackPending) {
         return;
     }
 
