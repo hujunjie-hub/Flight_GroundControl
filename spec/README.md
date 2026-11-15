@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.96
+- 版本 4.97
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -260,3 +260,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 总览拓扑矢量几何与节点卡片高 DPI 适配：Canvas 中心、四旋翼线框、六域节点、箭头和标签偏移统一使用 ScreenTools 密度比例；画布高度随字体像素高度增长。六域节点卡片的网格间距、内边距、指示点、内容行距和内容驱动高度统一使用 ScreenTools 字体像素度量；MockLink UI Integration 扩展六断点父子边界和几何缩放断言。按要求未运行 CI，新增回归 NOT_RUN。
+
+
+- 2026-11-15 导航指标层级收口：三项导航估计标准差继续以中性数值为主，状态改用 FamilyStatusBadge；四项导航能力状态由大号文字改为紧凑状态徽标，颜色/文案复用原 capability 与 freshness 门控。新增 1280/1279/760/759 px 及 1600/1672×941 徽标完整边界回归，未运行 CI/Unit/Integration，新增回归 NOT_RUN。
