@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.39
+- 版本：6.40
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页补齐 VehicleLinkManager 全链路通信丢失提示与恢复颜色；保留当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；本轮分离遥控链路主数值与底部详情字段有效性，FCU/地面站接收年龄分别展示；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -926,3 +926,16 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 增加初始时间排序编号、事件更新后的编号重排，以及 1600/1000/900/700/400 px 下编号/标签/时间值边界、两列不重叠和完整时间值宽度断言。
 - 仅调整 FlightTelemetry QML、对应 UI Integration 与本 SPEC/进度登记；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、时间同步服务或飞控控制行为。
 - 按用户要求本轮不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
+
+
+## 65. Phase 2.19 遥控链路主数值与通信详情去重（2026-11-15）
+
+- 遥控与链路页上方「链路质量」主视觉面板是链路数值的唯一主要呈现位置：每个链路实例分别展示 RSSI、链路质量、丢包率和 FCU 数据年龄；前三项分别服从 validityMask 对应 bit 8/9/10 与实例 receiveAgeMs，FCU 数据年龄服从实例 freshness。
+- FCU 上报的链路数据年龄（ageUs）移入上方链路实例指标区，明确标注「FCU 数据年龄」；地面站本地接收年龄（receiveAgeMs）继续独立标注「地面站接收年龄」，两者不可混用。链路原因与地面站接收年龄同处实例上下文行。
+- 下方「通信链路」详情卡不再重复显示 RSSI、质量、丢包率数值；保留 family 消息状态、链路实例新鲜/超时/等待覆盖、实例当前/最近状态、当前/最近原因、指标字段有效性摘要和地面站接收年龄。
+- 指标字段有效性摘要逐实例统计 3 项指标：有效字段显示 N/3；无效字段明确列出 RSSI/链路质量/丢包率；未上报字段单独列出；实例 freshness 等待/超时时显示 freshness 状态，不得把旧指标标记为当前有效。
+- 摘要颜色与实例 freshness/字段值对齐：超时琥珀色、无效字段琥珀色、未上报字段中性灰、有效字段使用中性辅助色。主视觉指标仍保留各字段独立颜色与数值门控。
+- 保留既有 link detail objectName 选择器（包括 flightTelemetry_linkDetailMetrics_*），避免破坏既有 UI Integration 查找路径；该选择器现在承载指标有效性摘要，不再承载重复的指标数值。
+- MockLink UI Integration 经原始 MAVLink wire path 覆盖：新鲜实例 3/3 有效、全字段无效实例 0/3、实例超时后的指标 freshness、FCU 数据年龄从有效值切换为超时状态，以及主视觉指标数值仍正确显示。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、Windows Release 验收指南与 G15 机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、链路状态生成、飞控判定或控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归状态为 NOT_RUN，待后续集中验收。
