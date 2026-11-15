@@ -10,11 +10,38 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isFlight: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
-    // The firmware plugin returns only a uniquely matched, registered model profile.
+    // The firmware plugin exposes only registered SIL-only profiles. The operator binds exactly one
+    // tuning profile; this selection does not change the active Vehicle hardware identity.
     readonly property var _modelProfiles: _activeVehicle ? _activeVehicle.vehicleModelProfiles : []
-    readonly property bool _flightModelAvailable: _modelProfiles.length === 1
-    readonly property int _modelParameterCount: _flightModelAvailable && _modelProfiles[0].parameterNames
-                                                ? _modelProfiles[0].parameterNames.length : 0
+    property int _selectedModelProfileIndex: -1
+    readonly property var _selectedModelProfile: _selectedModelProfileIndex >= 0 &&
+                                                   _selectedModelProfileIndex < _modelProfiles.length
+                                                   ? _modelProfiles[_selectedModelProfileIndex] : null
+    readonly property string _selectedModelProfileId: _selectedModelProfile ? _selectedModelProfile.id : ""
+    readonly property bool _flightModelAvailable: _selectedModelProfile !== null
+    readonly property int _modelParameterCount: _selectedModelProfile && _selectedModelProfile.parameterNames
+                                                ? _selectedModelProfile.parameterNames.length : 0
+
+    function _syncModelProfileSelection(resetSelection) {
+        if (_modelProfiles.length === 0) {
+            _selectedModelProfileIndex = -1
+        } else if (resetSelection || _selectedModelProfileIndex < 0 ||
+                   _selectedModelProfileIndex >= _modelProfiles.length) {
+            _selectedModelProfileIndex = 0
+        }
+    }
+
+    Component.onCompleted: _syncModelProfileSelection(true)
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        function onActiveVehicleChanged() { root._syncModelProfileSelection(true) }
+    }
+
+    Connections {
+        target: root._activeVehicle
+        function onVehicleModelProfilesChanged() { root._syncModelProfileSelection(false) }
+    }
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
                                               !_activeVehicle.parameterManager.missingParameters
@@ -186,16 +213,23 @@ Item {
                                     Layout.preferredHeight: 30
                                     model: root._modelProfiles
                                     textRole: "displayName"
-                                    currentIndex: root._flightModelAvailable ? 0 : -1
-                                    // The profile is detected from firmware identity; manual switching is not supported yet.
-                                    enabled: false
+                                    currentIndex: root._selectedModelProfileIndex
+                                    // Selects one registered parameter-tuning profile; does not change the Vehicle hardware type.
+                                    enabled: root._modelProfiles.length > 0
+                                    onActivated: index => {
+                                        root._selectedModelProfileIndex = index
+                                        if (dashboardLoader.item &&
+                                            typeof dashboardLoader.item.syncParameterDomain === "function") {
+                                            dashboardLoader.item.syncParameterDomain()
+                                        }
+                                    }
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     contentItem: QGCLabel {
                                         anchors.fill: parent
                                         anchors.leftMargin: 8
                                         anchors.rightMargin: 26
-                                        text: root._flightModelAvailable ? modelProfileSelector.currentText : qsTr("实机模型未登记")
-                                        color: root._flightModelAvailable ? root.cyan : root.mutedText
+                                        text: root._selectedModelProfile ? modelProfileSelector.currentText : qsTr("未登记可调机型")
+                                        color: root._selectedModelProfile ? root.cyan : root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                         verticalAlignment: Text.AlignVCenter
                                         elide: Text.ElideRight
@@ -204,7 +238,7 @@ Item {
                                         radius: 5
                                         color: "#06202A"
                                         border.width: 1
-                                        border.color: root._flightModelAvailable ? root.cyan : "#16424C"
+                                        border.color: root._selectedModelProfile ? root.cyan : "#16424C"
                                     }
                                 }
                             }
@@ -706,6 +740,7 @@ Item {
                                     ParameterEditor {
                                         externalCategoryNavigation: true
                                         parameterCenterSafeMode: true
+                                        selectedModelProfileId: root._selectedModelProfileId
                                         enabled: root._flightModelAvailable && root._linkHealthy && root._parametersReady &&
                                                  dashboardRoot.parameterDomainAvailable && !dashboardRoot.tuningBusy
                                     }
@@ -714,6 +749,7 @@ Item {
                                 Connections {
                                     target: QGroundControl.multiVehicleManager
                                     function onActiveVehicleChanged(vehicle) {
+                                        root._syncModelProfileSelection(true)
                                         // ParameterEditorController captures activeVehicle at construction.
                                         dashboardRoot.parameterDomainAvailable = false
                                         parameterEditorLoader.sourceComponent = undefined
@@ -724,6 +760,7 @@ Item {
                                 Connections {
                                     target: root._activeVehicle
                                     function onVehicleModelProfilesChanged() {
+                                        root._syncModelProfileSelection(false)
                                         dashboardRoot.syncParameterDomain()
                                     }
                                 }
