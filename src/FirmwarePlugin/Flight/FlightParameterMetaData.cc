@@ -94,15 +94,37 @@ bool validRuleArray(const QJsonValue &value, QVariantList &rules)
     if (!value.isArray()) {
         return false;
     }
+
+    static const QSet<QString> numericRuleTypes {
+        QStringLiteral("GREATER_THAN"),
+        QStringLiteral("GREATER_THAN_OR_EQUAL"),
+        QStringLiteral("LESS_THAN"),
+        QStringLiteral("LESS_THAN_OR_EQUAL"),
+        QStringLiteral("MULTIPLE_OF")
+    };
+
     for (const QJsonValue &entry : value.toArray()) {
         if (!entry.isObject()) {
             return false;
         }
-        const QString type = entry.toObject().value(QStringLiteral("type")).toString().trimmed();
-        if (type.isEmpty()) {
+        const QJsonObject rule = entry.toObject();
+        const QString type = rule.value(QStringLiteral("type")).toString();
+        const QJsonValue ruleValue = rule.value(QStringLiteral("value"));
+        if (numericRuleTypes.contains(type)) {
+            if (rule.size() != 2 || !ruleValue.isDouble() || !std::isfinite(ruleValue.toDouble()) ||
+                (type == QStringLiteral("MULTIPLE_OF") && ruleValue.toDouble() <= 0.0)) {
+                return false;
+            }
+        } else if (type == QStringLiteral("REQUIRES_PARAMETER_VALUE")) {
+            const QString parameter = rule.value(QStringLiteral("parameter")).toString();
+            if (rule.size() != 3 || parameter.isEmpty() || parameter != parameter.trimmed() ||
+                !ruleValue.isDouble() || !std::isfinite(ruleValue.toDouble())) {
+                return false;
+            }
+        } else {
             return false;
         }
-        rules.append(entry.toObject().toVariantMap());
+        rules.append(rule.toVariantMap());
     }
     return true;
 }
@@ -144,11 +166,13 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
 
     // Reject every occurrence of an ambiguous name, not merely the second one.
     QHash<QString, int> nameOccurrences;
+    QSet<QString> declaredParameterNames;
     for (const QJsonValue &value : parameters) {
         if (value.isObject()) {
             const QString name = value.toObject().value(QStringLiteral("name")).toString().trimmed();
             if (!name.isEmpty()) {
                 ++nameOccurrences[name];
+                declaredParameterNames.insert(name);
             }
         }
     }
@@ -192,14 +216,29 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         QStringList modelProfiles;
         QStringList dependencies;
         QVariantList validationRules;
+        const bool validDependencyList =
+            readUniqueStringList(entry.value(QStringLiteral("dependencies")), dependencies, true) &&
+            !dependencies.contains(name) &&
+            std::all_of(dependencies.cbegin(), dependencies.cend(), [&declaredParameterNames](const QString &dependency) {
+                return declaredParameterNames.contains(dependency);
+            });
+        const bool validRules = validRuleArray(entry.value(QStringLiteral("validationRules")), validationRules) &&
+            std::all_of(validationRules.cbegin(), validationRules.cend(),
+                         [&dependencies, &declaredParameterNames](const QVariant &ruleValue) {
+                const QVariantMap rule = ruleValue.toMap();
+                if (rule.value(QStringLiteral("type")).toString() != QStringLiteral("REQUIRES_PARAMETER_VALUE")) {
+                    return true;
+                }
+                const QString parameter = rule.value(QStringLiteral("parameter")).toString();
+                return declaredParameterNames.contains(parameter) && dependencies.contains(parameter);
+            });
         const bool validApplicability =
             !vehicleFamily.trimmed().isEmpty() && vehicleFamily == vehicleFamily.trimmed() &&
             !controlLaw.trimmed().isEmpty() && controlLaw == controlLaw.trimmed() &&
             validSourceMetadata(entry) &&
             readUniqueStringList(entry.value(QStringLiteral("modelVariants")), modelVariants) &&
             readUniqueStringList(entry.value(QStringLiteral("modelProfiles")), modelProfiles) &&
-            readUniqueStringList(entry.value(QStringLiteral("dependencies")), dependencies, true) &&
-            validRuleArray(entry.value(QStringLiteral("validationRules")), validationRules);
+            validDependencyList && validRules;
         const bool validPolicy =
             supportedTuningPolicies().contains(tuningPolicy) &&
             supportedUpdatePolicies().contains(updatePolicy) &&
