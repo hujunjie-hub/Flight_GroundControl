@@ -288,6 +288,13 @@ SetupPage {
         if (_familyStatus("storageAvailable") !== qsTr("已接收")) return _familyStatus("storageAvailable")
         return _validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
     }
+    function _storageFreeColor() {
+        const familyStatus = _familyStatus("storageAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("storageAvailable")
+        const value = Number(_fact("storageFreeKib"))
+        return _rawMaskState(_fact("storageValidityMask"), 2) === 1 &&
+                Number.isFinite(value) && value >= 0 ? "#49C7E7" : "#8A9A94"
+    }
     function _storageTrendSampleValue() {
         if (_familyStatus("storageAvailable") !== qsTr("已接收") ||
                 _rawMaskState(_fact("storageValidityMask"), 2) !== 1) return null
@@ -376,6 +383,22 @@ SetupPage {
         const missing = Math.max(0, 15 - checks.length)
         return qsTr("%1 / 15 有效 · %2 超时 · %3 未收到")
                 .arg(fresh).arg(stale).arg(waiting + missing)
+    }
+    function _prearmCheckCoverageColor() {
+        const familyStatus = _familyStatus("prearmAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("prearmAvailable")
+        const checks = _prearmChecks
+        if (checks.length === 0) return "#8A9A94"
+        let fresh = 0, stale = 0, waiting = 0
+        for (let index = 0; index < checks.length; ++index) {
+            const status = _prearmCheckStatus(checks[index])
+            if (status === qsTr("已接收")) ++fresh
+            else if (status === qsTr("数据超时")) ++stale
+            else ++waiting
+        }
+        if (stale > 0) return "#F0B94B"
+        if (waiting > 0 || fresh !== 15 || checks.length !== 15) return "#8A9A94"
+        return "#45D39A"
     }
     function _latestEventSummaryText() {
         if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
@@ -2771,19 +2794,61 @@ SetupPage {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 3
-                        QGCLabel { text: qsTr("预检与系统资源"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
+                        QGCLabel { text: qsTr("预检覆盖与资源快照"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
+                        QGCLabel {
+                            text: qsTr("预检覆盖")
+                            color: "#A8BBC3"
+                            font.pointSize: ScreenTools.microFontPointSize
+                        }
                         QGCLabel {
                             objectName: "flightTelemetry_healthMaintenancePrearmSummary"
                             Layout.fillWidth: true
-                            text: root._prearmSummaryText()
-                            color: root._prearmSummaryColor()
+                            text: root._prearmCheckCoverageText()
+                            color: root._prearmCheckCoverageColor()
                             wrapMode: Text.WordWrap
                         }
-                        QGCLabel {
-                            objectName: "flightTelemetry_healthMaintenanceCpuLoad"
-                            text: qsTr("系统汇总 CPU：%1").arg(root._resourceCpuLoadText())
-                            color: root._resourceMetricColor("cpuLoadPermille", 2)
-                            font.pointSize: ScreenTools.captionFontPointSize
+                        GridLayout {
+                            objectName: "flightTelemetry_healthMaintenanceResourceGrid"
+                            Layout.fillWidth: true
+                            columns: 2
+                            columnSpacing: 10
+                            rowSpacing: 3
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceCpuLoad"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: qsTr("CPU：%1").arg(root._resourceCpuLoadText())
+                                color: root._resourceMetricColor("cpuLoadPermille", 2)
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceWcet"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: qsTr("任务 WCET：%1").arg(root._resourceMetricText("wcetUs", 0, 0, " μs"))
+                                color: root._resourceMetricColor("wcetUs", 0)
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceStackFree"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: qsTr("系统栈剩余：%1").arg(root._resourceMetricText("stackFreeBytes", 1, 0, " B"))
+                                color: root._resourceMetricColor("stackFreeBytes", 1)
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceStorageFree"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: qsTr("存储剩余：%1").arg(root._storageFreeText())
+                                color: root._storageFreeColor()
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
                         }
                     }
                 }
