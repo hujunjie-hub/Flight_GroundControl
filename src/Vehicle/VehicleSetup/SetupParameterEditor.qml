@@ -147,9 +147,9 @@ Item {
                         return
                     }
 
-                    const timestampText = telemetry.getFact("controlTimeBootUs").valueString
+                    const timestamp = Number(telemetry.getFact("controlTimeBootUs").value)
+                    const timestampText = String(timestamp)
                     const bootIdText = telemetry.getFact("controlBootId").valueString
-                    const timestamp = Number(timestampText)
                     if (!Number.isFinite(timestamp) || timestamp <= 0) {
                         return
                     }
