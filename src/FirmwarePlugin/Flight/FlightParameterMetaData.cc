@@ -200,7 +200,9 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             !validNumericField(entry, QStringLiteral("max")) ||
             !validNumericField(entry, QStringLiteral("default")) ||
             (entry.contains(QStringLiteral("writeOnly")) &&
-             !entry.value(QStringLiteral("writeOnly")).isBool()) ||
+             (!entry.value(QStringLiteral("writeOnly")).isBool() ||
+              (entry.value(QStringLiteral("writeOnly")).toBool() &&
+               entry.value(QStringLiteral("readOnly")).toBool()))) ||
             (entry.contains(QStringLiteral("decimalPlaces")) &&
              (!entry.value(QStringLiteral("decimalPlaces")).isDouble() ||
               entry.value(QStringLiteral("decimalPlaces")).toInt(-1) < 0 ||
