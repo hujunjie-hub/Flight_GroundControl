@@ -400,6 +400,15 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 验收门槛：图表来源明确、无效数据不伪造连续性、仿真与实测清晰区分、影响分析可追溯。
 
+### Phase 4 实施记录（首轮实测控制遥测趋势）
+
+- 参数中心响应面板开始接入 Vehicle.flightTelemetry 的真实 FCU_CONTROL_STATUS 数据，采集 controlTimeBootUs、controlBootId 和 controlSolveTimeUs。
+- 仅在 controlAvailable 为真且收到新的飞控时间戳时采样；最多保留最近 120 个有效样本，不用地面站定时器重复采样旧值。
+- 控制器 boot ID 变化、飞控时间戳回退或活动飞行器切换时清空历史样本，避免跨启动/跨飞行器拼接曲线。
+- 当前曲线明确标记为“控制求解耗时”，显示最近真实值；控制遥测失效时标注历史样本，样本不足两个时显示等待态。
+- 该曲线是控制计算耗时趋势，不冒充参数目标/反馈误差响应曲线；参数变化标记、实际反馈、仿真预测、仿真接口、影响关系和 AI 建议仍待后续实现。
+- 本轮未运行 Windows 构建、QML UI 测试、单元测试或 CI，所有运行时验收保持 NOT_RUN。
+
 ### Phase 5：视觉收口与集中验收
 
 - 按 1672 × 941 参考图完成截图叠加和区域级对比。
@@ -520,7 +529,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
 - Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
 - Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
-- Phase 4：NOT_RUN。
+- Phase 4：PARTIAL（已接入基于 FCU_CONTROL_STATUS 的真实控制求解耗时趋势、有效样本去重、boot/时间戳重置和活动飞行器切换清空；参数目标/反馈响应、仿真、影响分析和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：NOT_RUN。
 
 本规范是参数中心 3.0 后续设计、实现和验收的唯一基线。若用户确认新的视觉变化，必须先更新本规范和参考图，再修改实现。
