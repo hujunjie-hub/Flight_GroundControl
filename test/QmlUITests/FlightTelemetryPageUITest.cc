@@ -177,6 +177,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_canvas"), 3000);
             QQuickItem* trendPositionTimeAxis =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_timeAxis"), 3000);
+            QQuickItem* trendPositionGaps =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_gaps"), 3000);
+            QQuickItem* trendPositionSampleState =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_sampleState"), 3000);
             QQuickItem* trendVelocity =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_velocity"), 3000);
             QQuickItem* trendHeading =
@@ -431,6 +435,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto trendFooterItemsFit = [&]() {
+                for (QQuickItem* item : {trendPositionGaps, trendPositionSampleState}) {
+                    if (!item || !item->isVisible()) return false;
+                    const QPointF topLeft = item->mapToItem(trendPosition, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + item->width() > trendPosition->width() + 1.0 ||
+                        topLeft.y() + item->height() > trendPosition->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
             const auto summaryTilesFit = [&]() {
                 const QPointF gridTopLeft = summaryGrid->mapToItem(summaryBand, 0, 0);
                 if (gridTopLeft.x() < 0 || gridTopLeft.y() < 0 ||
@@ -509,6 +526,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendFooterItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroNavigation->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroRcInput->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->x() < heroNavigation->x(), 3000);
@@ -588,6 +606,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendFooterItemsFit(), 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
                                       page->property("_dashboardColumns").toInt(), 3000);
@@ -698,8 +717,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
             QVERIFY(!trendPosition->property("hasRenderableSeries").toBool());
             QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
+            QCOMPARE(trendPositionGaps->property("text").toString(), translatedTelemetryText("断点 %1").arg(0));
+            QCOMPARE(trendPositionGaps->property("color").value<QColor>(), QColor(QStringLiteral("#688A94")));
+            QCOMPARE(trendPositionSampleState->property("text").toString(), QStringLiteral("WAIT"));
             QVERIFY(trendPositionCanvas);
             QVERIFY(trendPositionTimeAxis);
+            QVERIFY(trendPositionGaps);
+            QVERIFY(trendPositionSampleState);
+            QCOMPARE(trendPositionGaps->property("text").toString(), translatedTelemetryText("断点 %1").arg(0));
+            QCOMPARE(trendPositionGaps->property("color").value<QColor>(), QColor(QStringLiteral("#688A94")));
+            QCOMPARE(trendPositionSampleState->property("text").toString(), QStringLiteral("WAIT"));
             QQuickItem* trendPositionScale =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_scale"));
             QVERIFY(trendPositionScale);
@@ -1667,6 +1694,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
                     .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendPosition->property("lastSampleValid").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("gapCount").toInt() >= 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("text").toString(),
+                                      translatedTelemetryText("断点 %1")
+                                          .arg(trendPosition->property("gapCount").toInt()), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionSampleState->property("text").toString(), QStringLiteral("GAP"), 3000);
             // RC input uses a longer 5500 ms family freshness window.
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), staleText, 6500);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), staleText, 3000);
@@ -1704,6 +1738,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(
                 topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
                     .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionSampleState->property("text").toString(), QStringLiteral("NOW"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("gapCount").toInt() >= 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("text").toString(),
+                                      translatedTelemetryText("断点 %1")
+                                          .arg(trendPosition->property("gapCount").toInt()), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
 
             // A new FCU boot epoch clears the local trend buffer before new-session samples are appended.
             const int previousBootTrendSampleCount = trendPosition->property("sampleCount").toInt();
