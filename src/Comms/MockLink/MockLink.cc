@@ -3348,6 +3348,11 @@ void MockLink::simulateConnectionRemoved()
     _connectionRemoved();
 }
 
+bool MockLink::setGimbalDeviceOnlineForTesting(uint8_t gimbalDeviceId, bool online)
+{
+    return _mockLinkGimbal && _mockLinkGimbal->setSimulatedDeviceOnline(gimbalDeviceId, online);
+}
+
 MockLinkFTP *MockLink::mockLinkFTP() const
 {
     return _mockLinkFTP;
