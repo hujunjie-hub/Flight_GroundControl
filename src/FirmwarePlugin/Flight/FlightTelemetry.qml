@@ -2961,6 +2961,7 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_healthHeadline"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: root._healthHeadline()
                         color: root._communicationLost ? "#F06464" : "#E2ECEF"
                         typographyRole: "hero"
@@ -2969,6 +2970,7 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_healthCommunicationNote"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         visible: root._communicationLost
                         text: qsTr("链路心跳已丢失；各遥测域仍按独立接收年龄判定，缓存状态不代表链路在线。")
                         color: "#F0B94B"
@@ -2988,7 +2990,7 @@ SetupPage {
                         objectName: "flightTelemetry_healthPrimaryGrid"
                         Layout.fillWidth: true
                         columns: 1
-                        rowSpacing: 6
+                        rowSpacing: root._dashboardPanelBodySpacing
                         Repeater {
                             model: [
                                 { label: qsTr("飞控系统"), family: "operation", available: "operationAvailable" },
@@ -3019,8 +3021,8 @@ SetupPage {
                         objectName: "flightTelemetry_healthPageMatrixGrid"
                         Layout.fillWidth: true
                         columns: root._healthPageColumns
-                        columnSpacing: 7
-                        rowSpacing: 7
+                        columnSpacing: root._dashboardPanelBodySpacing
+                        rowSpacing: root._dashboardPanelBodySpacing
                         Repeater {
                             model: root._healthDomains
                             delegate: HealthCell {
@@ -3036,7 +3038,7 @@ SetupPage {
                     RowLayout {
                         objectName: "flightTelemetry_healthFreshnessLegend"
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: root._dashboardPanelHeaderSpacing
                         Repeater {
                             model: [
                                 { key: "received", color: "#45D39A", text: qsTr("已接收") },
@@ -3046,8 +3048,13 @@ SetupPage {
                             delegate: RowLayout {
                                 required property var modelData
                                 objectName: "flightTelemetry_healthLegend_" + modelData.key
-                                spacing: 4
-                                Rectangle { Layout.preferredWidth: 8; Layout.preferredHeight: 8; radius: 4; color: modelData.color }
+                                spacing: root._dashboardPanelBodySpacing * 0.45
+                                Rectangle {
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.42
+                                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.42
+                                    radius: width / 2
+                                    color: modelData.color
+                                }
                                 QGCLabel {
                                     objectName: "flightTelemetry_healthLegendLabel_" + modelData.key
                                     text: modelData.text
@@ -3060,6 +3067,7 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_healthMatrixLegendNote"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: qsTr("矩阵仅反映 13 类遥测消息的可用性与接收新鲜度；传感器健康、字段有效性、预检结果及故障原因以对应明细为准。")
                         color: "#8298A2"
                         font.pointSize: ScreenTools.microFontPointSize
@@ -3112,7 +3120,7 @@ SetupPage {
                 objectName: "flightTelemetry_healthMaintenanceGrid"
                 visible: root._activeDashboardPage === 1
                 Layout.fillWidth: true
-                implicitHeight: maintenanceRow.implicitHeight + 18
+                implicitHeight: maintenanceRow.implicitHeight + root._dashboardPanelPadding * 2
                 radius: 8
                 color: "#06232B"
                 border.width: 1
@@ -3121,30 +3129,38 @@ SetupPage {
                     id: maintenanceRow
                     objectName: "flightTelemetry_healthMaintenanceContent"
                     anchors.fill: parent
-                    anchors.margins: 10
+                    anchors.margins: root._dashboardPanelPadding
                     columns: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 2 : 1
-                    columnSpacing: 12
-                    rowSpacing: 8
+                    columnSpacing: root._dashboardGridSpacing
+                    rowSpacing: root._dashboardPanelBodySpacing
                     ColumnLayout {
+                        objectName: "flightTelemetry_healthMaintenanceIdentityColumn"
                         Layout.fillWidth: true
-                        spacing: 3
+                        Layout.minimumWidth: 0
+                        spacing: root._dashboardPanelBodySpacing
                         QGCLabel { text: qsTr("维护与可靠性"); color: "#E2ECEF"; typographyRole: "title" }
                         QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
                         QGCLabel {
                             objectName: "flightTelemetry_healthMaintenanceBootId"
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             text: qsTr("启动 ID：%1").arg(root._familyFreshValue("operationAvailable",
                                 String(root._fact("opBootIdHex") || qsTr("未上报"))))
                             color: "#A8BBC3"
                             font.pointSize: ScreenTools.captionFontPointSize
+                            wrapMode: Text.WrapAnywhere
                         }
                     }
                     ColumnLayout {
+                        objectName: "flightTelemetry_healthMaintenanceEventColumn"
                         Layout.fillWidth: true
-                        spacing: 3
+                        Layout.minimumWidth: 0
+                        spacing: root._dashboardPanelBodySpacing
                         QGCLabel { text: qsTr("最近异常"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
                         QGCLabel {
                             objectName: "flightTelemetry_healthMaintenanceEventSummary"
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             text: root._latestEventSummaryText()
                             color: root._latestEventSummaryColor()
                             wrapMode: Text.WordWrap
@@ -3152,8 +3168,10 @@ SetupPage {
                         QGCLabel { text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event")); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
                     }
                     ColumnLayout {
+                        objectName: "flightTelemetry_healthMaintenanceResourceColumn"
                         Layout.fillWidth: true
-                        spacing: 3
+                        Layout.minimumWidth: 0
+                        spacing: root._dashboardPanelBodySpacing
                         QGCLabel { text: qsTr("预检覆盖与资源快照"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
                         QGCLabel {
                             text: qsTr("预检覆盖")
@@ -3163,6 +3181,7 @@ SetupPage {
                         QGCLabel {
                             objectName: "flightTelemetry_healthMaintenancePrearmSummary"
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             text: root._prearmCheckCoverageText()
                             color: root._prearmCheckCoverageColor()
                             wrapMode: Text.WordWrap
@@ -3171,8 +3190,8 @@ SetupPage {
                             objectName: "flightTelemetry_healthMaintenanceResourceGrid"
                             Layout.fillWidth: true
                             columns: 2
-                            columnSpacing: 10
-                            rowSpacing: 3
+                            columnSpacing: root._dashboardMetricTileGap
+                            rowSpacing: root._dashboardMetricTileGap
                             QGCLabel {
                                 objectName: "flightTelemetry_healthMaintenanceCpuLoad"
                                 Layout.fillWidth: true
@@ -4445,8 +4464,8 @@ SetupPage {
                         objectName: "flightTelemetry_prearmMetadataGrid"
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 760 ? 2 : 1
-                        columnSpacing: 12
-                        rowSpacing: 2
+                        columnSpacing: root._dashboardPanelHeaderSpacing
+                        rowSpacing: root._dashboardPanelBodySpacing
                         TelemetryRow {
                             Layout.fillWidth: true
                             labelText: qsTr("消息")
@@ -5357,9 +5376,11 @@ SetupPage {
 
         readonly property string statusText: root._familyStatus(availableFact)
         readonly property color statusColor: root._familyStatusColor(availableFact)
+        readonly property real contentInset: root._dashboardPanelPadding
 
         implicitWidth: 150
-        implicitHeight: 54
+        implicitHeight: Math.max(ScreenTools.defaultFontPixelHeight * 3.3,
+                                 healthCellContent.implicitHeight + contentInset * 2)
         radius: 6
         color: "#082B33"
         border.width: 1
@@ -5376,31 +5397,40 @@ SetupPage {
         }
 
         ColumnLayout {
+            id: healthCellContent
+            objectName: healthCell.objectName + "_content"
             anchors.fill: parent
-            anchors.margins: 7
-            spacing: 2
+            anchors.margins: healthCell.contentInset
+            spacing: root._dashboardPanelBodySpacing * 0.45
             RowLayout {
                 Layout.fillWidth: true
+                spacing: root._dashboardPanelHeaderSpacing * 0.5
                 QGCLabel {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: healthCell.labelText
                     color: "#DCE8ED"
                     font.pointSize: ScreenTools.secondaryFontPointSize
                     font.weight: ScreenTools.strongFontWeight
+                    wrapMode: Text.WordWrap
                 }
                 QGCLabel {
+                    Layout.minimumWidth: 0
                     text: healthCell.statusText
                     color: healthCell.statusColor
                     font.pointSize: ScreenTools.microFontPointSize
+                    wrapMode: Text.WordWrap
                 }
             }
             QGCLabel {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: healthCell.familyName === "event"
                       ? qsTr("异步事件 · %1").arg(root._receiveAgeText("event"))
                       : qsTr("接收 %1").arg(root._receiveAgeText(healthCell.familyName))
                 color: "#8298A2"
                 font.pointSize: ScreenTools.microFontPointSize
+                wrapMode: Text.WordWrap
             }
         }
     }
