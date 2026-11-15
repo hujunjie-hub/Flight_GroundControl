@@ -96,6 +96,7 @@ Item {
             property string parameterChangeSummary: ""
             property string lastControlTimestamp: ""
             property string lastControlBootId: ""
+            property string lastControlProfileId: ""
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
             readonly property bool controlTelemetryAvailable: {
                 const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
@@ -158,7 +159,7 @@ Item {
             }
 
             function recordParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
-                if (lastControlBootId === "" || lastControlTimestamp === "") {
+                if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
                     parameterChangeSummary = qsTr("参数 %1 已收到 PARAM_VALUE 确认；当前没有同一启动会话的遥测基线，未标记曲线")
                                                  .arg(parameterName)
                     return
@@ -170,6 +171,7 @@ Item {
                     name: parameterName,
                     value: String(confirmedValue),
                     bootId: lastControlBootId,
+                    profileId: lastControlProfileId,
                     afterTimestamp: Number(lastControlTimestamp)
                 })
                 if (pending.length > 16) {
@@ -189,6 +191,7 @@ Item {
                 if (!telemetry || !telemetry.factExists("controlAvailable") ||
                     !telemetry.factExists("controlTimeBootUs") ||
                     !telemetry.factExists("controlBootId") ||
+                    !telemetry.factExists("controlProfileId") ||
                     !telemetry.factExists("controlSolveTimeUs") ||
                     !telemetry.getFact("controlAvailable").value ||
                     telemetry.familyStale["control"] !== false) {
@@ -198,13 +201,17 @@ Item {
                 const timestamp = Number(telemetry.getFact("controlTimeBootUs").value)
                 const timestampText = String(timestamp)
                 const bootIdText = telemetry.getFact("controlBootId").valueString
-                if (!Number.isFinite(timestamp) || timestamp <= 0 || bootIdText === "") {
+                const profileIdText = telemetry.getFact("controlProfileId").valueString
+                if (!Number.isFinite(timestamp) || timestamp <= 0 ||
+                    bootIdText === "" || profileIdText === "") {
                     return
                 }
 
                 const sessionChanged =
                     (dashboardRoot.lastControlBootId !== "" &&
                      bootIdText !== dashboardRoot.lastControlBootId) ||
+                    (dashboardRoot.lastControlProfileId !== "" &&
+                     profileIdText !== dashboardRoot.lastControlProfileId) ||
                     (dashboardRoot.lastControlTimestamp !== "" &&
                      timestamp <= Number(dashboardRoot.lastControlTimestamp))
                 if (sessionChanged) {
@@ -216,7 +223,7 @@ Item {
                     dashboardRoot.lastControlTimestamp = ""
                     if (hadParameterMarkers) {
                         dashboardRoot.parameterChangeSummary =
-                            qsTr("飞控启动会话或时间戳发生变化，已清空旧参数确认标记")
+                            qsTr("飞控启动会话、控制配置或时间戳发生变化，已清空旧参数确认标记")
                     }
                 }
                 if (timestampText === dashboardRoot.lastControlTimestamp) {
@@ -239,7 +246,7 @@ Item {
                 const correlated = []
                 for (let i = 0; i < pending.length; i++) {
                     const marker = pending[i]
-                    if (marker.bootId !== bootIdText) {
+                    if (marker.bootId !== bootIdText || marker.profileId !== profileIdText) {
                         continue
                     }
                     if (timestamp > marker.afterTimestamp) {
@@ -271,6 +278,7 @@ Item {
                 dashboardRoot.responseSamples = samples
                 dashboardRoot.lastControlTimestamp = timestampText
                 dashboardRoot.lastControlBootId = bootIdText
+                dashboardRoot.lastControlProfileId = profileIdText
                 responseCanvas.requestPaint()
             }
 
@@ -947,6 +955,7 @@ Item {
                                         dashboardRoot.parameterChangeSummary = qsTr("飞行器已切换，已清空遥测与参数确认标记")
                                         dashboardRoot.lastControlTimestamp = ""
                                         dashboardRoot.lastControlBootId = ""
+                                        dashboardRoot.lastControlProfileId = ""
                                         parameterEditorLoader.sourceComponent = undefined
                                         parameterEditorLoader.sourceComponent = parameterEditorComponent
                                     }
