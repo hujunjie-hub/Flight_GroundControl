@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.11  
+版本：4.12  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -403,3 +403,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 维护横条事件颜色与最新严重度一致；预检颜色仅在 15/15 新鲜且全通过时为绿，失败红、警告/超时琥珀、等待/不完整中性。
 - CPU/WCET/栈/AXI 颜色只表示测量字段有效性：有效青色、无效中性灰、过期琥珀，不代表负载健康阈值。
 - FlightTelemetryPageUITest 对应断言本轮 NOT_RUN，按用户要求留待集中 CI/本地验证。
+
+
+### G15 RC 页面 400 px 双摇杆边界补充（2026-11-15）
+
+- 在 1000/900/700/400 px 断点逐一验证遥控输入、逻辑通道、链路质量、失效保护四个面板垂直排列、统一左边界和等宽。
+- 左右摇杆必须完整位于遥控输入监视面板内部并保持并排；不允许越界、裁切或因窄屏丢失摇杆。
+- 对应断言位于 FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts；本轮不运行 CI，集中验收执行。

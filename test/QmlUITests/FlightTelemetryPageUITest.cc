@@ -1909,6 +1909,41 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         }
                         QTRY_VERIFY_WITH_TIMEOUT(
                             qAbs(diagnosticCardItems[1]->width() - diagnosticCardItems[8]->width()) < 1.0, 3000);
+                    } else if (pageIndex == 3) {
+                        QQuickItem* rcPanels[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcStickMonitor"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000)};
+                        QQuickItem* leftStickAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
+                        QQuickItem* rightStickAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
+                        for (QQuickItem* panel : rcPanels) QVERIFY(panel);
+                        QVERIFY(leftStickAtWidth);
+                        QVERIFY(rightStickAtWidth);
+                        for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[panelIndex - 1]->y() < rcPanels[panelIndex]->y(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(rcPanels[panelIndex - 1]->x() - rcPanels[panelIndex]->x()) < 1.0, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(rcPanels[panelIndex - 1]->width() - rcPanels[panelIndex]->width()) < 1.0, 3000);
+                        }
+                        const auto itemFitsInPanel = [](QQuickItem* item, QQuickItem* panel) {
+                            const auto topLeft = item->mapToItem(panel, 0, 0);
+                            return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                                   topLeft.x() + item->width() <= panel->width() + 1.0 &&
+                                   topLeft.y() + item->height() <= panel->height() + 1.0;
+                        };
+                        QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(leftStickAtWidth, rcPanels[0]), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(rightStickAtWidth, rcPanels[0]), 3000);
+                        const auto sticksRemainSideBySide = [&]() {
+                            const auto leftTopLeft = leftStickAtWidth->mapToItem(rcPanels[0], 0, 0);
+                            const auto rightTopLeft = rightStickAtWidth->mapToItem(rcPanels[0], 0, 0);
+                            return qAbs(leftTopLeft.y() - rightTopLeft.y()) < 1.0 &&
+                                   leftTopLeft.x() < rightTopLeft.x();
+                        };
+                        QTRY_VERIFY_WITH_TIMEOUT(sticksRemainSideBySide(), 3000);
                     }
                 }
                 QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));

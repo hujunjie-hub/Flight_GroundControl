@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.19
+- 版本：6.20
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；本轮飞行健康页补齐存储/预检元数据 freshness、预检行响应式布局、维护摘要严重度语义和资源字段有效性颜色；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；飞行健康页存储/预检 freshness 与严重度语义已补齐；本轮补齐 RC 页面 400 px 四面板和双摇杆边界回归；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -746,7 +746,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 不改变 SYS_STATUS 协议、VehicleLinkManager 丢包判定、ARM/Permit/FMS/执行器权限；本轮不运行 Unit、Integration、Windows Release 或 CI，新增回归为 NOT_RUN。
 
 
-## 46. Phase 2.9 遥控链路实例指标窄屏重排（2026-11-15）
+## 47. Phase 2.9 遥控链路实例指标窄屏重排（2026-11-15）
 
 - 每条链路的 RSSI、链路质量、丢包率三个指标格按内容宽度响应式排列：>=760 px 三列，420–759 px 两列，<420 px 单列。
 - 两列布局中丢包率指标跨两列占满第二行，避免产生半行空白；单列布局中三个指标各占整行。
@@ -755,7 +755,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 GroundControl QML 布局、UI Integration 和 SPEC/G15；不修改链路协议、FactGroup、链路状态语义或飞控控制行为。本轮不运行 CI，回归待集中验收。
 
 
-## 47. Phase 2.10 飞行健康页 freshness 与状态表达补强（2026-11-15）
+## 48. Phase 2.10 飞行健康页 freshness 与状态表达补强（2026-11-15）
 
 - 存储卡的 SD/NOR 状态、剩余空间、事件/日志丢弃计数、设置代次、原因和 FCU 发布时间统一受 storageAvailable family freshness 门控；字段本身继续遵守 storageValidityMask。family 等待或超时后不得展示旧启动周期或旧消息缓存值。
 - 预检卡的检查代次、适用模式掩码、最近检查原因和 FCU 发布时间统一受 prearmAvailable family freshness 门控；逐项 checkId 的 receiveAgeMs 规则保持不变。
@@ -765,3 +765,11 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 安全监测中的预检摘要与维护横条使用同一预检状态颜色 helper，避免同一数据在同页出现冲突颜色。
 - MockLink UI Integration 覆盖 storage 新鲜无效 → family 超时、prearm 元数据超时、事件严重度颜色、预检未完整/失败/警告/超时颜色、资源 CPU 有效/无效字段颜色，以及 1600/1000/900/700/400 px 的预检行布局。
 - 仅修改飞行健康页 QML、对应 UI Integration 断言与 SPEC/验收清单；不修改 MAVLink、FactGroup、Flight ICD、数据 freshness 阈值、控制行为或只读边界。本轮不运行 CI，新增断言状态 NOT_RUN，等待集中验收。
+
+
+## 49. RC 页面 400 px 面板与双摇杆边界回归（2026-11-15）
+
+- 四参考页响应式矩阵已覆盖 1600/1000/900/700/400 px；本轮补齐 RC 页面在 1000/900/700/400 px 下四个主视觉面板的垂直顺序、统一左边界和等宽约束。
+- 在每个窄屏宽度下检查左右摇杆都完整位于「遥控输入监视」面板内部，且保持并排，不得越界或被裁切。
+- 该补充只增强 UI Integration 断言，不改变 RC 摇杆绘制、FlightRadio 手型映射、有效轴 mask 或遥控输入数据。
+- 本轮未运行 UI Integration、Windows Release 或 CI；新增断言为 NOT_RUN，待集中验收。
