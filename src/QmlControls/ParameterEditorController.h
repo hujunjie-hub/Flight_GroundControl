@@ -312,6 +312,7 @@ private:
     bool                        _tuningBusy = false;
     bool                        _readbackPending = false;
     bool                        _writeFailureNeedsReadback = false;
+    bool                        _writeAckPendingReadback = false;
 
     QmlObjectListModel          _categories;
     QmlObjectListModel          _diffList;
