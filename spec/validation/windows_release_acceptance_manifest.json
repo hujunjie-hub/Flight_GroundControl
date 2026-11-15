@@ -609,7 +609,8 @@
         "gimbal_rate_control_on_device_155_changes_only_device_155_attitude_and_zero_rate_stops_only_device_155",
         "mocklink_broadcast_set_message_interval_fans_out_to_all_gimbal_device_components",
         "mocklink_broadcast_interval_acknowledgement_uses_the_manager_component",
-        "mocklink_unknown_gimbal_device_availability_toggle_is_rejected_without_side_effects"
+        "mocklink_unknown_gimbal_device_availability_toggle_is_rejected_without_side_effects",
+        "mocklink_rejects_nonfinite_fractional_and_out_of_int32_range_message_interval_and_request_message_ids"
       ]
     }
   ],
