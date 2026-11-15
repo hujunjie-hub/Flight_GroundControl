@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.1
+- 版本 5.11
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -275,3 +275,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 飞行健康页 Phase 2.67：150%/200% UI Scale 回归扩展到传感器实例、预检、任务资源详情卡和 CPU/WCET/栈/存储资源指标，逐项检查父子边界与内容高度；测试恢复原始 UI Scale。本轮未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
+
+
+- 2026-11-16 Phase 2.68 总览右侧告警高 DPI 适配：事件计数/优先级提示、五类严重度 chip、无事件空态、首要/后续告警卡与事件历史的间距、内边距、徽标、色条和内容高度统一改为 ScreenTools 字体像素度量；MockLink UI Integration 覆盖 1600/1400/1000/900/700/400 px 六档宽度及告警/历史父子边界。按要求未运行 CI，新增回归 NOT_RUN。
