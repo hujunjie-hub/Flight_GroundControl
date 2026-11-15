@@ -700,7 +700,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!release->property("enabled").toBool());
 
-            // A broadcast SET_MESSAGE_INTERVAL must fan out to both device
+            // A broadcast SET_MESSAGE_INTERVAL must fan out to all device
             // components and be acknowledged by the manager component.
             QVERIFY(!mockLink->setGimbalDeviceOnlineForTesting(200, false));
             uint8_t broadcastAckComponent = 0;
@@ -747,6 +747,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(broadcastAckResult, static_cast<uint8_t>(MAV_RESULT_ACCEPTED));
             QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->attitudeStatusFresh(), 4500);
             QTRY_VERIFY_WITH_TIMEOUT(!secondGimbal->attitudeStatusFresh(), 4500);
+            QTRY_VERIFY_WITH_TIMEOUT(!legacyGimbal->attitudeStatusFresh(), 4500);
 
             const int expectedFractionalIdAckCount = broadcastAckCount + 1;
             QVERIFY(sendBroadcastAttitudeInterval(
@@ -771,6 +772,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(broadcastAckResult, static_cast<uint8_t>(MAV_RESULT_ACCEPTED));
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(legacyGimbal->attitudeStatusFresh(), 3000);
             disconnect(broadcastAckConnection);
 
             // Take only device 154 offline while vehicle heartbeats and device
