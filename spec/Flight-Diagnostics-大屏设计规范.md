@@ -916,3 +916,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 GroundControl 总览 QML、MockLink UI Integration、G15 manifest 与 SPEC；不修改 VehicleLinkManager 心跳判定阈值、MAVLink、FactGroup、Flight 控制行为或只读边界。
 - MockLink Integration 使用 `MockLink::setCommLost(true/false)` 触发真实 VehicleLinkManager 心跳丢失/恢复，验证 KPI 文案、页头状态、红/绿颜色及通信恢复；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增回归为 NOT_RUN，等待集中验收。
 
+
+
+## 63. Phase 2.18 导航时序时间线层级与中窄屏可读性（2026-11-15）
+
+- FCU 单调时间线每条记录增加动态顺序编号（01/02/03），编号与纵向位置共用同一排序结果；导航、时间同步和事件颜色继续分别绑定各自 family freshness，不用编号或颜色代替状态。
+- 每条记录改为单行横向信息结构：左侧消息名称、右侧固定宽度时间值；时间值使用统一等宽字体并右对齐，保留「FCU +x.xxxxxx s」微秒精度。标签在空间不足时只对自身省略，时间值不省略、不换行。
+- 时间线说明明确标注「由上至下：最早 → 最近」，并保留 FCU 启动单调时间、非 UTC、非同步偏差的语义边界。
+- MockLink UI Integration 增加初始时间排序编号、事件更新后的编号重排，以及 1600/1000/900/700/400 px 下编号/标签/时间值边界、两列不重叠和完整时间值宽度断言。
+- 仅调整 FlightTelemetry QML、对应 UI Integration 与本 SPEC/进度登记；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、时间同步服务或飞控控制行为。
+- 按用户要求本轮不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。

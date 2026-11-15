@@ -2628,7 +2628,7 @@ SetupPage {
                             height: 36
                             spacing: 8
                             Item {
-                                Layout.preferredWidth: 10
+                                Layout.preferredWidth: 28
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_navigation"
@@ -2639,6 +2639,20 @@ SetupPage {
                                     y: 3
                                     color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
                                 }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_order_navigation"
+                                    x: 12
+                                    y: 0
+                                    width: 14
+                                    height: 14
+                                    text: ("0" + (root._navigationTimelineOrder.navigation + 1)).slice(-2)
+                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    font.family: ScreenTools.fixedFontFamily
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.navigation < 2
                                     width: 2
@@ -2648,23 +2662,29 @@ SetupPage {
                                     color: "#15505A"
                                 }
                             }
-                            ColumnLayout {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                spacing: 8
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_navigation"
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: qsTr("导航状态发布")
                                     color: "#B6CDD3"
                                     font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_navigation"
-                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 144
+                                    Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("navigationAvailable", "navTimeBootUs")
                                     color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignRight
                                     wrapMode: Text.NoWrap
                                 }
                             }
@@ -2677,7 +2697,7 @@ SetupPage {
                             height: 36
                             spacing: 8
                             Item {
-                                Layout.preferredWidth: 10
+                                Layout.preferredWidth: 28
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_time"
@@ -2688,6 +2708,20 @@ SetupPage {
                                     y: 3
                                     color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
                                 }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_order_time"
+                                    x: 12
+                                    y: 0
+                                    width: 14
+                                    height: 14
+                                    text: ("0" + (root._navigationTimelineOrder.time + 1)).slice(-2)
+                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    font.family: ScreenTools.fixedFontFamily
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.time < 2
                                     width: 2
@@ -2697,23 +2731,29 @@ SetupPage {
                                     color: "#15505A"
                                 }
                             }
-                            ColumnLayout {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                spacing: 8
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_time"
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: qsTr("时间同步发布")
                                     color: "#B6CDD3"
                                     font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_time"
-                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 144
+                                    Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("timeAvailable", "timeStatusTimeBootUs")
                                     color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignRight
                                     wrapMode: Text.NoWrap
                                 }
                             }
@@ -2726,7 +2766,7 @@ SetupPage {
                             height: 36
                             spacing: 8
                             Item {
-                                Layout.preferredWidth: 10
+                                Layout.preferredWidth: 28
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_event"
@@ -2737,6 +2777,20 @@ SetupPage {
                                     y: 3
                                     color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
                                 }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_order_event"
+                                    x: 12
+                                    y: 0
+                                    width: 14
+                                    height: 14
+                                    text: ("0" + (root._navigationTimelineOrder.event + 1)).slice(-2)
+                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    font.family: ScreenTools.fixedFontFamily
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.event < 2
                                     width: 2
@@ -2746,23 +2800,29 @@ SetupPage {
                                     color: "#15505A"
                                 }
                             }
-                            ColumnLayout {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                spacing: 8
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_event"
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: qsTr("最近事件")
                                     color: "#B6CDD3"
                                     font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_event"
-                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 144
+                                    Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("eventAvailable", "eventTimeBootUs")
                                     color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignRight
                                     wrapMode: Text.NoWrap
                                 }
                             }
@@ -2770,7 +2830,7 @@ SetupPage {
                     }
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("FCU 单调启动时间 · 非 UTC · 不表示时钟同步偏差")
+                        text: qsTr("由上至下：最早 → 最近 · FCU 单调启动时间 · 非 UTC · 不表示时钟同步偏差")
                         color: "#8298A2"
                         font.pointSize: ScreenTools.microFontPointSize
                         wrapMode: Text.WordWrap

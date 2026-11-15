@@ -217,6 +217,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"));
             QQuickItem* navigationTimelineEventValue =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"));
+            QQuickItem* navigationTimelineNavigationOrder =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_navigation"));
+            QQuickItem* navigationTimelineTimeOrder =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_time"));
+            QQuickItem* navigationTimelineEventOrder =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_event"));
             QQuickItem* navigationUtcTimestamp =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"));
             QQuickItem* timeUtcTimestamp =
@@ -298,6 +304,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(navigationTimelineNavigationValue);
             QVERIFY(navigationTimelineTimeValue);
             QVERIFY(navigationTimelineEventValue);
+            QVERIFY(navigationTimelineNavigationOrder);
+            QVERIFY(navigationTimelineTimeOrder);
+            QVERIFY(navigationTimelineEventOrder);
             QVERIFY(navigationUtcTimestamp);
             QVERIFY(timeUtcTimestamp);
             QVERIFY(rcCard);
@@ -1347,6 +1356,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("FCU +0.009650 s"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineTimeRow->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineTimeRow->y() < navigationTimelineEventRow->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationOrder->property("text").toString(),
+                                      QStringLiteral("01"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
+                                      QStringLiteral("02"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
+                                      QStringLiteral("03"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationOrder->property("text").toString(),
+                                      QStringLiteral("01"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
+                                      QStringLiteral("02"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
+                                      QStringLiteral("03"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
@@ -2486,7 +2507,44 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"), 3000)};
-                        for (QQuickItem* row : timelineRows) QVERIFY(row);
+                        QQuickItem* timelineOrders[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_navigation"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_time"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_event"), 3000)};
+                        QQuickItem* timelineLabels[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_label_navigation"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_label_time"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_label_event"), 3000)};
+                        QQuickItem* timelineValues[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_navigation"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"), 3000)};
+                        for (int rowIndex = 0; rowIndex < 3; ++rowIndex) {
+                            QVERIFY(timelineRows[rowIndex]);
+                            QVERIFY(timelineOrders[rowIndex]);
+                            QVERIFY(timelineLabels[rowIndex]);
+                            QVERIFY(timelineValues[rowIndex]);
+                        }
+                        const auto timelineItemFitsInRow = [](QQuickItem* item, QQuickItem* row) {
+                            const auto topLeft = item->mapToItem(row, 0, 0);
+                            return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                                   topLeft.x() + item->width() <= row->width() + 1.0 &&
+                                   topLeft.y() + item->height() <= row->height() + 1.0;
+                        };
+                        const auto timelineTextColumnsDoNotOverlap = [](QQuickItem* label, QQuickItem* value, QQuickItem* row) {
+                            const auto labelRight = label->mapToItem(row, label->width(), 0);
+                            const auto valueLeft = value->mapToItem(row, 0, 0);
+                            return labelRight.x() <= valueLeft.x() + 1.0;
+                        };
+                        for (int rowIndex = 0; rowIndex < 3; ++rowIndex) {
+                            QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineOrders[rowIndex], timelineRows[rowIndex]), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineLabels[rowIndex], timelineRows[rowIndex]), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineValues[rowIndex], timelineRows[rowIndex]), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(timelineTextColumnsDoNotOverlap(
+                                                         timelineLabels[rowIndex], timelineValues[rowIndex], timelineRows[rowIndex]), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                timelineValues[rowIndex]->width() + 1.0 >= timelineValues[rowIndex]->implicitWidth(), 3000);
+                        }
                         const auto timelineRowFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
                             const auto topLeft = row->mapToItem(panel, 0, 0);
                             return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
