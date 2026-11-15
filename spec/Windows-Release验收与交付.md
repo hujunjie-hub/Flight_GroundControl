@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.42        
+版本：4.43        
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -40,7 +40,7 @@
 | G18 | 旧版 SYS_STATUS 传感器状态 freshness | FlightTelemetryPageUITest、MockLink SYS_STATUS、JUnit | 通信丢失立即使缓存传感器状态 stale；恢复心跳但未收到新 SYS_STATUS 时仍保持 stale；新帧到达后恢复；历史状态只作诊断上下文 |
 | G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信丢失/恢复后新帧门控/5500 ms stale 正确；不伪造容量或日志操作；云台发现、姿态、控制权、外部 owner、链路恢复和拖动 Timer 正确；Armed/Flying 可访问 |
 
-只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G17 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
+只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G19 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
 - 飞行健康页逐项 freshness 验收：FCU_SENSOR_HEALTH 的 sensorInstanceId 和 FCU_PREARM_STATUS 的 checkId 各自具有 receiveAgeMs；健康页 500 ms age tick 使年龄持续更新；过期行显示最近一次结果及原因，不得保留无提示的当前态「健康/通过/失败」；覆盖率只统计新鲜项，并区分超时与未收到。
 ## 3. 单元和集成测试要求

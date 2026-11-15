@@ -10,6 +10,7 @@
 #include "AutoPilotPlugin.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
+#include "GimbalController.h"
 #include "MAVLinkLib.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
@@ -264,8 +265,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("本机控制中"), 6000);
             QTRY_VERIFY_WITH_TIMEOUT(pitchSlider->property("enabled").toBool(), 2000);
+            QVERIFY(yawMode->property("enabled").toBool());
             QVERIFY(retract->isVisible());
             QVERIFY(retract->property("enabled").toBool());
+
+            // Capability flags, not UI assumptions, decide whether optional controls exist.
+            Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
+            QVERIFY(activeGimbal);
+            activeGimbal->setCapabilityFlags(0);
+            QTRY_VERIFY_WITH_TIMEOUT(!yawMode->property("enabled").toBool(), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(!retract->isVisible(), 1000);
 
             // The page's 5 Hz target sender is active only while a slider is dragged.
             const QPoint start = pitchSlider->mapToScene(

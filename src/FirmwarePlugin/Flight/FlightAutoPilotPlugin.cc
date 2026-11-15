@@ -5,8 +5,6 @@
 #include "FlightVehicleComponent.h"
 
 namespace {
-constexpr const char *kPlaceholderQml =
-    "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightPlaceholder.qml";
 constexpr const char *kFlightModesQml =
     "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightModesPage.qml";
 constexpr const char *kSafetyQml =
