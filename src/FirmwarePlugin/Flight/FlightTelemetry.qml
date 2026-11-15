@@ -71,6 +71,9 @@ SetupPage {
     readonly property real _dashboardPanelSectionSpacing: ScreenTools.defaultFontPixelHeight * 0.45
     readonly property real _dashboardPanelBodySpacing: ScreenTools.defaultFontPixelHeight * 0.4
     readonly property real _dashboardGridSpacing: ScreenTools.defaultFontPixelHeight * 0.67
+    readonly property real _dashboardMetricTileInset: ScreenTools.defaultFontPixelHeight * 0.34
+    readonly property real _dashboardMetricTileGap: ScreenTools.defaultFontPixelHeight * 0.34
+    readonly property real _dashboardMetricTileMinHeight: ScreenTools.defaultFontPixelHeight * 2.8
 
     Settings {
         id: stickSettings
@@ -4089,30 +4092,42 @@ SetupPage {
                             ColumnLayout {
                                 id: sensorInstanceContent
                                 anchors.fill: parent
-                                anchors.margins: 7
-                                spacing: 4
-                                RowLayout {
+                                anchors.margins: root._dashboardMetricTileInset
+                                spacing: root._dashboardMetricTileGap * 0.7
+                                GridLayout {
+                                    objectName: "flightTelemetry_sensorInstanceHeaderGrid_" + modelData.sensorInstanceId
                                     Layout.fillWidth: true
-                                    spacing: 6
+                                    columns: root.availableWidth >= 760 ? 12 : 2
+                                    columnSpacing: root._dashboardPanelHeaderSpacing
+                                    rowSpacing: root._dashboardMetricTileGap * 0.55
                                     QGCLabel {
-                                        Layout.preferredWidth: 82
-                                        Layout.minimumWidth: 82
+                                        objectName: "flightTelemetry_sensorInstanceTitle_" + modelData.sensorInstanceId
+                                        Layout.columnSpan: root.availableWidth >= 760 ? 3 : 1
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: qsTr("传感器实例 %1").arg(modelData.sensorInstanceId)
                                         color: "#B7C9CF"
+                                        font.pointSize: ScreenTools.captionFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         objectName: "flightTelemetry_sensorInstanceState_" + modelData.sensorInstanceId
+                                        Layout.columnSpan: root.availableWidth >= 760 ? 5 : 1
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
                                         text: root._sensorInstanceHealthText(modelData)
                                         color: root._sensorInstanceHealthColor(modelData)
+                                        font.pointSize: ScreenTools.secondaryFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
                                         wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         objectName: "flightTelemetry_sensorInstanceAction_" + modelData.sensorInstanceId
+                                        Layout.columnSpan: root.availableWidth >= 760 ? 4 : 2
+                                        Layout.fillWidth: true
                                         Layout.minimumWidth: 0
+                                        horizontalAlignment: root.availableWidth >= 760 ? Text.AlignRight : Text.AlignLeft
                                         text: root._sensorInstanceActionText(modelData)
                                         color: "#8FB7C0"
                                         font.pointSize: ScreenTools.microFontPointSize
@@ -4346,10 +4361,10 @@ SetupPage {
                                 id: prearmCheckGrid
                                 objectName: "flightTelemetry_prearmCheckRow_" + modelData.checkId
                                 anchors.fill: parent
-                                anchors.margins: 7
+                                anchors.margins: root._dashboardMetricTileInset
                                 columns: root.availableWidth >= 760 ? 12 : 1
-                                columnSpacing: 8
-                                rowSpacing: 4
+                                columnSpacing: root._dashboardMetricTileGap
+                                rowSpacing: root._dashboardMetricTileGap * 0.65
                                 QGCLabel {
                                     objectName: "flightTelemetry_prearmCheckId_" + modelData.checkId
                                     Layout.columnSpan: root.availableWidth >= 760 ? 3 : 1
@@ -4358,6 +4373,7 @@ SetupPage {
                                     wrapMode: Text.WordWrap
                                     text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
                                     color: "#D4E2E6"
+                                    font.pointSize: ScreenTools.secondaryFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
                                 }
                                 QGCLabel {
@@ -4368,6 +4384,7 @@ SetupPage {
                                     wrapMode: Text.WordWrap
                                     text: root._prearmCheckResultText(modelData)
                                     color: root._prearmCheckStateColor(modelData)
+                                    font.pointSize: ScreenTools.secondaryFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
                                 }
                                 QGCLabel {
@@ -4437,144 +4454,74 @@ SetupPage {
                             ColumnLayout {
                                 id: resourceTaskContent
                                 anchors.fill: parent
-                                anchors.margins: 7
-                                spacing: 6
+                                anchors.margins: root._dashboardMetricTileInset
+                                spacing: root._dashboardMetricTileGap
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 8
+                                    spacing: root._dashboardPanelHeaderSpacing
                                     QGCLabel {
+                                        Layout.minimumWidth: 0
                                         text: Number(modelData.taskId) === 0
                                               ? qsTr("系统汇总")
                                               : qsTr("任务 %1").arg(modelData.taskId)
                                         color: "#B7C9CF"
+                                        font.pointSize: ScreenTools.captionFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         objectName: "flightTelemetry_resourceCpu_" + modelData.taskId
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         horizontalAlignment: Text.AlignRight
                                         text: root._resourceInstanceFresh(modelData)
                                               ? qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
                                               : qsTr("CPU %1").arg(root._resourceInstanceStatus(modelData))
                                         color: root._resourceInstanceMetricColor(modelData, "cpuLoadPermille", 2)
+                                        font.pointSize: ScreenTools.secondaryFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
+                                        wrapMode: Text.WordWrap
                                     }
                                 }
                                 GridLayout {
                                     objectName: "flightTelemetry_resourceMetricGrid_" + modelData.taskId
                                     Layout.fillWidth: true
                                     columns: 2
-                                    columnSpacing: 6
-                                    rowSpacing: 6
-                                    Rectangle {
+                                    columnSpacing: root._dashboardMetricTileGap
+                                    rowSpacing: root._dashboardMetricTileGap
+                                    ResourceMetricTile {
                                         objectName: "flightTelemetry_resourceMetricTile_wcet_" + modelData.taskId
-                                        Layout.fillWidth: true
-                                        implicitHeight: 42
-                                        radius: 4
-                                        color: "#06232B"
-                                        border.width: 1
-                                        border.color: "#104B55"
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 5
-                                            spacing: 1
-                                            QGCLabel {
-                                                text: qsTr("任务 WCET")
-                                                color: "#8298A2"
-                                                font.pointSize: ScreenTools.microFontPointSize
-                                            }
-                                            QGCLabel {
-                                                objectName: "flightTelemetry_resourceMetrics_" + modelData.taskId
-                                                Layout.fillWidth: true
-                                                text: root._resourceInstanceFresh(modelData)
-                                                      ? root._rawValidValue(modelData.wcetUs, modelData.validityMask, 0, 0, " μs")
-                                                      : root._resourceInstanceStatus(modelData)
-                                                color: root._resourceInstanceMetricColor(modelData, "wcetUs", 0)
-                                                font.weight: ScreenTools.strongFontWeight
-                                            }
-                                        }
+                                        titleText: qsTr("任务 WCET")
+                                        valueObjectName: "flightTelemetry_resourceMetrics_" + modelData.taskId
+                                        valueText: root._resourceInstanceFresh(modelData)
+                                                   ? root._rawValidValue(modelData.wcetUs, modelData.validityMask, 0, 0, " μs")
+                                                   : root._resourceInstanceStatus(modelData)
+                                        valueColor: root._resourceInstanceMetricColor(modelData, "wcetUs", 0)
                                     }
-                                    Rectangle {
+                                    ResourceMetricTile {
                                         objectName: "flightTelemetry_resourceMetricTile_stack_" + modelData.taskId
-                                        Layout.fillWidth: true
-                                        implicitHeight: 42
-                                        radius: 4
-                                        color: "#06232B"
-                                        border.width: 1
-                                        border.color: "#104B55"
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 5
-                                            spacing: 1
-                                            QGCLabel {
-                                                text: qsTr("系统栈剩余")
-                                                color: "#8298A2"
-                                                font.pointSize: ScreenTools.microFontPointSize
-                                            }
-                                            QGCLabel {
-                                                objectName: "flightTelemetry_resourceStackFree_" + modelData.taskId
-                                                Layout.fillWidth: true
-                                                text: root._resourceInstanceFresh(modelData)
-                                                      ? root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B")
-                                                      : root._resourceInstanceStatus(modelData)
-                                                color: root._resourceInstanceMetricColor(modelData, "stackFreeBytes", 1)
-                                                font.weight: ScreenTools.strongFontWeight
-                                            }
-                                        }
+                                        titleText: qsTr("系统栈剩余")
+                                        valueObjectName: "flightTelemetry_resourceStackFree_" + modelData.taskId
+                                        valueText: root._resourceInstanceFresh(modelData)
+                                                   ? root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B")
+                                                   : root._resourceInstanceStatus(modelData)
+                                        valueColor: root._resourceInstanceMetricColor(modelData, "stackFreeBytes", 1)
                                     }
-                                    Rectangle {
+                                    ResourceMetricTile {
                                         objectName: "flightTelemetry_resourceMetricTile_deadline_" + modelData.taskId
-                                        Layout.fillWidth: true
-                                        implicitHeight: 42
-                                        radius: 4
-                                        color: "#06232B"
-                                        border.width: 1
-                                        border.color: "#104B55"
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 5
-                                            spacing: 1
-                                            QGCLabel {
-                                                text: qsTr("截止期错过")
-                                                color: "#8298A2"
-                                                font.pointSize: ScreenTools.microFontPointSize
-                                            }
-                                            QGCLabel {
-                                                objectName: "flightTelemetry_resourceDeadlineMiss_" + modelData.taskId
-                                                Layout.fillWidth: true
-                                                text: root._resourceInstanceDeadlineMissText(modelData)
-                                                color: root._resourceInstanceDeadlineMissColor(modelData)
-                                                font.weight: ScreenTools.strongFontWeight
-                                            }
-                                        }
+                                        titleText: qsTr("截止期错过")
+                                        valueObjectName: "flightTelemetry_resourceDeadlineMiss_" + modelData.taskId
+                                        valueText: root._resourceInstanceDeadlineMissText(modelData)
+                                        valueColor: root._resourceInstanceDeadlineMissColor(modelData)
                                     }
-                                    Rectangle {
+                                    ResourceMetricTile {
                                         objectName: "flightTelemetry_resourceMetricTile_axi_" + modelData.taskId
-                                        Layout.fillWidth: true
-                                        implicitHeight: 42
-                                        radius: 4
-                                        color: "#06232B"
-                                        border.width: 1
-                                        border.color: "#104B55"
-                                        ColumnLayout {
-                                            anchors.fill: parent
-                                            anchors.margins: 5
-                                            spacing: 1
-                                            QGCLabel {
-                                                text: qsTr("AXI 可用")
-                                                color: "#8298A2"
-                                                font.pointSize: ScreenTools.microFontPointSize
-                                            }
-                                            QGCLabel {
-                                                objectName: "flightTelemetry_resourceAxiFree_" + modelData.taskId
-                                                Layout.fillWidth: true
-                                                text: root._resourceInstanceFresh(modelData)
-                                                      ? root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B")
-                                                      : root._resourceInstanceStatus(modelData)
-                                                color: root._resourceInstanceMetricColor(modelData, "axiFreeBytes", 3)
-                                                font.weight: ScreenTools.strongFontWeight
-                                            }
-                                        }
+                                        titleText: qsTr("AXI 可用")
+                                        valueObjectName: "flightTelemetry_resourceAxiFree_" + modelData.taskId
+                                        valueText: root._resourceInstanceFresh(modelData)
+                                                   ? root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B")
+                                                   : root._resourceInstanceStatus(modelData)
+                                        valueColor: root._resourceInstanceMetricColor(modelData, "axiFreeBytes", 3)
                                     }
                                 }
                                 QGCLabel {
@@ -5623,6 +5570,51 @@ SetupPage {
         }
     }
 
+    component ResourceMetricTile: Rectangle {
+        id: metricTile
+        required property string titleText
+        required property string valueText
+        required property string valueObjectName
+        required property color valueColor
+        readonly property real tileInset: root._dashboardMetricTileInset
+
+        Layout.fillWidth: true
+        implicitHeight: Math.max(root._dashboardMetricTileMinHeight,
+                                 metricContent.implicitHeight + tileInset * 2)
+        radius: 4
+        color: "#06232B"
+        border.width: 1
+        border.color: "#104B55"
+
+        ColumnLayout {
+            id: metricContent
+            anchors.fill: parent
+            anchors.margins: metricTile.tileInset
+            spacing: root._dashboardMetricTileGap * 0.25
+
+            QGCLabel {
+                objectName: metricTile.objectName + "_label"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                text: metricTile.titleText
+                color: "#8298A2"
+                font.pointSize: ScreenTools.microFontPointSize
+                wrapMode: Text.WordWrap
+            }
+
+            QGCLabel {
+                objectName: metricTile.valueObjectName
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                text: metricTile.valueText
+                color: metricTile.valueColor
+                font.pointSize: ScreenTools.secondaryFontPointSize
+                font.weight: ScreenTools.strongFontWeight
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
     component StatusCard: Rectangle {
         id: card
         required property string title
@@ -5706,6 +5698,51 @@ SetupPage {
                 id: detailColumn
                 Layout.fillWidth: true
                 spacing: card.panelBodySpacing
+            }
+        }
+    }
+
+    component ResourceMetricTile: Rectangle {
+        id: metricTile
+        required property string titleText
+        required property string valueText
+        required property string valueObjectName
+        required property color valueColor
+        readonly property real tileInset: root._dashboardMetricTileInset
+
+        Layout.fillWidth: true
+        implicitHeight: Math.max(root._dashboardMetricTileMinHeight,
+                                 metricContent.implicitHeight + tileInset * 2)
+        radius: 4
+        color: "#06232B"
+        border.width: 1
+        border.color: "#104B55"
+
+        ColumnLayout {
+            id: metricContent
+            anchors.fill: parent
+            anchors.margins: metricTile.tileInset
+            spacing: root._dashboardMetricTileGap * 0.25
+
+            QGCLabel {
+                objectName: metricTile.objectName + "_label"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                text: metricTile.titleText
+                color: "#8298A2"
+                font.pointSize: ScreenTools.microFontPointSize
+                wrapMode: Text.WordWrap
+            }
+
+            QGCLabel {
+                objectName: metricTile.valueObjectName
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                text: metricTile.valueText
+                color: metricTile.valueColor
+                font.pointSize: ScreenTools.secondaryFontPointSize
+                font.weight: ScreenTools.strongFontWeight
+                wrapMode: Text.WordWrap
             }
         }
     }
