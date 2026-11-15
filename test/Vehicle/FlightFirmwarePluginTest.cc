@@ -97,7 +97,8 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("min"), 0.0 },
         { QStringLiteral("max"), 10.0 },
         { QStringLiteral("default"), 5.0 },
-        { QStringLiteral("decimalPlaces"), 2 }
+        { QStringLiteral("decimalPlaces"), 2 },
+        { QStringLiteral("rebootRequired"), true }
     };
 
     QJsonObject unknownDomainEntry = validEntry;
@@ -113,11 +114,23 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     unsupportedTypeEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNSUPPORTED_TYPE"));
     unsupportedTypeEntry.insert(QStringLiteral("type"), QStringLiteral("int32"));
 
+    QJsonObject invalidRebootRequiredEntry = validEntry;
+    invalidRebootRequiredEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"));
+    invalidRebootRequiredEntry.insert(QStringLiteral("rebootRequired"), QStringLiteral("yes"));
+
+    QJsonObject duplicateEntryA = validEntry;
+    duplicateEntryA.insert(QStringLiteral("name"), QStringLiteral("TEST_DUPLICATE"));
+    QJsonObject duplicateEntryB = duplicateEntryA;
+    duplicateEntryB.insert(QStringLiteral("shortDescription"), QStringLiteral("Conflicting duplicate"));
+
     QJsonArray parameters;
     parameters.append(validEntry);
     parameters.append(unknownDomainEntry);
     parameters.append(invalidRangeEntry);
     parameters.append(unsupportedTypeEntry);
+    parameters.append(invalidRebootRequiredEntry);
+    parameters.append(duplicateEntryA);
+    parameters.append(duplicateEntryB);
     metadata.parseParameterJson(QJsonObject{{ QStringLiteral("parameters"), parameters }});
 
     FactMetaData *valid = metadata.getMetaDataForFact(QStringLiteral("TEST_VALID_CONTROL"),
@@ -125,13 +138,16 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QVERIFY(valid);
     QCOMPARE(valid->category(), QStringLiteral("CONTROL"));
     QCOMPARE(valid->shortDescription(), QStringLiteral("Valid test parameter"));
+    QVERIFY(valid->vehicleRebootRequired());
 
     // Rejected entries must not be cached as partially valid metadata. The base
     // class may still create an unclassified fallback for a live parameter.
     const QStringList rejectedNames {
         QStringLiteral("TEST_UNKNOWN_DOMAIN"),
         QStringLiteral("TEST_INVALID_RANGE"),
-        QStringLiteral("TEST_UNSUPPORTED_TYPE")
+        QStringLiteral("TEST_UNSUPPORTED_TYPE"),
+        QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"),
+        QStringLiteral("TEST_DUPLICATE")
     };
     for (const QString &name : rejectedNames) {
         FactMetaData *rejected = metadata.getMetaDataForFact(name, FactMetaData::valueTypeFloat);
