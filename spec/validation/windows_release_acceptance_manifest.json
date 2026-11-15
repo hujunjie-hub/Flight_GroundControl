@@ -379,7 +379,10 @@
         "overview_topology_connector_colors_follow_each_family_fresh_stale_recovered_state",
         "overview_topology_node_cards_share_status_text_color_and_receive_age_with_canvas",
         "multi_domain_topology_panel_has_no_navigation_only_status_badge",
-        "invalid_link_metric_validity_summary_uses_warning_amber_color"
+        "invalid_link_metric_validity_summary_uses_warning_amber_color",
+        "trend_cards_display_explicit_gap_counts_independent_of_latest_sample_state",
+        "trend_gap_count_and_color_follow_invalid_samples_without_masking_latest_state",
+        "trend_footer_labels_fit_responsive_card_bounds_at_1600_and_400_px"
       ]
     },
     {
@@ -639,7 +642,10 @@
     "overview_global_communication_loss_overrides_latched_telemetry_received_state_and_recovers",
     "overview_topology_connector_colors_follow_each_family_fresh_stale_recovered_state",
     "overview_topology_node_cards_share_status_text_color_and_receive_age_with_canvas",
-    "multi_domain_topology_panel_has_no_navigation_only_status_badge"
+    "multi_domain_topology_panel_has_no_navigation_only_status_badge",
+    "trend_cards_display_explicit_gap_counts_independent_of_latest_sample_state",
+    "trend_gap_count_and_color_follow_invalid_samples_without_masking_latest_state",
+    "trend_footer_labels_fit_responsive_card_bounds_at_1600_and_400_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
