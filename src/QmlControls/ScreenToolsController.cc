@@ -4,11 +4,12 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
+#include <QtCore/QStringList>
+
 #include <QtGui/QCursor>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QInputDevice>
-#include <QtCore/QStringList>
 
 #if defined(Q_OS_IOS)
 #include <sys/utsname.h>

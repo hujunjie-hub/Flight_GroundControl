@@ -13,7 +13,7 @@ T.ComboBox {
     id: control
     padding: ScreenTools.comboBoxPadding
     spacing: ScreenTools.defaultFontPixelWidth
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.bodyFontPointSize
     font.family: ScreenTools.normalFontFamily
     font.weight: Font.Normal
     font.hintingPreference: Font.PreferDefaultHinting

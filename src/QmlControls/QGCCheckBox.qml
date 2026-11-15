@@ -21,7 +21,7 @@ CheckBox {
 
     property color  textColor:          qgcPal.buttonText
     property bool   textBold:           false
-    property real   textFontPointSize:  ScreenTools.defaultFontPointSize
+    property real   textFontPointSize:  ScreenTools.bodyFontPointSize
     property ButtonGroup buttonGroup: null
 
     property bool _noText: text === ""

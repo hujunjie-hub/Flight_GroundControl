@@ -15,7 +15,7 @@ Button {
     property real heightFactor: 0.5
     property string iconSource: ""
     property real fontWeight: Font.Normal // default for qml Text
-    property real pointSize: ScreenTools.defaultFontPointSize
+    property real pointSize: ScreenTools.bodyFontPointSize
 
     property alias wrapMode: text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment

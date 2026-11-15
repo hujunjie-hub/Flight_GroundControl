@@ -12,7 +12,7 @@ TextField {
     selectedTextColor:  qgcPal.textField
     activeFocusOnPress: true
     antialiasing:       true
-    font.pointSize:     ScreenTools.defaultFontPointSize
+    font.pointSize:     ScreenTools.bodyFontPointSize
     font.family:        ScreenTools.normalFontFamily
     font.weight:        Font.Normal
     font.hintingPreference: Font.PreferDefaultHinting
@@ -131,7 +131,7 @@ TextField {
             Text {
                 Layout.alignment:   Qt.AlignVCenter
                 text:               control.extraUnitsLabel
-                font.pointSize:     ScreenTools.smallFontPointSize
+                font.pointSize:     ScreenTools.captionFontPointSize
                 font.family:        ScreenTools.normalFontFamily
                 font.hintingPreference: Font.PreferDefaultHinting
                 antialiasing:       true
@@ -143,8 +143,9 @@ TextField {
             Text {
                 Layout.alignment:   Qt.AlignVCenter
                 text:               control.unitsLabel
-                font.pointSize:     control.activeFocus ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                font.pointSize:     control.activeFocus ? ScreenTools.captionFontPointSize : ScreenTools.bodyFontPointSize
                 font.family:        ScreenTools.normalFontFamily
+                font.hintingPreference: Font.PreferDefaultHinting
                 antialiasing:       true
                 color:              control.color
                 visible:            control.showUnits && text !== ""
