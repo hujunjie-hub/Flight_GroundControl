@@ -483,7 +483,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，等待分阶段实施。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 49 项参数首轮 domain 分类、外层导航联动原生 ParameterEditor 分组及空态接入；机型注册/兼容性/在线调参策略未完成，构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（Flight 49 项参数首轮 domain 分类、当前域搜索隔离、唯一模型下拉入口及 SIL-only QUAD_X4 门控已接入；实机模型注册/兼容性/在线调参策略未完成，构建与测试 NOT_RUN）。
 - Phase 3：NOT_RUN。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。
