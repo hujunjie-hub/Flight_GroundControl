@@ -64,10 +64,10 @@ SetupPage {
     readonly property color _dashboardPanelEyebrow: "#45D6E5"
     readonly property color _dashboardPanelTitle: "#E6F0F4"
     readonly property color _dashboardPanelDivider: "#104B55"
-    readonly property int _dashboardPanelPadding: 10
-    readonly property int _dashboardPanelHeaderSpacing: 8
-    readonly property int _dashboardPanelSectionSpacing: 8
-    readonly property int _dashboardPanelBodySpacing: 7
+    readonly property real _dashboardPanelPadding: ScreenTools.defaultFontPixelHeight * 0.55
+    readonly property real _dashboardPanelHeaderSpacing: ScreenTools.defaultFontPixelWidth * 0.8
+    readonly property real _dashboardPanelSectionSpacing: ScreenTools.defaultFontPixelHeight * 0.45
+    readonly property real _dashboardPanelBodySpacing: ScreenTools.defaultFontPixelHeight * 0.4
 
     Settings {
         id: stickSettings
@@ -4342,9 +4342,10 @@ SetupPage {
         required property string statusText
         required property color statusColor
 
-        implicitHeight: 24
-        implicitWidth: badgeContent.implicitWidth + 18
-        radius: 12
+        implicitHeight: Math.max(ScreenTools.defaultFontPixelHeight * 1.35,
+                                 badgeText.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.45)
+        implicitWidth: badgeContent.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.8
+        radius: ScreenTools.defaultFontPixelHeight * 0.67
         color: Qt.rgba(statusColor.r, statusColor.g, statusColor.b, 0.10)
         border.width: 1
         border.color: Qt.rgba(statusColor.r, statusColor.g, statusColor.b, 0.32)
@@ -4352,16 +4353,17 @@ SetupPage {
         RowLayout {
             id: badgeContent
             anchors.centerIn: parent
-            spacing: 6
+            spacing: ScreenTools.defaultFontPixelWidth * 0.6
 
             Rectangle {
-                Layout.preferredWidth: 6
-                Layout.preferredHeight: 6
-                radius: 3
+                Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.33
+                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.33
+                radius: ScreenTools.defaultFontPixelHeight * 0.165
                 color: badge.statusColor
             }
 
             QGCLabel {
+                id: badgeText
                 objectName: badge.objectName + "_text"
                 text: badge.statusText
                 color: badge.statusColor
