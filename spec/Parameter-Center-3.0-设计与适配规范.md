@@ -545,7 +545,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、依赖与规则空态、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、真实 dependencies/validationRules、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、参数详情面板展示、依赖与规则空态、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、真实 dependencies/validationRules、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
 - Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、PARAM_VALUE 确认值与请求目标值二次核对、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：PARTIAL（已接入 1280/900 px 响应式断点、紧凑屏参数域选择器、上/下层卡片重排、纵向滚动、状态栏重排，以及 safe mode 参数表工具栏/列宽适配；截图叠加、DPI、Windows 构建、QML/单元测试与 CI 仍 NOT_RUN）。
@@ -569,5 +569,14 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - Flight safe mode 工具菜单隐藏恢复默认值、RC 映射清理和飞行器重启等不属于参数调校主流程的操作；保留刷新、参数文件预览/导出和收藏管理。所有文件导入仍只允许预览，批量上传保持关闭。
 - 本轮修改仅由 parameterCenterSafeMode 门控，不改变普通 ParameterEditor 的既有工具、列宽和写入行为。
 - 本轮未运行 QML 构建、UI/单元测试或 CI；紧凑表格宽度、长描述换行、100%/125%/150% DPI 和普通参数编辑器兼容性保持 NOT_RUN。
+
+### Phase 5 实施记录（第三轮参数详情中心）
+
+- 在线调参卡片重构为“参数详情与在线调参”，参数元数据置于独立纵向滚动区，目标值输入、写入状态和回读/恢复操作固定在详情区下方，避免长说明和策略信息挤掉关键操作。
+- 详情补齐参数长说明、参数域/分组、数据类型、默认值、飞控确认值、范围、调整步长、重启要求、机型适用范围、控制架构、源文件/字段路径/来源类型、调参策略、更新策略与读写权限。
+- 展示显式 dependencies 与 validationRules 类型；数组为空时明确显示“未声明（不推断）”，不根据参数名、分组或控制架构猜测依赖或规则语义。
+- 影响分析卡片跟随当前选中参数展示显式依赖；无依赖元数据时保留未知/未声明状态。
+- 数据类型按 Fact 当前暴露的布尔/字符串/数值属性显示，不将 QML 的 number 类型误报为固件原始 float/int 类型；规则仅展示元数据声明的 type，不擅自解释未知规则。
+- 本轮未运行 QML 构建、UI/单元测试或 CI；详情滚动、不同 DPI、窄屏高度、参数切换与写入操作可见性保持 NOT_RUN。
 
 本规范是参数中心 3.0 后续设计、实现和验收的唯一基线。若用户确认新的视觉变化，必须先更新本规范和参考图，再修改实现。
