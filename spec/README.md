@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.30
+- 版本 4.31
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -188,3 +188,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 诊断大屏 KPI 回归加固：六项辅助说明逐项检查 WordWrap、两行上限、实际行数和 Tile 内边界；额外注入长链路说明强制验证双行与 implicitHeight 自适应。本轮未运行测试，待集中验收。
+
+- 2026-11-15 飞行健康页资源覆盖表达升级：资源卡改为显示新鲜/超时/等待实例数量，与传感器卡统一；resourceAvailable family stale 时显示 family 状态，不展示缓存总数。本轮未运行 CI，待集中验收。

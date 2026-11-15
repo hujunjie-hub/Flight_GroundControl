@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.26
+- 版本：6.27
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史与告警事件元信息均已改为无省略换行并按内容自适应高度；本轮补齐资源任务实例计数的 family freshness 门控；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史与告警事件元信息均已改为无省略换行并按内容自适应高度；本轮补齐资源任务实例计数的 family freshness 门控；本轮将资源任务实例总数升级为新鲜/超时/等待三态覆盖率；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -804,11 +804,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本轮只调整 FlightTelemetry QML、对应 UI Integration 与 SPEC/G15；未运行 CI，新增回归待集中验收。
 
 
-## 53. 资源任务实例计数 freshness 门控（2026-11-15）
+## 53. 资源实例新鲜度覆盖表达（2026-11-15）
 
-- 实时资源卡的任务实例数量受 resourceAvailable family freshness 门控；family stale/等待时显示对应状态，不将缓存数组长度作为当前实例数。
-- 资源任务实例明细仍保留最近缓存行，但每个实例的 CPU/WCET/栈/截止期/AXI 数值继续按实例 receiveAgeMs 与 validityMask 独立门控。
-- MockLink UI Integration 验证资源消息新鲜时显示真实任务实例数，超过资源 family freshness 窗口后计数切换为「数据超时」。
+- 实时资源卡与传感器卡采用一致的实例新鲜度表达：显示新鲜、超时、等待三类实例数量，不只显示缓存数组总数。
+- resourceAvailable family stale/等待时，覆盖行直接显示 family 状态；family fresh 时由现有逐实例 receiveAgeMs 聚合新鲜/超时/等待数量。
+- 资源实例明细继续保留最近缓存行，但 CPU/WCET/栈/截止期/AXI 数值仍分别按实例 receiveAgeMs 与 validityMask 独立门控。
+- MockLink UI Integration 验证单实例新鲜覆盖文本及 resourceAvailable family stale 转换；_resourceCoverageTextFor 的独立样本断言继续覆盖新鲜/超时/等待聚合。
 - 仅修改飞行健康页 QML、对应 UI Integration 与 SPEC/G15；不修改资源消息协议、FactGroup 数据缓存或飞控资源统计。本轮不运行 CI，新增断言为 NOT_RUN。
 
 

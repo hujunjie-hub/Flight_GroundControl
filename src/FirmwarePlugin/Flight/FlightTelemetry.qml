@@ -3205,12 +3205,9 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("resource") }
                     TelemetryRow {
-                        objectName: "flightTelemetry_resourceTaskCount"
-                        labelText: qsTr("任务实例")
-                        valueText: root._familyFreshValue(
-                                       "resourceAvailable",
-                                       root._fact("resourceAvailable") && root._telemetry
-                                           ? String(root._resourceStatuses.length) : qsTr("未上报"))
+                        objectName: "flightTelemetry_resourceCoverage"
+                        labelText: qsTr("实例新鲜度")
+                        valueText: root._resourceCoverageText()
                     }
                     QGCLabel {
                         Layout.fillWidth: true

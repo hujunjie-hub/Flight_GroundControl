@@ -1732,8 +1732,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenancePrearmSummary"), 3000);
             QQuickItem* maintenanceCpu = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceCpuLoad"), 3000);
-            QQuickItem* resourceTaskCount = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_resourceTaskCount"), 3000);
+            QQuickItem* resourceCoverageRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceCoverage"), 3000);
             QQuickItem* healthSafetyPrearm = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthSafetyPrearmSummary"), 3000);
             QQuickItem* actuatorPrimary = findVisibleItem(
@@ -1774,10 +1774,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(maintenanceEvent);
             QVERIFY(maintenancePrearm);
             QVERIFY(maintenanceCpu);
-            QVERIFY(resourceTaskCount);
+            QVERIFY(resourceCoverageRow);
             QVERIFY(healthSafetyPrearm);
-            QTRY_COMPARE_WITH_TIMEOUT(resourceTaskCount->property("valueText").toString(),
-                                      QStringLiteral("1"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(resourceCoverageRow->property("valueText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(1).arg(0).arg(0), 3000);
             QVERIFY(actuatorPrimary);
             QVERIFY(safetyActuatorMask);
             QVERIFY(healthOverviewBadge);
@@ -1949,7 +1950,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmModeMask->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmReason->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmTimestamp->property("valueText").toString(), staleText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(resourceTaskCount->property("valueText").toString(), staleText, 7000);
+            QTRY_COMPARE_WITH_TIMEOUT(resourceCoverageRow->property("valueText").toString(), staleText, 7000);
             QVariant stalePrearmSummary;
             QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
                                               Q_RETURN_ARG(QVariant, stalePrearmSummary)));

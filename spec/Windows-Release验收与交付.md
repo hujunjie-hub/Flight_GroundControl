@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.17    
+版本：4.18    
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -447,3 +447,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 在 700 px 双列与 400 px 单列断点，逐项检查六个 KPI 辅助说明的 WordWrap、两行上限、实际 lineCount、可见状态与 Tile 内边界。
 - 通过长链路说明注入强制双行，验证 Tile/内容容器 implicitHeight 自适应，辅助说明底边不得越过 Tile。
 - 运行 `FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered`；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
+
+
+### G15 资源实例新鲜度覆盖表达补充（2026-11-15）
+
+- 资源卡与传感器卡统一显示新鲜/超时/等待实例覆盖数量。
+- resourceAvailable family stale/等待时显示 family 状态，不展示缓存实例总数；family fresh 时逐实例 receiveAgeMs 决定三类数量。
+- FlightTelemetryPageUITest 验证新鲜覆盖文本与 family stale 转换；本轮不运行 CI，集中验收时执行，不构成 PASS。
