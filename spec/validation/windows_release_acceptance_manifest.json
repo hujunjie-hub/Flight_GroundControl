@@ -497,7 +497,8 @@
         "health_page_ui_scale_150_percent_preserves_two_column_content_bounds",
         "health_page_ui_scale_200_percent_reflows_single_column_without_clipping",
         "health_page_ui_scale_200_percent_wraps_long_diagnostics_and_expands_maintenance_panel",
-        "health_page_ui_scale_preference_is_restored_after_mocklink_test"
+        "health_page_ui_scale_preference_is_restored_after_mocklink_test",
+        "health_page_ui_scale_150_200_percent_sensor_prearm_resource_detail_cards_and_metrics_fit"
       ]
     },
     {
@@ -895,7 +896,8 @@
     "health_page_ui_scale_200_percent_reflows_single_column_without_clipping",
     "health_page_ui_scale_200_percent_wraps_long_diagnostics_and_expands_maintenance_panel",
     "health_page_ui_scale_preference_is_restored_after_mocklink_test",
-    "rc_monitor_and_link_metric_geometry_scale_with_screen_tools"
+    "rc_monitor_and_link_metric_geometry_scale_with_screen_tools",
+    "health_page_ui_scale_150_200_percent_sensor_prearm_resource_detail_cards_and_metrics_fit"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
