@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.58
+版本：4.59
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -636,3 +636,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 有事件时显示动态范围说明「优先摘要 X / 总数 条 · 历史最近 Y 条」；无事件时范围说明隐藏，空态不显示伪统计。
 - MockLink UI Integration 注入严重度 3、1、3、2、0 五条事件，验证总数、前 4 条优先摘要顺序、第 5 条仍保留在事件历史，以及 700/400 px 范围说明布局边界。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言状态保持 NOT_RUN。
+
+
+### G15 FCU 单调时间线相同时间戳排序补充（2026-11-15）
+
+- 有效 `time_boot_us` 按数值升序；时间戳相同时必须按 navigation → time → event 固定顺序排列，不依赖 JS 引擎 sort 稳定性。
+- 无效、缺失、超时项均置于有效项之后；无效仍红色、超时琥珀、等待/未上报中性灰。
+- MockLink UI Integration 验证三个域同时间戳时的固定排序，以及后续无效时间戳的置后规则。
+- 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 完整回归和视觉检查。
