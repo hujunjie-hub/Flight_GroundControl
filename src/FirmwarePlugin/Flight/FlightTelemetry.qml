@@ -46,6 +46,24 @@ SetupPage {
     readonly property real _overviewTopologyLegendGap: ScreenTools.defaultFontPixelWidth * 1.25
     readonly property real _overviewTopologyLegendItemGap: ScreenTools.defaultFontPixelWidth * 0.625
     readonly property real _overviewTopologyLegendDotSize: Math.max(7, ScreenTools.defaultFontPixelHeight * 0.4375)
+    readonly property real _overviewFlightModeRowSpacing: ScreenTools.defaultFontPixelWidth * 1.5
+    readonly property real _overviewFlightModeContentSpacing: ScreenTools.defaultFontPixelHeight * 0.125
+    readonly property real _overviewFlightUnlockContentSpacing: ScreenTools.defaultFontPixelHeight * 0.25
+    readonly property real _overviewFlightArmBadgeHorizontalInset: ScreenTools.defaultFontPixelWidth * 1.375
+    readonly property real _overviewFlightArmBadgeVerticalInset: ScreenTools.defaultFontPixelHeight * 0.4375
+    readonly property real _overviewFlightArmBadgeRadius: ScreenTools.defaultFontPixelHeight * 0.4375
+    readonly property real _overviewFlightFailsafeMinimumHeight: ScreenTools.defaultFontPixelHeight * 2.875
+    readonly property real _overviewFlightFailsafeLeadingInset: ScreenTools.defaultFontPixelWidth * 1.375
+    readonly property real _overviewFlightFailsafeTrailingInset: ScreenTools.defaultFontPixelWidth * 1.125
+    readonly property real _overviewFlightFailsafeVerticalInset: ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property real _overviewFlightFailsafeContentSpacing: ScreenTools.defaultFontPixelWidth
+    readonly property real _overviewFlightFailsafeTextSpacing: ScreenTools.defaultFontPixelHeight * 0.0625
+    readonly property real _overviewFlightAuthorityMinimumHeight: ScreenTools.defaultFontPixelHeight * 2
+    readonly property real _overviewFlightAuthorityHorizontalInset: ScreenTools.defaultFontPixelWidth * 1.125
+    readonly property real _overviewFlightAuthorityVerticalInset: ScreenTools.defaultFontPixelHeight * 0.3125
+    readonly property real _overviewFlightAuthorityContentSpacing: ScreenTools.defaultFontPixelWidth
+    readonly property real _overviewFlightStatusStripeWidth: ScreenTools.defaultFontPixelWidth * 0.375
+    readonly property real _overviewFlightStatusStripeInset: ScreenTools.defaultFontPixelHeight * 0.0625
     readonly property int _overviewPriorityEventLimit: 4
     readonly property int _eventHistoryDisplayLimit: 8
     readonly property var _overviewEventSeverityCounts:
@@ -2231,12 +2249,16 @@ SetupPage {
                     titleText: qsTr("整机状态概览")
 
                     RowLayout {
+                        id: heroFlightModeRow
+                        objectName: "flightTelemetry_heroFlightModeRow"
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: root._overviewFlightModeRowSpacing
                         ColumnLayout {
+                            id: heroFlightModeContent
+                            objectName: "flightTelemetry_heroFlightModeContent"
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            spacing: 2
+                            spacing: root._overviewFlightModeContentSpacing
                             RowLayout {
                                 Layout.fillWidth: true
                                 QGCLabel {
@@ -2265,8 +2287,10 @@ SetupPage {
                             }
                         }
                         ColumnLayout {
+                            id: heroUnlockContent
+                            objectName: "flightTelemetry_heroUnlockContent"
                             Layout.alignment: Qt.AlignVCenter
-                            spacing: 4
+                            spacing: root._overviewFlightUnlockContentSpacing
                             QGCLabel {
                                 Layout.fillWidth: true
                                 text: qsTr("解锁状态")
@@ -2275,15 +2299,18 @@ SetupPage {
                                 horizontalAlignment: Text.AlignHCenter
                             }
                             Rectangle {
+                                objectName: "flightTelemetry_heroArmStateBadge"
+                                readonly property real horizontalInset: root._overviewFlightArmBadgeHorizontalInset
+                                readonly property real verticalInset: root._overviewFlightArmBadgeVerticalInset
                                 Layout.alignment: Qt.AlignHCenter
-                                radius: 7
+                                radius: root._overviewFlightArmBadgeRadius
                                 color: Qt.rgba(armStateText.stateColor.r, armStateText.stateColor.g,
                                                armStateText.stateColor.b, 0.09)
                                 border.width: 1
                                 border.color: Qt.rgba(armStateText.stateColor.r, armStateText.stateColor.g,
                                                       armStateText.stateColor.b, 0.62)
-                                implicitWidth: armStateText.implicitWidth + 22
-                                implicitHeight: armStateText.implicitHeight + 14
+                                implicitWidth: armStateText.implicitWidth + horizontalInset * 2
+                                implicitHeight: armStateText.implicitHeight + verticalInset * 2
                                 QGCLabel {
                                     id: armStateText
                                     readonly property color stateColor: root._familyStatusColor("operationAvailable")
@@ -2306,29 +2333,40 @@ SetupPage {
                         readonly property string stateText: root._familyStatus("operationAvailable") === qsTr("已接收")
                                                            ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
                                                            : root._familyStatus("operationAvailable")
+                        readonly property real contentLeadingInset: root._overviewFlightFailsafeLeadingInset
+                        readonly property real contentHorizontalInset: root._overviewFlightFailsafeTrailingInset
+                        readonly property real contentVerticalInset: root._overviewFlightFailsafeVerticalInset
+                        readonly property real contentSpacing: root._overviewFlightFailsafeContentSpacing
+                        readonly property real minimumHeight: root._overviewFlightFailsafeMinimumHeight
                         Layout.fillWidth: true
-                        implicitHeight: 46
-                        radius: 6
+                        implicitHeight: Math.max(minimumHeight,
+                                                 heroFailsafeContent.implicitHeight + 2 * contentVerticalInset)
+                        radius: ScreenTools.defaultFontPixelHeight * 0.375
                         color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.085)
                         border.width: 1
                         border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.48)
                         Rectangle {
-                            width: 3
+                            width: root._overviewFlightStatusStripeWidth
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            radius: 2
+                            anchors.margins: root._overviewFlightStatusStripeInset
+                            radius: root._overviewFlightStatusStripeWidth * 0.67
                             color: heroFailsafeBand.stateColor
                         }
                         RowLayout {
+                            id: heroFailsafeContent
+                            objectName: "flightTelemetry_heroFailsafeContent"
                             anchors.fill: parent
-                            anchors.leftMargin: 11
-                            anchors.rightMargin: 9
-                            spacing: 8
+                            anchors.leftMargin: parent.contentLeadingInset
+                            anchors.rightMargin: parent.contentHorizontalInset
+                            anchors.topMargin: parent.contentVerticalInset
+                            anchors.bottomMargin: parent.contentVerticalInset
+                            spacing: parent.contentSpacing
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 1
+                                Layout.minimumWidth: 0
+                                spacing: root._overviewFlightFailsafeTextSpacing
                                 QGCLabel {
                                     Layout.fillWidth: true
                                     text: qsTr("失效保护等级")
@@ -2347,27 +2385,40 @@ SetupPage {
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroFailsafeFreshness"
+                                Layout.minimumWidth: 0
                                 text: root._familyStatus("operationAvailable")
                                 color: root._familyStatusColor("operationAvailable")
                                 font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
+                                horizontalAlignment: Text.AlignRight
                             }
                         }
                     }
 
                     Rectangle {
                         objectName: "flightTelemetry_heroAuthorityRow"
+                        readonly property real contentHorizontalInset: root._overviewFlightAuthorityHorizontalInset
+                        readonly property real contentVerticalInset: root._overviewFlightAuthorityVerticalInset
+                        readonly property real contentSpacing: root._overviewFlightAuthorityContentSpacing
+                        readonly property real minimumHeight: root._overviewFlightAuthorityMinimumHeight
                         Layout.fillWidth: true
-                        implicitHeight: 32
-                        radius: 5
+                        implicitHeight: Math.max(minimumHeight,
+                                                 heroAuthorityContent.implicitHeight + 2 * contentVerticalInset)
+                        radius: ScreenTools.defaultFontPixelHeight * 0.3125
                         color: "#082630"
                         border.width: 1
                         border.color: "#104B55"
                         RowLayout {
+                            id: heroAuthorityContent
+                            objectName: "flightTelemetry_heroAuthorityContent"
                             anchors.fill: parent
-                            anchors.leftMargin: 9
-                            anchors.rightMargin: 9
-                            spacing: 8
+                            anchors.leftMargin: parent.contentHorizontalInset
+                            anchors.rightMargin: parent.contentHorizontalInset
+                            anchors.topMargin: parent.contentVerticalInset
+                            anchors.bottomMargin: parent.contentVerticalInset
+                            spacing: parent.contentSpacing
                             QGCLabel {
+                                Layout.minimumWidth: 0
                                 text: qsTr("控制权")
                                 color: "#91A8B2"
                                 font.pointSize: ScreenTools.captionFontPointSize
@@ -2375,12 +2426,14 @@ SetupPage {
                             Item { Layout.fillWidth: true }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroAuthority"
+                                Layout.minimumWidth: 0
                                 text: root._familyStatus("operationAvailable") === qsTr("已接收")
                                       ? root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")])
                                       : root._familyStatus("operationAvailable")
                                 color: root._familyStatus("operationAvailable") === qsTr("已接收")
                                        ? "#E1EDF1" : root._familyStatusColor("operationAvailable")
                                 font.weight: ScreenTools.strongFontWeight
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -2388,6 +2441,7 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_authorityNote"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: qsTr("控制权仅显示 FCU 上报值；地面站不推断或授予控制权")
                         color: "#8298A2"
                         font.pointSize: ScreenTools.microFontPointSize
