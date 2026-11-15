@@ -401,7 +401,8 @@
         "overview_alarm_primary_card_emphasizes_highest_known_severity_and_reason",
         "overview_alarm_unknown_severity_is_not_mislabeled_as_highest_priority",
         "overview_alarm_empty_state_does_not_create_synthetic_events",
-        "overview_alarm_primary_reason_metadata_time_and_priority_tag_fit_700_and_400_px"
+        "overview_alarm_primary_reason_metadata_time_and_priority_tag_fit_700_and_400_px",
+        "overview_hero_panels_share_equal_height_on_desktop_and_medium_layouts"
       ]
     },
     {
@@ -696,7 +697,8 @@
     "overview_alarm_primary_card_emphasizes_highest_known_severity_and_reason",
     "overview_alarm_unknown_severity_is_not_mislabeled_as_highest_priority",
     "overview_alarm_empty_state_does_not_create_synthetic_events",
-    "overview_alarm_primary_reason_metadata_time_and_priority_tag_fit_700_and_400_px"
+    "overview_alarm_primary_reason_metadata_time_and_priority_tag_fit_700_and_400_px",
+    "overview_hero_panels_share_equal_height_on_desktop_and_medium_layouts"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
