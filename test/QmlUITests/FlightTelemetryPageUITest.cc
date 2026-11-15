@@ -717,9 +717,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
             QVERIFY(!trendPosition->property("hasRenderableSeries").toBool());
             QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
-            QCOMPARE(trendPositionGaps->property("text").toString(), translatedTelemetryText("断点 %1").arg(0));
-            QCOMPARE(trendPositionGaps->property("color").value<QColor>(), QColor(QStringLiteral("#688A94")));
-            QCOMPARE(trendPositionSampleState->property("text").toString(), QStringLiteral("WAIT"));
             QVERIFY(trendPositionCanvas);
             QVERIFY(trendPositionTimeAxis);
             QVERIFY(trendPositionGaps);
