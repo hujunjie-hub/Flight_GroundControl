@@ -256,6 +256,8 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
         _previousValue.clear();
         _pendingOriginalValue.clear();
         _pendingTargetValue.clear();
+        _writeAckPendingReadback = false;
+        _readbackPending = false;
         _pendingParameterName.clear();
         _pendingComponentId = -1;
         _previousValues.clear();
@@ -391,6 +393,8 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
     _previousValue.clear();
     _pendingOriginalValue.clear();
     _pendingTargetValue.clear();
+    _writeAckPendingReadback = false;
+    _readbackPending = false;
     _previousValues.clear();
     _hasPreviousValue = false;
     _selectedModelProfileId = profileId;
@@ -728,6 +732,9 @@ bool ParameterEditorController::applySelectedValue(const QVariant &cookedValue)
     _pendingOriginalValue = _confirmedValue.isValid() ? _confirmedValue : _selectedFact->cookedValue();
     _pendingParameterName = _selectedFact->name();
     _pendingComponentId = _selectedFact->componentId();
+    _pendingTargetValue = targetValue;
+    _readbackPending = false;
+    _writeAckPendingReadback = false;
     _tuningBusy = true;
     _tuningError.clear();
     _tuningStatus = tr("正在等待飞控 PARAM_VALUE 确认…");
@@ -742,6 +749,9 @@ bool ParameterEditorController::applySelectedValue(const QVariant &cookedValue)
         : 1.0;
     if (!appliedOk || std::abs(appliedValue - targetValue) > 1e-9 * appliedScale) {
         _tuningBusy = false;
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
         _pendingTargetValue.clear();
         _tuningStatus = tr("参数值未能进入现有 Fact 写入路径");
         _tuningError = tr("本地参数值转换失败，未确认写入请求。");
@@ -762,6 +772,7 @@ bool ParameterEditorController::refreshSelectedValue()
     }
 
     _readbackPending = true;
+    _writeAckPendingReadback = false;
     _tuningError.clear();
     _tuningStatus = tr("正在请求飞控参数回读…");
     emit tuningStateChanged();
@@ -923,7 +934,7 @@ void ParameterEditorController::_parameterReadSucceeded(int componentId, const Q
     }
 
     _readbackPending = false;
-    _writeFailureNeedsReadback = false;
+    _writeFailureNeedsReadback = !readbackOk;
     _confirmedValue = readbackOk ? QVariant(readbackValue) : QVariant();
     _tuningStatus = readbackOk ? tr("回读验证完成") : tr("回读值无效");
     _tuningError = readbackOk ? QString() : tr("飞控回读值不是有效有限数值。");
@@ -951,8 +962,9 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
         _tuningStatus = tr("飞控已确认写入，但独立回读失败");
         _tuningError = tr("不能将本次修改标记为成功；请重新回读飞控实际参数。");
     } else {
+        _writeFailureNeedsReadback = true;
         _tuningStatus = tr("回读失败");
-        _tuningError = tr("飞控未返回该参数的有效回读值。");
+        _tuningError = tr("飞控未返回该参数的有效回读值；完成有效回读前禁止继续写入。");
     }
     emit tuningStateChanged();
 }
