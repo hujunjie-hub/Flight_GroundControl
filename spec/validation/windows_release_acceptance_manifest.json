@@ -472,7 +472,12 @@
         "twelve_consecutive_fcu_boot_epochs_reject_all_recent_retired_navigation_sessions",
         "health_sensor_prearm_and_resource_cards_include_two_screen_scaled_content_insets",
         "health_detail_content_containers_retain_implicit_height_and_scaled_top_bottom_insets",
-        "health_detail_card_content_height_is_verified_at_1600_1000_900_760_759_700_400_px"
+        "health_detail_card_content_height_is_verified_at_1600_1000_900_760_759_700_400_px",
+        "overview_alarm_severity_distribution_counts_full_event_cache_by_five_buckets",
+        "overview_alarm_severity_distribution_keeps_unknown_values_out_of_info_and_critical",
+        "overview_alarm_severity_distribution_updates_after_new_fcu_events",
+        "overview_alarm_severity_distribution_reflows_and_fits_at_700_and_400_px",
+        "overview_alarm_severity_distribution_hides_without_fresh_nonempty_event_cache"
       ]
     },
     {
