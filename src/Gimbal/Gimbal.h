@@ -22,8 +22,11 @@ class Gimbal : public FactGroup
     Q_PROPERTY(bool     retracted               READ retracted                  NOTIFY retractedChanged)
     Q_PROPERTY(bool     gimbalHaveControl       READ gimbalHaveControl          NOTIFY gimbalHaveControlChanged)
     Q_PROPERTY(bool     gimbalOthersHaveControl READ gimbalOthersHaveControl    NOTIFY gimbalOthersHaveControlChanged)
-    Q_PROPERTY(bool     supportsRetract         READ supportsRetract            NOTIFY capabilityFlagsChanged)
-    Q_PROPERTY(bool     supportsYawLock         READ supportsYawLock            NOTIFY capabilityFlagsChanged)
+    Q_PROPERTY(bool     ownershipStatusValid    READ ownershipStatusValid       NOTIFY ownershipStatusChanged)
+    Q_PROPERTY(bool     supportsPitchAxis       READ supportsPitchAxis          NOTIFY capabilityFlagsChanged)
+    Q_PROPERTY(bool     supportsYawAxis         READ supportsYawAxis             NOTIFY capabilityFlagsChanged)
+    Q_PROPERTY(bool     supportsRetract         READ supportsRetract             NOTIFY capabilityFlagsChanged)
+    Q_PROPERTY(bool     supportsYawLock         READ supportsYawLock             NOTIFY capabilityFlagsChanged)
     Q_PROPERTY(qint64   managerStatusAgeMs       READ managerStatusAgeMs          NOTIFY managerStatusFreshnessChanged)
     Q_PROPERTY(qint64   attitudeStatusAgeMs      READ attitudeStatusAgeMs         NOTIFY attitudeStatusFreshnessChanged)
 
@@ -48,6 +51,7 @@ public:
     bool retracted() const { return _retracted; }
     bool gimbalHaveControl() const { return _haveControl; }
     bool gimbalOthersHaveControl() const { return _othersHaveControl; }
+    bool ownershipStatusValid() const { return _ownershipStatusValid; }
 
     static constexpr qint64 kManagerStatusFreshnessThresholdMs = 6500;
     static constexpr qint64 kAttitudeStatusFreshnessThresholdMs = 3500;
@@ -75,8 +79,16 @@ public:
     {
         _managerStatusValid = false;
         _attitudeStatusValid = false;
+        setOwnershipStatusValid(false);
         emit managerStatusFreshnessChanged();
         emit attitudeStatusFreshnessChanged();
+    }
+    void setOwnershipStatusValid(bool valid)
+    {
+        if (_ownershipStatusValid != valid) {
+            _ownershipStatusValid = valid;
+            emit ownershipStatusChanged();
+        }
     }
     void markManagerStatusReceived()
     {
@@ -114,6 +126,8 @@ public:
     void setGimbalOthersHaveControl(bool set) { if (set != _othersHaveControl) { _othersHaveControl = set; emit gimbalOthersHaveControlChanged(); } }
 
     void setCapabilityFlags(uint32_t flags);
+    bool supportsPitchAxis() const { return (_capabilityFlags & GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS) != 0; }
+    bool supportsYawAxis() const { return (_capabilityFlags & GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS) != 0; }
     bool supportsRetract() const { return (_capabilityFlags & GIMBAL_MANAGER_CAP_FLAGS_HAS_RETRACT) != 0; }
     bool supportsYawLock() const { return (_capabilityFlags & GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_LOCK) != 0; }
 
@@ -125,6 +139,7 @@ signals:
     void gimbalHaveControlChanged();
     void gimbalOthersHaveControlChanged();
     void capabilityFlagsChanged();
+    void ownershipStatusChanged();
     void managerStatusFreshnessChanged();
     void attitudeStatusFreshnessChanged();
 
@@ -144,6 +159,7 @@ private:
     QElapsedTimer _attitudeStatusReceiveClock;
     bool _managerStatusValid = false;
     bool _attitudeStatusValid = false;
+    bool _ownershipStatusValid = false;
 
     Fact _absoluteRollFact = Fact(0, QStringLiteral("gimbalRoll"), FactMetaData::valueTypeFloat);
     Fact _absolutePitchFact = Fact(0, QStringLiteral("gimbalPitch"), FactMetaData::valueTypeFloat);
