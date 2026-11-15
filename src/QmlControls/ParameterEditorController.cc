@@ -440,14 +440,31 @@ bool ParameterEditorController::_profileAllowsSelectedParameter() const
             break;
         }
     }
+    const QVariant hardwareEligible = selectedProfile.value(QStringLiteral("hardwareEligible"));
     if (selectedProfile.isEmpty() ||
         selectedProfile.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
-        selectedProfile.value(QStringLiteral("hardwareEligible")).toBool() ||
+        !selectedProfile.contains(QStringLiteral("hardwareEligible")) ||
+        hardwareEligible.metaType().id() != QMetaType::Bool ||
+        hardwareEligible.toBool() ||
         selectedProfile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
         return false;
     }
 
-    return true;
+    bool parameterNameRegistered = false;
+    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterNames")).toList()) {
+        if (value.toString() == _selectedFact->name()) {
+            parameterNameRegistered = true;
+            break;
+        }
+    }
+    bool parameterDomainRegistered = false;
+    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterDomains")).toList()) {
+        if (value.toString() == _selectedFact->category()) {
+            parameterDomainRegistered = true;
+            break;
+        }
+    }
+    return parameterNameRegistered && parameterDomainRegistered;
 }
 
 QString ParameterEditorController::_tuningBlockReason() const
