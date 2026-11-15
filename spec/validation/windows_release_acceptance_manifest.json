@@ -614,7 +614,8 @@
         "mocklink_multi_gimbal_discovers_device_id_3_with_manager_component_1",
         "mocklink_device_id_3_attitude_status_uses_manager_component_and_embedded_device_id_3",
         "mocklink_device_id_155_attitude_status_uses_component_155_and_embedded_device_id_zero",
-        "mocklink_set_message_interval_routes_legacy_device_ids_1_through_6_via_manager_component"
+        "mocklink_set_message_interval_routes_legacy_device_ids_1_through_6_via_manager_component",
+        "mocklink_device_id_3_and_device_id_155_advertise_independent_capability_flags"
       ]
     }
   ],
