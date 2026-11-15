@@ -1,7 +1,9 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QHash>
 #include <QtCore/QSet>
+#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
@@ -140,6 +142,19 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(bool                 hideReadOnly            MEMBER _hideReadOnly                                        NOTIFY hideReadOnlyChanged)
     Q_PROPERTY(QStringList          favoriteParameterNames  READ favoriteParameterNames                                 NOTIFY favoritesChanged)
 
+    // The parameter-center tuning surface is deliberately single-parameter and fail-closed.
+    Q_PROPERTY(QObject*              selectedFact             READ selectedFact                                            NOTIFY selectedFactChanged)
+    Q_PROPERTY(QString               selectedParameterName    READ selectedParameterName                                   NOTIFY selectedFactChanged)
+    Q_PROPERTY(QVariant              confirmedValue           READ confirmedValue                                          NOTIFY tuningStateChanged)
+    Q_PROPERTY(QVariant              previousValue            READ previousValue                                           NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  hasPreviousValue         READ hasPreviousValue                                        NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  tuningBusy               READ tuningBusy                                              NOTIFY tuningStateChanged)
+    Q_PROPERTY(QString               tuningStatus             READ tuningStatus                                            NOTIFY tuningStateChanged)
+    Q_PROPERTY(QString               tuningError              READ tuningError                                             NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  canApplySelectedValue    READ canApplySelectedValue                                   NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  canReadbackSelectedValue READ canReadbackSelectedValue                                NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  canRestorePreviousValue  READ canRestorePreviousValue                                 NOTIFY tuningStateChanged)
+
     // These property are related to the diff associated with a load from file
     Q_PROPERTY(bool                 diffOtherVehicle        READ diffOtherVehicle                                       NOTIFY diffOtherVehicleChanged)
     Q_PROPERTY(bool                 diffMultipleComponents  READ diffMultipleComponents                                 NOTIFY diffMultipleComponentsChanged)
@@ -167,6 +182,23 @@ public:
     Q_INVOKABLE bool isFavorite                     (const QString& paramName) const;
     Q_INVOKABLE void clearAllFavorites              (void);
 
+    Q_INVOKABLE bool selectParameterFact(QObject *fact);
+    Q_INVOKABLE bool applySelectedValue(const QVariant &cookedValue);
+    Q_INVOKABLE bool refreshSelectedValue();
+    Q_INVOKABLE bool restorePreviousValue();
+
+    QObject*            selectedFact() const { return _selectedFact; }
+    QString             selectedParameterName() const { return _selectedFact ? _selectedFact->name() : QString(); }
+    QVariant            confirmedValue() const { return _confirmedValue; }
+    QVariant            previousValue() const { return _previousValue; }
+    bool                hasPreviousValue() const { return _hasPreviousValue; }
+    bool                tuningBusy() const { return _tuningBusy || _readbackPending || _writeFailureNeedsReadback; }
+    QString             tuningStatus() const { return _tuningStatus; }
+    QString             tuningError() const { return _tuningError; }
+    bool                canApplySelectedValue() const;
+    bool                canReadbackSelectedValue() const;
+    bool                canRestorePreviousValue() const;
+
     QObject*            currentCategory         (void) { return _currentCategory; }
     QObject*            currentGroup            (void) { return _currentGroup; }
     QmlObjectListModel* categories              (void) { return &_categories; }
@@ -193,6 +225,8 @@ signals:
     void showFavoritesOnlyChanged       (void);
     void hideReadOnlyChanged            (void);
     void favoritesChanged               (void);
+    void selectedFactChanged             (void);
+    void tuningStateChanged              (void);
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
     void diffParsedCountChanged         (int diffParsedCount);
@@ -212,8 +246,17 @@ private slots:
     void _buildLists            (void);
     void _buildListsForComponent(int compId);
     void _factAdded             (int compId, Fact* fact);
+    void _selectedFactVehicleUpdated(const QVariant &rawValue);
+    void _parameterWriteSucceeded(int componentId, const QString &paramName);
+    void _parameterWriteFailed(int componentId, const QString &paramName);
+    void _parameterReadSucceeded(int componentId, const QString &paramName, int paramIndex);
+    void _parameterReadFailed(int componentId, const QString &paramName, int paramIndex);
 
 private:
+    bool _profileAllowsSelectedParameter() const;
+    QString _tuningBlockReason() const;
+    QString _selectedParameterKey() const;
+    bool _flightParameterCenterSafeMode() const;
     bool _shouldShow(Fact *fact) const;
     void _performSearch();
     void _loadFavorites();
@@ -243,6 +286,20 @@ private:
     int                         _diffSelectedCount      = 0;
     QStringList                 _diffMissingParams;
     QSet<QString>               _favoriteNames;
+
+    Fact*                       _selectedFact = nullptr;
+    QVariant                    _confirmedValue;
+    QVariant                    _previousValue;
+    QVariant                    _pendingOriginalValue;
+    QHash<QString, QVariant>    _previousValues;
+    QString                     _pendingParameterName;
+    int                         _pendingComponentId = -1;
+    QString                     _tuningStatus = QStringLiteral("请选择参数");
+    QString                     _tuningError;
+    bool                        _hasPreviousValue = false;
+    bool                        _tuningBusy = false;
+    bool                        _readbackPending = false;
+    bool                        _writeFailureNeedsReadback = false;
 
     QmlObjectListModel          _categories;
     QmlObjectListModel          _diffList;
