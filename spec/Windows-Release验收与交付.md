@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.59
+版本：4.60
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -530,6 +530,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 遥控与链路页主视觉布局：≥1280 px 桌面为 12 列网格，双摇杆/逻辑轴 6/6、链路质量/失控保护 8/4；760–1279 px 为 6 列网格，两行分别为 3/3、4/2；低于 760 px 单列。MockLink UI Integration 在 1000/900 px 断言中屏两行比例和同排等高，1600 px 断言桌面 6/6 + 8/4，700/400 px 断言单列与父容器边界。
 - 接收机失效保护颜色由 `rcInputAvailable` freshness 门控：新鲜且触发红色、未触发绿色、超时琥珀色、等待/未上报中性灰；MockLink 断言主视觉和详情行一致，并覆盖触发→未触发恢复。
 - RC 页摘要带将 `linkAvailable` family freshness 明确标记为「链路消息」，辅助说明显示「链路状态消息接收年龄」；「链路实例」独立显示逐实例覆盖率，MockLink 验证两者不混淆。
+- 链路质量 HeroPanel 的「链路状态分布」按新鲜实例分别统计健康/降级/丢失/恢复中/初始化/未知；覆盖三实例健康、部分丢失、全部丢失、恢复中、全部恢复及混合超时，验证摘要文字与红/琥珀/绿/中性灰状态颜色，并确认 freshness 覆盖率仍独立显示。
 ### G15 总览整机状态安全优先级（2026-11-15）
 
 - 飞行模式是左侧整机状态主视觉，模式值用中性前景色；operation freshness 另行显示，不混用颜色语义。
