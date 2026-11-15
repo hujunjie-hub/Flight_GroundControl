@@ -516,7 +516,8 @@
         "navigation_timeline_order_marker_label_and_value_fit_their_parent_columns_at_all_ui_scales",
         "navigation_timeline_label_and_value_columns_do_not_overlap_or_clip_implicit_width",
         "navigation_timeline_row_position_matches_sorted_order_and_scaled_row_pitch",
-        "navigation_utc_timestamp_full_width_value_preserves_implicit_height_at_150_and_200_percent"
+        "navigation_utc_timestamp_full_width_value_preserves_implicit_height_at_150_and_200_percent",
+        "navigation_timeline_value_columns_expand_to_actual_implicit_width_for_long_valid_fcu_boot_times"
       ]
     },
     {
@@ -955,7 +956,8 @@
     "overview_trend_grid_spacing_card_insets_and_minimum_height_scale_with_screen_tools",
     "overview_trend_canvas_preserves_64px_baseline_and_scales_to_96px_128px_at_150_200_percent_ui_scale",
     "overview_trend_canvas_plot_inset_grid_line_series_line_marker_radii_and_glow_scale_with_ui_density",
-    "overview_trend_cards_footer_labels_canvas_and_grid_fit_parent_bounds_at_100_150_200_percent_ui_scale"
+    "overview_trend_cards_footer_labels_canvas_and_grid_fit_parent_bounds_at_100_150_200_percent_ui_scale",
+    "navigation_timeline_rows_are_contained_by_timeline_and_long_fcu_time_values_are_not_clipped"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
