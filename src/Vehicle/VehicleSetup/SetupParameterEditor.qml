@@ -90,7 +90,17 @@ Item {
             anchors.fill: parent
             property bool parameterDomainAvailable: false
             property string targetValueText: ""
+            property var responseSamples: []
+            property string lastControlTimestamp: ""
+            property string lastControlBootId: ""
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
+            readonly property bool controlTelemetryAvailable: {
+                const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
+                return telemetry && telemetry.factExists("controlAvailable") &&
+                       telemetry.getFact("controlAvailable").value
+            }
+            readonly property var lastResponseSample: responseSamples.length > 0
+                                                       ? responseSamples[responseSamples.length - 1] : null
             readonly property bool targetValueValid: {
                 if (!selectedFact || targetValueText.trim() === "") {
                     return false
@@ -120,6 +130,56 @@ Item {
             }
             function restorePreviousValue() {
                 return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
+            }
+
+            Timer {
+                id: responseSampleTimer
+                interval: 100
+                repeat: true
+                running: root._linkHealthy && root._parametersReady && root._flightModelAvailable
+                onTriggered: {
+                    const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
+                    if (!telemetry || !telemetry.factExists("controlAvailable") ||
+                        !telemetry.factExists("controlTimeBootUs") ||
+                        !telemetry.factExists("controlBootId") ||
+                        !telemetry.factExists("controlSolveTimeUs") ||
+                        !telemetry.getFact("controlAvailable").value) {
+                        return
+                    }
+
+                    const timestampText = telemetry.getFact("controlTimeBootUs").valueString
+                    const bootIdText = telemetry.getFact("controlBootId").valueString
+                    const timestamp = Number(timestampText)
+                    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+                        return
+                    }
+
+                    if (bootIdText !== dashboardRoot.lastControlBootId ||
+                        (dashboardRoot.lastControlTimestamp !== "" &&
+                         timestamp <= Number(dashboardRoot.lastControlTimestamp))) {
+                        dashboardRoot.responseSamples = []
+                        dashboardRoot.lastControlTimestamp = ""
+                        dashboardRoot.lastControlBootId = bootIdText
+                    }
+                    if (timestampText === dashboardRoot.lastControlTimestamp) {
+                        return
+                    }
+
+                    const solveTimeUs = Number(telemetry.getFact("controlSolveTimeUs").value)
+                    if (!Number.isFinite(solveTimeUs) || solveTimeUs < 0) {
+                        return
+                    }
+
+                    const samples = dashboardRoot.responseSamples.slice()
+                    samples.push({ time: timestamp, value: solveTimeUs })
+                    if (samples.length > 120) {
+                        samples.shift()
+                    }
+                    dashboardRoot.responseSamples = samples
+                    dashboardRoot.lastControlTimestamp = timestampText
+                    dashboardRoot.lastControlBootId = bootIdText
+                    responseCanvas.requestPaint()
+                }
             }
 
             function domainCategoryName(domainIndex) {
@@ -782,6 +842,9 @@ Item {
                                         root._syncModelProfileSelection(true)
                                         // ParameterEditorController captures activeVehicle at construction.
                                         dashboardRoot.parameterDomainAvailable = false
+                                        dashboardRoot.responseSamples = []
+                                        dashboardRoot.lastControlTimestamp = ""
+                                        dashboardRoot.lastControlBootId = ""
                                         parameterEditorLoader.sourceComponent = undefined
                                         parameterEditorLoader.sourceComponent = parameterEditorComponent
                                     }
@@ -1110,7 +1173,16 @@ Item {
                                 Item { Layout.fillWidth: true }
                                 QGCLabel { text: "RESPONSE"; color: root.cyan; font.pointSize: ScreenTools.microFontPointSize }
                             }
-                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#14505B" }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: dashboardRoot.lastResponseSample
+                                      ? qsTr("控制求解耗时 · %1 μs · %2")
+                                        .arg(dashboardRoot.lastResponseSample.value.toFixed(0))
+                                        .arg(dashboardRoot.controlTelemetryAvailable ? qsTr("实时遥测") : qsTr("遥测中断 · 历史样本"))
+                                      : qsTr("控制求解耗时 · 等待 FCU_CONTROL_STATUS 实测数据")
+                                color: dashboardRoot.controlTelemetryAvailable ? root.cyan : root.amber
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -1119,6 +1191,7 @@ Item {
                                 color: "#061F29"
                                 border.color: "#10434E"
                                 Canvas {
+                                    id: responseCanvas
                                     anchors.fill: parent
                                     anchors.margins: 8
                                     onPaint: {
@@ -1134,6 +1207,33 @@ Item {
                                             const x = Math.round((width - 1) * i / 6)
                                             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke()
                                         }
+
+                                        const samples = dashboardRoot.responseSamples
+                                        if (samples.length < 2) {
+                                            return
+                                        }
+                                        let minValue = Number.POSITIVE_INFINITY
+                                        let maxValue = Number.NEGATIVE_INFINITY
+                                        for (let i = 0; i < samples.length; i++) {
+                                            minValue = Math.min(minValue, samples[i].value)
+                                            maxValue = Math.max(maxValue, samples[i].value)
+                                        }
+                                        const valueRange = Math.max(1, maxValue - minValue)
+                                        ctx.strokeStyle = "#18DDE2"
+                                        ctx.fillStyle = "#18DDE2"
+                                        ctx.lineWidth = 2
+                                        ctx.beginPath()
+                                        for (let i = 0; i < samples.length; i++) {
+                                            const x = (width - 1) * i / (samples.length - 1)
+                                            const y = (height - 1) -
+                                                      ((samples[i].value - minValue) / valueRange) * (height - 1)
+                                            if (i === 0) {
+                                                ctx.moveTo(x, y)
+                                            } else {
+                                                ctx.lineTo(x, y)
+                                            }
+                                        }
+                                        ctx.stroke()
                                     }
                                     onWidthChanged: requestPaint()
                                     onHeightChanged: requestPaint()
@@ -1141,8 +1241,22 @@ Item {
                                 ColumnLayout {
                                     anchors.centerIn: parent
                                     spacing: 3
-                                    QGCLabel { text: qsTr("暂无响应数据"); color: root.mainText; font.pointSize: ScreenTools.bodyEmphasisFontPointSize; font.weight: ScreenTools.strongFontWeight }
-                                    QGCLabel { text: qsTr("等待真实遥测 / 仿真数据接入"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
+                                    visible: dashboardRoot.responseSamples.length < 2
+                                    QGCLabel {
+                                        text: dashboardRoot.responseSamples.length === 0
+                                              ? qsTr("暂无实测响应数据")
+                                              : qsTr("正在积累实测样本")
+                                        color: root.mainText
+                                        font.pointSize: ScreenTools.bodyEmphasisFontPointSize
+                                        font.weight: ScreenTools.strongFontWeight
+                                    }
+                                    QGCLabel {
+                                        text: dashboardRoot.responseSamples.length === 0
+                                              ? qsTr("等待有效 FCU_CONTROL_STATUS 控制求解耗时")
+                                              : qsTr("已收到 1 个样本，至少需要 2 个有效样本绘制趋势")
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
                                 }
                             }
                             RowLayout {
