@@ -109,6 +109,23 @@ SetupPage {
         return value === null || value === undefined ? "—" : String(value)
     }
 
+    function _fcuUptimeText() {
+        if (!_storageFresh)
+            return _statusText()
+        const timeBootUs = Number(_factValue("storageTimeBootUs"))
+        if (!Number.isFinite(timeBootUs) || timeBootUs < 0)
+            return "—"
+
+        const totalSeconds = Math.floor(timeBootUs / 1000000)
+        const days = Math.floor(totalSeconds / 86400)
+        const hours = Math.floor((totalSeconds % 86400) / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+        const twoDigits = value => value < 10 ? "0" + value : String(value)
+        const clock = twoDigits(hours) + ":" + twoDigits(minutes) + ":" + twoDigits(seconds)
+        return days > 0 ? qsTr("%1 天 %2").arg(days).arg(clock) : clock
+    }
+
     function _receiveAgeText() {
         if (_communicationLost)
             return qsTr("通信中断")
@@ -318,6 +335,24 @@ SetupPage {
                         }
                         ColumnLayout {
                             Layout.fillWidth: true
+                            QGCLabel { text: qsTr("存储 Profile"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
+                            QGCLabel {
+                                objectName: "flightStorage_profileId"
+                                text: root._metricText("storageProfileId")
+                                font.pointSize: ScreenTools.subtitleFontPointSize
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            QGCLabel { text: qsTr("飞控原因码"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
+                            QGCLabel {
+                                objectName: "flightStorage_reasonCode"
+                                text: root._metricText("storageReasonCode")
+                                font.pointSize: ScreenTools.subtitleFontPointSize
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
                             QGCLabel { text: qsTr("关键事件丢弃"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
                             QGCLabel {
                                 objectName: "flightStorage_eventDrops"
@@ -331,6 +366,15 @@ SetupPage {
                             QGCLabel {
                                 objectName: "flightStorage_logDrops"
                                 text: root._metricText("storageLogDrops")
+                                font.pointSize: ScreenTools.subtitleFontPointSize
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            QGCLabel { text: qsTr("FCU 运行时间"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
+                            QGCLabel {
+                                objectName: "flightStorage_fcuUptime"
+                                text: root._fcuUptimeText()
                                 font.pointSize: ScreenTools.subtitleFontPointSize
                             }
                         }
