@@ -4,6 +4,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QPointF>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
 #include <QtGui/QColor>
 #include <QtGui/QFont>
@@ -11,7 +12,10 @@
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
 #include "AutoPilotPlugin.h"
+#include "Fact.h"
+#include "SettingsManager.h"
 #include "MockLink.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
@@ -4938,6 +4942,80 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             page->setHeight(941);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
+
+            // Exercise the real application UI scale preference, not only logical viewport resizing.
+            Fact* uiScaleFact = SettingsManager::instance()->appSettings()->uiScalePercent();
+            QVERIFY(uiScaleFact);
+            const QVariant originalUiScale = uiScaleFact->rawValue();
+            const qreal originalDpiPageWidth = page->width();
+            const qreal originalDpiPageHeight = page->height();
+            const qreal originalDpiPanelPadding = page->property("_dashboardPanelPadding").toReal();
+            const auto restoreUiScaleAndViewport = qScopeGuard([&]() {
+                uiScaleFact->setRawValue(originalUiScale);
+                page->setWidth(originalDpiPageWidth);
+                page->setHeight(originalDpiPageHeight);
+            });
+
+            uiScaleFact->setRawValue(100);
+            const qreal expectedBasePanelPadding =
+                originalDpiPanelPadding * 100.0 / qMax(1, originalUiScale.toInt());
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(page->property("_dashboardPanelPadding").toReal() - expectedBasePanelPadding) < 2.0,
+                3000);
+            const qreal basePanelPadding = page->property("_dashboardPanelPadding").toReal();
+            QVERIFY(basePanelPadding > 0.0);
+
+            // 1672x941 physical reference viewport at 150% UI scale => 1115x627 logical pixels.
+            uiScaleFact->setRawValue(150);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.35, 3000);
+            page->setWidth(1672.0 / 1.5);
+            page->setHeight(941.0 / 1.5);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 2, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit() &&
+                                         maintenancePanelProvidesContentHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
+                                         itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
+                                         itemFitsInPanel(maintenanceResourceColumn, maintenancePanel), 3000);
+
+            // A 1280x720 physical viewport at 200% UI scale becomes a 640x360 logical layout.
+            uiScaleFact->setRawValue(200);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.8, 3000);
+            page->setWidth(1280.0 / 2.0);
+            page->setHeight(720.0 / 2.0);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit() &&
+                                         maintenancePanelProvidesContentHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
+                                         itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
+                                         itemFitsInPanel(maintenanceResourceColumn, maintenancePanel) &&
+                                         itemFitsInPanel(maintenanceBootId, maintenanceIdentityColumn) &&
+                                         itemFitsInPanel(maintenanceEvent, maintenanceEventColumn) &&
+                                         itemFitsInPanel(maintenancePrearm, maintenanceResourceColumn) &&
+                                         itemFitsInPanel(maintenanceResourceGrid, maintenanceResourceColumn), 3000);
+
+            // Long diagnostics must still expand the maintenance strip at the largest UI scale.
+            const qreal highDpiEventHeight = maintenanceEvent->height();
+            const qreal highDpiMaintenanceHeight = maintenancePanel->height();
+            maintenanceEvent->setProperty(
+                "text",
+                QStringLiteral("高 DPI 下仍需完整显示链路恢复、传感器实例接收年龄、解锁前检查结果、资源快照完整性与启动周期一致性。")
+                    .repeated(8));
+            QTRY_VERIFY_WITH_TIMEOUT(maintenanceEvent->height() > highDpiEventHeight + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanel->height() > highDpiMaintenanceHeight + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight() &&
+                                         itemFitsInPanel(maintenanceEvent, maintenanceEventColumn), 3000);
+            maintenanceEvent->setProperty("text", originalMaintenanceEventText);
+
+            uiScaleFact->setRawValue(originalUiScale);
+            page->setWidth(originalDpiPageWidth);
+            page->setHeight(originalDpiPageHeight);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(page->property("_dashboardPanelPadding").toReal() - originalDpiPanelPadding) < 1.0,
+                3000);
 
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcTab);
