@@ -432,11 +432,28 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 相关自动化测试和 Windows Release 验收有精确 HEAD 证据。
 - SPEC 与实际实现同步；未完成阶段保持明确状态，不提前标记 PASS。
 
+### Phase 1 实施记录（首轮）
+
+- Flight 参数页切换为全宽参数中心工作台：仅在 Flight 的参数页隐藏旧配置侧栏和分隔线，其他配置页保留原导航。
+- 顶部 Flight 工具栏在参数页显示“参数中心 3.0”标题和“参数调优 / 仿真验证 / 参数应用”工作区入口。
+- 参数页新增唯一 activeVehicle 绑定区、五步流程条、八个参数域导航、上层三卡片、下层三卡片和底部状态栏。
+- 数字孪生卡片只读取 Vehicle 已公开的机型、构型和电机数量；未提供的规格明确显示“未提供”。
+- 参数健康度只显示真实连接状态、ParameterManager 参数就绪和待写入状态；不显示未经规则计算的综合分数。
+- 参数表嵌入现有 ParameterEditor，继续使用 ParameterEditorController / Fact / ParameterManager，不建立第二套参数写入路径。
+- 在线调参按钮保持禁用并标明 Phase 3 待接入；响应曲线显示空态，不绘制伪造的实时/仿真数据；影响分析和 AI 建议显示数据不足空态。
+- 原始 1672 × 941 参考图已审阅，但尚未成功写入 Git 仓库二进制资产路径；Phase 0 参考图归档仍待解决。
+
+当前局限：
+- 参数域点击仅切换 UI 选中态，动态参数域映射待 Phase 2。
+- 顶部工作区入口仅为视觉入口，不代表仿真或参数应用功能已实现。
+- 当前机型信息来自 activeVehicle；独立机型模型注册/兼容性选择待 Phase 2。
+- 本轮未运行 Windows 构建、QML UI 测试或 CI；必须在集中验收阶段验证。
+
 ## 13. 当前实施状态
 
 - SPEC：已定义，等待分阶段实施。
-- Phase 0：PARTIAL（源码盘点已完成；原始参考图归档待完成）。
-- Phase 1：NOT_RUN。
+- Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
+- Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
 - Phase 2：NOT_RUN。
 - Phase 3：NOT_RUN。
 - Phase 4：NOT_RUN。

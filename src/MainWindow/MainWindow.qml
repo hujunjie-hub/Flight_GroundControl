@@ -445,7 +445,10 @@ ApplicationWindow {
             Loader {
                 anchors.fill: parent
                 active: toolDrawer.visible && toolDrawer.flightConfig
-                sourceComponent: FlyViewToolBar { configuring: true }
+                sourceComponent: FlyViewToolBar {
+                    configuring: true
+                    parameterCenter: toolDrawerLoader.source.toString().endsWith("/SetupParameterEditor.qml")
+                }
             }
 
             Rectangle {

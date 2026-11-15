@@ -32,6 +32,7 @@ Rectangle {
     property bool   _fullParameterVehicleAvailable: _activeVehicle && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !_activeVehicle.parameterManager.missingParameters
     readonly property bool _flightLayout: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
     readonly property bool _flightNavigation: _flightLayout && _fullParameterVehicleAvailable
+    readonly property bool _parameterCenterFullPage: _flightLayout && _selectedSpecial === "parameters"
     readonly property bool _flightRebootAvailable: _flightLayout && !_activeVehicle.armed &&
                                                    !_activeVehicle.flying && !_activeVehicle.vehicleLinkManager.communicationLost
     property var    _corePlugin:                    QGroundControl.corePlugin
@@ -427,12 +428,13 @@ Rectangle {
         anchors.bottom: parent.bottom
         width: leftPanel.x + leftPanel.width + 4
         color: _flightLayout ? "#061F27" : "#253330"
-        visible: _flightLayout
+        visible: _flightLayout && !_parameterCenterFullPage
     }
 
     ColumnLayout {
         id:                 leftPanel
         objectName:         "vehicleConfig_flightSidebar"
+        visible:            !_parameterCenterFullPage
         width:              _flightLayout ? 160 :
                                 Math.max(buttonColumn.implicitWidth + _horizontalMargin, _defaultTextWidth * 22)
         anchors.topMargin:  _flightLayout ? 18 : _verticalMargin
@@ -720,17 +722,18 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
+        visible:                !_parameterCenterFullPage
         color:                  _flightLayout ? "#0B6873" : qgcPal.windowShade
     }
 
     Loader {
         id:                     panelLoader
         objectName:             "vehicleConfig_panelLoader"
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
-        anchors.rightMargin:    _horizontalMargin
-        anchors.left:           divider.right
+        anchors.topMargin:      _parameterCenterFullPage ? 0 : _verticalMargin
+        anchors.bottomMargin:   _parameterCenterFullPage ? 0 : _verticalMargin
+        anchors.leftMargin:     _parameterCenterFullPage ? 0 : _horizontalMargin
+        anchors.rightMargin:    _parameterCenterFullPage ? 0 : _horizontalMargin
+        anchors.left:           _parameterCenterFullPage ? parent.left : divider.right
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom

@@ -12,6 +12,7 @@ Item {
     height: control.configuring ? 56 : ScreenTools.toolbarHeight
 
     property bool configuring: false
+    property bool parameterCenter: false
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
@@ -108,11 +109,43 @@ Item {
                             color: "#0D6670"
                         }
 
+                        ColumnLayout {
+                            visible: control.parameterCenter
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 0
+                            QGCLabel {
+                                text: qsTr("参数中心 3.0")
+                                color: "#E8F4F6"
+                                font.pointSize: ScreenTools.titleFontPointSize
+                                font.weight: ScreenTools.strongFontWeight
+                            }
+                            QGCLabel {
+                                text: qsTr("PARAMETER CENTER 3.0")
+                                color: "#83B7C0"
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                        }
+
                         MainStatusIndicator {
                             id:                 mainStatusIndicator
                             objectName:         "toolbar_mainStatusIndicator"
                             disconnectedStatusColor: control.configuring ? "#063640" : qgcPal.brandingPurple
                             Layout.fillHeight:  true
+                        }
+                    }
+
+                    RowLayout {
+                        visible: control.parameterCenter
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 10
+                        Repeater {
+                            model: [qsTr("参数调优"), qsTr("仿真验证"), qsTr("参数应用")]
+                            delegate: QGCLabel {
+                                required property string modelData
+                                text: modelData
+                                color: modelData === qsTr("参数调优") ? "#18DDE2" : "#91ADB6"
+                                font.pointSize: ScreenTools.bodyFontPointSize
+                            }
                         }
                     }
 
