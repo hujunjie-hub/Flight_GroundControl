@@ -261,14 +261,55 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("本机控制中"), 6000);
+            QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() != QStringLiteral("数据超时"), 2000);
             QTRY_VERIFY_WITH_TIMEOUT(pitchSlider->property("enabled").toBool(), 2000);
             QVERIFY(yawMode->property("enabled").toBool());
+
+            // Partial -3 pairs are malformed and cannot release the current owner.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -3.0f, -1.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
+
+            // 0 clears the slot; -2 assigns the sender itself as controller.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, 0.0f, 0.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 6000);
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -2.0f, -2.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("本机控制中"), 6000);
+
+            // A foreign owner cannot be released by this GCS.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, 42.0f, 191.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("其他控制端占用"), 6000);
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -3.0f, -3.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("其他控制端占用"));
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -2.0f, -2.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("本机控制中"), 6000);
 
             // A lost heartbeat invalidates cached ownership immediately. The page
             // must wait for a fresh manager-status frame after link recovery.
             mockLink->setCommLost(true);
             QTRY_VERIFY_WITH_TIMEOUT(vehicle->vehicleLinkManager()->communicationLost(), 6000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("通信中断"), 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(rollValue->property("text").toString(),
                                       QStringLiteral("通信中断"), 1000);
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!page->property("controlTimerRunning").toBool());
@@ -311,6 +352,21 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 6000);
 
+            // A raw attitude command without an owner must be rejected by MockLink.
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 2000);
+            const QString pitchBeforeUnauthorizedCommand = pitchValue->property("text").toString();
+            vehicle->sendMavCommand(
+                MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW, false,
+                44.0f, 90.0f, NAN, NAN,
+                GIMBAL_MANAGER_FLAGS_ROLL_LOCK | GIMBAL_MANAGER_FLAGS_PITCH_LOCK |
+                    GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME,
+                0, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 2000);
+            QCOMPARE(pitchValue->property("text").toString(), pitchBeforeUnauthorizedCommand);
+            QVERIFY(pitchValue->property("text").toString() != QStringLiteral("44.0°"));
+
             // Simulate a different GCS owning the primary slot. The UI must not offer takeover.
             mavlink_gimbal_manager_status_t status{};
             status.time_boot_ms = 5000;
@@ -331,5 +387,17 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!acquire->property("enabled").toBool());
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!release->property("enabled").toBool());
+
+            // Stop the gimbal status streams while keeping vehicle heartbeats alive.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL,
+                                    false, MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS, -1);
+            vehicle->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_SET_MESSAGE_INTERVAL,
+                                    false, MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("控制权状态超时"), 9000);
+            QTRY_COMPARE_WITH_TIMEOUT(rollValue->property("text").toString(),
+                                      QStringLiteral("数据超时"), 1000);
+            QVERIFY(!pitchSlider->property("enabled").toBool());
+            QVERIFY(!acquire->property("enabled").toBool());
         });
 }

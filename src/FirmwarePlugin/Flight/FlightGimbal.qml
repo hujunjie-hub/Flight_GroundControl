@@ -19,7 +19,19 @@ SetupPage {
                                                 ? _vehicle.vehicleLinkManager.communicationLost : true
     readonly property bool _hasControl: _activeGimbal ? _activeGimbal.gimbalHaveControl : false
     readonly property bool _otherHasControl: _activeGimbal ? _activeGimbal.gimbalOthersHaveControl : false
+    property int _freshnessTick: 0
+    readonly property int _managerStatusAgeMs: {
+        _freshnessTick
+        return _activeGimbal ? Number(_activeGimbal.managerStatusAgeMs) : -1
+    }
+    readonly property int _attitudeStatusAgeMs: {
+        _freshnessTick
+        return _activeGimbal ? Number(_activeGimbal.attitudeStatusAgeMs) : -1
+    }
+    readonly property bool _managerStatusFresh: _managerStatusAgeMs >= 0 && _managerStatusAgeMs <= 6500
+    readonly property bool _attitudeStatusFresh: _attitudeStatusAgeMs >= 0 && _attitudeStatusAgeMs <= 3500
     readonly property bool _controlReady: !!_activeGimbal && !_communicationLost &&
+                                          _managerStatusFresh && _attitudeStatusFresh &&
                                           _hasControl && !_otherHasControl
     readonly property bool controlTimerRunning: controlTimer.running
 
@@ -45,6 +57,10 @@ SetupPage {
             return qsTr("通信中断")
         if (!_activeGimbal)
             return qsTr("未发现云台")
+        if (!_managerStatusFresh)
+            return qsTr("控制权状态超时")
+        if (_hasControl && !_attitudeStatusFresh)
+            return qsTr("姿态数据超时")
         if (_hasControl)
             return qsTr("本机控制中")
         if (_otherHasControl)
@@ -52,8 +68,18 @@ SetupPage {
         return qsTr("未取得控制权")
     }
 
+    function _attitudeText(fact) {
+        if (_communicationLost)
+            return qsTr("通信中断")
+        if (!_activeGimbal)
+            return "—"
+        if (!_attitudeStatusFresh)
+            return qsTr("数据超时")
+        return Number(fact.rawValue).toFixed(1) + "°"
+    }
+
     function _syncTargets() {
-        if (!_activeGimbal) {
+        if (!_activeGimbal || !_attitudeStatusFresh) {
             _targetPitch = 0
             _targetYaw = 0
             return
@@ -279,7 +305,7 @@ SetupPage {
                                 QGCLabel { text: qsTr("横滚"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
                                 QGCLabel {
                                     objectName: "flightGimbal_rollValue"
-                                    text: root._activeGimbal ? Number(root._activeGimbal.absoluteRoll.rawValue).toFixed(1) + "°" : "—"
+                                    text: root._activeGimbal ? root._attitudeText(root._activeGimbal.absoluteRoll) : "—"
                                     font.pointSize: ScreenTools.subtitleFontPointSize
                                 }
                             }
@@ -288,7 +314,7 @@ SetupPage {
                                 QGCLabel { text: qsTr("俯仰"); color: qgcPal.text; font.pointSize: ScreenTools.captionFontPointSize }
                                 QGCLabel {
                                     objectName: "flightGimbal_pitchValue"
-                                    text: root._activeGimbal ? Number(root._activeGimbal.absolutePitch.rawValue).toFixed(1) + "°" : "—"
+                                    text: root._activeGimbal ? root._attitudeText(root._activeGimbal.absolutePitch) : "—"
                                     font.pointSize: ScreenTools.subtitleFontPointSize
                                 }
                             }
@@ -298,8 +324,8 @@ SetupPage {
                                 QGCLabel {
                                     objectName: "flightGimbal_yawValue"
                                     text: root._activeGimbal
-                                          ? Number((root._activeGimbal.yawLock
-                                                    ? root._activeGimbal.absoluteYaw : root._activeGimbal.bodyYaw).rawValue).toFixed(1) + "°"
+                                          ? root._attitudeText(root._activeGimbal.yawLock
+                                                               ? root._activeGimbal.absoluteYaw : root._activeGimbal.bodyYaw)
                                           : "—"
                                     font.pointSize: ScreenTools.subtitleFontPointSize
                                 }
@@ -343,7 +369,7 @@ SetupPage {
                                 Layout.fillWidth: true
                                 text: qsTr("获取控制权")
                                 primary: true
-                                enabled: !!root._activeGimbal && !root._communicationLost &&
+                                enabled: !!root._activeGimbal && !root._communicationLost && root._managerStatusFresh &&
                                          !root._hasControl && !root._otherHasControl
                                 onClicked: root._controller.acquireGimbalControl()
                             }

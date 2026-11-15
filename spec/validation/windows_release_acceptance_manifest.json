@@ -488,7 +488,13 @@
         "gimbal_control_timer_starts_on_drag_and_stops_on_release",
         "storage_and_gimbal_setup_pages_remain_accessible_when_armed_and_declare_flying_access",
         "mocklink_gimbal_releases_primary_owner_for_configure_minus_three_sentinel",
-        "gimbal_slider_target_is_reflected_by_mocklink_attitude_feedback"
+        "gimbal_slider_target_is_reflected_by_mocklink_attitude_feedback",
+        "gimbal_manager_status_older_than_6500ms_disables_acquire_and_control_even_with_live_vehicle_heartbeat",
+        "gimbal_attitude_status_older_than_3500ms_hides_cached_angles_and_disables_attitude_controls",
+        "gimbal_link_recovery_invalidates_both_cached_manager_and_attitude_status_until_new_frames",
+        "mocklink_gimbal_configure_zero_clears_minus_one_preserves_minus_two_sets_sender",
+        "mocklink_gimbal_configure_partial_or_foreign_minus_three_release_is_denied",
+        "mocklink_gimbal_pitch_yaw_commands_require_primary_or_secondary_owner"
       ]
     }
   ],

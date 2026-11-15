@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QElapsedTimer>
+
 #include "FactGroup.h"
 #include "MAVLinkEnums.h"
 
@@ -22,6 +24,8 @@ class Gimbal : public FactGroup
     Q_PROPERTY(bool     gimbalOthersHaveControl READ gimbalOthersHaveControl    NOTIFY gimbalOthersHaveControlChanged)
     Q_PROPERTY(bool     supportsRetract         READ supportsRetract            NOTIFY capabilityFlagsChanged)
     Q_PROPERTY(bool     supportsYawLock         READ supportsYawLock            NOTIFY capabilityFlagsChanged)
+    Q_PROPERTY(qint64   managerStatusAgeMs       READ managerStatusAgeMs          NOTIFY managerStatusFreshnessChanged)
+    Q_PROPERTY(qint64   attitudeStatusAgeMs      READ attitudeStatusAgeMs         NOTIFY attitudeStatusFreshnessChanged)
 
     friend class GimbalController;
 
@@ -44,6 +48,56 @@ public:
     bool retracted() const { return _retracted; }
     bool gimbalHaveControl() const { return _haveControl; }
     bool gimbalOthersHaveControl() const { return _othersHaveControl; }
+
+    static constexpr qint64 kManagerStatusFreshnessThresholdMs = 6500;
+    static constexpr qint64 kAttitudeStatusFreshnessThresholdMs = 3500;
+    qint64 managerStatusAgeMs() const
+    {
+        return _managerStatusValid && _managerStatusReceiveClock.isValid()
+                   ? _managerStatusReceiveClock.elapsed() : -1;
+    }
+    qint64 attitudeStatusAgeMs() const
+    {
+        return _attitudeStatusValid && _attitudeStatusReceiveClock.isValid()
+                   ? _attitudeStatusReceiveClock.elapsed() : -1;
+    }
+    bool managerStatusFresh() const
+    {
+        const qint64 age = managerStatusAgeMs();
+        return age >= 0 && age <= kManagerStatusFreshnessThresholdMs;
+    }
+    bool attitudeStatusFresh() const
+    {
+        const qint64 age = attitudeStatusAgeMs();
+        return age >= 0 && age <= kAttitudeStatusFreshnessThresholdMs;
+    }
+    void invalidateStatus()
+    {
+        _managerStatusValid = false;
+        _attitudeStatusValid = false;
+        emit managerStatusFreshnessChanged();
+        emit attitudeStatusFreshnessChanged();
+    }
+    void markManagerStatusReceived()
+    {
+        _managerStatusValid = true;
+        if (_managerStatusReceiveClock.isValid()) {
+            _managerStatusReceiveClock.restart();
+        } else {
+            _managerStatusReceiveClock.start();
+        }
+        emit managerStatusFreshnessChanged();
+    }
+    void markAttitudeStatusReceived()
+    {
+        _attitudeStatusValid = true;
+        if (_attitudeStatusReceiveClock.isValid()) {
+            _attitudeStatusReceiveClock.restart();
+        } else {
+            _attitudeStatusReceiveClock.start();
+        }
+        emit attitudeStatusFreshnessChanged();
+    }
 
     void setAbsoluteRoll(float absRoll) { absoluteRoll()->setRawValue(absRoll); }
     void setAbsolutePitch(float absPitch) { absolutePitch()->setRawValue(absPitch); }
@@ -71,6 +125,8 @@ signals:
     void gimbalHaveControlChanged();
     void gimbalOthersHaveControlChanged();
     void capabilityFlagsChanged();
+    void managerStatusFreshnessChanged();
+    void attitudeStatusFreshnessChanged();
 
 private:
     void _initFacts();
@@ -84,6 +140,10 @@ private:
     bool _isComplete = false;
     bool _neutral = false;
     uint32_t _capabilityFlags = 0; // GIMBAL_MANAGER_CAP_FLAGS
+    QElapsedTimer _managerStatusReceiveClock;
+    QElapsedTimer _attitudeStatusReceiveClock;
+    bool _managerStatusValid = false;
+    bool _attitudeStatusValid = false;
 
     Fact _absoluteRollFact = Fact(0, QStringLiteral("gimbalRoll"), FactMetaData::valueTypeFloat);
     Fact _absolutePitchFact = Fact(0, QStringLiteral("gimbalPitch"), FactMetaData::valueTypeFloat);

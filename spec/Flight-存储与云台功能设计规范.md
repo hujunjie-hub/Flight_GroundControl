@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.0
+- 版本：1.1
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -80,7 +80,8 @@
 - 只有飞控回报本机为 primary controller 后，姿态、回中、偏航模式和收起/展开操作才启用。
 - 当其他控制端持有 primary control 时，显示「其他控制端占用」，禁用获取控制权与全部控制操作；不提供强制接管按钮。
 - 释放控制权调用现有 `GimbalController.releaseGimbalControl()`。
-- VehicleLinkManager 报告通信丢失时，GimbalController 必须清除缓存的本机/其他控制权状态并停止周期控制发送；链路恢复后，只有新的 GIMBAL_MANAGER_STATUS 到达，才能重新确认所有权。
+- VehicleLinkManager 报告通信丢失时，GimbalController 必须清除缓存的本机/其他控制权状态、使管理状态和姿态状态接收时间戳失效并停止周期控制发送；链路恢复后，只有新的 GIMBAL_MANAGER_STATUS 到达才能重新确认所有权，只有新的 GIMBAL_DEVICE_ATTITUDE_STATUS 到达才能重新开放姿态控制。
+- GIMBAL_MANAGER_STATUS 与 GIMBAL_DEVICE_ATTITUDE_STATUS 分别使用地面站单调接收时钟；管理状态超过 6500 ms、姿态状态超过 3500 ms 未更新即标记超时。6500 ms 覆盖 GimbalController 的 0.2 Hz（5000 ms）回退周期和接收余量。任一状态流超时禁止姿态命令；管理状态超时禁止获取控制权，姿态状态超时隐藏缓存角度并禁用姿态控制，即使 Vehicle 心跳仍正常也不得把旧数据显示为实时值。
 - 云台页面允许 Armed / Flying 期间访问，但每条控制命令仍必须同时满足链路正常和本机控制权已确认。
 
 ### 3.3 控制入口
@@ -97,9 +98,9 @@
 
 MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 
-- 0 / -1：保持对应控制权字段不变。
-- 正数：设置对应 system/component ID。
-- -3：仅当发送方 system/component ID 与当前 primary/secondary owner 完全匹配时，释放该 owner pair。
+- 每个参数按 MAVLink 定义解释：0 = 无人控制（清空对应字段）；-1 = 保持不变；-2 = 将发送方自己的 system/component ID 写入对应字段；-3 = 仅当发送方拥有完整 owner pair 时释放该 pair；正整数 = 设置显式 ID。
+- -3 必须以完整的 sysid/compid 参数对出现；部分 -3、非整数 ID、越界 ID 和未定义负值均拒绝。
+- 未持有 primary/secondary 控制权的发送方，其 `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 命令必须被拒绝。
 - 不得因为其他 GCS 发来 -3 就清除当前 owner。
 - 共享状态和 1 Hz 状态发送使用同一互斥锁，避免配置写入与状态读取竞争。
 
@@ -111,6 +112,9 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 存储页不展示总容量/使用率，不发送日志列表、下载或擦除命令。
 - 无兼容云台时的空态与禁用状态。
 - 云台发现、实时姿态、控制权获取/释放、外部 owner 禁止接管。
+- 管理状态 6500 ms、姿态状态 3500 ms freshness；心跳正常但云台状态流停止时，旧控制权/姿态不得继续显示为实时。
+- MockLink 验证 Configure 的 0/-1/-2/-3 语义、部分/越权释放拒绝，以及无 primary/secondary owner 时禁止姿态命令。
+- 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
 - 链路丢失清除缓存所有权，恢复后等待新状态确认。
 - 拖动期间控制 Timer 运行，松开后停止；MockLink 姿态回读与最终目标角度一致。
 - yaw-lock / retract 按设备能力门控。

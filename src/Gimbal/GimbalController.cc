@@ -35,6 +35,7 @@ GimbalController::GimbalController(Vehicle *vehicle)
         for (auto it = _potentialGimbals.cbegin(); it != _potentialGimbals.cend(); ++it) {
             it.value()->setGimbalHaveControl(false);
             it.value()->setGimbalOthersHaveControl(false);
+            it.value()->invalidateStatus();
         }
     });
 
@@ -185,6 +186,7 @@ void GimbalController::_handleGimbalManagerStatus(const mavlink_message_t &messa
     }
 
     gimbal->_receivedGimbalManagerStatus = true;
+    gimbal->markManagerStatusReceived();
 
     const bool haveControl =
         (status.primary_control_sysid == MAVLinkProtocol::instance()->getSystemId()) &&
@@ -277,6 +279,7 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     }
 
     gimbal->_receivedGimbalDeviceAttitudeStatus = true;
+    gimbal->markAttitudeStatusReceived();
 
     _checkComplete(*gimbal, pairId);
 }
@@ -385,6 +388,16 @@ bool GimbalController::_tryGetGimbalControl()
 {
     if (!_activeGimbal) {
         qCCritical(GimbalControllerLog) << "_tryGetGimbalControl: active gimbal is nullptr, returning";
+        return false;
+    }
+
+    if (!_vehicle || !_vehicle->vehicleLinkManager() ||
+        _vehicle->vehicleLinkManager()->communicationLost()) {
+        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: communication is lost, refusing command";
+        return false;
+    }
+    if (!_activeGimbal->managerStatusFresh() || !_activeGimbal->attitudeStatusFresh()) {
+        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: manager or attitude status is stale, refusing command";
         return false;
     }
 
@@ -693,6 +706,11 @@ void GimbalController::setGimbalYawLock(bool set)
 
 void GimbalController::sendPitchYawFlags(uint32_t flags)
 {
+    if (!_activeGimbal || !_vehicle || !_vehicle->vehicleLinkManager() ||
+        _vehicle->vehicleLinkManager()->communicationLost() || !_activeGimbal->managerStatusFresh()) {
+        qCDebug(GimbalControllerLog) << "sendPitchYawFlags: link or manager status is not fresh, refusing command";
+        return;
+    }
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
 
     _vehicle->sendMavCommand(
@@ -714,6 +732,11 @@ void GimbalController::acquireGimbalControl()
         qCCritical(GimbalControllerLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
         return;
     }
+    if (!_vehicle || !_vehicle->vehicleLinkManager() ||
+        _vehicle->vehicleLinkManager()->communicationLost() || !_activeGimbal->managerStatusFresh()) {
+        qCDebug(GimbalControllerLog) << "acquireGimbalControl: link or manager status is not fresh, refusing request";
+        return;
+    }
 
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
@@ -732,6 +755,11 @@ void GimbalController::releaseGimbalControl()
 {
     if (!_activeGimbal) {
         qCCritical(GimbalControllerLog) << "releaseGimbalControl: active gimbal is nullptr, returning";
+        return;
+    }
+    if (!_vehicle || !_vehicle->vehicleLinkManager() ||
+        _vehicle->vehicleLinkManager()->communicationLost()) {
+        qCDebug(GimbalControllerLog) << "releaseGimbalControl: communication is lost, refusing request";
         return;
     }
 

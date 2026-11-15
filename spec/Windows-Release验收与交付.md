@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.44        
+版本：4.45        
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -38,7 +38,7 @@
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 | G17 | 全项目字体系统与渲染一致性 | qml-typography-check --all、TopLevelViewsTest、JUnit、Windows DPI screenshots | 递归检查全部 src/**/*.qml；除 ScreenTools 兼容别名外无旧字号令牌；无固定 font.pixelSize、硬编码字体族和未登记的局部字号乘数；QGCLabel/共享控件统一字体族、Hinting 与抗锯齿；RadioButton 继承正确字体族；中文界面按平台选择已安装 CJK 字体；100%/125%/150% DPI 视觉证据齐全 |
 | G18 | 旧版 SYS_STATUS 传感器状态 freshness | FlightTelemetryPageUITest、MockLink SYS_STATUS、JUnit | 通信丢失立即使缓存传感器状态 stale；恢复心跳但未收到新 SYS_STATUS 时仍保持 stale；新帧到达后恢复；历史状态只作诊断上下文 |
-| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；无虚构容量或日志操作；云台设备发现/姿态回读/控制权/外部 owner/能力门控/5 Hz 目标回读/链路恢复正确；Armed/Flying 可访问 |
+| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；无虚构容量或日志操作；云台设备发现/姿态回读/控制权/外部 owner/能力门控/5 Hz 目标回读/链路恢复/6500 ms manager 与 3500 ms attitude freshness/Configure 0/-1/-2/-3 权限语义/非 owner 命令拒绝正确；Armed/Flying 可访问 |
 
 只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G19 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
@@ -543,7 +543,9 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 存储页从 `vehicle.flightTelemetry` 读取真实 FCU_STORAGE_STATUS Facts；SD/NOR/free-space 分别按 validity bit 0/1/2 门控；通信丢失立即隐藏缓存值，恢复链路后必须等待新的 storageTimeBootUs 帧才恢复展示，storage receive age 超过 5500 ms 时显示 stale。
 - 存储页不推算总容量、使用率或剩余时间；当前固件没有 MAVLink Onboard Log 列表/读取/擦除支持，因此不加载通用日志下载器，也不发送未支持的日志命令。
 - 云台页复用 GimbalController，显示 Gimbal Manager 发现的设备和实时姿态；必须由本机明确取得 primary control 后才开放控制；其他控制端持有时禁止接管。
-- VehicleLinkManager 报告通信丢失后，GimbalController 清除缓存的控制权并停止周期发送；恢复后等待新 GIMBAL_MANAGER_STATUS 再确认所有权。
+- VehicleLinkManager 报告通信丢失后，GimbalController 清除缓存的控制权、使 manager/attitude 接收时间戳失效并停止周期发送；恢复后等待新的 GIMBAL_MANAGER_STATUS 确认所有权，并等待新的 GIMBAL_DEVICE_ATTITUDE_STATUS 后才开放姿态命令。
+- GIMBAL_MANAGER_STATUS 使用 6500 ms 接收年龄门控（覆盖控制器回退到 0.2 Hz 的 5000 ms 周期及余量）；GIMBAL_DEVICE_ATTITUDE_STATUS 使用 3500 ms 门控。任一流超时都禁止姿态命令；姿态流超时隐藏缓存角度，管理状态超时禁止获取控制权。
+- MockLink Configure 遵循 0 清空、-1 保持、-2 设为发送方、-3 owner-pair 校验释放、正整数显式设置；部分 -3/非法 ID 被拒绝。GIMBAL_MANAGER_PITCHYAW 仅允许 primary/secondary owner 发送。
 - 拖动姿态滑块时按 5 Hz 发送目标，松开后提交最后目标并停止 Timer；yaw-lock/retract 控件按设备 capability flags 门控。
 - MockLink Gimbal Manager Configure 的 -3 释放哨兵只允许释放与发送方 system/component ID 匹配的 owner pair，并在共享状态上加锁。
 - 新增 `FlightStorageGimbalPageUITest` 覆盖存储等待/validity/通信丢失/恢复后新帧门控/stale/无虚构容量、云台空态/设备发现/三轴姿态回读/控制权/能力标志门控/滑块目标与姿态回读/链路恢复/外部 owner/拖动 Timer。按用户要求本轮不运行 CI、Unit、Integration 或 Windows Release；G19 新增断言保持 NOT_RUN，集中验收执行后再判 PASS。

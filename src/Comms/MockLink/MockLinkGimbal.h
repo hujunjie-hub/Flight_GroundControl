@@ -52,7 +52,8 @@ private:
 
     /// Handle MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW to control gimbal attitude.
     /// @return true if the command was handled
-    bool _handleGimbalManagerPitchYaw(const mavlink_command_long_t &request);
+    bool _handleGimbalManagerPitchYaw(const mavlink_command_long_t &request,
+                                      uint8_t sourceSysid, uint8_t sourceCompid);
 
     /// Handle MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE to configure gimbal manager.
     /// @return true if the command was handled
