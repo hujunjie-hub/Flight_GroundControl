@@ -502,7 +502,10 @@
         "health_page_ui_scale_150_200_percent_sensor_prearm_resource_detail_cards_and_metrics_fit",
         "overview_alarm_severity_chips_and_empty_state_use_screen_tools_scaled_content_geometry",
         "overview_alarm_priority_cards_and_history_rows_use_screen_tools_scaled_insets_and_content_driven_heights_at_six_widths",
-        "overview_alarm_density_tokens_scale_with_application_ui_scale_at_150_and_200_percent"
+        "overview_alarm_density_tokens_scale_with_application_ui_scale_at_150_and_200_percent",
+        "health_page_cells_use_dedicated_screen_tools_scaled_insets_and_compact_content_height",
+        "health_page_primary_summary_cells_fit_and_desktop_panels_keep_3_6_3_ratio",
+        "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens"
       ]
     },
     {
@@ -908,7 +911,10 @@
     "valid_utc_uncertainty_and_timestamp_use_neutral_value_colors",
     "navigation_time_groups_reflow_at_840px_and_utc_timestamp_spans_the_full_width",
     "navigation_and_time_family_statuses_remain_independent_in_the_monotonic_timeline",
-    "navigation_monotonic_timeline_marker_order_and_value_colors_match_for_navigation_time_and_event_rows"
+    "navigation_monotonic_timeline_marker_order_and_value_colors_match_for_navigation_time_and_event_rows",
+    "health_page_cells_use_dedicated_screen_tools_scaled_insets_and_compact_content_height",
+    "health_page_primary_summary_cells_fit_and_desktop_panels_keep_3_6_3_ratio",
+    "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
