@@ -395,7 +395,8 @@
         "overview_aircraft_arm_state_is_independent_and_does_not_imply_safety",
         "overview_failsafe_level_uses_prominent_full_width_severity_band_and_gates_stale_values",
         "overview_control_authority_is_secondary_and_health_cells_remain_independent",
-        "overview_aircraft_priority_content_fits_1600_1000_and_400_px_bounds"
+        "overview_aircraft_priority_content_fits_1600_1000_and_400_px_bounds",
+        "rc_input_family_badge_single_owner_is_preserved_across_1600_1000_900_700_400_widths"
       ]
     },
     {
