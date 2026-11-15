@@ -38,7 +38,7 @@
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 | G17 | 全项目字体系统与渲染一致性 | qml-typography-check --all、TopLevelViewsTest、JUnit、Windows DPI screenshots | 递归检查全部 src/**/*.qml；除 ScreenTools 兼容别名外无旧字号令牌；无固定 font.pixelSize、硬编码字体族和未登记的局部字号乘数；QGCLabel/共享控件统一字体族、Hinting 与抗锯齿；RadioButton 继承正确字体族；中文界面按平台选择已安装 CJK 字体；100%/125%/150% DPI 视觉证据齐全 |
 | G18 | 旧版 SYS_STATUS 传感器状态 freshness | FlightTelemetryPageUITest、MockLink SYS_STATUS、JUnit | 通信丢失立即使缓存传感器状态 stale；恢复心跳但未收到新 SYS_STATUS 时仍保持 stale；新帧到达后恢复；历史状态只作诊断上下文 |
-| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；无虚构容量或日志操作；云台设备发现/姿态回读/控制权/外部 owner/能力门控/5 Hz 目标回读/链路恢复/6500 ms manager 与 3500 ms attitude freshness/Configure 0/-1/-2/-3 权限语义/非 owner 命令拒绝正确；Armed/Flying 可访问 |
+| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；Profile ID、原因码、FCU 运行时间与 GCS 接收年龄正确；无虚构容量或日志操作；云台设备发现/姿态回读/显式获取控制权/完整 owner pair 校验/半 owner pair fail-closed/外部 owner 禁止接管/俯仰与偏航轴 capability 门控/5 Hz 目标回读/yaw-lock 与 retract 状态回读/链路恢复/6500 ms manager 与 3500 ms attitude freshness/Configure 0/-1/-2/-3 权限语义/非 owner、未知设备 ID、非有限目标命令拒绝正确；Armed/Flying 可访问 |
 
 只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G19 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
