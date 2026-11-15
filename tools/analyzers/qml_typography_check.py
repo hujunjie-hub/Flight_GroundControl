@@ -165,6 +165,22 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
                 'root._overviewAlarmPrimaryLeftInset' in content and
                 'root._overviewEventHistoryGridColumnSpacing' in content,
                 "FlightTelemetry alarm cards and history rows must use ScreenTools-scaled content geometry")
+        require('readonly property real _dashboardHeaderInset: ScreenTools.defaultFontPixelHeight *' in content and
+                'readonly property real _dashboardTabHeight: ScreenTools.defaultFontPixelHeight *' in content and
+                'readonly property real _dashboardTabIconSize: ScreenTools.defaultFontPixelHeight * 2.0' in content and
+                'Layout.preferredWidth: root._dashboardTabIconSize' in content and
+                'height: root._dashboardTabActiveIndicatorHeight' in content,
+                "FlightTelemetry header and tab geometry must scale from ScreenTools font metrics")
+        require('readonly property real _dashboardReadOnlyBadgeHorizontalInset: ScreenTools.defaultFontPixelWidth' in content and
+                'implicitWidth: readOnlyContent.implicitWidth + 2 * horizontalInset' in content and
+                'implicitHeight: readOnlyContent.implicitHeight + 2 * verticalInset' in content and
+                'Layout.preferredWidth: root._dashboardReadOnlyDotSize' in content,
+                "FlightTelemetry read-only badge must use scaled insets and content-driven dimensions")
+        require('readonly property real _dashboardPanelRadius: ScreenTools.defaultFontPixelHeight * 0.8' in content and
+                'readonly property real _dashboardPanelAccentStripeWidth: ScreenTools.defaultFontPixelWidth * 0.3' in content and
+                'width: root._dashboardPanelAccentStripeWidth' in content and
+                'Layout.preferredHeight: root._dashboardPanelDividerHeight' in content,
+                "FlightTelemetry hero and detail panel frame geometry must scale with ScreenTools")
 
 
 
