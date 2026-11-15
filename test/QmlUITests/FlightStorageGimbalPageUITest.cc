@@ -135,6 +135,12 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
 
             mockLink->setCommLost(false);
             QTRY_VERIFY_WITH_TIMEOUT(!vehicle->vehicleLinkManager()->communicationLost(), 6000);
+            // Recovery alone does not refresh a cached storage frame. Wait for a
+            // new FCU_STORAGE_STATUS before exposing values again.
+            QTRY_COMPARE_WITH_TIMEOUT(connection->property("text").toString(),
+                                      QStringLiteral("等待新遥测"), 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(),
+                                      QStringLiteral("等待新遥测"), 1000);
 
             // A cleared validity bit is not a numeric zero and cannot be rendered as ready.
             sendStorageStatus(2000, 0x00, 1, 1, 0);
@@ -261,7 +267,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(retract->isVisible());
             QVERIFY(retract->property("enabled").toBool());
 
-            // The page's 10 Hz target sender is active only while a slider is dragged.
+            // The page's 5 Hz target sender is active only while a slider is dragged.
             const QPoint start = pitchSlider->mapToScene(
                 QPointF(pitchSlider->width() * 0.5, pitchSlider->height() * 0.5)).toPoint();
             const QPoint moved = start + QPoint(18, 0);

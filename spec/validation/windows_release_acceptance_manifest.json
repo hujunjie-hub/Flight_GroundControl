@@ -468,6 +468,7 @@
         "storage_page_shows_invalid_when_corresponding_validity_bit_is_clear",
         "storage_page_hides_cached_values_after_5500ms_storage_family_staleness",
         "storage_page_shows_communication_loss_without_waiting_for_family_timeout",
+        "storage_page_requires_new_storage_frame_after_link_recovery",
         "storage_page_does_not_infer_total_capacity_or_usage_percentage",
         "storage_page_does_not_send_unsupported_onboard_log_list_download_or_erase_commands",
         "gimbal_page_shows_empty_state_and_disables_controls_without_compatible_device",

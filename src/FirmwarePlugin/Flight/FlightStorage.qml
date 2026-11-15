@@ -15,8 +15,15 @@ SetupPage {
     readonly property bool _communicationLost: _vehicle && _vehicle.vehicleLinkManager
                                                 ? _vehicle.vehicleLinkManager.communicationLost : false
     property int _ageRefreshTick: 0
+    property int _communicationEpoch: 0
+    property int _storageEpoch: -1
+    property var _lastStorageTimeBootUs: null
 
     readonly property bool _storageAvailable: Boolean(_factValue("storageAvailable"))
+    readonly property bool _hasPreviousStorageSample: {
+        const sample = Number(_factValue("storageTimeBootUs"))
+        return Number.isFinite(sample) && sample > 0
+    }
     readonly property real _storageAgeMs: {
         _ageRefreshTick
         if (!_telemetry || !_telemetry.familyReceiveAgeMs)
@@ -25,6 +32,7 @@ SetupPage {
         return Number.isFinite(age) ? age : -1
     }
     readonly property bool _storageFresh: !_communicationLost && _storageAvailable &&
+                                          _storageEpoch === _communicationEpoch &&
                                           _storageAgeMs >= 0 && _storageAgeMs <= 5500
 
     function _factValue(name) {
@@ -38,7 +46,9 @@ SetupPage {
         if (_communicationLost)
             return qsTr("通信中断")
         if (!_storageAvailable || _storageAgeMs < 0)
-            return qsTr("等待遥测")
+            return _hasPreviousStorageSample ? qsTr("等待新遥测") : qsTr("等待遥测")
+        if (_storageEpoch !== _communicationEpoch)
+            return qsTr("等待新遥测")
         if (_storageAgeMs > 5500)
             return qsTr("数据超时")
         return qsTr("已接收")
@@ -103,17 +113,43 @@ SetupPage {
         if (_communicationLost)
             return qsTr("通信中断")
         if (!_storageAvailable || _storageAgeMs < 0)
-            return qsTr("未收到")
+            return _hasPreviousStorageSample ? qsTr("等待新遥测") : qsTr("未收到")
+        if (_storageEpoch !== _communicationEpoch)
+            return qsTr("等待新遥测")
         if (_storageAgeMs > 5500)
             return qsTr("数据超时")
         return qsTr("%1 s").arg((_storageAgeMs / 1000).toFixed(1))
+    }
+
+    Component.onCompleted: {
+        root._lastStorageTimeBootUs = root._factValue("storageTimeBootUs")
+        if (!root._communicationLost && root._storageAvailable)
+            root._storageEpoch = root._communicationEpoch
+    }
+
+    Connections {
+        target: root._vehicle ? root._vehicle.vehicleLinkManager : null
+        function onCommunicationLostChanged(communicationLost) {
+            if (communicationLost)
+                root._communicationEpoch++
+            root._ageRefreshTick++
+        }
     }
 
     Timer {
         interval: 250
         repeat: true
         running: root.visible
-        onTriggered: root._ageRefreshTick++
+        onTriggered: {
+            const sampleTime = root._factValue("storageTimeBootUs")
+            if (sampleTime !== null && sampleTime !== undefined &&
+                sampleTime !== root._lastStorageTimeBootUs) {
+                root._lastStorageTimeBootUs = sampleTime
+                if (!root._communicationLost)
+                    root._storageEpoch = root._communicationEpoch
+            }
+            root._ageRefreshTick++
+        }
     }
 
     Component {

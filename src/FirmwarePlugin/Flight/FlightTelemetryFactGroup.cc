@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 FlightTelemetryFactGroup::~FlightTelemetryFactGroup()
 {
@@ -18,6 +19,21 @@ FlightTelemetryFactGroup::FlightTelemetryFactGroup(QObject *parent)
     : FactGroup(0, parent)
 {
     _receiveClock.start();
+
+    if (auto *vehicle = qobject_cast<Vehicle *>(parent)) {
+        if (vehicle->vehicleLinkManager()) {
+            (void) connect(vehicle->vehicleLinkManager(),
+                           &VehicleLinkManager::communicationLostChanged,
+                           this, [this](bool communicationLost) {
+                if (communicationLost) {
+                    // A storage sample from before a link outage is no longer current.
+                    // Keep its timestamp for diagnostics, but require a new frame before
+                    // exposing storage values again after the link recovers.
+                    _storageAvailable.setRawValue(false);
+                }
+            });
+        }
+    }
 
     // Single shot: one timer serves every family, armed only for the nearest deadline.
     _staleTimer.setSingleShot(true);
