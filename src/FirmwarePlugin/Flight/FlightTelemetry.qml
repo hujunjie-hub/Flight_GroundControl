@@ -2689,7 +2689,9 @@ SetupPage {
                                      root._familyStatus("eventAvailable"),
                                      root._telemetry ? root._telemetry.recentEvents.length : 0)
                         Layout.fillWidth: true
-                        columns: root.availableWidth >= 1000 ? 5 : 3
+                        // The alarm panel is narrow only in the six-column intermediate dashboard.
+                        // At desktop and stacked layouts it has enough width for all five severity buckets.
+                        columns: root._dashboardColumns === 6 ? 3 : 5
                         columnSpacing: 5
                         rowSpacing: 4
                         Repeater {
