@@ -183,14 +183,26 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
     connect(_parameterMgr, &ParameterManager::pendingWritesChanged, this, [this](bool) {
         emit tuningStateChanged();
     });
-    connect(_parameterMgr, &ParameterManager::parametersReadyChanged, this, [this](bool) {
-        emit tuningStateChanged();
+    connect(_parameterMgr, &ParameterManager::parametersReadyChanged, this, [this](bool ready) {
+        if (!ready) {
+            _invalidatePendingTuningOperation(tr("参数列表状态发生变化；请在参数重新就绪后回读确认。"));
+        } else {
+            emit tuningStateChanged();
+        }
     });
-    connect(_parameterMgr, &ParameterManager::missingParametersChanged, this, [this](bool) {
-        emit tuningStateChanged();
+    connect(_parameterMgr, &ParameterManager::missingParametersChanged, this, [this](bool missing) {
+        if (missing) {
+            _invalidatePendingTuningOperation(tr("飞控参数列表不完整；本次调参结果需要重新回读确认。"));
+        } else {
+            emit tuningStateChanged();
+        }
     });
     connect(_parameterMgr, &ParameterManager::parameterDownloadSkippedChanged, this, [this]() {
-        emit tuningStateChanged();
+        if (_parameterMgr && _parameterMgr->parameterDownloadSkipped()) {
+            _invalidatePendingTuningOperation(tr("参数下载被跳过；本次调参结果需要重新回读确认。"));
+        } else {
+            emit tuningStateChanged();
+        }
     });
     connect(_parameterMgr, &ParameterManager::_paramSetSuccess,
             this, &ParameterEditorController::_parameterWriteSucceeded);
@@ -202,17 +214,45 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
             this, &ParameterEditorController::_parameterReadFailed);
 
     if (_vehicle) {
-        connect(_vehicle, &Vehicle::armedChanged, this, [this](bool) { emit tuningStateChanged(); });
-        connect(_vehicle, &Vehicle::flyingChanged, this, [this](bool) { emit tuningStateChanged(); });
-        connect(_vehicle, &Vehicle::firmwareVersionChanged, this, [this]() { emit tuningStateChanged(); });
-        connect(_vehicle, &Vehicle::gitHashChanged, this, [this](const QString &) { emit tuningStateChanged(); });
+        connect(_vehicle, &Vehicle::armedChanged, this, [this](bool armed) {
+            if (armed) {
+                _invalidatePendingTuningOperation(tr("飞行器已解锁；本次调参结果需在解除锁定后重新回读。"));
+            } else {
+                emit tuningStateChanged();
+            }
+        });
+        connect(_vehicle, &Vehicle::flyingChanged, this, [this](bool flying) {
+            if (flying) {
+                _invalidatePendingTuningOperation(tr("飞行器已进入飞行状态；本次调参结果不能继续确认。"));
+            } else {
+                emit tuningStateChanged();
+            }
+        });
+        connect(_vehicle, &Vehicle::firmwareVersionChanged, this, [this]() {
+            _invalidatePendingTuningOperation(tr("固件版本上下文发生变化；请重新绑定机型并回读参数。"));
+        });
+        connect(_vehicle, &Vehicle::gitHashChanged, this, [this](const QString &) {
+            _invalidatePendingTuningOperation(tr("固件构建标识发生变化；请重新绑定机型并回读参数。"));
+        });
         if (_vehicle->vehicleLinkManager()) {
             connect(_vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged,
-                    this, [this](bool) { emit tuningStateChanged(); });
+                    this, [this](bool lost) {
+                if (lost) {
+                    _invalidatePendingTuningOperation(tr("通信链路中断；重新连接后必须回读确认参数。"));
+                } else {
+                    emit tuningStateChanged();
+                }
+            });
         }
     }
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged,
-            this, [this](Vehicle *) { emit tuningStateChanged(); });
+            this, [this](Vehicle *activeVehicle) {
+        if (activeVehicle != _vehicle) {
+            _invalidatePendingTuningOperation(tr("活动飞行器已切换；本次调参结果不再自动确认。"));
+        } else {
+            emit tuningStateChanged();
+        }
+    });
 
     _loadFavorites();
 
@@ -492,6 +532,23 @@ bool ParameterEditorController::_profileAllowsSelectedParameter() const
         }
     }
     return parameterNameRegistered && parameterDomainRegistered;
+}
+
+void ParameterEditorController::_invalidatePendingTuningOperation(const QString &reason)
+{
+    if (_tuningBusy || _readbackPending || _writeAckPendingReadback) {
+        _tuningBusy = false;
+        _readbackPending = false;
+        _writeAckPendingReadback = false;
+        _writeFailureNeedsReadback = true;
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
+        _pendingTargetValue.clear();
+        _tuningStatus = tr("调参上下文已变化，等待重新回读");
+        _tuningError = reason;
+    }
+    emit tuningStateChanged();
 }
 
 QString ParameterEditorController::_tuningBlockReason() const
