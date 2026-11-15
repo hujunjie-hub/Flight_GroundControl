@@ -1354,6 +1354,17 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: !dashboardRoot.selectedFact
+                                              ? qsTr("配置来源：—")
+                                              : qsTr("配置来源：%1 · %2 · %3")
+                                                .arg(dashboardRoot.selectedFact.sourceFile)
+                                                .arg(dashboardRoot.selectedFact.sourcePath)
+                                                .arg(dashboardRoot.selectedFact.sourceKind)
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
                                               ? qsTr("调参策略：—")
                                               : dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
                                                 ? qsTr("调参策略：只读")
