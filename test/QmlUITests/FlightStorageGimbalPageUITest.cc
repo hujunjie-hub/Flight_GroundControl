@@ -385,6 +385,12 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                 }
             }
             QVERIFY(secondGimbal);
+            QCOMPARE(activeGimbal->managerCompid()->rawValue().toUInt(),
+                     static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
+            QCOMPARE(secondGimbal->managerCompid()->rawValue().toUInt(),
+                     static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
+            QCOMPARE(secondGimbal->deviceId()->rawValue().toUInt(),
+                     static_cast<uint32_t>(secondDeviceId));
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->managerStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
             QVERIFY(secondGimbal->supportsPitchAxis());
@@ -717,6 +723,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                              firstDevicePitchBeforeSwitch) < 0.5);
             QVERIFY(!activeGimbal->gimbalHaveControl());
             QVERIFY(secondGimbal->gimbalHaveControl());
+
+            // An explicit unknown device ID must be denied without routing the
+            // command to either the default or the currently selected device.
+            const QString secondPitchBeforeUnknownDevice = pitchValue->property("text").toString();
+            vehicle->sendMavCommand(
+                MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW, false,
+                35.0f, 70.0f, NAN, NAN, attitudeFlags, 0, 200);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            QCOMPARE(pitchValue->property("text").toString(), secondPitchBeforeUnknownDevice);
 
             QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
