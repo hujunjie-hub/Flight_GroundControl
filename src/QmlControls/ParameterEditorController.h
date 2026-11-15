@@ -151,6 +151,7 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(QVariant              previousValue            READ previousValue                                           NOTIFY tuningStateChanged)
     Q_PROPERTY(bool                  hasPreviousValue         READ hasPreviousValue                                        NOTIFY tuningStateChanged)
     Q_PROPERTY(bool                  tuningBusy               READ tuningBusy                                              NOTIFY tuningStateChanged)
+    Q_PROPERTY(bool                  modelProfileBound        READ modelProfileBound                                       NOTIFY tuningStateChanged)
     Q_PROPERTY(QString               tuningStatus             READ tuningStatus                                            NOTIFY tuningStateChanged)
     Q_PROPERTY(QString               tuningError              READ tuningError                                             NOTIFY tuningStateChanged)
     Q_PROPERTY(bool                  canApplySelectedValue    READ canApplySelectedValue                                   NOTIFY tuningStateChanged)
@@ -201,6 +202,7 @@ public:
     bool                canApplySelectedValue() const;
     bool                canReadbackSelectedValue() const;
     bool                canRestorePreviousValue() const;
+    bool                modelProfileBound() const;
 
     QObject*            currentCategory         (void) { return _currentCategory; }
     QObject*            currentGroup            (void) { return _currentGroup; }
