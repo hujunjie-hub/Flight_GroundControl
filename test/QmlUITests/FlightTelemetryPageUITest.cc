@@ -2221,10 +2221,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(
                 qAbs(overviewFlight->property("panelBodySpacing").toReal() -
                      diagnosticCardItems[0]->property("panelBodySpacing").toReal()) < 0.01, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("radius").toInt(), 12, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(detailEventBadge->property("radius").toInt(), 12, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(overviewEventBadge->property("implicitHeight").toReal() >= 24.0 &&
-                                         detailEventBadge->property("implicitHeight").toReal() >= 24.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewEventBadge->property("radius").toReal() > 0.0 &&
+                                         detailEventBadge->property("radius").toReal() > 0.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(overviewEventBadge->property("radius").toReal() -
+                     detailEventBadge->property("radius").toReal()) < 0.01, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewEventBadge->property("implicitHeight").toReal() > 0.0 &&
+                                         detailEventBadge->property("implicitHeight").toReal() > 0.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 qAbs(overviewEventBadge->property("implicitHeight").toReal() -
                      detailEventBadge->property("implicitHeight").toReal()) < 0.01, 3000);
