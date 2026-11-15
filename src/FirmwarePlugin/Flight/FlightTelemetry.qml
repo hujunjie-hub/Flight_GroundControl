@@ -731,6 +731,18 @@ SetupPage {
     function _rcAxisValidForChannel(channel) {
         return _rcAxisStatusTextForChannel(channel) === qsTr("已接收")
     }
+    function _rcAxisReadoutColorForChannels(horizontalChannel, verticalChannel) {
+        const horizontalStatus = _rcAxisStatusTextForChannel(horizontalChannel)
+        const verticalStatus = _rcAxisStatusTextForChannel(verticalChannel)
+        if ([qsTr("数据超时"), qsTr("无效")].indexOf(horizontalStatus) >= 0 ||
+                [qsTr("数据超时"), qsTr("无效")].indexOf(verticalStatus) >= 0) {
+            return "#F0B94B"
+        }
+        if (horizontalStatus === qsTr("已接收") && verticalStatus === qsTr("已接收")) {
+            return "#9DD9D0"
+        }
+        return "#8A9A94"
+    }
     function _rcAxisStickValueForChannel(channel) {
         const value = _rcAxisValueForChannel(channel)
         return Number(channel) === 2 ? value * 2 - 1 : value
@@ -4495,6 +4507,10 @@ SetupPage {
         readonly property bool valid: familyFresh && maskState === 1 &&
                                       rawValue !== null && rawValue !== undefined &&
                                       Number.isFinite(numericValue) && inRange
+        readonly property color valueColor: !familyFresh ? root._familyStatusColor("rcInputAvailable")
+                                                          : maskState < 0 ? "#8298A2"
+                                                          : maskState === 0 || !valid ? "#F0B94B"
+                                                          : "#E6F0F4"
         readonly property string displayValue: !familyFresh ? root._familyStatus("rcInputAvailable")
                                                 : maskState < 0 ? qsTr("未上报")
                                                 : maskState === 0 || !valid ? qsTr("无效")
@@ -4514,7 +4530,7 @@ SetupPage {
             QGCLabel {
                 objectName: axis.objectName + "_value"
                 text: axis.displayValue
-                color: axis.valid ? "#E6F0F4" : "#F0B94B"
+                color: axis.valueColor
                 font.pointSize: ScreenTools.captionFontPointSize
                 font.weight: ScreenTools.strongFontWeight
             }
@@ -4618,7 +4634,7 @@ SetupPage {
                 text: qsTr("%1 · %2")
                       .arg(root._rcAxisDisplayTextForChannel(stick.horizontalChannel))
                       .arg(root._rcAxisDisplayTextForChannel(stick.verticalChannel))
-                color: stick.horizontalValid && stick.verticalValid ? "#9DD9D0" : "#F0B94B"
+                color: root._rcAxisReadoutColorForChannels(stick.horizontalChannel, stick.verticalChannel)
                 font.pointSize: ScreenTools.microFontPointSize
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
