@@ -5438,19 +5438,20 @@ SetupPage {
         readonly property real stageMinimumHeight: Math.max(112, ScreenTools.defaultFontPixelHeight * 11.2)
         readonly property real stageMaximumHeight: Math.max(176, ScreenTools.defaultFontPixelHeight * 17.6)
         readonly property real minimumCardHeight: Math.max(190, ScreenTools.defaultFontPixelHeight * 19)
-        readonly property real maximumCardHeight: Math.max(252, ScreenTools.defaultFontPixelHeight * 25.2)
         readonly property real markerSize: root._rcStickMarkerSize
         readonly property real markerEdgeInset: root._rcStickMarkerEdgeInset
         readonly property real markerBorderWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.2)
         Layout.fillWidth: true
         implicitWidth: 140
         implicitHeight: Math.max(stick.minimumCardHeight,
-                                 Math.min(stick.maximumCardHeight, width * 0.45 + ScreenTools.defaultFontPixelHeight * 7.8))
+                                 width * 0.45 + ScreenTools.defaultFontPixelHeight * 7.8,
+                                 stickContent.implicitHeight + stick.contentInset * 2)
         radius: root._dashboardPanelRadius
         color: "#082E36"
         border.width: 1
         border.color: root._dashboardPanelBorder
         ColumnLayout {
+            id: stickContent
             objectName: stick.objectName + "_content"
             anchors.fill: parent
             anchors.margins: stick.contentInset
