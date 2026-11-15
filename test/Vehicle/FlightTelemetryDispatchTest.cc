@@ -760,6 +760,64 @@ void FlightTelemetryDispatchTest::_unknownBootIdDoesNotResetWatermark()
     mockLink->respondWithMavlinkMessage(navigationStatusMessage(sysId, compId, knownBoot, 6000, 9));
     QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(), 6000ULL, TestTimeout::mediumMs());
 }
+
+void FlightTelemetryDispatchTest::_multipleBootEpochsKeepRecentRetiredIdsRejected()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Telemetry repeated boot epochs"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    Fact *navigationTime = telemetry->getFact(QStringLiteral("navTimeBootUs"));
+    QVERIFY(navigationTime);
+
+    const uint8_t sysId = static_cast<uint8_t>(vehicle->id());
+    const uint8_t compId = static_cast<uint8_t>(vehicle->compId());
+    constexpr uint64_t firstBootId = 0xABCD000000000001ULL;
+    constexpr int bootEpochCount = 12;
+    uint64_t activeTimeBootUs = 0;
+
+    // More than the previous eight-entry retired cache: every accepted reboot must
+    // retire the prior session, including the first sessions in this sequence.
+    for (int i = 0; i < bootEpochCount; ++i) {
+        const uint64_t bootId = firstBootId + static_cast<uint64_t>(i);
+        activeTimeBootUs = static_cast<uint64_t>(i + 1) * 1000ULL;
+        mockLink->respondWithMavlinkMessage(
+            navigationStatusMessage(sysId, compId, bootId, activeTimeBootUs,
+                                    static_cast<uint32_t>(i + 1)));
+        QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(),
+                                  activeTimeBootUs, TestTimeout::mediumMs());
+    }
+
+    const uint64_t activeBootId = firstBootId + static_cast<uint64_t>(bootEpochCount - 1);
+    QSignalSpy timeChanges(navigationTime, &Fact::rawValueChanged);
+    QVERIFY(timeChanges.isValid());
+
+    // Delayed frames from every retired epoch carry larger timestamps on purpose.
+    // They must not reactivate an earlier session or roll the current cache backwards.
+    for (int i = 0; i < bootEpochCount - 1; ++i) {
+        const uint64_t retiredBootId = firstBootId + static_cast<uint64_t>(i);
+        const uint64_t delayedTimeBootUs = activeTimeBootUs + 100000ULL + static_cast<uint64_t>(i);
+        mockLink->respondWithMavlinkMessage(
+            navigationStatusMessage(sysId, compId, retiredBootId, delayedTimeBootUs,
+                                    static_cast<uint32_t>(100 + i)));
+        QTest::qWait(0);
+        QCOMPARE(navigationTime->rawValue().toULongLong(), activeTimeBootUs);
+    }
+    QCOMPARE(timeChanges.count(), 0);
+
+    // The active session remains writable after all retired-session rejects.
+    ++activeTimeBootUs;
+    mockLink->respondWithMavlinkMessage(
+        navigationStatusMessage(sysId, compId, activeBootId, activeTimeBootUs, 999));
+    QTRY_COMPARE_WITH_TIMEOUT(navigationTime->rawValue().toULongLong(),
+                              activeTimeBootUs, TestTimeout::mediumMs());
+    QCOMPARE(timeChanges.count(), 1);
+}
 // MockLink's component-metadata request legitimately fails for vehicles that carry no metadata
 // (the same precise suppression used by InitialConnectTest/ParameterManagerTest). Declared in
 // initTestCase so every dispatch test is deterministic; the match is exact, not a category-
