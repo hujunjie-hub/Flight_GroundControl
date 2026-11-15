@@ -3380,17 +3380,17 @@ SetupPage {
                         }
                         TelemetryRow {
                             Layout.fillWidth: true
-                            objectName: "flightTelemetry_navigationUtcTimestamp"
-                            labelText: qsTr("FCU UTC 时间")
-                            valueText: root._utcTimestampText()
-                            valueColor: root._utcValidityColor()
-                        }
-                        TelemetryRow {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: root.availableWidth >= 760 ? 2 : 1
                             objectName: "flightTelemetry_navigationUtcUncertainty"
                             labelText: qsTr("UTC 不确定度")
                             valueText: root._utcUncertaintyText()
+                            valueColor: root._utcValidityColor()
+                        }
+                        TelemetryTimestampRow {
+                            Layout.fillWidth: true
+                            Layout.columnSpan: root.availableWidth >= 760 ? 2 : 1
+                            objectName: "flightTelemetry_navigationUtcTimestamp"
+                            labelText: qsTr("FCU UTC 时间")
+                            valueText: root._utcTimestampText()
                             valueColor: root._utcValidityColor()
                         }
                     }
@@ -5700,6 +5700,48 @@ SetupPage {
     component TelemetryRow: VehicleSummaryRow {
         id: telemetryRow
         valueColor: root._diagnosticValueColor(valueText)
+    }
+
+    component TelemetryTimestampRow: ColumnLayout {
+        id: timestampRow
+        required property string labelText
+        required property string valueText
+        property string valueColor: ""
+
+        Layout.fillWidth: true
+        spacing: ScreenTools.defaultFontPixelHeight * 0.2
+
+        QGCLabel {
+            Layout.fillWidth: true
+            objectName: timestampRow.objectName + "_label"
+            text: timestampRow.labelText
+            color: "#8298A2"
+            font.pointSize: ScreenTools.microFontPointSize
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: timestampValue.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.8
+            radius: 4
+            color: "#082C35"
+            border.width: 1
+            border.color: "#14515D"
+
+            QGCLabel {
+                id: timestampValue
+                objectName: timestampRow.objectName + "_value"
+                anchors.fill: parent
+                anchors.margins: ScreenTools.defaultFontPixelHeight * 0.35
+                text: timestampRow.valueText
+                color: timestampRow.valueColor !== "" ? timestampRow.valueColor : "#E6F0F4"
+                font.family: ScreenTools.fixedFontFamily
+                font.pointSize: ScreenTools.captionFontPointSize
+                font.weight: ScreenTools.strongFontWeight
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.WordWrap
+            }
+        }
     }
 
     component SummaryTile: Rectangle {
