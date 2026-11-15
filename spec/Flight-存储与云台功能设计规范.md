@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.7
+- 版本：1.8
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -116,6 +116,7 @@ MockLink 的多设备模拟必须遵守以下规则：
 
 - 默认保持单设备行为：设备 ID 154，管理组件 ID 1。
 - 测试选项 `OptionEnableMultipleGimbals` 启用第二台独立设备 ID 155；两台设备共用 manager component ID 1，但分别维护姿态、角速度、yaw-lock、retract、能力标志、消息间隔和 primary/secondary owner pair。
+- MockLink 测试接口可以单独模拟设备离线与重新上线；离线设备停止 manager status / attitude status 输出、清空模拟器 owner pair 和速率目标，在线恢复后重新广播 manager information，并在下一个 worker tick 恢复已请求的状态流。
 - 管理器收到 `MAV_CMD_REQUEST_MESSAGE(GIMBAL_MANAGER_INFORMATION)` 时，必须分别为每台设备发送一帧信息；`GIMBAL_MANAGER_STATUS` 必须按设备分别发送，且每帧携带对应 `gimbal_device_id`。
 - 设备 ID 大于 6 时，`GIMBAL_DEVICE_ATTITUDE_STATUS` 使用设备 ID 作为 MAVLink component ID，消息内 `gimbal_device_id=0`；设备 ID 1-6 使用 manager component ID，并在消息字段中携带真实设备 ID。
 - manager status 消息间隔设置应用于该 manager 下的所有设备；姿态状态间隔按设备 component ID 路由。设备 ID 1-6 的姿态状态间隔由 manager component 路由。
@@ -153,6 +154,8 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - MockLink 多设备验证：不手工注入第二设备 MAVLink 帧；由模拟器真实发现设备 154/155，并验证共享 manager ID、独立 device ID、独立 capability、独立 owner pair、独立姿态回读。
 - 第二设备 155 获取控制权并执行姿态命令时，第一设备 154 的姿态和 owner pair 必须保持不变；设备 155 不支持 yaw-lock / retract 时对应控制入口必须禁用或隐藏。
 - 第二设备 155 的角速度控制必须只改变设备 155 的姿态；发送双轴零速后停止设备 155 的速率运动，设备 154 的姿态保持不变。
+- 设备 154 单独离线时，设备 155 的管理状态与姿态状态继续保持新鲜；活动设备选择器必须允许切换到设备 155。
+- 设备 154 重新上线后必须重新收到 manager information、manager status 和 attitude status，旧 owner 不得恢复；重新选择设备 154 后必须允许显式重新获取控制权。
 - 设备选择器的禁用条件必须基于新鲜且有效的本机 primary owner 状态；manager status 超时后不得因缓存的 `gimbalHaveControl` 位而永久锁定设备选择。
 - QML 的管理状态/姿态状态年龄必须由可见页面的周期刷新依赖驱动；不得假设 `QElapsedTimer::elapsed()` 会自行触发属性通知。停止状态流后，界面仍须分别跨过 6500 ms / 3500 ms 超时门限。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
