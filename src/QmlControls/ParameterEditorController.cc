@@ -442,7 +442,7 @@ bool ParameterEditorController::_profileAllowsSelectedParameter() const
         return false;
     }
 
-    return !_selectedFact->readOnly() && !_selectedFact->writeOnly();
+    return true;
 }
 
 QString ParameterEditorController::_tuningBlockReason() const
@@ -469,6 +469,12 @@ QString ParameterEditorController::_tuningBlockReason() const
     if (_vehicle->armed() || _vehicle->flying()) {
         return tr("在线调参仅允许飞行器解除锁定且未飞行时执行。");
     }
+    if (_selectedFact->readOnly()) {
+        return tr("该参数标记为只读，仅允许查看和回读，不允许在线写入。");
+    }
+    if (_selectedFact->writeOnly()) {
+        return tr("该参数标记为只写，无法完成 PARAM_VALUE 回读确认，因此禁止在线调参。");
+    }
     if (!_profileAllowsSelectedParameter()) {
         return tr("所选机型配置未通过 SIL-only 注册检查；实机写入保持锁定。");
     }
@@ -483,7 +489,8 @@ bool ParameterEditorController::canApplySelectedValue() const
 
 bool ParameterEditorController::canReadbackSelectedValue() const
 {
-    return _selectedFact && !_tuningBusy && !_readbackPending && _vehicle &&
+    return _selectedFact && !_selectedFact->writeOnly() &&
+           !_tuningBusy && !_readbackPending && _vehicle &&
            MultiVehicleManager::instance()->activeVehicle() == _vehicle &&
            _vehicle->vehicleLinkManager() && !_vehicle->vehicleLinkManager()->communicationLost() &&
            _parameterMgr && _parameterMgr->parametersReady() && !_parameterMgr->missingParameters() &&
