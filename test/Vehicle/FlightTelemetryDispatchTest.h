@@ -10,6 +10,7 @@ private slots:
     void initTestCase();
     void _validFrameTraversesMavlinkParserAndVehicleDispatch();
     void _allFcuFamiliesTraverseVehicleDispatch();
+    void _controlStatusUpdatedSignalFiresOnlyForAcceptedFrames();
     void _invalidFramesAndSourcesDoNotUpdateTelemetry();
     void _telemetryIsIsolatedAcrossVehicles();
     void _telemetryStartsFreshAfterReconnect();
