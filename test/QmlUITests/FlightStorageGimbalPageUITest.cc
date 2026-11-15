@@ -297,7 +297,10 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                          "Set active gimbal: (refusing an unknown or incomplete device|release control before switching devices)")));
 
     runWithMockLink(
-        []() { return MockLink::startGenericMockLink(MockConfiguration::OptionEnableGimbal); },
+        []() {
+            return MockLink::startGenericMockLink(
+                MockConfiguration::OptionEnableGimbal | MockConfiguration::OptionEnableMultipleGimbals);
+        },
         [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
             QVERIFY(mockLink);
             QVERIFY(vehicle);
@@ -313,7 +316,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
 
             QQuickItem *page = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_page"), 3000);
             QVERIFY(page);
-            QTRY_VERIFY_WITH_TIMEOUT(page->property("deviceCount").toInt() > 0, 15000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("deviceCount").toInt(), 2, 15000);
 
             QQuickItem *ownership = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_ownershipState"), 3000);
             QQuickItem *deviceSelector = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_deviceSelector"), 3000);
@@ -368,45 +371,9 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
             QVERIFY(activeGimbal);
 
-            // Inject a second manager/device pair through the same MAVLink wire
-            // path used by a real device. Device 155 reports its attitude from
-            // its own component ID with gimbal_device_id=0.
+            // Device 155 is emitted by MockLink as a second independent
+            // device behind the same Gimbal Manager component.
             constexpr uint8_t secondDeviceId = 155;
-            auto sendSecondGimbalTelemetry = [&]() {
-                mavlink_message_t message{};
-                const uint32_t secondCapabilities =
-                    GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS |
-                    GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS |
-                    GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_LOCK |
-                    GIMBAL_MANAGER_CAP_FLAGS_HAS_RETRACT;
-                mavlink_msg_gimbal_manager_information_pack_chan(
-                    static_cast<uint8_t>(vehicle->id()), MAV_COMP_ID_AUTOPILOT1,
-                    mockLink->outgoingMavlinkChannel(), &message,
-                    0, secondCapabilities, secondDeviceId, -45, 45, -45, 45, -180, 180);
-                mockLink->respondWithMavlinkMessage(message);
-
-                mavlink_gimbal_manager_status_t secondStatus{};
-                secondStatus.gimbal_device_id = secondDeviceId;
-                mavlink_msg_gimbal_manager_status_encode(
-                    static_cast<uint8_t>(vehicle->id()), MAV_COMP_ID_AUTOPILOT1,
-                    &message, &secondStatus);
-                mockLink->respondWithMavlinkMessage(message);
-
-                const float secondQuaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};
-                mavlink_msg_gimbal_device_attitude_status_pack_chan(
-                    static_cast<uint8_t>(vehicle->id()), secondDeviceId,
-                    mockLink->outgoingMavlinkChannel(), &message,
-                    0, 0, 0,
-                    GIMBAL_DEVICE_FLAGS_NEUTRAL |
-                        GIMBAL_DEVICE_FLAGS_ROLL_LOCK |
-                        GIMBAL_DEVICE_FLAGS_PITCH_LOCK,
-                    secondQuaternion,
-                    0.0f, 0.0f, 0.0f, 0,
-                    0.0f, 10.0f, 0);
-                mockLink->respondWithMavlinkMessage(message);
-            };
-            sendSecondGimbalTelemetry();
-
             QTRY_COMPARE_WITH_TIMEOUT(vehicle->gimbalController()->gimbals()->count(), 2, 5000);
             Gimbal *secondGimbal = nullptr;
             for (int index = 0; index < vehicle->gimbalController()->gimbals()->count(); ++index) {
@@ -418,6 +385,12 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                 }
             }
             QVERIFY(secondGimbal);
+            QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->managerStatusFresh(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
+            QVERIFY(secondGimbal->supportsPitchAxis());
+            QVERIFY(secondGimbal->supportsYawAxis());
+            QVERIFY(!secondGimbal->supportsYawLock());
+            QVERIFY(!secondGimbal->supportsRetract());
 
             // Switching away from a device with confirmed local ownership is
             // rejected, so the operator cannot orphan an actively controlled unit.
@@ -711,9 +684,11 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(deviceSelector->property("enabled").toBool());
 
             // Once the first device is no longer locally controlled, the
-            // operator may select the other fully discovered and fresh device.
-            sendSecondGimbalTelemetry();
+            // operator may select the other fully discovered device. Restart
+            // the manager status stream after verifying the first device timeout.
             vehicle->gimbalController()->setActiveGimbal(secondGimbal);
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL,
+                                    false, MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS, 1000000);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
             QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 1, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
