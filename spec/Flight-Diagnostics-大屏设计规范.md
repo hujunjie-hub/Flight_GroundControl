@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.28
+- 版本：6.29
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；本轮补齐操作、导航、时间和 RC 动态详情 freshness；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC 动态详情及 RC/链路实例 freshness 持续收口；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -829,3 +829,16 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - RC 轴值、有效轴掩码、接收机 failsafe、RC 链路状态、输入年龄和 FCU 发布时间统一服从 rcInput family freshness；链路状态在等待/超时时使用 family 状态色，摇杆和 AxisGauge 保留既有 family freshness + axis validity 双门控。
 - MockLink UI Integration 覆盖操作/导航/时间 fresh → stale → recovered，以及 RC 5500 ms 超时与警告色；资源实例新鲜度覆盖已由上一阶段专项覆盖。
 - 仅修改 GroundControl QML、UI Integration 与 SPEC/G15，不改变 MAVLink 协议、FactGroup freshness 阈值、飞控健康判定、控制权限或飞行控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
+
+
+## 56. Phase 2.14 遥控与链路详情 freshness 一致性闭环（2026-11-15）
+
+- 遥控与链路页的「链路质量」主面板和下方「通信链路」详情卡统一使用相同的链路 family freshness、实例 receiveAgeMs 与字段 validityMask 规则；详情卡不得绕过 freshness 直接显示缓存 RSSI、链路质量、丢包率或 FCU 数据年龄。
+- 链路实例覆盖摘要使用新鲜实例数/已知实例总数；family 等待或超时时显示对应状态，不再将缓存数组长度标记为当前已上报实例数。
+- 链路实例状态在新鲜时显示当前枚举；实例或 family 超时/等待时显示「数据超时/等待遥测 · 最近状态：…」，保留最近状态上下文但不得表达为当前健康。
+- 链路原因在超时/等待时明确标注为最近原因；FCU 数据年龄仅在该链路实例新鲜时作为当前指标显示。
+- 「链路质量」主面板增加 linkAvailable 状态徽标；状态文字、指标值和颜色共享实例 freshness 结果。
+- 失控保护卡的 RC 接收年龄统一使用 rcInput family freshness；RC 数据超时后显示「数据超时」，不继续展示缓存的 FCU RC age。
+- MockLink UI Integration 覆盖新鲜链路详情、实例超时、family 超时、最近状态上下文、详情指标超时，以及 RC family 超时后的接收年龄显示。
+- 本轮仅调整 GroundControl QML、UI Integration 与本 SPEC；不修改 MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、链路/RC 状态生成、飞控判定或任何控制行为。
+- 按用户要求不运行、不触发 CI；本阶段新增断言状态为 NOT_RUN，待集中 CI 与本地 Windows x64 Release 验收。
