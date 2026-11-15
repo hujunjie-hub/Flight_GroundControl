@@ -210,12 +210,17 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             continue;
         }
 
+        bool profilesRegistered = true;
         for (const QString &profile : modelProfiles) {
             if (!registeredProfiles.contains(profile)) {
+                profilesRegistered = false;
                 qCWarning(FlightParameterMetaDataLog)
                     << "Ignoring parameter metadata referencing an unregistered model profile:" << name << profile;
-                continue;
+                break;
             }
+        }
+        if (!profilesRegistered) {
+            continue;
         }
 
         if (entry.contains(QStringLiteral("rebootRequired")) &&
