@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.2
+- 版本：1.3
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -98,6 +98,7 @@
 - 「云台回中」调用现有 `centerGimbal()`。
 - 俯仰、偏航滑块分别仅在设备报告 `HAS_PITCH_AXIS`、`HAS_YAW_AXIS` 时启用；不支持的轴必须以 NaN 表示“不更新”，不得发送伪造目标值。
 - 回中操作要求俯仰与偏航轴均可用。
+- 摇杆角速度通过 `GIMBAL_MANAGER_SET_ATTITUDE` 发送；只允许向能力已报告的轴发送对应角速度，停止操作必须将全部受支持轴的角速度归零。
 - 偏航模式选择仅在设备报告支持 yaw-lock 且偏航轴可用时启用。
 - 收起/展开按钮仅在设备报告支持 retract 时显示和启用。
 - 不得根据未知 capability flags 推断设备支持某项功能。
@@ -125,7 +126,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 管理状态 6500 ms、姿态状态 3500 ms freshness；心跳正常但云台状态流停止时，旧控制权/姿态不得继续显示为实时。
 - MockLink 验证 Configure 的 0/-1/-2/-3 语义、半 owner pair / 部分释放 / 越权释放拒绝，以及无 primary/secondary owner 时禁止姿态命令。
 - 存储诊断验证 Profile ID、原始原因码、FCU 运行时间与地面站接收年龄，并确认通信丢失/超时会隐藏全部缓存元数据。
-- 云台验证半 owner pair 显示无效并 fail-closed、pitch/yaw 轴 capability 门控、未知设备 ID 和非有限目标值拒绝，以及 yaw-lock / retract 的遥测回读。
+- 云台验证半 owner pair 显示无效并 fail-closed、pitch/yaw 轴 capability 门控、未知设备 ID 和非有限目标值拒绝、`GIMBAL_MANAGER_SET_ATTITUDE` 角速度控制与停止回读，以及 yaw-lock / retract 的遥测回读。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
 - 链路丢失清除缓存所有权，恢复后等待新状态确认。
 - 拖动期间控制 Timer 运行，松开后停止；MockLink 姿态回读与最终目标角度一致。
