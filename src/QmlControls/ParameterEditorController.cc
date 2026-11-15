@@ -255,6 +255,7 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
         _confirmedValue.clear();
         _previousValue.clear();
         _pendingOriginalValue.clear();
+        _pendingTargetValue.clear();
         _pendingParameterName.clear();
         _pendingComponentId = -1;
         _previousValues.clear();
@@ -648,11 +649,13 @@ bool ParameterEditorController::applySelectedValue(const QVariant &cookedValue)
         : 1.0;
     if (!appliedOk || std::abs(appliedValue - targetValue) > 1e-9 * appliedScale) {
         _tuningBusy = false;
+        _pendingTargetValue.clear();
         _tuningStatus = tr("参数值未能进入现有 Fact 写入路径");
         _tuningError = tr("本地参数值转换失败，未确认写入请求。");
         emit tuningStateChanged();
         return false;
     }
+    _pendingTargetValue = appliedValue;
     return true;
 }
 
@@ -701,10 +704,31 @@ void ParameterEditorController::_parameterWriteSucceeded(int componentId, const 
         return;
     }
 
+    bool confirmedOk = false;
+    const double confirmedValue = _selectedFact->cookedValue().toDouble(&confirmedOk);
+    bool targetOk = false;
+    const double targetValue = _pendingTargetValue.toDouble(&targetOk);
+    const double comparisonScale = confirmedOk && targetOk
+        ? std::max(1.0, std::max(std::abs(confirmedValue), std::abs(targetValue)))
+        : 1.0;
+    if (!confirmedOk || !targetOk ||
+        std::abs(confirmedValue - targetValue) > 1e-6 * comparisonScale) {
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingTargetValue.clear();
+        _tuningBusy = false;
+        _writeFailureNeedsReadback = true;
+        _tuningStatus = tr("飞控确认值与目标值不一致");
+        _tuningError = tr("PARAM_VALUE 返回值未达到目标值，请回读飞控实际参数后再继续。");
+        emit tuningStateChanged();
+        return;
+    }
+
     _previousValues.insert(_selectedParameterKey(), _pendingOriginalValue);
     _previousValue = _pendingOriginalValue;
     _hasPreviousValue = true;
-    _confirmedValue = _selectedFact->cookedValue();
+    _confirmedValue = confirmedValue;
+    _pendingTargetValue.clear();
     _pendingParameterName.clear();
     _pendingComponentId = -1;
     _tuningBusy = false;
@@ -724,6 +748,7 @@ void ParameterEditorController::_parameterWriteFailed(int componentId, const QSt
 
     _pendingParameterName.clear();
     _pendingComponentId = -1;
+    _pendingTargetValue.clear();
     _tuningBusy = false;
     _writeFailureNeedsReadback = true;
     _tuningStatus = tr("写入失败 · 飞控未确认目标值");
