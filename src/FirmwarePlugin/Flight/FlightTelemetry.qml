@@ -344,7 +344,7 @@ SetupPage {
                     _utcUncertaintyText()][index]
         return [_familyStatus("rcInputAvailable"), _validRcAxisCountText(), _rcLinkStateText(),
                 _familyStatus("linkAvailable"),
-                _familyStatus("linkAvailable") === qsTr("已接收") ? String(_linkStatuses.length) : _familyStatus("linkAvailable"),
+                _linkInstanceSummaryValue(),
                 _receiveAgeText("rcInput")][index]
     }
     function _actuatorMaskSummaryText() {

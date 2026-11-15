@@ -754,6 +754,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(),
                                       translatedTelemetryText("接收机失效保护未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(3).arg(0).arg(0),
                                       3000);
@@ -1030,6 +1034,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          QStringLiteral("GCS 地面站")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(1).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(1).arg(2).arg(0),
                                       3000);

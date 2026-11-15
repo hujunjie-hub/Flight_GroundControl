@@ -340,7 +340,8 @@
         "overview_link_kpi_detail_reports_fresh_stale_waiting_and_family_receive_age",
         "overview_link_kpi_color_aggregates_instance_link_state_and_freshness",
         "overview_and_rc_link_pages_share_link_instance_coverage_color_rules",
-        "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out"
+        "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out",
+        "rc_link_kpi_shows_fresh_instance_count_over_known_total"
       ]
     },
     {
@@ -546,7 +547,8 @@
     "overview_link_kpi_detail_reports_fresh_stale_waiting_and_family_receive_age",
     "overview_link_kpi_color_aggregates_instance_link_state_and_freshness",
     "overview_and_rc_link_pages_share_link_instance_coverage_color_rules",
-    "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out"
+    "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out",
+        "rc_link_kpi_shows_fresh_instance_count_over_known_total"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

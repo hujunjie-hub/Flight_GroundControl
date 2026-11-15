@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.5  
+版本：4.6  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -360,5 +360,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - 总览链路 KPI 主值必须显示新鲜实例数/已知实例总数；辅助说明分别报告新鲜、超时和等待实例及 family 接收年龄。
 - 全部实例健康且新鲜时绿色；存在 stale/degraded/recovering 时琥珀色；任一新鲜实例明确 lost 时红色；未知/等待为中性灰。
-- 总览与遥控链路专页对同一组实例必须使用一致的聚合颜色；验证三实例全新鲜与 RC 新鲜但 GCS/其他过期两种场景。
+- 总览与遥控链路专页对同一组实例必须使用一致的主值与聚合颜色；两页主值均显示新鲜实例数/总数，验证三实例全新鲜与 RC 新鲜但 GCS/其他过期两种场景。
 - 本轮新增 MockLink UI Integration 断言，CI 未运行，集中验收时执行。
