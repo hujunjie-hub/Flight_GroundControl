@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.18
+- 版本 5.19
 - 日期 2026-11-16
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -296,3 +296,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-16 飞行健康页 Phase 2.74：维护资源快照中的 CPU/WCET/系统栈/存储四项数值改为统一 ScreenTools 缩放指标 tile；原文案、单位、精度、对象名、freshness 和状态色保持不变。新增四项 tile 的父子边界/implicitHeight/多视口回归，未运行 CI，新增验收 NOT_RUN。
+
+- 2026-11-16 Phase 2.75 总览页标题区、只读监控徽标、四页页签与共享 HeroPanel/StatusCard 外框完成 ScreenTools 高 DPI 密度适配；100% 基准尺寸保持不变，FlightTelemetryPageUITest 新增 100%/150%/200% 实际 UI Scale 的总览切换、徽标防重叠和父子边界断言，G15 manifest/Windows Release 指南同步。按要求未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN，待集中验收。
