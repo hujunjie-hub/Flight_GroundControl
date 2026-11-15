@@ -148,6 +148,7 @@ public:
     QString rawUnits() const { return _rawUnits; }
     QString cookedUnits() const { return _cookedUnits; }
     bool vehicleRebootRequired() const { return _vehicleRebootRequired; }
+    bool vehicleRebootRequiredKnown() const { return _vehicleRebootRequiredKnown; }
     bool qgcRebootRequired() const { return _qgcRebootRequired; }
     bool hasControl() const { return _hasControl; }
     bool readOnly() const { return _readOnly; }
@@ -194,7 +195,8 @@ public:
     void setLabel(const QString &label) { _label = label; }
     void setShortDescription(const QString &shortDescription) { _shortDescription = shortDescription; }
     void setRawUnits(const QString &rawUnits);
-    void setVehicleRebootRequired(bool rebootRequired) { _vehicleRebootRequired = rebootRequired; }
+    void setVehicleRebootRequired(bool rebootRequired) { _vehicleRebootRequired = rebootRequired; _vehicleRebootRequiredKnown = true; }
+    void setVehicleRebootRequiredKnown(bool known) { _vehicleRebootRequiredKnown = known; }
     void setQGCRebootRequired(bool rebootRequired) { _qgcRebootRequired = rebootRequired; }
     void setRawIncrement(double increment) { _rawIncrement = increment; }
     void setHasControl(bool bValue) { _hasControl = bValue; }
@@ -362,6 +364,7 @@ private:
     Translator _rawTranslator = _defaultTranslator;
     Translator _cookedTranslator = _defaultTranslator;
     bool _vehicleRebootRequired = false;
+    bool _vehicleRebootRequiredKnown = false;
     bool _qgcRebootRequired = false;
     double _rawIncrement = std::numeric_limits<double>::quiet_NaN();
     bool _hasControl = true;
