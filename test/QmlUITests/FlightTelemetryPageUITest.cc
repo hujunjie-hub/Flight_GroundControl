@@ -220,6 +220,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* axisRoll = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll"));
             QQuickItem* axisRollValue = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll_value"));
+            QQuickItem* rightStickReadout = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcRightStick_readout"));
             QQuickItem* axisPitch = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_pitch"));
             QQuickItem* axisYaw = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_yaw"));
             QQuickItem* axisThrottle = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_throttle"));
@@ -326,6 +328,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(heroFailsafe);
             QVERIFY(axisRoll);
             QVERIFY(axisRollValue);
+            QVERIFY(rightStickReadout);
             QVERIFY(axisPitch);
             QVERIFY(axisYaw);
             QVERIFY(axisThrottle);
@@ -784,6 +787,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#8A9A94")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#8A9A94")), 3000);
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
             QVERIFY(!trendPosition->property("hasRenderableSeries").toBool());
             QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
@@ -1043,8 +1048,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("3 中国手"), 3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
-            QQuickItem* rightStickReadout = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_rcRightStick_readout"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->isVisible(), 3000);
             QQuickItem* gcsRssiValue = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_rssi_2"), 3000);
             QQuickItem* gcsQualityValue = findVisibleItem(
@@ -1094,8 +1098,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(leftStick);
             QVERIFY(rightStick);
             QVERIFY(rightStickReadout);
-            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
-                                      QColor(QStringLiteral("#8A9A94")), 3000);
             QVERIFY(gcsRssiValue);
             QVERIFY(gcsQualityValue);
             QVERIFY(gcsLossValue);
