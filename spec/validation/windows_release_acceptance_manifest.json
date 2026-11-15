@@ -365,7 +365,8 @@
         "health_resource_instance_coverage_counts_fresh_stale_waiting_and_follows_family_freshness",
         "operation_navigation_time_rc_details_follow_family_freshness",
         "health_link_detail_card_uses_fresh_stale_waiting_instance_coverage",
-        "health_link_detail_metrics_and_state_follow_per_instance_freshness"
+        "health_link_detail_metrics_and_state_follow_per_instance_freshness",
+        "navigation_overview_time_panel_and_maintenance_boot_id_follow_family_freshness"
       ]
     },
     {
@@ -618,7 +619,8 @@
     "health_resource_instance_coverage_counts_fresh_stale_waiting_and_follows_family_freshness",
     "operation_navigation_time_rc_details_follow_family_freshness",
     "health_link_detail_card_uses_fresh_stale_waiting_instance_coverage",
-    "health_link_detail_metrics_and_state_follow_per_instance_freshness"
+    "health_link_detail_metrics_and_state_follow_per_instance_freshness",
+    "navigation_overview_time_panel_and_maintenance_boot_id_follow_family_freshness"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
