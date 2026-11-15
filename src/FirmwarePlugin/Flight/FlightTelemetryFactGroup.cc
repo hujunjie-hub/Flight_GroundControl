@@ -422,8 +422,8 @@ bool FlightTelemetryFactGroup::_activateBoot(quint64 bootId)
         return true;
     }
     // boot_id is a random session identifier, not an ordered counter. Keep a
-    // bounded retired set so a delayed OPERATION_STATUS from an earlier boot
-    // cannot roll the display cache back to a previous session.
+    // bounded retired set so delayed telemetry from an earlier boot cannot roll
+    // any family cache back to a previous session.
     if (_retiredBootIds.contains(bootId)) {
         return false;
     }
