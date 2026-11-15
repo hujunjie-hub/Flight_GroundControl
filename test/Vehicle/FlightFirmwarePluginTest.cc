@@ -322,6 +322,12 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
     QCOMPARE(validProfiles.first().toMap().value(QStringLiteral("id")).toString(),
              QStringLiteral("QUAD_X4"));
 
+    QJsonObject wrongSourcePathCatalog = catalog;
+    QJsonObject wrongSource = wrongSourcePathCatalog.value(QStringLiteral("source")).toObject();
+    wrongSource.insert(QStringLiteral("vehicleModel"), QStringLiteral("config/other_vehicle_model.yaml"));
+    wrongSourcePathCatalog.insert(QStringLiteral("source"), wrongSource);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(wrongSourcePathCatalog, metadata).isEmpty());
+
     // A registry generated from a different firmware parameter catalog must not expose a profile.
     QJsonObject mismatchedHashCatalog = catalog;
     QJsonObject source = mismatchedHashCatalog.value(QStringLiteral("source")).toObject();
