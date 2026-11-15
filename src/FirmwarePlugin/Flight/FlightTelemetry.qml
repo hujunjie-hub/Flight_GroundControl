@@ -589,6 +589,15 @@ SetupPage {
         const state = _rawMaskState(link.validityMask, bit)
         return state === 1 ? "#E6F0F4" : state === 0 ? "#F0B94B" : "#8A9A94"
     }
+    function _linkInstanceDetailsColor(link) {
+        if (!link) return "#8A9A94"
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        if (freshness !== qsTr("已接收")) return _freshnessStatusColor(freshness)
+        const states = [8, 9, 10].map(bit => _rawMaskState(link.validityMask, bit))
+        if (states.indexOf(0) >= 0) return "#F0B94B"
+        if (states.some(state => state !== 1)) return "#8A9A94"
+        return "#8298A2"
+    }
     function _linkInstanceStateText(link) {
         if (!link) {
             const familyStatus = _familyStatus("linkAvailable")
@@ -3131,8 +3140,8 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
                     TelemetryRow {
                         objectName: "flightTelemetry_linkDetailCoverage"
-                        labelText: qsTr("链路实例覆盖")
-                        valueText: root._linkInstanceSummaryValue()
+                        labelText: qsTr("链路实例新鲜度")
+                        valueText: root._linkInstanceCoverageText()
                     }
                     QGCLabel {
                         objectName: "flightTelemetry_linkDetailEmptyState"
@@ -3179,6 +3188,7 @@ SetupPage {
                                       .arg(root._linkInstanceMetricText(modelData, "linkQualityPermille", 9, 1, " %"))
                                       .arg(root._linkInstanceMetricText(modelData, "packetLossPpm", 10, 2, " %"))
                                       .arg(root._linkInstanceAgeText(modelData))
+                                color: root._linkInstanceDetailsColor(modelData)
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_linkDetailReceiveAge_" + modelData.linkInstanceId

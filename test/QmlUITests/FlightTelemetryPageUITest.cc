@@ -852,6 +852,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          QStringLiteral("RSSI -68 dBm")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
                                          QStringLiteral("70.0 %")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(3).arg(0).arg(0), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#8298A2")), 3000);
             const QVariantMap staleLinkSample{
                 {QStringLiteral("linkState"), 2}, {QStringLiteral("receiveAgeMs"), 6000},
                 {QStringLiteral("reasonCode"), 0}, {QStringLiteral("validityMask"), 0x700},
@@ -1206,6 +1211,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
                                          QStringLiteral("GCS 地面站")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(1).arg(2).arg(0), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
+                                      translatedTelemetryText("%1 · 最近状态：%2")
+                                          .arg(staleText).arg(translatedTelemetryText("健康")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
+                                         translatedTelemetryText("RSSI %1").arg(staleText)), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
                                       translatedTelemetryText("%1 / %2 新鲜").arg(1).arg(3), 3000);

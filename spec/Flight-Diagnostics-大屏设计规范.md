@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.29
+- 版本：6.30
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC 动态详情及 RC/链路实例 freshness 持续收口；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC 动态详情及 RC/链路实例 freshness 持续收口；本轮补齐链路详情卡三态实例覆盖与 per-instance stale 指标色彩回归；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -842,3 +842,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 覆盖新鲜链路详情、实例超时、family 超时、最近状态上下文、详情指标超时，以及 RC family 超时后的接收年龄显示。
 - 本轮仅调整 GroundControl QML、UI Integration 与本 SPEC；不修改 MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、链路/RC 状态生成、飞控判定或任何控制行为。
 - 按用户要求不运行、不触发 CI；本阶段新增断言状态为 NOT_RUN，待集中 CI 与本地 Windows x64 Release 验收。
+
+
+## 57. 通信链路详情卡三态覆盖与指标 freshness 可视化（2026-11-15）
+
+- 通信链路详情卡的实例覆盖统一显示新鲜、超时、等待三态数量，与传感器、资源和 RC 链路摘要保持一致；不再仅显示新鲜数/总数。
+- 每个链路实例的 RSSI、链路质量、丢包率继续使用 per-instance freshness 与 validityMask；当实例超时/等待时不显示缓存指标数值。
+- 指标行颜色与实例 freshness/字段 validity 对齐：超时琥珀色、无效字段琥珀色、未知字段中性灰、有效值使用中性前景色。
+- MockLink UI Integration 覆盖 3/0/0 新鲜覆盖、1/2/0 stale 覆盖、实例状态“最近状态”标识、指标值超时替代及 stale 色彩。
+- 仅修改 FlightTelemetry QML、对应 UI Integration 和 SPEC/G15；不修改 MAVLink 消息、FactGroup 缓存、链路选择规则或 RC/飞行控制行为。本轮不运行 CI，新增断言为 NOT_RUN。

@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.32
+- 版本 4.33
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -192,3 +192,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 飞行健康页资源覆盖表达升级：资源卡改为显示新鲜/超时/等待实例数量，与传感器卡统一；resourceAvailable family stale 时显示 family 状态，不展示缓存总数。本轮未运行 CI，待集中验收。
 
 - 2026-11-15 本轮增量：操作/导航/时间/RC 详情字段统一按 family freshness 门控；导航指标先 freshness 后 capability；补充 MockLink fresh/stale/recovered 与 RC 5500 ms stale 断言。本轮未运行 CI。
+
+- 2026-11-15 通信链路详情卡统一三态实例覆盖：显示新鲜/超时/等待数量；链路指标按实例 freshness 与 validityMask 门控，超时显示状态并使用琥珀色，补充 MockLink 新鲜/过期回归。本轮未运行 CI，待集中验收。

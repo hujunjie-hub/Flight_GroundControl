@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.19  
+版本：4.20  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -454,3 +454,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 资源卡与传感器卡统一显示新鲜/超时/等待实例覆盖数量。
 - resourceAvailable family stale/等待时显示 family 状态，不展示缓存实例总数；family fresh 时逐实例 receiveAgeMs 决定三类数量。
 - FlightTelemetryPageUITest 验证新鲜覆盖文本与 family stale 转换；本轮不运行 CI，集中验收时执行，不构成 PASS。
+
+
+### G15 通信链路详情卡 freshness 补充（2026-11-15）
+
+- 通信链路详情卡显示新鲜/超时/等待三态实例数量。
+- 每个实例 RSSI/质量/丢包指标按 receiveAgeMs 与 validityMask 门控；超时不显示缓存数值，并采用琥珀色状态。
+- UI Integration 验证新鲜、超时两种状态及链路实例“最近状态”标签；本轮不运行 CI，集中验收时执行，不构成 PASS。
