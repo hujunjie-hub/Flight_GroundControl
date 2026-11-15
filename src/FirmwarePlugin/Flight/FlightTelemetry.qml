@@ -2422,6 +2422,7 @@ SetupPage {
                             anchors.margins: 9
                             spacing: 3
                             QGCLabel {
+                                objectName: "flightTelemetry_alarmEmptyTitle"
                                 Layout.fillWidth: true
                                 text: root._familyStatus("eventAvailable") === qsTr("已接收")
                                       ? qsTr("当前启动周期暂无事件")
@@ -2431,6 +2432,7 @@ SetupPage {
                                 font.weight: ScreenTools.strongFontWeight
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_alarmEmptyDescription"
                                 Layout.fillWidth: true
                                 text: qsTr("收到 FCU_EVENT 后按严重度自动排序")
                                 color: "#8298A2"
