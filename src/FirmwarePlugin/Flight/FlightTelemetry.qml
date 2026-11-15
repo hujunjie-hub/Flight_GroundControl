@@ -3024,6 +3024,7 @@ SetupPage {
                     eyebrow: "RC LOGICAL AXES / REAL-TIME"
                     titleText: qsTr("逻辑轴输入（实时）")
                     statusFamily: "rcInputAvailable"
+                    showStatusBadge: false
                     GridLayout {
                         objectName: "flightTelemetry_rcAxesGrid"
                         Layout.fillWidth: true
@@ -4177,6 +4178,7 @@ SetupPage {
         property string eyebrow: "FLIGHT STATUS"
         property string statusFamily: ""
         property bool fillRowHeight: false
+        property bool showStatusBadge: true
         readonly property color currentStatusColor: statusFamily.length > 0
                                                             ? root._familyStatusColor(statusFamily) : "#0B6873"
         default property alias contentData: bodyColumn.data
@@ -4230,7 +4232,7 @@ SetupPage {
                 }
                 Rectangle {
                     objectName: hero.objectName + "_statusBadge"
-                    visible: hero.statusFamily.length > 0
+                    visible: hero.showStatusBadge && hero.statusFamily.length > 0
                     radius: 10
                     implicitWidth: heroStatusText.implicitWidth + 16
                     implicitHeight: heroStatusText.implicitHeight + 10
