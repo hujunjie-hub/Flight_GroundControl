@@ -44,6 +44,9 @@ Button {
             Layout.fillWidth:       true
             text:                   control.text
             color:                  control.textColor
+            font.family:            ScreenTools.normalFontFamily
+            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.weight:            Font.Normal
             horizontalAlignment:    QGCLabel.AlignLeft
         }
 

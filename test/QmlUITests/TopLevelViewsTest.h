@@ -16,6 +16,7 @@ public:
 
 private slots:
     void _testNavigateViews();
+    void _testSettingsSidebarTypographyConsistency();
     void _testSettingsSectionVisibility();
     void _testSettingsHiddenSectionAfterPageSwitch();
     void _testSettingsSectionCollapseToSingle();

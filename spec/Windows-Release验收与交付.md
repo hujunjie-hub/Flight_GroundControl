@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：1.6  
+版本：1.7  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -32,9 +32,11 @@
 | G11 | 证据交付 | RUN_ID、ZIP、SHA-256、报告 | 文件齐全、哈希可复核、commit 对齐 |
 | G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
 | G13 | 飞控诊断大屏 UI（Phase 1） | FlightTelemetryPageUITest、JUnit、页面布局断言 | 标题/摘要/卡片结构存在；12/6/1 列断点正确；UNKNOWN/INVALID/STALE/RECOVERY 语义正确；只读边界保持 |
+| G14 | 遥控器双摇杆 UI | FlightRadioPageUITest、JUnit、MockLink RC_CHANNELS wire-path | Mode 1/2/3 通道映射、PWM/指示点和第二帧实时跟随正确；CH1–CH3 时左摇杆隐藏且校准禁用；恢复至少 4 路连续通道后校准重新启用；不触发校准或飞控命令 |
 | G15 | 飞控诊断指挥中心（Phase 2） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | 飞行态势/导航/RC 面板来自真实 Fact；RC validity mask 正确；导航水平位置 bit3、速度 bit5+bit6、航向 bit2 能力门控正确；13 类 family 独立状态矩阵在 1600/1000/700/400 px 下分别为 7/4/2/1 列且单元不越界；四趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；无虚构姿态仪；原 14 张卡片保留；只读 |
+| G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 
-只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G15 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
+只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G16 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
 ## 3. 单元和集成测试要求
 
@@ -274,3 +276,12 @@ Integration failures and corrective action:
 Pre-commit run [43598886118](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43598886118): SUCCESS.
 
 This run is diagnostic evidence for the failed HEAD only. The fixes require a fresh exact-main Windows Release run. No Installer, clean-install, installed-runtime or overall PASS is claimed until all gates execute successfully.
+
+
+## 13. 设置侧栏字体与状态颜色一致性（FGC-0046）
+
+- 发现基线：`main@ad5709bfe75ea46526eaad2542872c246eaa297d`，用户提供的设置侧栏截图。
+- 根因：`AppSettings.qml` 的二级分区标签使用 `ScreenTools.defaultFontPointSize * 0.9`，而一级页面项使用 `QGCLabel` 默认完整字号；二级项还复用外层 palette，而一级 `SettingsButton` 按控件自身 enabled 状态选择颜色组。
+- 修复：两级菜单统一使用 `ScreenTools.normalFontFamily`、`ScreenTools.defaultFontPointSize` 和 `Font.Normal`；二级项改为按自身 `enabled` 选择 QGCPalette 颜色组。层级继续由缩进和布局表达，不再通过缩小字号表达。
+- 回归：新增 `TopLevelViewsTest::_testSettingsSidebarTypographyConsistency`，验证两级菜单字体族、字号、字重、普通文字颜色和选中文字颜色一致。
+- Windows 100%/125%/150% DPI 的真实显示器观感检查不由 CI 字体属性测试代替；本地实测前保持 NOT_RUN。

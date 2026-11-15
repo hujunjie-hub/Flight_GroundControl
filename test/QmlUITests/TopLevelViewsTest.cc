@@ -1,6 +1,8 @@
 #include "TopLevelViewsTest.h"
 
 #include <QtCore/QScopeGuard>
+#include <QtGui/QColor>
+#include <QtGui/QFont>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -35,6 +37,26 @@ static QQuickItem* findVisibleSectionButton(QQuickItem* root, const QString& sec
         if (auto* found = findVisibleSectionButton(child, sectionName)) {
             return found;
         }
+    }
+    return nullptr;
+}
+
+static QQuickItem* findVisibleTextItem(QQuickItem* root, const QString& text)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findVisibleTextItem(child, text)) {
+            return found;
+        }
+    }
+
+    const QVariant font = root->property("font");
+    if (root->property("text").toString() == text && font.isValid() && font.canConvert<QFont>()) {
+        return root;
     }
     return nullptr;
 }
@@ -95,6 +117,52 @@ QQuickItem* TopLevelViewsTest::_clickSettingsButton(const QString& pageName)
         return nullptr;
     }
     return button;
+}
+
+void TopLevelViewsTest::_testSettingsSidebarTypographyConsistency()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+
+    QQuickItem* const flyViewButton = _clickSettingsButton(QStringLiteral("Fly View"));
+    QVERIFY(flyViewButton);
+    QTRY_VERIFY(findVisibleSectionButton(flyViewButton->parentItem(), QStringLiteral("General")));
+
+    // Select another page so the Fly View page label and its section label are both unselected.
+    QVERIFY(_clickSettingsButton(QStringLiteral("General")));
+
+    QQuickItem* const flyViewLabel = findVisibleTextItem(flyViewButton, QStringLiteral("Fly View"));
+    QQuickItem* const sectionButton =
+        findVisibleSectionButton(flyViewButton->parentItem(), QStringLiteral("General"));
+    QVERIFY(flyViewLabel);
+    QVERIFY(sectionButton);
+
+    QQuickItem* const sectionLabel = findVisibleTextItem(sectionButton, QStringLiteral("General"));
+    QVERIFY(sectionLabel);
+
+    const QFont pageFont = flyViewLabel->property("font").value<QFont>();
+    const QFont sectionFont = sectionLabel->property("font").value<QFont>();
+    QCOMPARE(sectionFont.family(), pageFont.family());
+    QCOMPARE(sectionFont.pointSizeF(), pageFont.pointSizeF());
+    QCOMPARE(sectionFont.weight(), pageFont.weight());
+    QCOMPARE(sectionLabel->property("color").value<QColor>(), flyViewLabel->property("color").value<QColor>());
+
+    // Selected page and selected section must use the same palette highlight text color.
+    QQuickItem* const generalPageButton = findVisibleItem(_rootItem, QStringLiteral("settingsButton_General"));
+    QVERIFY(generalPageButton);
+    QQuickItem* const generalPageLabel = findVisibleTextItem(generalPageButton, QStringLiteral("General"));
+    QVERIFY(generalPageLabel);
+    const QColor selectedPageTextColor = generalPageLabel->property("color").value<QColor>();
+
+    QVERIFY(_clickItemAt(sectionButton, 0.5, 0.5, QStringLiteral("settings section General")));
+    QTRY_VERIFY(sectionButton->property("sectionChecked").toBool());
+    QTRY_COMPARE(sectionLabel->property("color").value<QColor>(), selectedPageTextColor);
+
+    stopUI();
 }
 
 void TopLevelViewsTest::_testNavigateViews()

@@ -342,11 +342,16 @@ Rectangle {
                                 var matches = settingsView._matchingSections(pageColumn.index)
                                 return matches.indexOf(sectionIndex) !== -1
                             }
-                            property color textColor: sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            property color textColor: sectionChecked || pressed ? sectionPalette.buttonHighlightText : sectionPalette.buttonText
                             visible: sectionMatchesSearch
 
+                            QGCPalette {
+                                id: sectionPalette
+                                colorGroupEnabled: sectionBtn.enabled
+                            }
+
                             background: Rectangle {
-                                color:   qgcPal.buttonHighlight
+                                color:   sectionPalette.buttonHighlight
                                 opacity: sectionBtn.sectionChecked || sectionBtn.pressed ? 1 : sectionBtn.enabled && sectionBtn.hovered ? 0.2 : 0
                                 radius:  ScreenTools.defaultFontPixelWidth / 2
                             }
@@ -354,7 +359,9 @@ Rectangle {
                             contentItem: QGCLabel {
                                 text:  modelData.name
                                 color: sectionBtn.textColor
-                                font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                                font.family: ScreenTools.normalFontFamily
+                                font.pointSize: ScreenTools.defaultFontPointSize
+                                font.weight: Font.Normal
                                 horizontalAlignment: Text.AlignLeft
                             }
 

@@ -253,6 +253,20 @@
         "trend_buffer_reset_is_verified_after_active_vehicle_switch",
         "health_matrix_uses_7_4_2_1_columns_at_1600_1000_700_400_px_and_all_cells_fit_grid_bounds"
       ]
+    },
+    {
+      "id": "G16",
+      "name": "settings_sidebar_typography_and_palette_consistency",
+      "required": true,
+      "pass": [
+        "top_level_and_section_labels_use_same_font_family",
+        "top_level_and_section_labels_use_same_default_point_size",
+        "top_level_and_section_labels_use_same_normal_weight",
+        "unselected_page_and_section_labels_use_same_palette_button_text_color",
+        "selected_page_and_section_labels_use_same_palette_highlight_text_color",
+        "section_palette_color_group_tracks_section_button_enabled_state",
+        "settings_navigation_and_section_expansion_regression_tests_pass"
+      ]
     }
   ],
   "telemetry_test_matrix": [
