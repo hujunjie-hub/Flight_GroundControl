@@ -9,6 +9,7 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include <cmath>
+#include <QtMath>
 #include "Gimbal.h"
 #include "QGCCameraManager.h"
 
