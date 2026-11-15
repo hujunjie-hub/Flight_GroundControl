@@ -160,7 +160,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 活动设备切换验证：拒绝未发现/未完成的 Gimbal 实例；本机仍持有有效控制权时拒绝切换；释放后允许选择列表中的完整设备。
 - MockLink 多设备验证：不手工注入设备 MAVLink 帧；由模拟器真实发现 manager 1 下设备 154/155/3，以及 manager 2 下设备 3，共四个 manager/device pair；验证同 device ID 跨 manager 的独立发现、capability、owner pair、姿态回读和命令路由；设备 3 与 155 分别验证 Gimbal v2 的两种 attitude status 地址形式。
 - 设备 ID 3 的 Configure / PITCHYAW param7 必须路由到该设备；通过 manager component 1 下发位置命令后，只有设备 3 的姿态变化，设备 154/155 的姿态和 owner pair 保持不变。
-- manager component 2 下的重复设备 ID 3 必须通过 manager 2 路由 Configure/PITCHYAW；其姿态控制不得改变 manager 1 下设备 154/155/3 的姿态和 owner pair。
+- manager component 2 下的重复设备 ID 3 必须通过 manager 2 路由 Configure/PITCHYAW；其姿态控制不得改变 manager 1 下设备 154/155/3 的姿态和 owner pair。 `GIMBAL_MANAGER_SET_ATTITUDE` 角速度命令及双轴零速停止也必须路由到 manager 2 的设备 3，其他 manager 1 设备的姿态不得变化。
 - 第二设备 155 获取控制权并执行姿态命令时，第一设备 154 的姿态和 owner pair 必须保持不变；设备 155 不支持 yaw-lock / retract 时对应控制入口必须禁用或隐藏。
 - 第二设备 155 的角速度控制必须只改变设备 155 的姿态；发送双轴零速后停止设备 155 的速率运动，设备 154 的姿态保持不变。
 - 设备 154 单独离线时，设备 155 的管理状态与姿态状态继续保持新鲜；活动设备选择器必须允许切换到设备 155。
