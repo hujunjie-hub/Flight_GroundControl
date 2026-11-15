@@ -154,7 +154,11 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         if (entry.contains(QStringLiteral("decimalPlaces"))) {
             metaData->setDecimalPlaces(entry.value(QStringLiteral("decimalPlaces")).toInt());
         }
-        metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool(false));
+        if (entry.contains(QStringLiteral("rebootRequired"))) {
+            metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool());
+        } else {
+            metaData->setVehicleRebootRequiredKnown(false);
+        }
         metaData->setReadOnly(entry.value(QStringLiteral("readOnly")).toBool(false));
         metaData->setWriteOnly(entry.value(QStringLiteral("writeOnly")).toBool(false));
         _cachedMetaData.insert(name, metaData);
