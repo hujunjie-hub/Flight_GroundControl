@@ -152,6 +152,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 活动设备切换验证：拒绝未发现/未完成的 Gimbal 实例；本机仍持有有效控制权时拒绝切换；释放后允许选择列表中的完整设备。
 - MockLink 多设备验证：不手工注入第二设备 MAVLink 帧；由模拟器真实发现设备 154/155，并验证共享 manager ID、独立 device ID、独立 capability、独立 owner pair、独立姿态回读。
 - 第二设备 155 获取控制权并执行姿态命令时，第一设备 154 的姿态和 owner pair 必须保持不变；设备 155 不支持 yaw-lock / retract 时对应控制入口必须禁用或隐藏。
+- 第二设备 155 的角速度控制必须只改变设备 155 的姿态；发送双轴零速后停止设备 155 的速率运动，设备 154 的姿态保持不变。
 - 设备选择器的禁用条件必须基于新鲜且有效的本机 primary owner 状态；manager status 超时后不得因缓存的 `gimbalHaveControl` 位而永久锁定设备选择。
 - QML 的管理状态/姿态状态年龄必须由可见页面的周期刷新依赖驱动；不得假设 `QElapsedTimer::elapsed()` 会自行触发属性通知。停止状态流后，界面仍须分别跨过 6500 ms / 3500 ms 超时门限。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
