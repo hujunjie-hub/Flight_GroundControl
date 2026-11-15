@@ -140,6 +140,16 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
                 "FlightTelemetry Canvas text must use a semantic point size")
         require('"sans-serif"' not in content,
                 "FlightTelemetry must not hard-code the Canvas fallback font family")
+        require('readonly property real densityScale: root._overviewTopologyDensityScale' in content and
+                'readonly property real geometryScale:' in content and
+                'ScreenTools.defaultFontPixelHeight / 16.0' in content,
+                "FlightTelemetry topology geometry must use ScreenTools density scaling")
+        require('Layout.preferredHeight: preferredCanvasHeight' in content,
+                "FlightTelemetry topology Canvas height must follow the ScreenTools-scaled height token")
+        require('topologyNodeContent.implicitHeight + 2 * contentVerticalInset' in content and
+                'anchors.topMargin: parent.contentVerticalInset' in content,
+                "FlightTelemetry topology node cards must use scaled insets and content-driven height")
+
 
     elif name == "FlightRadio.qml":
         require('typographyRole: "title"' in content, "FlightRadio page title must use the shared title role")
