@@ -676,7 +676,17 @@ Item {
                                     { t: qsTr("通信链路"), d: root._linkHealthy ? qsTr("正常") : qsTr("未连接 / 丢失"), s: root._linkHealthy ? 1 : 0 },
                                     { t: qsTr("参数完整性"), d: root._parametersReady ? qsTr("参数已就绪") : qsTr("未就绪 / 不完整"), s: root._parametersReady ? 1 : 0 },
                                     { t: qsTr("写入队列"), d: root._pendingWrites ? qsTr("存在待确认写入") : qsTr("无待写入"), s: root._pendingWrites ? 2 : 1 },
-                                    { t: qsTr("机型适配映射"), d: qsTr("Phase 2 待接入"), s: 2 }
+                                    { t: qsTr("机型参数映射"),
+                                      d: !root._flightModelAvailable
+                                         ? (root._modelProfiles.length > 0 ? qsTr("等待操作者选择机型配置") : qsTr("未登记可调机型"))
+                                         : parameterEditorLoader.status !== Loader.Ready
+                                           ? qsTr("正在校验飞控参数清单")
+                                           : dashboardRoot.modelProfileBound
+                                             ? qsTr("校验通过 · %1 项").arg(root._modelParameterCount)
+                                             : qsTr("校验失败 · 参数编辑已锁定"),
+                                      s: !root._flightModelAvailable ? 2
+                                         : parameterEditorLoader.status !== Loader.Ready ? 2
+                                           : dashboardRoot.modelProfileBound ? 1 : 0 }
                                 ]
                                 delegate: RowLayout {
                                     required property var modelData
@@ -708,7 +718,7 @@ Item {
                     }
                 }
 
-                // Lower row: actual Fact editor + not-yet-enabled tuning and response workspaces.
+                // Lower row: native Fact editor, guarded SIL single-parameter tuning, and data-gated response analysis.
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
