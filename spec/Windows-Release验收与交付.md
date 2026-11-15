@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.63
+版本：4.64
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -661,3 +661,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 验证 1280 px 桌面布局的 4/8 + 8/4 列宽比例和同行等高；1279/760/759 px 四个主面板按顺序纵向堆叠、等宽对齐。
 - 验证能力、时间和域状态子网格在 760 px 处由双列切换为单列。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 回归与 DPI 视觉检查。
+
+
+### G15 飞行健康页传感器、预检与资源详情层级收口（2026-11-15）
+
+- 传感器实例以独立卡片呈现编号、健康状态、动作、原因/间隙/拒绝计数和地面站接收年龄；状态色遵循实例健康/freshness。
+- 预检元信息在 760 px 及以上双列、以下单列；逐项检查卡片保留名称、结果、原因与恢复条件，状态色条遵循 checkState/freshness。
+- 每个资源任务使用 CPU 摘要和 WCET/栈剩余/截止期错过/AXI 2×2 指标格；每项独立 freshness/validity gating。
+- MockLink UI Integration 验证四项资源的原始值和独立 validity mask、传感器与预检卡片，以及 1600/1000/900/700/400 px 子卡片边界。
+- 按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言为 NOT_RUN，待集中验收。
