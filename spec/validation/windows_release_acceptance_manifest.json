@@ -459,7 +459,11 @@
         "health_resource_metric_tiles_use_screen_tools_scaled_insets_min_height_and_wrapped_values",
         "health_resource_metric_values_remain_inside_their_tiles_at_1600_1000_900_700_400_px",
         "all_four_dashboard_pages_and_detail_grids_render_in_compact_1672x941_mode",
-        "health_sensor_header_breakpoint_is_verified_at_760_and_759_px"
+        "health_sensor_header_breakpoint_is_verified_at_760_and_759_px",
+        "overview_hero_panels_share_one_row_at_1672x941",
+        "overview_hero_panels_share_equal_height_at_1672x941",
+        "overview_hero_panels_preserve_3_4_5_width_hierarchy_at_1672x941",
+        "overview_hero_panels_fit_without_overlap_at_1672x941"
       ]
     },
     {
