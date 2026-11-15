@@ -18,5 +18,6 @@ private slots:
     void _clearDiffResetsState();
     void _diffSignalsEmitOnlyOnChange();
     void _categoryFilterRestrictsSearch();
+    void _onlineTuningRequiresRegisteredSilProfile();
     void _sendDiffUnknownParamStopsAfterWriteFailure();
 };
