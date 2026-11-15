@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.28  
+版本：4.29  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -491,4 +491,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 遥控与链路页上方「链路质量」HeroPanel 与下方「通信链路」StatusCard 的 `statusFamily` 均必须为空；不得使用 `linkAvailable` 为多实例链路面板生成整卡状态徽标或健康色条。
 - 详情卡仍显式展示 linkAvailable 消息接收状态和新鲜/超时/等待实例覆盖；每个实例的状态、原因、字段有效性与地面站接收年龄独立显示，不将 family fresh 等同所有实例健康。
 - FlightTelemetryPageUITest 使用 MockLink 验证链路主视觉、链路详情卡与失控保护面板均不带 family 聚合徽标，并验证 per-instance 状态仍正常显示。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
+
+
+### G15 链路消息与实例接收年龄语义区分（2026-11-15）
+
+- `linkAvailable` family 级年龄标注为「链路状态消息接收年龄」；每个链路实例的 `receiveAgeMs` 标注为「地面站接收年龄」；FCU 上报的 `ageUs` 标注为「FCU 数据年龄」。三者必须在 UI 中独立标注和门控。
+- FlightTelemetryPageUITest 通过 MockLink 验证三个稳定 objectName/显示值位置与标签，避免把 family 消息 freshness、实例 freshness 和 FCU 数据年龄混为一谈。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
