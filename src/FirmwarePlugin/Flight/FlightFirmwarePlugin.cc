@@ -9,6 +9,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QJsonParseError>
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <cmath>
