@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.45
+- 版本：6.46
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -104,7 +104,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | CPU 负载 / WCET / 栈剩余 / 存储剩余 | resourceStatuses、storageFreeKib | health/resource/storage family 新鲜；taskId=0 实例 receiveAgeMs 在限值内；resource validity bit0/1/2 和 storage bit2 有效；飞行健康页 |
 | RSSI / 链路质量 / 丢包率 / RC 接收年龄 | linkStatuses、rcAgeUs | link/RC family 新鲜且相应 validity mask 有效；链路实例 receiveAgeMs 在限值内；遥控与链路页替换四张图 |
 
-继续使用页面现有 500 ms 年龄刷新 Timer 的每第二次 tick 进行 1 Hz 地面站本地采样，最多保留 60 点；页面隐藏时停止采样。图表明确标注 GCS 1 Hz / 最近 60 点，缺失、过期、无效和 capability 缺失均形成断点，禁止插值或跨断点连线。
+继续使用页面现有 500 ms 年龄刷新 Timer 的每第二次 tick 进行 1 Hz 地面站本地采样，最多保留 60 点；页面隐藏时停止采样。图表明确标注 GCS 1 Hz / 最近 60 点，缺失、过期、无效和 capability 缺失均形成断点，禁止插值或跨断点连线。每张趋势卡底部独立显示窗口内断点数量和最新样本状态（WAIT/NOW/GAP）：断点数量统计窗口内全部缺失/无效样本，最新样本恢复为 NOW 不得清除历史断点；刻度范围、断点数量和最新样本状态不得合并成含混的单一状态。
 
 ### 2.6 完整诊断信息保留区
 
@@ -965,10 +965,21 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 
 
 
-## 67. Phase 2.21 链路消息与实例接收年龄语义区分（2026-11-15）
+## 68. Phase 2.22 链路消息与实例接收年龄语义区分（2026-11-15）
 
 - 下方通信详情的 family 级 `linkAvailable` 接收年龄使用「链路状态消息接收年龄」标签，来源为 `_receiveAgeText("link")`，表示地面站最近收到链路状态消息的年龄。
 - 每个链路实例的 `receiveAgeMs` 使用「地面站接收年龄」标签，来源为该实例自身的接收年龄；它与 family 级消息年龄、FCU 上报的 `ageUs`（「FCU 数据年龄」）是三个不同量，不能共用同一标签或互相替代。
 - 为 family 级接收年龄增加稳定 `flightTelemetry_linkDetailFamilyReceiveAge` objectName；原有 per-instance `flightTelemetry_linkDetailReceiveAge_*` 与主视觉 `flightTelemetry_linkMetricAge_*` 保持不变。
 - MockLink UI Integration 分别断言 family 消息年龄、实例接收年龄和 FCU 数据年龄的标签/显示位置；本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 与本 SPEC；不修改 MAVLink、FactGroup、VehicleLinkManager、Flight ICD 或飞控控制行为。
+
+## 69. Phase 2.23 趋势卡显式断点计数与最新样本状态（2026-11-15）
+
+- 每张 `TrendCard` 在底部独立显示「断点 N」计数；计数直接来自窗口内 `gapCount`，即该趋势序列中缺失、过期、无效或 capability 不满足而未采样的点，不插值、不补造数据。
+- 断点数大于零时使用琥珀色，等于零时使用中性辅助色；历史断点在后续采样恢复后仍保留，直到对应样本离开最近 60 点窗口或 Vehicle/boot epoch 重置。
+- 最新样本状态单独显示 WAIT/NOW/GAP：没有有效样本为 WAIT，最新样本有效为 NOW，最新样本无效为 GAP。该状态只反映最后一个采样点，不得覆盖或清零历史断点计数。
+- 原有刻度范围/有效点采集说明、较早/最新时间轴和 1 Hz/60 点采样规则保持不变；趋势线仍按连续有效段绘制，不跨断点连线。
+- `FlightTelemetryPageUITest` 验证无数据时断点 0/WAIT、数据过期后断点计数增长并显示 GAP、数据恢复后最新状态回到 NOW 但历史断点仍保留；同时验证趋势卡 footer 标签在 1600 px 与 400 px 下位于卡片边界内。
+- 仅修改 TrendCard QML、对应 UI Integration、G15 manifest、Windows Release 验收指南与本 SPEC；不修改采样周期、FactGroup、MAVLink、Flight ICD 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归断言为 NOT_RUN，等待集中验收。
+
