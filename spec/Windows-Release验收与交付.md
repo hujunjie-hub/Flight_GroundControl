@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.45        
+版本：4.46        
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -580,3 +580,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 左栏保留飞行模式、解锁状态、失效保护等级、控制权；移除与中栏重叠的六域 HealthCell 矩阵；右栏保持告警首要事件。
 - 总览页隐藏六项 SummaryTile；飞行健康/导航时序/遥控与链路页切换后恢复各自原有六项摘要卡。
 - FlightTelemetryPageUITest 通过 MockLink 与布局断言检查三项 KPI、页面切换显隐、1600/1400/1000/900/700/400 px 内容边界，以及三栏信息不重复。本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
+
+### G15 总览六域拓扑 freshness 图例（2026-11-15）
+
+- 总览中栏拓扑节点下方显示「状态图例」及三种独立状态：已接收、数据超时、等待遥测；颜色分别为 #45D39A、#F0B94B、#8A9A94。
+- 图例色点与文字颜色必须一致，且只解释六域 family freshness；不得生成全局健康结论，也不得把全链路通信丢失状态传播到各遥测域。
+- FlightTelemetryPageUITest 通过稳定 objectName 检查图例标题、三项文字、色点颜色，并在 1600/1400/1000/900/700/400 px 下检查图例及各项均位于拓扑 HeroPanel 边界内。
+- 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
