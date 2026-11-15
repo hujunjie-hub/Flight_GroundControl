@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.46
+- 版本：6.47
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -905,6 +905,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 链路实例指标在大屏三列、中/窄屏两列、极窄屏单列显示；RSSI、链路质量、丢包率仍严格服从 per-instance freshness 与 validityMask。链路质量面板宽度优先级高于失控保护摘要。
 - 顶部 KPI、关键趋势、底部遥控与通信详情卡继续复用诊断大屏共享外壳、字体 token、状态色和卡片组件；不引入独立视觉体系，不重复构造顶部导航或连接状态。
 - MockLink UI Integration 新增/更新 1600、1000、900、700、400 px 布局断点断言：验证宽屏 6/6 + 8/4、中屏 3/3 + 4/2、窄屏单列；验证逻辑轴仪表 2/1 列、链路指标 3/2/1 列、双摇杆不越界与宽屏轨迹放大。
+- 宽屏与中屏均额外断言链路质量面板/失控保护面板宽度约 2:1，防止后续布局改动把链路主视觉压缩成与摘要面板等宽。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 和本 SPEC；不修改 FlightRadio.qml、MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、遥控手型映射算法、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增布局回归状态为 NOT_RUN，待后续集中验收。
 
