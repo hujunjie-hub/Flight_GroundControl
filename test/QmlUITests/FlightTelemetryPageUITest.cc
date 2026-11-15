@@ -1234,6 +1234,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_eventHistoryDetails_1"), 3000);
             QQuickItem* alarmEventMeta = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventMeta_1"), 3000);
+            QQuickItem* alarmEventReason = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventReason_1"), 3000);
+            QQuickItem* alarmEventPrimaryTag = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventPrimaryTag_1"), 3000);
+            QQuickItem* alarmEventCount = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventCount"), 3000);
             QQuickItem* historyEventSequence = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistorySequence_1"), 3000);
             QVERIFY(alarmCard);
@@ -1245,7 +1251,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(historyEventSeverity);
             QVERIFY(historyEventDetails);
             QVERIFY(alarmEventMeta);
+            QVERIFY(alarmEventReason);
+            QVERIFY(alarmEventPrimaryTag);
+            QVERIFY(alarmEventCount);
             QVERIFY(historyEventSequence);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEventCard->property("isPrimary").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard->property("severityColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventPrimaryTag->property("text").toString(),
+                                      translatedTelemetryText("最高优先级"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
+                                      translatedTelemetryText("%1 条").arg(1), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEventReason->property("text").toString().contains(
+                                         translatedTelemetryText("硬件故障")), 3000);
             const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("0.009"));
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventTime->property("text").toString(), expectedEventBootTime, 3000);
@@ -1280,6 +1298,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 alarmEventTime->mapToItem(alarmCard, alarmEventTime->width(), alarmEventTime->height()).y()
                     <= alarmCard->height() + 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
+                alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).x()
+                    <= alarmCard->width() + 1.0 &&
+                alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).y()
+                    <= alarmCard->height() + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                alarmEventPrimaryTag->mapToItem(alarmCard, alarmEventPrimaryTag->width(),
+                                                alarmEventPrimaryTag->height()).x() <= alarmCard->width() + 1.0 &&
+                alarmEventPrimaryTag->mapToItem(alarmCard, alarmEventPrimaryTag->width(),
+                                                alarmEventPrimaryTag->height()).y() <= alarmCard->height() + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventSequence->width() >= historyEventSequence->implicitWidth() - 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
@@ -1301,6 +1329,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                     <= alarmCard->width() + 1.0 &&
                 alarmEventTime->mapToItem(alarmCard, alarmEventTime->width(), alarmEventTime->height()).y()
                     <= alarmCard->height() + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).x()
+                    <= alarmCard->width() + 1.0 &&
+                alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).y()
+                    <= alarmCard->height() + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                alarmEventPrimaryTag->mapToItem(alarmCard, alarmEventPrimaryTag->width(),
+                                                alarmEventPrimaryTag->height()).x() <= alarmCard->width() + 1.0 &&
+                alarmEventPrimaryTag->mapToItem(alarmCard, alarmEventPrimaryTag->width(),
+                                                alarmEventPrimaryTag->height()).y() <= alarmCard->height() + 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventSequence->width() >= historyEventSequence->implicitWidth() - 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
