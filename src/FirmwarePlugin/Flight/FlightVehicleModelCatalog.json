@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source": {
     "repository": "hujunjie-hub/Flight",
     "parameterCatalog": {
@@ -17,6 +17,11 @@
       "status": "SIM_ONLY",
       "hardwareEligible": false,
       "parameterWriteScope": "SIL_ONLY",
+      "vehicleFamily": "MULTIROTOR",
+      "modelVariants": [
+        "QUAD_X4"
+      ],
+      "controlLaw": "MPC_OUTER_SO3_ATTITUDE_RATE_PID",
       "sourceDescription": "Synthetic X4 fixture; motor numbering and yaw signs have no hardware evidence",
       "hardwareThrustCurve": "TBD: no hardware output calibration is supplied",
       "controllerTuningStatus": "SIM_ONLY",
