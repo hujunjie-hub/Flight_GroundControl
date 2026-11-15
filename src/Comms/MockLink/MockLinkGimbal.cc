@@ -159,6 +159,22 @@ bool MockLinkGimbal::setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool onlin
     return true;
 }
 
+bool MockLinkGimbal::setSimulatedDeviceOnline(
+    uint8_t managerCompId, uint8_t gimbalDeviceId, bool online)
+{
+    if (_managerCompId == managerCompId) {
+        return setSimulatedDeviceOnline(gimbalDeviceId, online);
+    }
+
+    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+        if (manager->_managerCompId == managerCompId) {
+            return manager->setSimulatedDeviceOnline(gimbalDeviceId, online);
+        }
+    }
+
+    return false;
+}
+
 MockLinkGimbal *MockLinkGimbal::_deviceForId(uint8_t gimbalDeviceId)
 {
     if (gimbalDeviceId == 0 || gimbalDeviceId == _gimbalDeviceId) {
