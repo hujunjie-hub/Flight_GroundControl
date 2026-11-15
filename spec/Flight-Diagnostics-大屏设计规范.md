@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.21
+- 版本：6.22
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率、顶部摘要与链路指标窄屏布局已闭环；本轮补齐事件历史序号/FCU 启动时间/严重程度元信息的无省略响应式重排；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率、顶部摘要与链路指标窄屏布局已闭环；本轮补齐事件历史序号/FCU 启动时间/严重程度元信息的无省略响应式重排；本轮补齐预检摘要缺失项覆盖表达、family stale 上下文和 15/15 全通过门槛；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -783,3 +783,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 事件 ID、来源 ID 和原因详情仍独立保留并 WordWrap，不修改事件排序、接收序号含义、FCU 启动相对时间或事件严重程度。
 - MockLink UI Integration 在 700 px 检查三列同排，在 400 px 检查两列及严重程度换行，并验证序号/时间宽度不小于文本 implicitWidth。
 - 仅修改 GroundControl QML、UI Integration 与 SPEC/G15；不修改 MAVLink、FactGroup、事件缓存、协议时间戳或飞控行为。本轮不运行 CI，新增回归待集中验收。
+
+
+## 50. 预检摘要完整覆盖率与 freshness 表达（2026-11-15）
+
+- 解锁前检查摘要始终以 15 项为完整覆盖基准；只收到部分 checkId 时，必须同时显示有效项数、待更新项数和通过/警告/失败/未知计数，不得只显示已收到项的结果而隐去缺失项。
+- 预检 family 未新鲜时，摘要和覆盖率显示 family 状态及最近缓存项数量，不得把旧缓存结果计入当前有效检查。
+- family 新鲜但无任何逐项检查时，明确显示 0/15 有效、15 项未收到；不以单独的「已接收」代替检查覆盖状态。
+- 只有 15 项全部新鲜且 checkState 全部为通过时，摘要才使用健康绿色；任一失败为红色，警告/逐项超时为琥珀色，等待、未知或覆盖不完整为中性灰。
+- MockLink UI Integration 增加部分覆盖摘要、family stale 摘要、15/15 全通过绿色、单项警告转琥珀色的断言；本轮不运行 CI，新增断言为 NOT_RUN。
+- 仅修改飞行健康页 QML、对应 UI Integration 和 SPEC/G15 验收清单；不修改 FCU_PREARM_STATUS 协议、FactGroup 数据源、检查规则或飞控解锁决策。

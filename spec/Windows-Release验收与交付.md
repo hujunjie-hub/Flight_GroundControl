@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.13  
+版本：4.14  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -417,3 +417,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 事件序号、FCU 启动时间和严重程度在 >=520 px 三列同排；<520 px 两列，严重程度独立换至下一行右对齐。
 - 序号和启动时间不得使用固定宽度或 ElideRight；集中验收需确认 700/400 px 下文本完整、无横向溢出，严重度颜色保持原语义。
 - 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。
+
+
+### G15 解锁前检查摘要覆盖率补充（2026-11-15）
+
+- 仅收到部分 checkId 时，摘要明确显示有效项/15、待更新数量和通过/警告/失败/未知计数，不得只显示已收到项而隐去缺失项。
+- prearmAvailable family stale 时，摘要和覆盖率显示 family stale 与最近缓存项数量，不把缓存结果算作当前检查。
+- 仅 15/15 新鲜且全部通过时使用健康绿色；失败红、警告/逐项超时琥珀、等待/未知/覆盖不完整中性灰。
+- 新增 FlightTelemetryPageUITest 断言；本轮按用户要求不运行 CI，集中验收时执行，不构成 PASS。

@@ -1747,6 +1747,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                               Q_RETURN_ARG(QVariant, prearmCoverage)));
             QCOMPARE(prearmCoverage.toString(),
                      translatedTelemetryText("%1 / 15 有效 · %2 超时 · %3 未收到").arg(1).arg(1).arg(13));
+            QVariant prearmSummary;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, prearmSummary)));
+            QCOMPARE(prearmSummary.toString(),
+                     translatedTelemetryText("%1 / 15 有效 · %2 待更新 · %3 通过 · %4 警告 · %5 失败 · %6 未知")
+                         .arg(1).arg(14).arg(1).arg(0).arg(0).arg(0));
             QVariant sensorCoverage;
             QVERIFY(QMetaObject::invokeMethod(page, "_sensorCoverageText", Qt::DirectConnection,
                                               Q_RETURN_ARG(QVariant, sensorCoverage)));
@@ -1801,6 +1807,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmModeMask->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmReason->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmTimestamp->property("valueText").toString(), staleText, 3000);
+            QVariant stalePrearmSummary;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, stalePrearmSummary)));
+            QVERIFY(stalePrearmSummary.toString().contains(staleText));
+            QVERIFY(stalePrearmSummary.toString().contains(translatedTelemetryText("最近")));
+            QVariant stalePrearmCoverage;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmCheckCoverageText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, stalePrearmCoverage)));
+            QVERIFY(stalePrearmCoverage.toString().contains(staleText));
+            QVERIFY(stalePrearmCoverage.toString().contains(QStringLiteral("/ 15")));
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
@@ -2000,6 +2016,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             }
+            maintenancePrearm = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenancePrearmSummary"), 3000);
+            QVERIFY(maintenancePrearm);
+            for (uint16_t checkId = 1; checkId <= 15; ++checkId) {
+                sendPrearmStatus(2300 + checkId, 1, checkId, 1, 0);
+            }
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_prearmChecks").toList().size(), 15, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            QVariant completePrearmSummary;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, completePrearmSummary)));
+            QCOMPARE(completePrearmSummary.toString(),
+                     translatedTelemetryText("%1 / 15 通过 · %2 警告 · %3 失败 · %4 未知")
+                         .arg(15).arg(0).arg(0).arg(0));
+            sendPrearmStatus(2320, 1, 15, 3, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             page->setWidth(1600);
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcTab);

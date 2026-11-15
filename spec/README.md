@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.25
+- 版本 4.26
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -176,3 +176,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 RC 窄屏验收补强：FlightTelemetryPageUITest 在 1000/900/700/400 px 下检查遥控输入、逻辑通道、链路质量、失效保护四面板的垂直顺序、等宽与边界；左右摇杆需完整位于输入面板内并保持并排。新增断言 NOT_RUN，待集中验收。
 
 - 2026-11-15 本轮增量：事件历史序号/启动时间/严重程度元信息按 520 px 断点由三列改为两列，窄屏严重程度换至下一行；增加 700/400 px Integration 断言，取消序号和时间的固定宽度省略。本轮未运行 CI。
+
+- 2026-11-15 飞行健康页预检摘要收口：部分上报明确显示 15 项覆盖率与待更新数量；family stale 时只显示最近缓存项数量；仅 15/15 新鲜通过为绿色，补充部分覆盖、过期、全通过和警告状态的 MockLink Integration 断言。本轮未运行 CI，待集中验收。

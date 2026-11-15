@@ -276,8 +276,11 @@ SetupPage {
     function _prearmSummaryText() {
         const familyStatus = _familyStatus("prearmAvailable")
         const checks = _prearmChecks
-        if (checks.length === 0) return familyStatus
-        if (familyStatus !== qsTr("已接收")) return qsTr("%1 · 最近 %2 项").arg(familyStatus).arg(checks.length)
+        if (familyStatus !== qsTr("已接收")) {
+            return checks.length === 0 ? familyStatus
+                                       : qsTr("%1 · 最近 %2 / 15 项").arg(familyStatus).arg(checks.length)
+        }
+        if (checks.length === 0) return qsTr("0 / 15 有效 · 0 超时 · 15 未收到")
         let fresh = 0, stale = 0, waiting = 0
         let passed = 0, warnings = 0, failed = 0, unknown = 0
         for (let index = 0; index < checks.length; ++index) {
@@ -296,11 +299,13 @@ SetupPage {
             default: ++unknown; break
             }
         }
-        if (stale > 0 || waiting > 0) {
-            return qsTr("%1 有效 · %2 待更新 · %3 通过 · %4 警告 · %5 失败")
-                    .arg(fresh).arg(stale + waiting).arg(passed).arg(warnings).arg(failed)
+        const missing = Math.max(0, 15 - checks.length)
+        if (stale > 0 || waiting > 0 || missing > 0) {
+            return qsTr("%1 / 15 有效 · %2 待更新 · %3 通过 · %4 警告 · %5 失败 · %6 未知")
+                    .arg(fresh).arg(stale + waiting + missing)
+                    .arg(passed).arg(warnings).arg(failed).arg(unknown)
         }
-        return qsTr("%1 通过 · %2 警告 · %3 失败 · %4 未知")
+        return qsTr("%1 / 15 通过 · %2 警告 · %3 失败 · %4 未知")
                 .arg(passed).arg(warnings).arg(failed).arg(unknown)
     }
     function _prearmSummaryColor() {
@@ -326,13 +331,17 @@ SetupPage {
         }
         if (failed > 0) return "#F06464"
         if (warnings > 0 || stale > 0) return "#F0B94B"
-        if (waiting > 0 || unknown > 0 || checks.length < 15) return "#8A9A94"
+        if (waiting > 0 || unknown > 0 || checks.length !== 15) return "#8A9A94"
         return "#45D39A"
     }
     function _prearmCheckCoverageText() {
         const checks = _prearmChecks
         const familyStatus = _familyStatus("prearmAvailable")
-        if (checks.length === 0) return familyStatus
+        if (familyStatus !== qsTr("已接收")) {
+            return checks.length === 0 ? familyStatus
+                                       : qsTr("%1 · 最近 %2 / 15 项").arg(familyStatus).arg(checks.length)
+        }
+        if (checks.length === 0) return qsTr("0 / 15 有效 · 0 超时 · 15 未收到")
         let fresh = 0, stale = 0, waiting = 0
         for (let index = 0; index < checks.length; ++index) {
             const status = _prearmCheckStatus(checks[index])
