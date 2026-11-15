@@ -99,7 +99,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         return true;
 
     case MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE:
-        if (_handleGimbalManagerConfigure(request)) {
+        if (_handleGimbalManagerConfigure(request, msg.sysid, msg.compid)) {
             _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
             return true;
         }
@@ -233,30 +233,41 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
     return true;
 }
 
-bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t &request)
+bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t &request,
+                                                   uint8_t sourceSysid, uint8_t sourceCompid)
 {
-    // param1: sysid primary control (0: no change)
-    // param2: compid primary control (0: no change)
-    // param3: sysid secondary control (0: no change)
-    // param4: compid secondary control (0: no change)
-    // param7: gimbal device id
+    // MAVLink Gimbal Manager Configure semantics:
+    //   0: no change; -1: leave unchanged; -3: release this controller's ownership.
+    // Positive values set the requested system/component ID.
+    // A release must only clear ownership when the sender currently owns the pair.
+    QMutexLocker locker(&_stateMutex);
 
-    const uint8_t sysidPrimary = static_cast<uint8_t>(request.param1);
-    const uint8_t compidPrimary = static_cast<uint8_t>(request.param2);
-    const uint8_t sysidSecondary = static_cast<uint8_t>(request.param3);
-    const uint8_t compidSecondary = static_cast<uint8_t>(request.param4);
+    const auto isRelease = [](float value) {
+        return qIsFinite(value) && qFuzzyCompare(value, -3.0f);
+    };
+    const bool releasePrimary = isRelease(request.param1) && isRelease(request.param2);
+    const bool releaseSecondary = isRelease(request.param3) && isRelease(request.param4);
 
-    if (sysidPrimary > 0) {
-        _gimbalManagerSysidPrimary = sysidPrimary;
+    if (releasePrimary && _gimbalManagerSysidPrimary == sourceSysid &&
+        _gimbalManagerCompidPrimary == sourceCompid) {
+        _gimbalManagerSysidPrimary = 0;
+        _gimbalManagerCompidPrimary = 0;
+    } else if (!releasePrimary) {
+        if (request.param1 > 0.0f && request.param1 <= 255.0f)
+            _gimbalManagerSysidPrimary = static_cast<uint8_t>(request.param1);
+        if (request.param2 > 0.0f && request.param2 <= 255.0f)
+            _gimbalManagerCompidPrimary = static_cast<uint8_t>(request.param2);
     }
-    if (compidPrimary > 0) {
-        _gimbalManagerCompidPrimary = compidPrimary;
-    }
-    if (sysidSecondary > 0) {
-        _gimbalManagerSysidSecondary = sysidSecondary;
-    }
-    if (compidSecondary > 0) {
-        _gimbalManagerCompidSecondary = compidSecondary;
+
+    if (releaseSecondary && _gimbalManagerSysidSecondary == sourceSysid &&
+        _gimbalManagerCompidSecondary == sourceCompid) {
+        _gimbalManagerSysidSecondary = 0;
+        _gimbalManagerCompidSecondary = 0;
+    } else if (!releaseSecondary) {
+        if (request.param3 > 0.0f && request.param3 <= 255.0f)
+            _gimbalManagerSysidSecondary = static_cast<uint8_t>(request.param3);
+        if (request.param4 > 0.0f && request.param4 <= 255.0f)
+            _gimbalManagerCompidSecondary = static_cast<uint8_t>(request.param4);
     }
 
     qCDebug(MockLinkGimbalLog) << "Gimbal manager configured - Primary:" << _gimbalManagerSysidPrimary

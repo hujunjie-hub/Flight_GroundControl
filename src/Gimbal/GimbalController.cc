@@ -23,6 +23,20 @@ GimbalController::GimbalController(Vehicle *vehicle)
 
     (void) connect(_vehicle, &Vehicle::initialConnectComplete, this, &GimbalController::_initialConnectCompleted, Qt::UniqueConnection);
     (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &GimbalController::_mavlinkMessageReceived);
+    (void) connect(_vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged,
+                   this, [this](bool communicationLost) {
+        if (!communicationLost) {
+            return;
+        }
+        // Ownership is only valid while the manager status stream is live. Clear
+        // cached ownership and stop any periodic rate sender until a fresh status
+        // frame confirms who currently owns the gimbal after link recovery.
+        _rateSenderTimer.stop();
+        for (auto it = _potentialGimbals.cbegin(); it != _potentialGimbals.cend(); ++it) {
+            it.value()->setGimbalHaveControl(false);
+            it.value()->setGimbalOthersHaveControl(false);
+        }
+    });
 
     _rateSenderTimer.setInterval(500);
     (void) connect(&_rateSenderTimer, &QTimer::timeout, this, &GimbalController::_rateSenderTimeout);
@@ -54,7 +68,7 @@ void GimbalController::setActiveGimbal(Gimbal *gimbal)
 
 void GimbalController::_mavlinkMessageReceived(const mavlink_message_t &message)
 {
-    if (!_initialConnectComplete) {
+    if (!_initialConnectComplete || _vehicle->vehicleLinkManager()->communicationLost()) {
         return;
     }
 

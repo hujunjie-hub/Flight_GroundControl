@@ -31,6 +31,10 @@ publisher support. Each telemetry card shows its own message availability and lo
 ground-station receive age. The page honors the link/storage/resource validity masks
 and the RC valid-axis mask; it does not send commands or grant control authority.
 
+The Configure sidebar also provides a dedicated **存储卡** page (`FlightStorage.qml`). It reads the same `FCU_STORAGE_STATUS` Facts, gates SD/NOR/free-space independently with validity bits 0/1/2, immediately hides cached values on `VehicleLinkManager.communicationLost`, and treats storage data older than 5500 ms as stale. It does not infer total capacity or usage percentage. MAVLink Onboard Log list/read/erase operations are not implemented by the current Flight firmware, so the page deliberately does not load the generic log downloader or send those requests.
+
+The **云台** page (`FlightGimbal.qml`) reuses `Vehicle.gimbalController` and the MAVLink Gimbal Manager protocol; it is not part of FCU telemetry. It displays discovered devices and live attitude, requires explicit local primary-control ownership before enabling commands, and disables takeover when another controller owns the device. Communication loss clears cached ownership in GimbalController; a fresh manager-status message is required after recovery before controls can be enabled again.
+
 ## QML access
 
 The per-vehicle FactGroup is exposed as:

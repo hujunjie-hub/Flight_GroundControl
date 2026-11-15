@@ -4,12 +4,17 @@ FlightPlaceholderComponent::FlightPlaceholderComponent(Vehicle *vehicle, AutoPil
                                                        const QString &name,
                                                        const QString &description,
                                                        const QString &iconResource,
-                                                       const QString &qmlPath, QObject *parent)
+                                                       const QString &qmlPath,
+                                                       bool allowSetupWhileArmed,
+                                                       bool allowSetupWhileFlying,
+                                                       QObject *parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _name(name)
     , _description(description)
     , _iconResource(iconResource)
     , _qmlPath(qmlPath)
+    , _allowSetupWhileArmed(allowSetupWhileArmed)
+    , _allowSetupWhileFlying(allowSetupWhileFlying)
 {
 }
 

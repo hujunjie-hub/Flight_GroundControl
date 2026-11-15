@@ -449,6 +449,28 @@
         "stale_sensor_rows_retain_last_known_status_as_historical_context",
         "stale_sensor_rows_use_warning_color_and_preserve_sensor_name_order"
       ]
+    },
+    {
+      "id": "G19",
+      "name": "flight_storage_gimbal_configuration_pages",
+      "required": true,
+      "pass": [
+        "storage_page_waits_without_fcu_storage_status_instead_of_showing_zero_or_ready",
+        "storage_sd_nor_and_free_space_follow_validity_bits_zero_one_and_two",
+        "storage_page_shows_invalid_when_corresponding_validity_bit_is_clear",
+        "storage_page_hides_cached_values_after_5500ms_storage_family_staleness",
+        "storage_page_shows_communication_loss_without_waiting_for_family_timeout",
+        "storage_page_does_not_infer_total_capacity_or_usage_percentage",
+        "storage_page_does_not_send_unsupported_onboard_log_list_download_or_erase_commands",
+        "gimbal_page_shows_empty_state_and_disables_controls_without_compatible_device",
+        "gimbal_page_discovers_mocklink_gimbal_manager_information_status_and_attitude",
+        "gimbal_control_requires_live_link_and_confirmed_local_control_ownership",
+        "gimbal_page_does_not_offer_takeover_when_another_controller_owns_the_device",
+        "gimbal_optional_controls_follow_advertised_yaw_lock_and_retract_capabilities",
+        "gimbal_control_timer_starts_on_drag_and_stops_on_release",
+        "storage_and_gimbal_setup_pages_remain_accessible_when_armed_and_declare_flying_access",
+        "mocklink_gimbal_releases_primary_owner_for_configure_minus_three_sentinel"
+      ]
     }
   ],
   "telemetry_test_matrix": [
