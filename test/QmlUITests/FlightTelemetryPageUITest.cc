@@ -389,6 +389,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             const char* topologyFamilies[] = {
                 "sensorHealth", "navigation", "link", "control", "actuator", "time"};
+            const char* topologyFamilyLabels[] = {
+                "传感器系统", "导航定位", "数据链路", "飞控系统", "执行器", "时间同步"};
             const char* topologyLegendKeys[] = {"received", "stale", "waiting"};
             const char* topologyLegendTexts[] = {"已接收", "数据超时", "等待遥测"};
             const QColor topologyLegendColors[] = {
@@ -427,6 +429,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QVERIFY2(topologyNodeItems[index], qPrintable(nodeName));
                 QVERIFY(topologyNodeItems[index]->property("stateColor").canConvert<QColor>());
                 QVERIFY(topologyNodeItems[index]->property("stateText").isValid());
+                const QString labelName = QStringLiteral("flightTelemetry_topologyNodeLabel_")
+                                          + QString::fromLatin1(topologyFamilies[index]);
+                QQuickItem* labelItem = findVisibleItem(_rootItem, labelName, 3000);
+                QVERIFY2(labelItem, qPrintable(labelName));
+                QCOMPARE(labelItem->property("text").toString(),
+                         translatedTelemetryText(topologyFamilyLabels[index]));
                 const QString statusName = QStringLiteral("flightTelemetry_topologyNodeStatus_")
                                            + QString::fromLatin1(topologyFamilies[index]);
                 QQuickItem* statusItem = findVisibleItem(_rootItem, statusName, 3000);
@@ -448,6 +456,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 const QVariantMap connection = initialTopologyConnections.at(index).toMap();
                 QCOMPARE(connection.value(QStringLiteral("family")).toString(),
                          QString::fromLatin1(topologyFamilies[index]));
+                QCOMPARE(connection.value(QStringLiteral("label")).toString(),
+                         translatedTelemetryText(topologyFamilyLabels[index]));
+                QCOMPARE(connection.value(QStringLiteral("direction")).toString(),
+                         QStringLiteral("toFcu"));
                 QCOMPARE(connection.value(QStringLiteral("available")).toString(),
                          QString::fromLatin1(topologyFamilies[index]) + QStringLiteral("Available"));
                 QVERIFY(!connection.value(QStringLiteral("status")).toString().isEmpty());
