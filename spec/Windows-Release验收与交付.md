@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.81
+版本：4.82
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -766,3 +766,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 双列时间同步网格中 UTC 时间戳行横跨两列；UTC 有效性与 UTC 不确定度并排；窄屏单列下时间戳仍占满内容宽度。
 - MockLink UI Integration 覆盖 1600/1000/900/700/400 px，验证时间戳行和值标签宽度、内容高度、UTC 时间同步卡片边界及原有 freshness/utc_valid 状态。
 - 不改变 FCU_TIME_STATUS、时间服务、MAVLink、FactGroup、UTC 有效性和 freshness 语义；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
+
+
+### G15 导航时序辅助网格与指标文本高 DPI 适配（2026-11-15）
+
+- 导航能力网格、时间同步网格、导航/时间域状态网格的 columnSpacing/rowSpacing 必须与 FlightTelemetry 根对象公开的 ScreenTools 缩放 token 一致；默认值分别保持 8/14/6/8 px，UI Scale 或 DPI 增大后按字体像素宽高同步扩展。
+- MetricReadout 的内容间距必须与共享 ScreenTools token 一致；导航估计与能力指标的标签/状态文本均启用 WordWrap 且允许收缩到最小宽度，不得因中窄屏或高 DPI 溢出面板。
+- MockLink FlightTelemetryPageUITest 在 1280/1279/760/759 px 检查子网格 spacing、指标间距与换行属性；同时保留 1672×941 时间线动态行高/排序、UTC 六位微秒全宽显示和原有数据 freshness/validity 门控。
+- 不运行 CI、Unit、Integration 或 Windows Release；新增验收状态 NOT_RUN，集中验收时执行 exact-HEAD 回归并完成 100/125/150% DPI 实机截图签收。
