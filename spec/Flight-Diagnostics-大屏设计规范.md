@@ -93,7 +93,8 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | 航向标准差 | headingStdRad | navigation 新鲜、能力 bit2 存在、数值有限且非负 |
 | 控制求解耗时 | controlSolveTimeUs | control 新鲜、数值有限且非负；总览/健康页显示 |
 | UTC 时间不确定度 | utcUncertaintyUs | time 新鲜且 utcValid=true；导航时序页替换第 4 张图 |
-| RSSI / 链路质量 / 丢包率 / RC 接收年龄 | linkStatuses、rcAgeUs | link/RC family 新鲜且相应 validity mask 有效；遥控与链路页替换四张图 |
+| CPU 负载 / WCET / 栈剩余 / 存储剩余 | resourceStatuses、storageFreeKib | health/resource/storage family 新鲜；taskId=0 实例 receiveAgeMs 在限值内；resource validity bit0/1/2 和 storage bit2 有效；飞行健康页 |
+| RSSI / 链路质量 / 丢包率 / RC 接收年龄 | linkStatuses、rcAgeUs | link/RC family 新鲜且相应 validity mask 有效；链路实例 receiveAgeMs 在限值内；遥控与链路页替换四张图 |
 
 继续使用页面现有 500 ms 年龄刷新 Timer 的每第二次 tick 进行 1 Hz 地面站本地采样，最多保留 60 点；页面隐藏时停止采样。图表明确标注 GCS 1 Hz / 最近 60 点，缺失、过期、无效和 capability 缺失均形成断点，禁止插值或跨断点连线。
 
@@ -134,7 +135,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 健康矩阵逐项显示 operation、navigation、sensor health、control、actuator、link、storage、resource、time、event、pre-arm、RC input、build info 的独立状态和接收年龄。
 - 矩阵宽屏 4 列、中屏 2 列、窄屏 1 列；单元内容随文本自然增高。
 - 矩阵下方显示维护与可靠性横条：启动 ID、最近真实事件、预检通过/警告/失败/未知计数、真实系统资源摘要。
-- 页面底部复用地面站本地 1 Hz 趋势；不把健康分、振动 RMS、电池温度或电压一致性等未提供字段伪装成遥测。
+- 页面底部复用地面站本地 1 Hz 趋势，使用真实 CPU 负载、WCET、栈剩余和存储剩余；resource taskId=0 实例超时或 validity bit 缺失时形成断点。不把健康分、振动 RMS、电池温度或电压一致性等未提供字段伪装成遥测。
 
 ### 2.9 导航时序页面
 
@@ -437,7 +438,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 飞行健康页采用左侧状态概览、中间 13 类矩阵、右侧安全监测和维护横条；不显示参考图中未由协议提供的 96/100 健康分。
 - 导航时序页仅使用导航能力、精度、UTC 和时钟纪律字段；不伪造卫星数量、HDOP 或卫星天图。
 - 遥控与链路页使用 FlightRadio 同一 FlightRadio.mode 设置和 Mode 1/2/3 通道映射；仅显示四个逻辑轴和 validityMask 有效的链路指标，不伪造 CH5–CH8、SNR、RTT 或吞吐量。
-- 趋势面板复用现有 1 Hz / 60 点采样器：总览/健康页显示导航与控制指标，导航页第 4 张切换为 UTC 不确定度，RC 页切换为 RSSI/质量/丢包/RC 接收年龄。
+- 趋势面板复用现有 1 Hz / 60 点采样器：总览页显示导航/控制指标，健康页显示 resource CPU/WCET/stack 和 storage free，导航页第 4 张切换为 UTC 不确定度，RC 页切换为 RSSI/质量/丢包/RC 接收年龄；resource/link 实例过期时必须断点。
 - UI Integration 对四页切换、各页主要面板、响应式 12/6/1 列、健康矩阵 4/2/1 列、Mode 1/2/3 映射和 RC marker 有效性进行回归。
 - 视觉验收仍需在 Windows x64 实际运行应用，对照四张原图逐页检查 1672×941、100%/125%/150% DPI；CI 布局断言不能替代像素级人工验收。
 - Exact HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地 RUN_ID 证据必须重新执行；未完成前 FGC-0044 保持 RETESTING。
