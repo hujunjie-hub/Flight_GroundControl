@@ -2890,6 +2890,7 @@ SetupPage {
                             color: root._familyStatus("eventAvailable") === qsTr("已接收")
                                    ? "#C5DDE3" : root._familyStatusColor("eventAvailable")
                             font.pointSize: ScreenTools.captionFontPointSize
+                            wrapMode: Text.WordWrap
                             font.weight: ScreenTools.strongFontWeight
                         }
                     }
@@ -2992,19 +2993,23 @@ SetupPage {
                             QGCLabel {
                                 objectName: "flightTelemetry_alarmEmptyTitle"
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 text: root._familyStatus("eventAvailable") === qsTr("已接收")
                                       ? qsTr("当前启动周期暂无事件")
                                       : root._familyStatus("eventAvailable")
                                 color: "#C1D7DD"
                                 font.pointSize: ScreenTools.secondaryFontPointSize
                                 font.weight: ScreenTools.strongFontWeight
+                                wrapMode: Text.WordWrap
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_alarmEmptyDescription"
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 text: qsTr("收到 FCU_EVENT 后按严重度自动排序")
                                 color: "#8298A2"
                                 font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
                             }
                         }
                     }
