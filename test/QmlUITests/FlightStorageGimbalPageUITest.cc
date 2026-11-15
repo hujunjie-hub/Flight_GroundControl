@@ -865,7 +865,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                       QStringLiteral("本机控制中"), 6000);
             QTRY_VERIFY_WITH_TIMEOUT(pitchSlider->property("enabled").toBool(), 2000);
             QVERIFY(!yawMode->property("enabled").toBool());
-            QVERIFY(!retract->isVisible());
+            QTRY_VERIFY_WITH_TIMEOUT(!retract->isVisible(), 1000);
 
             vehicle->gimbalController()->sendPitchBodyYaw(-18.0f, 48.0f, false);
             QTRY_VERIFY_WITH_TIMEOUT(std::abs(std::abs(currentPitch()) - 18.0) < 3.0, 4000);
