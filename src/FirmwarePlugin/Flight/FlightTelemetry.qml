@@ -3570,7 +3570,11 @@ SetupPage {
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("通信链路")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_linkDetailFamilyReceiveAge"
+                        labelText: qsTr("链路状态消息接收年龄")
+                        valueText: root._receiveAgeText("link")
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_linkDetailCoverage"
                         labelText: qsTr("链路实例新鲜度")
