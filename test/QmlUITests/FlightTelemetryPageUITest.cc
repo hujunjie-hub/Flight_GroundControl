@@ -2190,9 +2190,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomains->property("columns").toInt(), 2, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationCapabilityBadge->isVisible(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationEstimatePosition->property("valueColor").value<QColor>(),
-                                              QColor(QStringLiteral("#E6F0F4")), 3000);
+                                              QColor(QStringLiteral("#A8BBC3")), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationEstimatePosition->property("statusColor").value<QColor>(),
-                                              QColor(QStringLiteral("#45D39A")), 3000);
+                                              QColor(QStringLiteral("#8A9A94")), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationCapabilityHeading->property("showStatusText").toBool(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationStateOriginDetail->isVisible(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationPositionStdDetail->isVisible(), 3000);
