@@ -780,6 +780,30 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(3).arg(0).arg(0),
                                       3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("titleText").toString(),
+                                      translatedTelemetryText("RC 遥测接收年龄"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTime->property("detailText").toString().contains(
+                                         translatedTelemetryText("地面站接收 RC 状态")), 3000);
+            QQuickItem* rcAxisPanelTitle = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor"), 3000);
+            QVERIFY(rcAxisPanelTitle);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAxisPanelTitle->property("titleText").toString(),
+                                      translatedTelemetryText("逻辑轴输入（实时）"), 3000);
+            QQuickItem* mode1Label = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcModeLabel_1"), 3000);
+            QQuickItem* mode2Label = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcModeLabel_2"), 3000);
+            QQuickItem* mode3Label = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcModeLabel_3"), 3000);
+            QVERIFY(mode1Label);
+            QVERIFY(mode2Label);
+            QVERIFY(mode3Label);
+            QTRY_COMPARE_WITH_TIMEOUT(mode1Label->property("text").toString(),
+                                      translatedTelemetryText("1 日本手"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(mode2Label->property("text").toString(),
+                                      translatedTelemetryText("2 美国手"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(mode3Label->property("text").toString(),
+                                      translatedTelemetryText("3 中国手"), 3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
             QQuickItem* rightStickReadout = findVisibleItem(
@@ -857,6 +881,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                           .arg(3).arg(0).arg(0), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#8298A2")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / 4").arg(4), 3000);
+            sendRcInputStatus(1750, bootId, 0x0F, 1.50F, -0.25F, 0.50F, 0.40F);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / 4").arg(3), 3000);
+            sendRcInputStatus(1800, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / 4").arg(4), 3000);
             const QVariantMap staleLinkSample{
                 {QStringLiteral("linkState"), 2}, {QStringLiteral("receiveAgeMs"), 6000},
                 {QStringLiteral("reasonCode"), 0}, {QStringLiteral("validityMask"), 0x700},
@@ -2397,6 +2429,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* rcAgeRow = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcFailsafeRcAge"), 3000);
             QVERIFY(rcAgeRow);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAgeRow->property("labelText").toString(),
+                                      translatedTelemetryText("FCU 侧 RC 输入年龄"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcAgeRow->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailState->property("text").toString().contains(staleText), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailState->property("text").toString().contains(
