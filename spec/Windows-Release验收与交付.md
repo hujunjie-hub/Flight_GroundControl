@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.89
+版本：4.90
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -831,3 +831,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 导航状态发布、时间同步发布、最近事件三行的 marker、排序序号和 FCU boot-relative 时间值必须共享相同 QColor；有效/超时/无效/等待状态沿用统一时间线状态映射。
 - 不得因时间质量、UTC 有效性变化而误改 FCU 单调时间戳的独立状态；原有效时间排序、无效值置后、相等时间戳稳定顺序和微秒精度继续通过既有回归。
 - 新增 MockLink UI Integration 三行 marker/order/value 颜色一致性断言；不运行本轮 CI/Build/Unit/Integration/Windows Release，新增验收 NOT_RUN，集中 exact-HEAD 验收时执行。
+
+
+### G15 飞行健康页紧凑密度与主视觉比例（2026-11-16）
+
+- 13 域矩阵与六个重点域状态单元的 contentInset 必须等于页面公开的 `_healthCellInset`，且随 ScreenTools 字体像素高度缩放；实际高度不得小于 implicitHeight，内容容器必须完整落在单元内部。
+- 健康矩阵间距、重点域行间距和单元内容间距必须使用独立紧凑 token，并小于通用 dashboard body spacing；不得通过缩小字体、隐藏接收年龄、删减状态文字或省略遥测域换取空间。
+- 1600 px 桌面健康主视觉保持重点域概览/矩阵/安全监测 3:6:3 比例，三张主卡片顶部对齐且等高；重点域六单元保持单列。
+- 150%/200% UI Scale 与 1600/1000/900/760/759/700/400 px 响应式回归继续覆盖所有健康单元的内容高度、内边距和父子边界。
+- 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 实机截图签收。
