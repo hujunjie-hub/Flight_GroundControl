@@ -511,7 +511,12 @@
         "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths",
         "health_maintenance_resource_metrics_use_four_consistent_scaled_tiles",
         "health_maintenance_metric_tiles_preserve_value_text_freshness_and_color",
-        "health_maintenance_metric_tile_content_fits_at_all_responsive_widths"
+        "health_maintenance_metric_tile_content_fits_at_all_responsive_widths",
+        "navigation_page_ui_scale_100_150_200_percent_preserves_12_6_1_column_page_grid_and_all_four_panel_bounds",
+        "navigation_timeline_order_marker_label_and_value_fit_their_parent_columns_at_all_ui_scales",
+        "navigation_timeline_label_and_value_columns_do_not_overlap_or_clip_implicit_width",
+        "navigation_timeline_row_position_matches_sorted_order_and_scaled_row_pitch",
+        "navigation_utc_timestamp_full_width_value_preserves_implicit_height_at_150_and_200_percent"
       ]
     },
     {
@@ -945,7 +950,8 @@
     "health_maintenance_metric_tiles_preserve_value_text_freshness_and_color",
     "health_maintenance_metric_tile_content_fits_at_all_responsive_widths",
     "navigation_time_groups_and_monotonic_timeline_scale_at_100_150_200_percent_ui_scale",
-    "navigation_time_status_badges_and_timeline_rows_remain_inside_panels_at_high_dpi"
+    "navigation_time_status_badges_and_timeline_rows_remain_inside_panels_at_high_dpi",
+    "navigation_high_dpi_timeline_order_marker_label_value_and_utc_timestamp_parent_bounds_are_verified_at_100_150_200_percent"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

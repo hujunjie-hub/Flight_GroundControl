@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.93
+版本：4.94
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -859,3 +859,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - HeroPanel/StatusCard 圆角、左侧 freshness 色条宽度/内缩/圆角、标题区间距和分隔线高度使用 ScreenTools token；原有状态颜色和 family freshness 不变。
 - MockLink FlightTelemetryPageUITest 在 100%/150%/200% 实际 UI Scale 下显式切换至总览页，检查标题/只读徽标不重叠、徽标内边距、页签图标/选中线与主视觉色条父子边界；覆盖 1672×941→1115×627 与 1280×720→640×360 逻辑视口，测试结束恢复原始 UI Scale。
 - 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 实机截图签收。
+
+
+### G15 导航时序页高 DPI 时间线标签/序号/标记边界（2026-11-16）
+
+- 真实 UI Scale 100%/150%/200% 下，导航主网格列数分别为 12/6/1；四个导航主面板均必须完整位于导航主网格内。
+- FCU 单调时间线的三行序号、时间点标记、行标签和时间值分别完整落在标记列/行容器内；标签与时间值不得重叠，文本宽度不得小于 implicitWidth，序号对应的行 y 必须与排序序号 × rowPitch 一致。
+- UTC 时间戳继续占据时间同步面板全宽行；值区宽度至少覆盖父行 90%，高度不得小于 implicitHeight，保留六位微秒和 FCU boot-relative 语义。
+- 150%/200% 场景继续检查时钟纪律/UTC 参考分组重排、域状态列数、徽标/行高缩放和全部父子边界；测试结束恢复原始 UI Scale。
+- 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言 NOT_RUN，集中 exact-HEAD 验收时执行。
