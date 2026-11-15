@@ -3296,6 +3296,7 @@ SetupPage {
                     statusFamily: "navigationAvailable"
                     MetricReadout {
                         objectName: "flightTelemetry_navigationEstimatePosition"
+                        statusAsBadge: true
                         labelText: qsTr("水平位置标准差")
                         valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3)
                         unitText: "m"
@@ -3306,6 +3307,7 @@ SetupPage {
                     }
                     MetricReadout {
                         objectName: "flightTelemetry_navigationEstimateVelocity"
+                        statusAsBadge: true
                         labelText: qsTr("速度标准差")
                         valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3)
                         unitText: "m/s"
@@ -3316,6 +3318,7 @@ SetupPage {
                     }
                     MetricReadout {
                         objectName: "flightTelemetry_navigationEstimateHeading"
+                        statusAsBadge: true
                         labelText: qsTr("航向标准差")
                         valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3)
                         unitText: "rad"
@@ -3340,6 +3343,7 @@ SetupPage {
                         rowSpacing: root._navigationCapabilityGridSpacing
                         MetricReadout {
                             objectName: "flightTelemetry_navigationCapabilityHeading"
+                            valueAsStatusBadge: true
                             labelText: qsTr("航向估计")
                             valueText: root._navigationMetricStatus(root._navCapabilityHeading)
                             unitText: ""
@@ -3349,6 +3353,7 @@ SetupPage {
                         }
                         MetricReadout {
                             objectName: "flightTelemetry_navigationCapabilityPosition"
+                            valueAsStatusBadge: true
                             labelText: qsTr("水平位置")
                             valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
                             unitText: ""
@@ -3358,6 +3363,7 @@ SetupPage {
                         }
                         MetricReadout {
                             objectName: "flightTelemetry_navigationCapabilityHorizontalVelocity"
+                            valueAsStatusBadge: true
                             labelText: qsTr("水平速度")
                             valueText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity)
                             unitText: ""
@@ -3367,6 +3373,7 @@ SetupPage {
                         }
                         MetricReadout {
                             objectName: "flightTelemetry_navigationCapabilityVerticalVelocity"
+                            valueAsStatusBadge: true
                             labelText: qsTr("垂直速度")
                             valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity)
                             unitText: ""
@@ -5216,6 +5223,8 @@ SetupPage {
         property color valueColor: accentColor
         property color statusColor: accentColor
         property bool showStatusText: true
+        property bool valueAsStatusBadge: false
+        property bool statusAsBadge: false
         readonly property real contentSpacing: root._dashboardMetricReadoutSpacing
 
         Layout.fillWidth: true
@@ -5234,7 +5243,10 @@ SetupPage {
             Layout.fillWidth: true
             spacing: metric.contentSpacing
             QGCLabel {
+                objectName: metric.objectName + "_value"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                visible: !metric.valueAsStatusBadge
                 text: metric.valueText
                 color: metric.valueColor
                 font.pointSize: ScreenTools.metricFontPointSize
@@ -5242,20 +5254,36 @@ SetupPage {
                 elide: Text.ElideRight
             }
             QGCLabel {
+                objectName: metric.objectName + "_unit"
+                visible: metric.unitText.length > 0
                 text: metric.unitText
                 color: "#A8BBC3"
                 font.pointSize: ScreenTools.secondaryFontPointSize
+            }
+            FamilyStatusBadge {
+                objectName: metric.objectName + "_valueBadge"
+                visible: metric.valueAsStatusBadge && metric.valueText.length > 0
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                statusText: metric.valueText
+                statusColor: metric.accentColor
             }
         }
         QGCLabel {
             objectName: metric.objectName + "_status"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            visible: metric.showStatusText && metric.statusText.length > 0
+            visible: metric.showStatusText && metric.statusText.length > 0 && !metric.statusAsBadge
             text: metric.statusText
             color: metric.statusColor
             font.pointSize: ScreenTools.microFontPointSize
             wrapMode: Text.WordWrap
+        }
+        FamilyStatusBadge {
+            objectName: metric.objectName + "_statusBadge"
+            visible: metric.showStatusText && metric.statusAsBadge && metric.statusText.length > 0
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            statusText: metric.statusText
+            statusColor: metric.statusColor
         }
     }
 
