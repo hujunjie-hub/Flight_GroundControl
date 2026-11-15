@@ -284,7 +284,11 @@
         "dashboard_tabs_provide_hover_feedback_and_preserve_active_state_priority",
         "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints",
         "dashboard_detail_cards_are_partitioned_by_page_as_4_6_2_2_without_losing_diagnostic_fields",
-        "navigation_and_rc_detail_pairs_fill_desktop_rows_as_equal_six_of_twelve_column_panels"
+        "navigation_and_rc_detail_pairs_fill_desktop_rows_as_equal_six_of_twelve_column_panels",
+        "health_page_matrix_explicitly_represents_message_freshness_not_aggregate_device_health",
+        "health_page_overview_matrix_and_safety_panels_do_not_show_single_family_status_badges",
+        "health_detail_cards_use_balanced_4_4_4_and_6_3_3_desktop_rows",
+        "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px"
       ]
     },
     {
@@ -434,7 +438,11 @@
     "dashboard_tabs_provide_hover_feedback_and_preserve_active_state_priority",
     "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints",
     "dashboard_detail_cards_are_partitioned_by_page_as_4_6_2_2_without_losing_diagnostic_fields",
-    "navigation_and_rc_detail_pairs_fill_desktop_rows_as_equal_six_of_twelve_column_panels"
+    "navigation_and_rc_detail_pairs_fill_desktop_rows_as_equal_six_of_twelve_column_panels",
+    "health_page_matrix_explicitly_represents_message_freshness_not_aggregate_device_health",
+    "health_page_overview_matrix_and_safety_panels_do_not_show_single_family_status_badges",
+    "health_detail_cards_use_balanced_4_4_4_and_6_3_3_desktop_rows",
+    "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

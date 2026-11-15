@@ -1669,9 +1669,8 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_healthOverview"
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
-                    eyebrow: "HEALTH OVERALL"
-                    titleText: qsTr("健康总评")
-                    statusFamily: "operationAvailable"
+                    eyebrow: "TELEMETRY DOMAIN OVERVIEW"
+                    titleText: qsTr("遥测域概览")
                     QGCLabel { Layout.fillWidth: true; text: root._healthHeadline(); color: root._familyStatusColor("operationAvailable"); typographyRole: "hero"; wrapMode: Text.WordWrap }
                     QGCLabel {
                         Layout.fillWidth: true
@@ -1710,9 +1709,8 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_healthPageMatrix"
                     Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 6 : 1
-                    eyebrow: "SYSTEM HEALTH MATRIX"
-                    titleText: qsTr("系统健康矩阵")
-                    statusFamily: "sensorHealthAvailable"
+                    eyebrow: "TELEMETRY FRESHNESS MATRIX"
+                    titleText: qsTr("遥测域接收矩阵")
                     GridLayout {
                         objectName: "flightTelemetry_healthPageMatrixGrid"
                         Layout.fillWidth: true
@@ -1732,21 +1730,36 @@ SetupPage {
                         }
                     }
                     RowLayout {
+                        objectName: "flightTelemetry_healthFreshnessLegend"
                         Layout.fillWidth: true
                         spacing: 12
                         Repeater {
                             model: [
-                                { color: "#45D39A", text: qsTr("正常") },
-                                { color: "#F0B94B", text: qsTr("注意") },
-                                { color: "#F06464", text: qsTr("告警") }
+                                { key: "received", color: "#45D39A", text: qsTr("已接收") },
+                                { key: "stale", color: "#F0B94B", text: qsTr("数据超时") },
+                                { key: "waiting", color: "#8A9A94", text: qsTr("等待遥测") }
                             ]
                             delegate: RowLayout {
                                 required property var modelData
+                                objectName: "flightTelemetry_healthLegend_" + modelData.key
                                 spacing: 4
                                 Rectangle { Layout.preferredWidth: 8; Layout.preferredHeight: 8; radius: 4; color: modelData.color }
-                                QGCLabel { text: modelData.text; color: "#A8BBC3"; font.pointSize: ScreenTools.microFontPointSize }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_healthLegendLabel_" + modelData.key
+                                    text: modelData.text
+                                    color: "#A8BBC3"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
                             }
                         }
+                    }
+                    QGCLabel {
+                        objectName: "flightTelemetry_healthMatrixLegendNote"
+                        Layout.fillWidth: true
+                        text: qsTr("矩阵仅反映 13 类遥测消息的可用性与接收新鲜度；传感器健康、字段有效性、预检结果及故障原因以对应明细为准。")
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
                     }
                 }
                 HeroPanel {
@@ -1754,7 +1767,6 @@ SetupPage {
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "SAFETY MONITORING"
                     titleText: qsTr("安全监测")
-                    statusFamily: "prearmAvailable"
                     TelemetryRow {
                         labelText: qsTr("失效保护")
                         valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
@@ -2426,7 +2438,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "PRE-ARM CHECKS"
                     statusFamily: "prearmAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 8 : root._dashboardColumns >= 6 ? 6 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 6 : 1
                     title: qsTr("解锁前检查")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
@@ -2492,7 +2504,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "REAL-TIME RESOURCES"
                     statusFamily: "resourceAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("实时资源")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("resource") }
@@ -2546,7 +2558,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "STORAGE"
                     statusFamily: "storageAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("存储状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
@@ -2693,7 +2705,8 @@ SetupPage {
         required property string titleText
         property string eyebrow: "FLIGHT STATUS"
         property string statusFamily: ""
-        readonly property color currentStatusColor: root._familyStatusColor(statusFamily)
+        readonly property color currentStatusColor: statusFamily.length > 0
+                                                            ? root._familyStatusColor(statusFamily) : "#0B6873"
         default property alias contentData: bodyColumn.data
 
         Layout.fillWidth: true
@@ -2743,6 +2756,8 @@ SetupPage {
                     }
                 }
                 Rectangle {
+                    objectName: hero.objectName + "_statusBadge"
+                    visible: hero.statusFamily.length > 0
                     radius: 10
                     implicitWidth: heroStatusText.implicitWidth + 16
                     implicitHeight: heroStatusText.implicitHeight + 10

@@ -882,7 +882,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[cardIndex]->isVisible(),
                                               expectedDetailVisibility[index][cardIndex], 3000);
                 }
-                if (index == 2) {
+                if (index == 1) {
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[2]->y(), diagnosticCardItems[3]->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[2]->y(), diagnosticCardItems[4]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[2]->x() < diagnosticCardItems[3]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[3]->x() < diagnosticCardItems[4]->x(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[11]->y(), diagnosticCardItems[7]->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[11]->y(), diagnosticCardItems[6]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[11]->x() < diagnosticCardItems[7]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->x() < diagnosticCardItems[6]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[11]->width() >= dashboardGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->width() >= dashboardGrid->width() * 0.20, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[6]->width() >= dashboardGrid->width() * 0.20, 3000);
+                } else if (index == 2) {
                     QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[1]->y(), diagnosticCardItems[8]->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[1]->x() < diagnosticCardItems[8]->x(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[1]->width() >= dashboardGrid->width() * 0.45, 3000);
@@ -926,10 +938,64 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
             QQuickItem* healthGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageGrid"), 3000);
             QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrixGrid"), 3000);
+            QQuickItem* healthOverview = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview"), 3000);
+            QQuickItem* healthMatrixPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix"), 3000);
+            QQuickItem* healthSafety = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000);
+            QQuickItem* healthOverviewBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview_statusBadge"));
+            QQuickItem* healthMatrixBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix_statusBadge"));
+            QQuickItem* healthSafetyBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety_statusBadge"));
+            QQuickItem* receivedLegend = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegend_received"), 3000);
+            QQuickItem* staleLegend = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegend_stale"), 3000);
+            QQuickItem* waitingLegend = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegend_waiting"), 3000);
+            QQuickItem* receivedLegendLabel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegendLabel_received"), 3000);
+            QQuickItem* staleLegendLabel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegendLabel_stale"), 3000);
+            QQuickItem* waitingLegendLabel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthLegendLabel_waiting"), 3000);
+            QQuickItem* legendNote = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMatrixLegendNote"), 3000);
+            QQuickItem* prearmDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
+            QQuickItem* resourcesDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
+            QQuickItem* storageDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
             QVERIFY(healthGrid);
             QVERIFY(healthMatrix);
+            QVERIFY(healthOverview);
+            QVERIFY(healthMatrixPanel);
+            QVERIFY(healthSafety);
+            QVERIFY(healthOverviewBadge);
+            QVERIFY(healthMatrixBadge);
+            QVERIFY(healthSafetyBadge);
+            QVERIFY(receivedLegend);
+            QVERIFY(staleLegend);
+            QVERIFY(waitingLegend);
+            QVERIFY(receivedLegendLabel);
+            QVERIFY(staleLegendLabel);
+            QVERIFY(waitingLegendLabel);
+            QVERIFY(legendNote);
+            QVERIFY(prearmDetail);
+            QVERIFY(resourcesDetail);
+            QVERIFY(storageDetail);
+            QTRY_COMPARE_WITH_TIMEOUT(healthOverview->property("titleText").toString(),
+                                      translatedTelemetryText("遥测域概览"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixPanel->property("titleText").toString(),
+                                      translatedTelemetryText("遥测域接收矩阵"), 3000);
+            QVERIFY(healthOverview->property("statusFamily").toString().isEmpty());
+            QVERIFY(healthMatrixPanel->property("statusFamily").toString().isEmpty());
+            QVERIFY(healthSafety->property("statusFamily").toString().isEmpty());
+            QTRY_VERIFY_WITH_TIMEOUT(!healthOverviewBadge->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!healthMatrixBadge->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!healthSafetyBadge->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(receivedLegendLabel->property("text").toString(),
+                                      translatedTelemetryText("已接收"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(staleLegendLabel->property("text").toString(),
+                                      translatedTelemetryText("数据超时"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(waitingLegendLabel->property("text").toString(),
+                                      translatedTelemetryText("等待遥测"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(legendNote->property("text").toString().contains(
+                                         translatedTelemetryText("字段有效性")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 4, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmDetail->y(), resourcesDetail->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmDetail->y(), storageDetail->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(prearmDetail->x() < resourcesDetail->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(resourcesDetail->x() < storageDetail->x(), 3000);
             const char* healthDomains[] = {"operation", "navigation", "sensorHealth", "control", "actuator",
                                            "link",      "storage",    "resource",     "time",    "event",
                                            "prearm",    "rcInput",    "buildInfo"};
@@ -969,6 +1035,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
+                if (widthIndex == 0) {
+                    QTRY_VERIFY_WITH_TIMEOUT(prearmDetail->y() < resourcesDetail->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(resourcesDetail->y(), storageDetail->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(resourcesDetail->x() < storageDetail->x(), 3000);
+                } else {
+                    QTRY_VERIFY_WITH_TIMEOUT(prearmDetail->y() < resourcesDetail->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(resourcesDetail->y() < storageDetail->y(), 3000);
+                }
                 for (int pageIndex = 2; pageIndex <= 3; ++pageIndex) {
                     QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex), 3000);
                     QVERIFY(tab);
