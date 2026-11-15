@@ -436,6 +436,8 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(secondManagerGimbal->attitudeStatusFresh(), 5000);
             QVERIFY(secondManagerGimbal->supportsPitchAxis());
             QVERIFY(secondManagerGimbal->supportsYawAxis());
+            QVERIFY(secondManagerGimbal->supportsYawLock());
+            QVERIFY(!secondManagerGimbal->supportsRetract());
             QVERIFY(secondGimbal->supportsPitchAxis());
             QVERIFY(secondGimbal->supportsYawAxis());
             QVERIFY(!secondGimbal->supportsYawLock());
@@ -783,6 +785,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!activeGimbal->attitudeStatusFresh());
             QVERIFY(!secondGimbal->attitudeStatusFresh());
             QVERIFY(!legacyGimbal->attitudeStatusFresh());
+            QVERIFY(!secondManagerGimbal->attitudeStatusFresh());
 
             const int expectedResumeAckCount = broadcastAckCount + 1;
             QVERIFY(sendBroadcastMessageInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000));
