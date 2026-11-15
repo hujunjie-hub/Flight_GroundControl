@@ -107,6 +107,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyLegendTitle"), 3000);
             QQuickItem* alarmPriorityHint =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmPriorityHint"), 3000);
+            QQuickItem* alarmEmptyState =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyState"), 3000);
+            QQuickItem* alarmEmptyTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyTitle"), 3000);
+            QQuickItem* alarmEmptyDescription =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyDescription"), 3000);
             QQuickItem* alarmList =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmList"), 3000);
             QQuickItem* diagnosticDetailsTitle =
@@ -288,6 +294,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(topologyLegendTitle->property("text").toString(),
                      translatedTelemetryText("状态图例"));
             QVERIFY(alarmPriorityHint);
+            QVERIFY(alarmEmptyState);
+            QVERIFY(alarmEmptyTitle);
+            QVERIFY(alarmEmptyDescription);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
             QVERIFY(summaryLink);
@@ -458,7 +467,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(sortedPriorityEvents.at(2).toMap().value(QStringLiteral("severity")).toInt(), 2);
             QCOMPARE(sortedPriorityEvents.at(3).toMap().value(QStringLiteral("sequence")).toInt(), 12);
             QCOMPARE(alarmPriorityHint->property("text").toString(),
-                     translatedTelemetryText("严重度优先 · 同级按本地接收序号"));
+                     translatedTelemetryText("最高严重度置顶 · 同级按本地接收序号"));
 
             QVariant eventBootTimeOutput;
             QVERIFY(QMetaObject::invokeMethod(page, "_eventBootTimeText", Qt::DirectConnection,
@@ -865,6 +874,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const QString invalidText = translatedTelemetryText("无效");
 
             // No FCU custom telemetry has arrived: the page must not present it as current data.
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEmptyState->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEmptyTitle->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEmptyDescription->property("text").toString(),
+                                      translatedTelemetryText("收到 FCU_EVENT 后按严重度自动排序"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(), waitingText, 3000);
@@ -1404,6 +1417,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("最高优先级"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
                                       translatedTelemetryText("%1 条").arg(1), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!alarmEmptyState->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmEventReason->property("text").toString().contains(
                                          translatedTelemetryText("硬件故障")), 3000);
             const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("0.009"));
@@ -1728,8 +1742,27 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
+            // A newer event with the same highest severity must move ahead of the earlier critical event.
+            sendEventStatus(lastOperationTime + 700, bootId, 4323, 3);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QQuickItem* alarmEventCard2 = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_2"), 3000);
+            QQuickItem* alarmEventCard3 = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_3"), 3000);
+            QVERIFY(alarmEventCard2);
+            QVERIFY(alarmEventCard3);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
+                                      translatedTelemetryText("%1 条").arg(3), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEventCard3->property("isPrimary").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard3->property("severityColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!alarmEventCard->property("isPrimary").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard->property("severityColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!alarmEventCard2->property("isPrimary").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard2->property("severityColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
 
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
             QTRY_VERIFY_WITH_TIMEOUT(trendVelocity->property("validSampleCount").toInt() >= 2, 3000);
