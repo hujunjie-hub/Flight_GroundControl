@@ -106,6 +106,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTime"), 3000);
             QQuickItem* dashboardTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
+            QQuickItem* dashboardSubtitle =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_dashboardSubtitle"));
+            QQuickItem* compactDashboardSubtitle =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_dashboardSubtitleCompact"));
             QQuickItem* readOnlyBadge =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
             QQuickItem* summaryTelemetry =
@@ -193,6 +197,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryLink);
             QVERIFY(summaryTime);
             QVERIFY(dashboardTitle);
+            QVERIFY(dashboardSubtitle);
+            QVERIFY(compactDashboardSubtitle);
             QVERIFY(readOnlyBadge);
             QVERIFY(summaryTelemetry);
             QVERIFY(summaryOperation);
@@ -235,7 +241,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(failsafeRow);
 
             const auto headerItemsFit = [&]() {
-                for (QQuickItem* item : {dashboardTitle, readOnlyBadge}) {
+                for (QQuickItem* item : {dashboardTitle, dashboardSubtitle, compactDashboardSubtitle, readOnlyBadge}) {
+                    if (!item->isVisible()) continue;
                     const QPointF topLeft = item->mapToItem(dashboardHeader, 0, 0);
                     if (topLeft.x() < 0 || topLeft.y() < 0 || topLeft.x() + item->width() > dashboardHeader->width() ||
                         topLeft.y() + item->height() > dashboardHeader->height()) {
@@ -288,6 +295,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
                 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
@@ -317,6 +326,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
             page->setWidth(1000);
+            QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(compactDashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
@@ -324,6 +336,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
+            QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(compactDashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
@@ -331,6 +346,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
+            QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);

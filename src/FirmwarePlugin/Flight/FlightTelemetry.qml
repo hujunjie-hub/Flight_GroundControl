@@ -1102,23 +1102,39 @@ SetupPage {
                         radius: 2
                         color: "#16BCC3"
                     }
-                    RowLayout {
+                    ColumnLayout {
+                        objectName: "flightTelemetry_dashboardHeaderText"
                         Layout.fillWidth: true
-                        spacing: 12
-                        QGCLabel {
-                            objectName: "flightTelemetry_dashboardTitle"
-                            text: root._dashboardPageInfo[root._activeDashboardPage].title
-                            color: "#E7F0F4"
-                            typographyRole: "hero"
-                            wrapMode: Text.WordWrap
+                        spacing: 2
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            QGCLabel {
+                                objectName: "flightTelemetry_dashboardTitle"
+                                Layout.fillWidth: true
+                                text: root._dashboardPageInfo[root._activeDashboardPage].title
+                                color: "#E7F0F4"
+                                typographyRole: "hero"
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_dashboardSubtitle"
+                                visible: root.availableWidth >= 1280
+                                text: root._dashboardPageInfo[root._activeDashboardPage].subtitle
+                                color: "#9CBFC7"
+                                font.pointSize: ScreenTools.secondaryFontPointSize
+                                Layout.alignment: Qt.AlignVCenter
+                                elide: Text.ElideRight
+                            }
                         }
                         QGCLabel {
-                            objectName: "flightTelemetry_dashboardSubtitle"
-                            visible: root.availableWidth >= 760
+                            objectName: "flightTelemetry_dashboardSubtitleCompact"
+                            Layout.fillWidth: true
+                            visible: root.availableWidth >= 760 && root.availableWidth < 1280
                             text: root._dashboardPageInfo[root._activeDashboardPage].subtitle
-                            color: "#9CBFC7"
-                            font.pointSize: ScreenTools.secondaryFontPointSize
-                            Layout.alignment: Qt.AlignVCenter
+                            color: "#82AEB8"
+                            font.pointSize: ScreenTools.microFontPointSize
+                            elide: Text.ElideRight
                         }
                     }
                     Rectangle {
