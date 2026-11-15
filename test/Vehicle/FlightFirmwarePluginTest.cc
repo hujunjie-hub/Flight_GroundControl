@@ -1,10 +1,19 @@
 #include "FlightFirmwarePluginTest.h"
 
 #include "FirmwarePlugin/Flight/FlightFirmwarePlugin.h"
+#include "FirmwarePlugin/Flight/FlightParameterMetaData.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin/Flight/FlightTelemetryFactGroup.h"
 
 #include <QtTest/QTest>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+
+class TestFlightParameterMetaData final : public FlightParameterMetaData
+{
+public:
+    using FlightParameterMetaData::parseParameterJson;
+};
 
 // These wire-layout values are generated from Flight's authoritative
 // spec/contracts/FCU.xml (Schema 6). A changed CRC or payload length is an
@@ -72,6 +81,64 @@ void FlightFirmwarePluginTest::_takeoffIsNotAFlightMode()
 
     QVERIFY(plugin.takeOffFlightMode().isEmpty());
     QVERIFY(plugin.flightMode(MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 9).endsWith(QStringLiteral("9")));
+}
+
+void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
+{
+    TestFlightParameterMetaData metadata;
+
+    QJsonObject validEntry {
+        { QStringLiteral("name"), QStringLiteral("TEST_VALID_CONTROL") },
+        { QStringLiteral("type"), QStringLiteral("float") },
+        { QStringLiteral("group"), QStringLiteral("Control") },
+        { QStringLiteral("domain"), QStringLiteral("CONTROL") },
+        { QStringLiteral("shortDescription"), QStringLiteral("Valid test parameter") },
+        { QStringLiteral("units"), QStringLiteral("-") },
+        { QStringLiteral("min"), 0.0 },
+        { QStringLiteral("max"), 10.0 },
+        { QStringLiteral("default"), 5.0 },
+        { QStringLiteral("decimalPlaces"), 2 }
+    };
+
+    QJsonObject unknownDomainEntry = validEntry;
+    unknownDomainEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_DOMAIN"));
+    unknownDomainEntry.insert(QStringLiteral("domain"), QStringLiteral("CONTROL_EXPERIMENTAL"));
+
+    QJsonObject invalidRangeEntry = validEntry;
+    invalidRangeEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_RANGE"));
+    invalidRangeEntry.insert(QStringLiteral("min"), 10.0);
+    invalidRangeEntry.insert(QStringLiteral("max"), 1.0);
+
+    QJsonObject unsupportedTypeEntry = validEntry;
+    unsupportedTypeEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNSUPPORTED_TYPE"));
+    unsupportedTypeEntry.insert(QStringLiteral("type"), QStringLiteral("int32"));
+
+    QJsonArray parameters;
+    parameters.append(validEntry);
+    parameters.append(unknownDomainEntry);
+    parameters.append(invalidRangeEntry);
+    parameters.append(unsupportedTypeEntry);
+    metadata.parseParameterJson(QJsonObject{{ QStringLiteral("parameters"), parameters }});
+
+    FactMetaData *valid = metadata.getMetaDataForFact(QStringLiteral("TEST_VALID_CONTROL"),
+                                                      FactMetaData::valueTypeFloat);
+    QVERIFY(valid);
+    QCOMPARE(valid->category(), QStringLiteral("CONTROL"));
+    QCOMPARE(valid->shortDescription(), QStringLiteral("Valid test parameter"));
+
+    // Rejected entries must not be cached as partially valid metadata. The base
+    // class may still create an unclassified fallback for a live parameter.
+    const QStringList rejectedNames {
+        QStringLiteral("TEST_UNKNOWN_DOMAIN"),
+        QStringLiteral("TEST_INVALID_RANGE"),
+        QStringLiteral("TEST_UNSUPPORTED_TYPE")
+    };
+    for (const QString &name : rejectedNames) {
+        FactMetaData *rejected = metadata.getMetaDataForFact(name, FactMetaData::valueTypeFloat);
+        QVERIFY(rejected);
+        QVERIFY(rejected->category().isEmpty());
+        QVERIFY(rejected->shortDescription().isEmpty());
+    }
 }
 
 void FlightFirmwarePluginTest::_flightOperationTelemetryIsDecodedPerVehicle()
