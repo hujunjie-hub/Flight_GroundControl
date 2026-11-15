@@ -73,6 +73,22 @@ bool readUniqueStringList(const QJsonValue &value, QStringList &strings, bool al
     return allowEmpty || !strings.isEmpty();
 }
 
+bool validSourceMetadata(const QJsonObject &entry)
+{
+    const QString sourceFile = entry.value(QStringLiteral("sourceFile")).toString();
+    const QString sourcePath = entry.value(QStringLiteral("sourcePath")).toString();
+    const QString sourceKind = entry.value(QStringLiteral("sourceKind")).toString();
+    static const QStringList sourceKinds {
+        QStringLiteral("scalar"),
+        QStringLiteral("vector"),
+        QStringLiteral("matrix"),
+        QStringLiteral("stored")
+    };
+    return !sourceFile.isEmpty() && sourceFile == sourceFile.trimmed() &&
+           !sourcePath.isEmpty() && sourcePath == sourcePath.trimmed() &&
+           sourceKinds.contains(sourceKind);
+}
+
 bool validRuleArray(const QJsonValue &value, QVariantList &rules)
 {
     if (!value.isArray()) {
@@ -179,6 +195,7 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         const bool validApplicability =
             !vehicleFamily.trimmed().isEmpty() && vehicleFamily == vehicleFamily.trimmed() &&
             !controlLaw.trimmed().isEmpty() && controlLaw == controlLaw.trimmed() &&
+            validSourceMetadata(entry) &&
             readUniqueStringList(entry.value(QStringLiteral("modelVariants")), modelVariants) &&
             readUniqueStringList(entry.value(QStringLiteral("modelProfiles")), modelProfiles) &&
             readUniqueStringList(entry.value(QStringLiteral("dependencies")), dependencies, true) &&
@@ -286,6 +303,9 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         metaData->setUpdatePolicy(updatePolicy);
         metaData->setDependencies(dependencies);
         metaData->setValidationRules(validationRules);
+        metaData->setSourceFile(entry.value(QStringLiteral("sourceFile")).toString());
+        metaData->setSourcePath(entry.value(QStringLiteral("sourcePath")).toString());
+        metaData->setSourceKind(entry.value(QStringLiteral("sourceKind")).toString());
         metaData->setReadOnly(entry.value(QStringLiteral("readOnly")).toBool());
         metaData->setWriteOnly(entry.value(QStringLiteral("writeOnly")).toBool(false));
         _cachedMetaData.insert(name, metaData);
