@@ -1183,12 +1183,16 @@ Item {
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
-                                        text: dashboardRoot.selectedFact
-                                              ? (dashboardRoot.selectedFact.vehicleRebootRequired
-                                                 ? qsTr("生效要求：应用后需要重启飞控")
-                                                 : qsTr("生效要求：无需重启飞控"))
-                                              : qsTr("生效要求：—")
-                                        color: dashboardRoot.selectedFact && dashboardRoot.selectedFact.vehicleRebootRequired
+                                        text: !dashboardRoot.selectedFact
+                                              ? qsTr("生效要求：—")
+                                              : !dashboardRoot.selectedFact.vehicleRebootRequiredKnown
+                                                ? qsTr("生效要求：固件未声明，请查阅固件说明")
+                                                : dashboardRoot.selectedFact.vehicleRebootRequired
+                                                  ? qsTr("生效要求：应用后需要重启飞控")
+                                                  : qsTr("生效要求：无需重启飞控")
+                                        color: dashboardRoot.selectedFact &&
+                                               (!dashboardRoot.selectedFact.vehicleRebootRequiredKnown ||
+                                                dashboardRoot.selectedFact.vehicleRebootRequired)
                                                ? root.amber : root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
