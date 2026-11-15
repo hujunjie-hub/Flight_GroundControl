@@ -318,7 +318,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
 
             QQuickItem *page = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_page"), 3000);
             QVERIFY(page);
-            QTRY_COMPARE_WITH_TIMEOUT(page->property("deviceCount").toInt(), 2, 15000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("deviceCount").toInt(), 3, 15000);
 
             QQuickItem *ownership = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_ownershipState"), 3000);
             QQuickItem *deviceSelector = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_deviceSelector"), 3000);
@@ -378,17 +378,28 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // Device 155 is emitted by MockLink as a second independent
             // device behind the same Gimbal Manager component.
             constexpr uint8_t secondDeviceId = 155;
-            QTRY_COMPARE_WITH_TIMEOUT(vehicle->gimbalController()->gimbals()->count(), 2, 5000);
+            QTRY_COMPARE_WITH_TIMEOUT(vehicle->gimbalController()->gimbals()->count(), 3, 5000);
             Gimbal *secondGimbal = nullptr;
+            Gimbal *legacyGimbal = nullptr;
             for (int index = 0; index < vehicle->gimbalController()->gimbals()->count(); ++index) {
                 auto *candidate = qobject_cast<Gimbal *>(
                     vehicle->gimbalController()->gimbals()->get(index));
-                if (candidate && candidate->deviceId()->rawValue().toUInt() == secondDeviceId) {
+                if (!candidate) {
+                    continue;
+                }
+                if (candidate->deviceId()->rawValue().toUInt() == secondDeviceId) {
                     secondGimbal = candidate;
-                    break;
+                } else if (candidate->deviceId()->rawValue().toUInt() == 3) {
+                    legacyGimbal = candidate;
                 }
             }
             QVERIFY(secondGimbal);
+            QVERIFY(legacyGimbal);
+            QCOMPARE(legacyGimbal->managerCompid()->rawValue().toUInt(),
+                     static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
+            QCOMPARE(legacyGimbal->deviceId()->rawValue().toUInt(), static_cast<uint32_t>(3));
+            QTRY_VERIFY_WITH_TIMEOUT(legacyGimbal->managerStatusFresh(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(legacyGimbal->attitudeStatusFresh(), 3000);
             QCOMPARE(activeGimbal->managerCompid()->rawValue().toUInt(),
                      static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
             QCOMPARE(secondGimbal->managerCompid()->rawValue().toUInt(),
