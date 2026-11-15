@@ -863,7 +863,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QQuickItem* modeButton = findVisibleItem(_rootItem, modeNames[mode], 3000);
                 QVERIFY(modeButton);
                 QVERIFY(_clickItemAt(modeButton, 0.5, 0.5, modeNames[mode]));
-                QTRY_VERIFY_WITH_TIMEOUT(page->property("_stickChannels").toList().size() == 4, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(page->property("_stickChannels").toList().value(0).toInt(),
+                                          expectedModes[mode][0], 3000);
                 const QVariantList channels = page->property("_stickChannels").toList();
                 for (int axis = 0; axis < 4; ++axis) QCOMPARE(channels[axis].toInt(), expectedModes[mode][axis]);
             }
