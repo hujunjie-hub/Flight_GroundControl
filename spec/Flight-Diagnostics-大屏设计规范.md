@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.42
+- 版本：6.43
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例链路聚合徽标；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；总览拓扑连线/节点按六域独立 freshness 着色，多域拓扑面板不再显示导航单域徽标；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例链路聚合徽标；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -80,12 +80,13 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | 区域 | 标题/内容 | 实现要求 |
 |---|---|---|
 | 左栏 | 整机状态概览 | 突出当前飞行模式、解锁状态、控制权、失效保护；下方显示飞控、传感器、导航、链路、资源、时间六个关键域的独立状态 |
-| 中栏 | 系统拓扑与导航估计 | 中央绘制静态多旋翼拓扑示意，周围节点显示传感器、导航、链路、控制、执行器、时间六个 family 的真实状态；下方保留水平位置、速度、航向标准差 |
+| 中栏 | 系统拓扑与导航估计 | 中央绘制静态多旋翼拓扑示意；六条连接线与六个节点分别绑定传感器、导航、链路、控制、执行器、时间 family 的真实 freshness，已接收为绿色、超时为琥珀色、等待为中性灰；下方节点卡同步显示状态与接收年龄；底部保留水平位置、速度、航向标准差 |
 | 右栏 | 告警事件（优先级） | 显示当前 boot epoch 最近事件、严重度、事件序号/ID、来源和原因；RC 输入监视移至独立的「遥控与链路」页面 |
 
 - 左栏不得显示 96/100 等虚构健康分，不得将 family 状态计数包装成健康百分比。
-- 中栏拓扑图是静态系统连接示意，不代表飞行器实时位置、姿态、航向或飞行轨迹；当前接口没有姿态角，不得绘制人工地平仪。
+- 中栏拓扑图是静态系统连接示意，不代表飞行器实时位置、姿态、航向或飞行轨迹；当前接口没有姿态角，不得绘制人工地平仪。六条连线和节点必须按各自 family freshness 独立着色，不得将某一 family 状态或全链路通信状态扩散成整张拓扑的统一健康结论。
 - 右栏事件必须来自 `recentEvents`；没有事件时明确显示空态/等待状态，不生成示例告警。
+- 左栏整机状态概览和中栏系统拓扑与导航估计均为多域复合面板，标题区不得显示某一个 family 的单域状态徽标；各子项与拓扑节点独立显示自己的 freshness。右栏告警面板可以保留 event family 状态。
 - 总览页不重复显示 RC 操纵输入；横滚/俯仰/偏航/油门及双摇杆可视化统一放在「遥控与链路」页面，并按 `rcValidAxesMask` 和 FlightRadio 手型映射显示，无效轴不绘制成零值。
 - 不为匹配参考图而伪造电池、卫星数、HDOP、振动或链路吞吐量；当前 FlightTelemetry 接口未提供的字段不展示为实时指标。
 
@@ -949,3 +950,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - `FlightTelemetryPageUITest` 使用真实 MockLink 数据验证主视觉链路面板与详情卡 `statusFamily` 均为空、失控保护卡也不显示 operation family 聚合徽标；实例状态、覆盖数、字段有效性与接收年龄继续独立断言。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 与本 SPEC；不修改链路实例状态生成、VehicleLinkManager、MAVLink、FactGroup、Flight ICD、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归断言为 NOT_RUN，待后续集中验收。
+
+## 67. Phase 2.21 总览系统拓扑六域连线状态映射与复合面板徽标语义（2026-11-15）
+
+- 中栏拓扑 Canvas 新增 `familyConnectionStates`，直接从 `_overviewTopologyFamilies` 派生六域的 family、availability、当前状态和状态颜色；画布连线与节点读取同一状态快照，避免节点颜色更新而连接线仍保持固定装饰色。
+- 六条中心连接线和六个节点 halo/边框按各自 family freshness 独立着色：新鲜绿色、超时琥珀色、等待中性灰；新鲜连线强调度略高，超时/等待降低亮度。不得用全链路 communicationLost 或 navigation 单域状态覆盖其余 family。
+- 中央示意增加 FCU 核心标识和轻量中心光晕；该图仍只表示系统连接关系，不表示实时姿态、位置或飞行轨迹。
+- 六个节点卡增加与节点同源的状态色背景、左侧状态色条和加粗状态文字；原有 family 接收年龄继续保留，卡片状态与 Canvas 连线共用同一 freshness 语义。
+- 「系统拓扑与导航估计」为六域复合面板，移除 `statusFamily: navigationAvailable`，不再以导航单域状态为整张面板生成状态徽标；左侧整机多域面板同样保持无单域徽标。右侧告警面板仍可按 event family 表达状态。
+- `FlightTelemetryPageUITest` 增加六条连接状态映射、family 名称/状态颜色绑定、导航 fresh→stale→recovered 的节点与连线状态同步，以及拓扑复合面板无导航单域徽标断言；保留 1600/1400/1000/900/700/400 px 节点边界断言。
+- 仅修改 FlightTelemetry QML、对应 UI Integration、G15 manifest、Windows Release 验收指南和本 SPEC；不修改 MAVLink、FactGroup、Flight ICD、freshness 阈值、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归断言为 NOT_RUN，等待集中验收。
+
