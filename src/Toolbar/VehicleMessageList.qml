@@ -21,10 +21,16 @@ TextArea {
 
     property var _fact: null
 
+    function _monospaceStyle(color) {
+        return "color: " + color
+            + "; font-family: '" + ScreenTools.fixedFontFamily
+            + "'; font-size: " + ScreenTools.captionFontPointSize.toFixed(0) + "pt;";
+    }
+
     function formatMessage(message) {
-        message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.bodyFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.bodyFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.bodyFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#E>", "g"), _monospaceStyle(qgcPal.warningText));
+        message = message.replace(new RegExp("<#I>", "g"), _monospaceStyle(qgcPal.warningText));
+        message = message.replace(new RegExp("<#N>", "g"), _monospaceStyle(qgcPal.text));
         return message;
     }
 

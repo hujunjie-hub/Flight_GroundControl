@@ -173,6 +173,9 @@ def _scan_qml(path: Path, root: Path) -> list[Violation]:
         if FONT_PIXEL_SIZE.search(line):
             issues.append(Violation(relative, line_number, "font.pixelSize is not allowed; use a point-size semantic token for DPI scaling"))
 
+        if "monospace" in line.lower():
+            issues.append(Violation(relative, line_number, "use ScreenTools.fixedFontFamily instead of a hard-coded monospace family"))
+
         family_match = FONT_FAMILY.search(line)
         if family_match:
             value = family_match.group(1).strip().rstrip(";")
