@@ -3370,6 +3370,13 @@ bool MockLink::setGimbalDeviceOnlineForTesting(uint8_t gimbalDeviceId, bool onli
     return _mockLinkGimbal && _mockLinkGimbal->setSimulatedDeviceOnline(gimbalDeviceId, online);
 }
 
+bool MockLink::setGimbalDeviceOnlineForTesting(
+    uint8_t managerCompId, uint8_t gimbalDeviceId, bool online)
+{
+    return _mockLinkGimbal &&
+        _mockLinkGimbal->setSimulatedDeviceOnline(managerCompId, gimbalDeviceId, online);
+}
+
 MockLinkFTP *MockLink::mockLinkFTP() const
 {
     return _mockLinkFTP;
