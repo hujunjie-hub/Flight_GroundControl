@@ -145,11 +145,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* healthNavigation =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_health_navigation"), 3000);
             QQuickItem* heroFailsafe = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafe"), 3000);
-            QQuickItem* axisRoll = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_roll"), 3000);
-            QQuickItem* axisPitch = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_pitch"), 3000);
-            QQuickItem* axisYaw = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_yaw"), 3000);
-            QQuickItem* axisThrottle =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxis_throttle"), 3000);
+            QQuickItem* axisRoll = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll"));
+            QQuickItem* axisPitch = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_pitch"));
+            QQuickItem* axisYaw = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_yaw"));
+            QQuickItem* axisThrottle = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_throttle"));
             QQuickItem* operationCard =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
             QQuickItem* prearmCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
@@ -486,6 +485,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendNavigationStatus(1100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
             sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
+            QQuickItem* rcPageTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
+            QVERIFY(rcPageTab);
+            QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QQuickItem* leftStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
+            QQuickItem* rightStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
+            QVERIFY(leftStickMarker);
+            QVERIFY(rightStickMarker);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
+            QQuickItem* overviewTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
+            QVERIFY(overviewTab);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
@@ -731,5 +744,118 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount, 5000);
             QTRY_COMPARE_WITH_TIMEOUT(replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
             disconnectMockLink(replacementMockLink);
+        });
+}
+
+
+void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
+{
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "COMP_METADATA_TYPE_GENERAL : failed to load metadata \\(primary and fallback\\)")));
+    runWithMockLink(
+        []() { return MockLink::startGenericMockLink(); },
+        [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+            QVERIFY(mockLink);
+            QVERIFY(vehicle);
+            const QString componentButtonName = flightTelemetryComponentButtonName(vehicle);
+            QVERIFY2(!componentButtonName.isEmpty(), "FlightTelemetry setup component was not registered");
+            navigateToConfigureView();
+            if (QTest::currentTestFailed()) return;
+            QVERIFY(clickSidebarButton(componentButtonName));
+            QQuickItem* page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
+            QQuickItem* tabs = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTabs"), 3000);
+            QQuickItem* title = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
+            QVERIFY(page);
+            QVERIFY(tabs);
+            QVERIFY(title);
+            page->setWidth(1600);
+            const QString pageGrids[] = {
+                QStringLiteral("flightTelemetry_heroGrid"),
+                QStringLiteral("flightTelemetry_healthPageGrid"),
+                QStringLiteral("flightTelemetry_navigationPageGrid"),
+                QStringLiteral("flightTelemetry_rcLinkPageGrid")
+            };
+            const QString titles[] = {
+                translatedTelemetryText("飞控诊断总览"),
+                translatedTelemetryText("飞行健康"),
+                translatedTelemetryText("导航时序"),
+                translatedTelemetryText("遥控与链路")
+            };
+            for (int index = 0; index < 4; ++index) {
+                QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(index), 3000);
+                QVERIFY2(tab, qPrintable(QStringLiteral("Missing dashboard tab %1").arg(index)));
+                QVERIFY(_clickItemAt(tab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_%1").arg(index)));
+                QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), index, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(title->property("text").toString(), titles[index], 3000);
+                QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[index], 3000);
+                QVERIFY2(grid, qPrintable(QStringLiteral("Missing active dashboard page %1").arg(index)));
+                if (index > 0) QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), 12, 3000);
+                QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000));
+                QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000));
+            }
+            QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
+            QVERIFY(healthTab);
+            QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            QQuickItem* healthGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageGrid"), 3000);
+            QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrixGrid"), 3000);
+            QVERIFY(healthGrid);
+            QVERIFY(healthMatrix);
+            QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 4, 3000);
+            QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000));
+            QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000));
+            const int widths[] = {1000, 700};
+            const int expectedColumns[] = {6, 1};
+            const int expectedHealthMatrixColumns[] = {2, 1};
+            for (int widthIndex = 0; widthIndex < 2; ++widthIndex) {
+                page->setWidth(widths[widthIndex]);
+                QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
+                for (int pageIndex = 2; pageIndex <= 3; ++pageIndex) {
+                    QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex), 3000);
+                    QVERIFY(tab);
+                    QVERIFY(_clickItemAt(tab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex)));
+                    QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), pageIndex, 3000);
+                    QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[pageIndex], 3000);
+                    QVERIFY(grid);
+                    QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                }
+                QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+                QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+            }
+            page->setWidth(1600);
+            QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
+            QVERIFY(rcTab);
+            QVERIFY(_clickItemAt(rcTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QQuickItem* leftMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
+            QQuickItem* rightMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
+            QVERIFY(leftMarker);
+            QVERIFY(rightMarker);
+            QVERIFY(!leftMarker->isVisible());
+            QVERIFY(!rightMarker->isVisible());
+            const QString modeNames[] = {
+                QStringLiteral("flightTelemetry_rcMode_1"),
+                QStringLiteral("flightTelemetry_rcMode_2"),
+                QStringLiteral("flightTelemetry_rcMode_3")
+            };
+            const int expectedModes[3][4] = {{3, 1, 0, 2}, {3, 2, 0, 1}, {0, 1, 3, 2}};
+            for (int mode = 0; mode < 3; ++mode) {
+                QQuickItem* modeButton = findVisibleItem(_rootItem, modeNames[mode], 3000);
+                QVERIFY(modeButton);
+                QVERIFY(_clickItemAt(modeButton, 0.5, 0.5, modeNames[mode]));
+                QTRY_VERIFY_WITH_TIMEOUT(page->property("_stickChannels").toList().size() == 4, 3000);
+                const QVariantList channels = page->property("_stickChannels").toList();
+                for (int axis = 0; axis < 4; ++axis) QCOMPARE(channels[axis].toInt(), expectedModes[mode][axis]);
+            }
+            QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
+            QVERIFY(mode2Button);
+            QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
+            QQuickItem* overviewTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
+            QVERIFY(overviewTab);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
         });
 }

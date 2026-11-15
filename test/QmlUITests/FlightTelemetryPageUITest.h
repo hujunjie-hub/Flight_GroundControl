@@ -8,4 +8,5 @@ class FlightTelemetryPageUITest : public VehicleConfigUITestBase
 
 private slots:
     void _testUnknownInvalidAndStaleStatesAreRendered();
+    void _testFourReferencePagesAndResponsiveLayouts();
 };
