@@ -4944,8 +4944,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         QVERIFY(navigationChecksDomainsAtWidth);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
+                        const int expectedTimeColumns =
+                            page->property("availableWidth").toReal() >=
+                                page->property("_navigationTimeTwoColumnMinimumWidth").toReal() ? 2 : 1;
                         QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGridAtWidth->property("columns").toInt(),
-                                                  widthIndex < 2 ? 2 : 1, 3000);
+                                                  expectedTimeColumns, 3000);
                         const auto timeGroupFitsAtWidth = [](QQuickItem* group, QQuickItem* panel) {
                             const auto topLeft = group->mapToItem(panel, 0, 0);
                             return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
@@ -4954,7 +4957,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         };
                         QTRY_VERIFY_WITH_TIMEOUT(timeGroupFitsAtWidth(navigationClockGroupAtWidth, navigationPanels[2]), 3000);
                         QTRY_VERIFY_WITH_TIMEOUT(timeGroupFitsAtWidth(navigationUtcGroupAtWidth, navigationPanels[2]), 3000);
-                        if (widthIndex < 2) {
+                        if (expectedTimeColumns == 2) {
                             QTRY_COMPARE_WITH_TIMEOUT(navigationClockGroupAtWidth->y(), navigationUtcGroupAtWidth->y(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(navigationClockGroupAtWidth->x() < navigationUtcGroupAtWidth->x(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
