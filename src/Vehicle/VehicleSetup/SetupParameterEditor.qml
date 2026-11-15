@@ -1963,79 +1963,92 @@ Item {
                                             font.pointSize: ScreenTools.microFontPointSize
                                         }
                                     }
-                                    ColumnLayout {
+                                    Flickable {
+                                        id: parameterAuditHistoryScroll
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
-                                        spacing: 3
-                                        Repeater {
-                                            model: dashboardRoot.parameterAuditHistory.slice(0, 3)
-                                            delegate: Rectangle {
-                                                required property var modelData
-                                                Layout.fillWidth: true
-                                                Layout.preferredHeight: 34
-                                                radius: 3
-                                                color: "#082B33"
-                                                ColumnLayout {
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 5
-                                                    anchors.rightMargin: 5
-                                                    anchors.topMargin: 2
-                                                    anchors.bottomMargin: 2
-                                                    spacing: 0
-                                                    RowLayout {
-                                                        Layout.fillWidth: true
-                                                        spacing: 5
-                                                        QGCLabel {
-                                                            Layout.preferredWidth: 66
-                                                            text: new Date(modelData.timestamp).toLocaleTimeString()
-                                                            color: root.mutedText
-                                                            font.pointSize: ScreenTools.microFontPointSize
-                                                        }
-                                                        QGCLabel {
+                                        clip: true
+                                        contentWidth: width
+                                        contentHeight: parameterAuditHistoryColumn.implicitHeight
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        ScrollBar.vertical: ScrollBar {
+                                            policy: parameterAuditHistoryScroll.contentHeight > parameterAuditHistoryScroll.height
+                                                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                                        }
+                                        ColumnLayout {
+                                            id: parameterAuditHistoryColumn
+                                            width: parameterAuditHistoryScroll.width
+                                            spacing: 3
+                                            Repeater {
+                                                model: dashboardRoot.parameterAuditHistory
+                                                delegate: Rectangle {
+                                                    required property var modelData
+                                                    Layout.fillWidth: true
+                                                    Layout.preferredHeight: 34
+                                                    radius: 3
+                                                    color: "#082B33"
+                                                    ColumnLayout {
+                                                        anchors.fill: parent
+                                                        anchors.leftMargin: 5
+                                                        anchors.rightMargin: 5
+                                                        anchors.topMargin: 2
+                                                        anchors.bottomMargin: 2
+                                                        spacing: 0
+                                                        RowLayout {
                                                             Layout.fillWidth: true
-                                                            text: modelData.parameterName
-                                                            color: root.mainText
-                                                            font.pointSize: ScreenTools.captionFontPointSize
-                                                            elide: Text.ElideRight
+                                                            spacing: 5
+                                                            QGCLabel {
+                                                                Layout.preferredWidth: 96
+                                                                text: new Date(modelData.timestamp).toLocaleString()
+                                                                color: root.mutedText
+                                                                font.pointSize: ScreenTools.microFontPointSize
+                                                            }
+                                                            QGCLabel {
+                                                                Layout.fillWidth: true
+                                                                text: modelData.parameterName
+                                                                color: root.mainText
+                                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                                elide: Text.ElideRight
+                                                            }
+                                                            QGCLabel {
+                                                                text: modelData.previousValue + " → " + modelData.confirmedValue
+                                                                color: root.cyan
+                                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                            }
                                                         }
-                                                        QGCLabel {
-                                                            text: modelData.previousValue + " → " + modelData.confirmedValue
-                                                            color: root.cyan
-                                                            font.pointSize: ScreenTools.captionFontPointSize
-                                                        }
-                                                    }
-                                                    RowLayout {
-                                                        Layout.fillWidth: true
-                                                        spacing: 5
-                                                        QGCLabel {
+                                                        RowLayout {
                                                             Layout.fillWidth: true
-                                                            text: qsTr("SYS %1 · %2 · %3 · %4")
-                                                                  .arg(modelData.vehicleSystemId)
-                                                                  .arg(modelData.profileDisplayName)
-                                                                  .arg(modelData.modelVariants)
-                                                                  .arg(modelData.controlLaw)
-                                                            color: root.mutedText
-                                                            font.pointSize: ScreenTools.microFontPointSize
-                                                            elide: Text.ElideRight
-                                                        }
-                                                        QGCLabel {
-                                                            text: modelData.correlationStatus
-                                                            color: modelData.correlationStatus.indexOf(qsTr("已关联")) === 0
-                                                                   ? root.green : root.amber
-                                                            font.pointSize: ScreenTools.microFontPointSize
-                                                            elide: Text.ElideRight
+                                                            spacing: 5
+                                                            QGCLabel {
+                                                                Layout.fillWidth: true
+                                                                text: qsTr("SYS %1 / COMP %2 · %3 · %4")
+                                                                      .arg(modelData.vehicleSystemId)
+                                                                      .arg(modelData.componentId)
+                                                                      .arg(modelData.profileDisplayName)
+                                                                      .arg(modelData.modelVariants)
+                                                                color: root.mutedText
+                                                                font.pointSize: ScreenTools.microFontPointSize
+                                                                elide: Text.ElideRight
+                                                            }
+                                                            QGCLabel {
+                                                                text: modelData.correlationStatus
+                                                                color: modelData.correlationStatus.indexOf(qsTr("已关联")) === 0
+                                                                       ? root.green : root.amber
+                                                                font.pointSize: ScreenTools.microFontPointSize
+                                                                elide: Text.ElideRight
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
-                                        }
-                                        QGCLabel {
-                                            Layout.fillWidth: true
-                                            visible: dashboardRoot.parameterAuditHistory.length === 0
-                                            text: qsTr("尚无飞控确认的参数变更；未确认或失败的写入不会进入审计记录")
-                                            color: root.mutedText
-                                            font.pointSize: ScreenTools.microFontPointSize
-                                            wrapMode: Text.WordWrap
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                visible: dashboardRoot.parameterAuditHistory.length === 0
+                                                text: qsTr("尚无飞控确认的参数变更；未确认或失败的写入不会进入审计记录")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.microFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
                                         }
                                     }
                                 }
