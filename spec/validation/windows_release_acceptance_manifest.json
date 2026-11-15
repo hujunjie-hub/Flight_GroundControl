@@ -405,7 +405,8 @@
         "overview_hero_panels_share_equal_height_on_desktop_and_medium_layouts",
         "navigation_time_utc_uncertainty_spans_final_row_in_two_column_layout_and_all_time_metrics_fit_panel",
         "rc_axis_and_stick_readout_colors_distinguish_waiting_valid_and_invalid_states",
-        "dashboard_primary_and_detail_panels_share_typography_padding_spacing_and_family_status_badge_style"
+        "dashboard_primary_and_detail_panels_share_typography_padding_spacing_and_family_status_badge_style",
+        "dashboard_panel_padding_and_badge_geometry_follow_screen_tools_font_metrics"
       ]
     },
     {
