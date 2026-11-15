@@ -897,6 +897,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             page->setWidth(1000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
                                          overviewGridSpacingMatches(heroGrid), 3000);
@@ -916,6 +917,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
                                          overviewGridSpacingMatches(heroGrid), 3000);
@@ -1671,7 +1673,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("硬件故障")), 3000);
             const qreal originalEventHistoryPageWidth = page->width();
             page->setWidth(700);
-            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
@@ -1711,7 +1713,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
             page->setWidth(400);
-            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
