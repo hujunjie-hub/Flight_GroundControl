@@ -659,6 +659,7 @@ void ParameterEditorController::_parameterWriteSucceeded(int componentId, const 
     _tuningStatus = tr("已应用 · 已收到飞控 PARAM_VALUE 确认");
     _tuningError.clear();
     emit tuningStateChanged();
+    emit parameterWriteConfirmed(componentId, paramName, _confirmedValue);
 }
 
 void ParameterEditorController::_parameterWriteFailed(int componentId, const QString &paramName)
