@@ -207,6 +207,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
         const bool added = _mockLinkGimbal->addSimulatedDevice(
             155, false, true, true, true, false, false, true);
         Q_ASSERT(added);
+        Q_UNUSED(added);
     }
 
     if (_mockConfig->startArmed()) {
