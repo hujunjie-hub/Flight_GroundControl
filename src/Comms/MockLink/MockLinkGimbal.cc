@@ -88,16 +88,36 @@ bool MockLinkGimbal::addSimulatedManager(
     bool hasRetract,
     bool hasNeutral)
 {
-    if (managerCompId == 0 || managerCompId == _managerCompId ||
-        gimbalDeviceId == 0 || gimbalDeviceId == managerCompId) {
+    if (managerCompId == 0 || managerCompId == _managerCompId || gimbalDeviceId == 0) {
         return false;
     }
 
-    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
-        if (manager->_managerCompId == managerCompId ||
-            manager->_deviceCompId == gimbalDeviceId) {
-            return false;
+    const auto componentInUse = [this](uint8_t componentId) {
+        if (componentId == _managerCompId || componentId == _deviceCompId) {
+            return true;
         }
+        for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+            if (device->_deviceCompId == componentId) {
+                return true;
+            }
+        }
+        for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+            if (manager->_managerCompId == componentId || manager->_deviceCompId == componentId) {
+                return true;
+            }
+            for (MockLinkGimbal *device : std::as_const(manager->_additionalDevices)) {
+                if (device->_deviceCompId == componentId) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    const uint8_t deviceCompId = gimbalDeviceId <= 6 ? managerCompId : gimbalDeviceId;
+    if (componentInUse(managerCompId) ||
+        (deviceCompId != managerCompId && componentInUse(deviceCompId))) {
+        return false;
     }
 
     _additionalManagers.append(new MockLinkGimbal(
