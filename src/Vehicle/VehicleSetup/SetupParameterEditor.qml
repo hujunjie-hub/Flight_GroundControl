@@ -209,13 +209,15 @@ Item {
                         (dashboardRoot.lastControlTimestamp !== "" &&
                          timestamp <= Number(dashboardRoot.lastControlTimestamp))
                     if (sessionChanged) {
+                        const hadParameterMarkers = dashboardRoot.parameterChangeMarkers.length > 0 ||
+                                                     dashboardRoot.pendingParameterChangeMarkers.length > 0
                         dashboardRoot.responseSamples = []
                         dashboardRoot.parameterChangeMarkers = []
+                        dashboardRoot.pendingParameterChangeMarkers = []
                         dashboardRoot.lastControlTimestamp = ""
-                        if (dashboardRoot.pendingParameterChangeMarkers.length > 0) {
-                            dashboardRoot.pendingParameterChangeMarkers = []
+                        if (hadParameterMarkers) {
                             dashboardRoot.parameterChangeSummary =
-                                qsTr("参数已确认，但飞控启动会话或时间戳发生变化，未关联到响应曲线")
+                                qsTr("飞控启动会话或时间戳发生变化，已清空旧参数确认标记")
                         }
                     }
                     if (timestampText === dashboardRoot.lastControlTimestamp) {
@@ -1338,7 +1340,12 @@ Item {
                                             minValue = Math.min(minValue, samples[i].value)
                                             maxValue = Math.max(maxValue, samples[i].value)
                                         }
-                                        const valueRange = Math.max(1, maxValue - minValue)
+                                        const rawValueRange = maxValue - minValue
+                                        const valuePadding = rawValueRange > 0
+                                                             ? rawValueRange * 0.05
+                                                             : Math.max(1, Math.abs(minValue) * 0.05)
+                                        const plotMinValue = minValue - valuePadding
+                                        const valueRange = Math.max(1, rawValueRange + 2 * valuePadding)
                                         const firstTime = samples[0].time
                                         const timeSpan = Math.max(1, samples[samples.length - 1].time - firstTime)
                                         const points = []
@@ -1346,7 +1353,7 @@ Item {
                                             points.push({
                                                 x: (width - 1) * (samples[i].time - firstTime) / timeSpan,
                                                 y: (height - 1) -
-                                                   ((samples[i].value - minValue) / valueRange) * (height - 1)
+                                                   ((samples[i].value - plotMinValue) / valueRange) * (height - 1)
                                             })
                                         }
 
