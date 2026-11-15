@@ -886,10 +886,18 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("本机控制中"), 6000);
+            const double firstPitchBeforeLegacyControl =
+                activeGimbal->absolutePitch()->rawValue().toDouble();
+            const double secondPitchBeforeLegacyControl =
+                secondGimbal->absolutePitch()->rawValue().toDouble();
             vehicle->gimbalController()->sendPitchBodyYaw(-12.0f, 24.0f, false);
             QTRY_VERIFY_WITH_TIMEOUT(
                 std::abs(std::abs(legacyGimbal->absolutePitch()->rawValue().toDouble()) - 12.0) < 3.0,
                 4000);
+            QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
+                             firstPitchBeforeLegacyControl) < 0.5);
+            QVERIFY(std::abs(secondGimbal->absolutePitch()->rawValue().toDouble() -
+                             secondPitchBeforeLegacyControl) < 0.5);
             QVERIFY(!activeGimbal->gimbalHaveControl());
             QVERIFY(!secondGimbal->gimbalHaveControl());
             QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
