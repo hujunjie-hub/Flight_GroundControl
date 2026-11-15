@@ -605,24 +605,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
-            QQuickItem* leftStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
-            QQuickItem* rightStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
-            QVERIFY(leftStickMarker);
-            QVERIFY(rightStickMarker);
-            QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(rcRssiValue->property("text").toString(), QStringLiteral("-42 dBm"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherRssiValue->property("text").toString(), invalidText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherQualityValue->property("text").toString(), invalidText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLossValue->property("text").toString(), invalidText, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("-68 dBm"), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
-                                         QStringLiteral("GCS 地面站")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcFailsafePanel->property("statusFamily").toString().isEmpty(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString().isEmpty(), 3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
             QQuickItem* rightStickReadout = findVisibleItem(
@@ -657,6 +639,24 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(invalidOtherLossValue);
             QVERIFY(rcFailsafePanel);
             QVERIFY(rcLinkPanel);
+            QQuickItem* leftStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
+            QQuickItem* rightStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
+            QVERIFY(leftStickMarker);
+            QVERIFY(rightStickMarker);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcRssiValue->property("text").toString(), QStringLiteral("-42 dBm"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherRssiValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherQualityValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLossValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("-68 dBm"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
+                                         QStringLiteral("GCS 地面站")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcFailsafePanel->property("statusFamily").toString().isEmpty(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString().isEmpty(), 3000);
             QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
             QVERIFY(mode2Button);
             QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
