@@ -298,6 +298,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_time"));
             QQuickItem* navigationTimelineEventOrder =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_event"));
+            QQuickItem* navigationTimelineMarkers[] = {
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_marker_navigation")),
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_marker_time")),
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_marker_event"))};
+            QQuickItem* navigationTimelineValues[] = {
+                navigationTimelineNavigationValue, navigationTimelineTimeValue, navigationTimelineEventValue};
+            QQuickItem* navigationTimelineOrders[] = {
+                navigationTimelineNavigationOrder, navigationTimelineTimeOrder, navigationTimelineEventOrder};
             QQuickItem* navigationUtcTimestamp =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"));
             QQuickItem* timeUtcTimestamp =
@@ -429,6 +437,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(navigationTimelineNavigationOrder);
             QVERIFY(navigationTimelineTimeOrder);
             QVERIFY(navigationTimelineEventOrder);
+            for (QQuickItem* marker : navigationTimelineMarkers) QVERIFY(marker);
             QVERIFY(navigationUtcTimestamp);
             QVERIFY(timeUtcTimestamp);
             QVERIFY(rcCard);
@@ -2191,6 +2200,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("02"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
                                       QStringLiteral("03"), 3000);
+            for (int timelineIndex = 0; timelineIndex < 3; ++timelineIndex) {
+                const QColor markerColor = navigationTimelineMarkers[timelineIndex]->property("color").value<QColor>();
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    navigationTimelineOrders[timelineIndex]->property("color").value<QColor>(),
+                    markerColor, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(
+                    navigationTimelineValues[timelineIndex]->property("color").value<QColor>(),
+                    markerColor, 3000);
+            }
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
