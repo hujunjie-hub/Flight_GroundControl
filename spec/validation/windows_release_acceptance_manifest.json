@@ -388,7 +388,8 @@
         "navigation_estimate_standard_deviation_values_use_neutral_color_separate_from_capability_status",
         "navigation_capability_states_are_shown_once_without_duplicate_status_labels",
         "navigation_primary_estimate_and_time_facts_are_not_repeated_in_detail_cards",
-        "navigation_and_time_diagnostic_metadata_remain_in_detail_cards_with_family_freshness_gating"
+        "navigation_and_time_diagnostic_metadata_remain_in_detail_cards_with_family_freshness_gating",
+        "rc_input_family_badge_appears_only_on_stick_monitor_while_axis_panel_retains_status_accent"
       ]
     },
     {
