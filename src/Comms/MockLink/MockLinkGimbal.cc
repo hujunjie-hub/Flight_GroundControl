@@ -202,6 +202,23 @@ MockLinkGimbal *MockLinkGimbal::_managerForTargetComponent(uint8_t targetCompone
 
 void MockLinkGimbal::run1HzTasks()
 {
+    // A secondary manager advertises its own component heartbeat so the
+    // vehicle-side discovery state machine can request its information.
+    if (_managerCompId != MAV_COMP_ID_AUTOPILOT1) {
+        mavlink_message_t heartbeat{};
+        (void) mavlink_msg_heartbeat_pack_chan(
+            _mockLink->vehicleId(),
+            _managerCompId,
+            _mockLink->outgoingMavlinkChannel(),
+            &heartbeat,
+            MAV_TYPE_GIMBAL,
+            MAV_AUTOPILOT_INVALID,
+            0,
+            0,
+            MAV_STATE_STANDBY);
+        _mockLink->respondWithMavlinkMessage(heartbeat);
+    }
+
     // Runs every 1s (1Hz on worker thread). Reads intervals and gimbal state main thread modifies.
     // Must serialize access to prevent:
     //   - Auto-movement overwriting manual control commands
@@ -211,6 +228,9 @@ void MockLinkGimbal::run1HzTasks()
         locker.unlock();
         for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
             device->run1HzTasks();
+        }
+        for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+            manager->run1HzTasks();
         }
         return;
     }
@@ -254,6 +274,9 @@ void MockLinkGimbal::run1HzTasks()
     for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
         device->run1HzTasks();
     }
+    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+        manager->run1HzTasks();
+    }
 }
 
 bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
@@ -261,7 +284,21 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE) {
         mavlink_gimbal_manager_set_attitude_t request{};
         mavlink_msg_gimbal_manager_set_attitude_decode(&msg, &request);
-        MockLinkGimbal *const device = _deviceForId(request.gimbal_device_id);
+        if (request.target_component != 0 && request.target_component != _managerCompId) {
+            MockLinkGimbal *const manager = _managerForTargetComponent(request.target_component);
+            if (manager && manager != this) {
+                return manager->handleMavlinkMessage(msg);
+            }
+        }
+        MockLinkGimbal *device = _deviceForId(request.gimbal_device_id);
+        if (!device && request.target_component == 0) {
+            for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+                device = manager->_deviceForId(request.gimbal_device_id);
+                if (device) {
+                    return device->_handleGimbalManagerSetAttitude(request, msg.sysid, msg.compid);
+                }
+            }
+        }
         return device && device->_handleGimbalManagerSetAttitude(request, msg.sysid, msg.compid);
     }
 
@@ -290,10 +327,19 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
             if (request.target_component != 0 && request.target_component != _managerCompId) {
                 return false;
             }
-            // The manager publishes one status stream containing one frame per device.
+            // A broadcast interval applies to every manager and device in this
+            // simulated vehicle. Emit one ACK from the primary manager below.
             handled = _handleSetMessageInterval(request);
             for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
                 handled = device->_handleSetMessageInterval(request) || handled;
+            }
+            if (request.target_component == 0) {
+                for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+                    handled = manager->_handleSetMessageInterval(request) || handled;
+                    for (MockLinkGimbal *device : std::as_const(manager->_additionalDevices)) {
+                        handled = device->_handleSetMessageInterval(request) || handled;
+                    }
+                }
             }
         } else if (messageId == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
             if (request.target_component == 0) {
@@ -340,8 +386,16 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
             (request.target_component != 0 && request.target_component != _managerCompId)) {
             return false;
         }
-        if (!_handleRequestMessage(request)) {
-            return false;
+        {
+            bool handled = _handleRequestMessage(request);
+            if (request.target_component == 0) {
+                for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+                    handled = manager->_handleRequestMessage(request) || handled;
+                }
+            }
+            if (!handled) {
+                return false;
+            }
         }
         _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, ackComponent);
         return true;
