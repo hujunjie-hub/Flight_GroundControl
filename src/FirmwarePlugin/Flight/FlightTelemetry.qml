@@ -1901,7 +1901,7 @@ SetupPage {
                                     text: root._familyStatus("operationAvailable") === qsTr("已接收")
                                           ? root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
                                           : root._familyStatus("operationAvailable")
-                                    color: stateColor === "#8A9A94" ? stateColor : "#E6F0F4"
+                                    color: root._familyStatus("operationAvailable") === qsTr("已接收") ? "#E6F0F4" : stateColor
                                     font.weight: ScreenTools.strongFontWeight
                                 }
                             }
