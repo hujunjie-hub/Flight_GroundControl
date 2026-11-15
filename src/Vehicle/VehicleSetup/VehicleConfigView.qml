@@ -24,6 +24,15 @@ Rectangle {
     readonly property real      _horizontalMargin:  _defaultTextWidth / 2
     readonly property real      _verticalMargin:    _defaultTextHeight / 2
     readonly property real      _buttonWidth:       _defaultTextWidth * 18
+    readonly property real      _flightSidebarWidth: Math.max(160, Math.min(240, _defaultTextWidth * 16))
+    readonly property real      _flightSidebarTopInset: Math.max(18, _defaultTextHeight * 1.8)
+    readonly property real      _flightSidebarHorizontalInset: Math.max(8, _defaultTextWidth * 0.8)
+    readonly property real      _flightSidebarBottomInset: Math.max(7, _defaultTextHeight * 0.7)
+    readonly property real      _flightSidebarSpacing: Math.max(8, _defaultTextHeight * 0.8)
+    readonly property real      _flightSidebarButtonSpacing: Math.max(7, _defaultTextHeight * 0.7)
+    readonly property real      _flightSidebarSectionPadding: Math.max(8, _defaultTextHeight * 0.8)
+    readonly property real      _flightSidebarSectionLeftPadding: Math.max(28, _defaultTextWidth * 2.8)
+    readonly property real      _flightSidebarDividerInset: Math.max(4, _defaultTextWidth * 0.4)
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while the vehicle is armed.")
 
     property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
@@ -426,7 +435,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        width: leftPanel.x + leftPanel.width + 4
+        width: leftPanel.x + leftPanel.width + _flightSidebarDividerInset
         color: _flightLayout ? "#061F27" : "#253330"
         visible: _flightLayout && !_parameterCenterFullPage
     }
@@ -435,15 +444,15 @@ Rectangle {
         id:                 leftPanel
         objectName:         "vehicleConfig_flightSidebar"
         visible:            !_parameterCenterFullPage
-        width:              _flightLayout ? 160 :
+        width:              _flightLayout ? _flightSidebarWidth :
                                 Math.max(buttonColumn.implicitWidth + _horizontalMargin, _defaultTextWidth * 22)
-        anchors.topMargin:  _flightLayout ? 18 : _verticalMargin
+        anchors.topMargin:  _flightLayout ? _flightSidebarTopInset : _verticalMargin
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        anchors.leftMargin: _flightLayout ? 8 : _horizontalMargin
+        anchors.leftMargin: _flightLayout ? _flightSidebarHorizontalInset : _horizontalMargin
         anchors.left:       parent.left
-        anchors.bottomMargin: _flightLayout ? 7 : 0
-        spacing:            _flightLayout ? 8 : _verticalMargin / 2
+        anchors.bottomMargin: _flightLayout ? _flightSidebarBottomInset : 0
+        spacing:            _flightLayout ? _flightSidebarSpacing : _verticalMargin / 2
 
         QGCTextField {
             id:                 searchField
@@ -468,7 +477,7 @@ Rectangle {
             ColumnLayout {
                 id:         buttonColumn
                 width:      parent.width
-                spacing:    _flightLayout ? 7 : 0
+                spacing:    _flightLayout ? _flightSidebarButtonSpacing : 0
 
                 // Summary button
                 ConfigButton {
@@ -556,8 +565,8 @@ Rectangle {
                                 id:             sectionBtn
                                 objectName:     "vehicleConfig_section_" + modelData.replace(/ /g, "")
                                 Layout.fillWidth: true
-                                padding:        _flightLayout ? 8 : ScreenTools.defaultFontPixelWidth * 0.75
-                                leftPadding:    _flightLayout ? 28 : ScreenTools.defaultFontPixelWidth * 3
+                                padding:        _flightLayout ? _flightSidebarSectionPadding : ScreenTools.defaultFontPixelWidth * 0.75
+                                leftPadding:    _flightLayout ? _flightSidebarSectionLeftPadding : ScreenTools.defaultFontPixelWidth * 3
                                 hoverEnabled:   !ScreenTools.isMobile
 
                                 property int sectionIndex: index
@@ -717,7 +726,7 @@ Rectangle {
         id:                     divider
         anchors.topMargin:      _verticalMargin
         anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _flightLayout ? 4 : _horizontalMargin
+        anchors.leftMargin:     _flightLayout ? _flightSidebarDividerInset : _horizontalMargin
         anchors.left:           leftPanel.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
