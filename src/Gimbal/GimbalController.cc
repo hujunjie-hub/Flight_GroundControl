@@ -691,6 +691,9 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
 
     if (!std::isfinite(pitch_rate_deg_s) || !std::isfinite(yaw_rate_deg_s)) {
         qCWarning(GimbalControllerLog) << "sendGimbalRate: refusing non-finite angular rate";
+        // We still own a fresh device here, so explicitly stop any previously
+        // active motion before clearing the local targets and timer.
+        _sendGimbalAttitudeRates(0.0f, 0.0f);
         _rateSenderTimer.stop();
         _activeGimbal->setPitchRate(0.0f);
         _activeGimbal->setYawRate(0.0f);
