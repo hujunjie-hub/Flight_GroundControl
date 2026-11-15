@@ -308,6 +308,12 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 
     mavlink_command_long_t request{};
     mavlink_msg_command_long_decode(&msg, &request);
+    if (request.target_component != 0 && request.target_component != _managerCompId) {
+        MockLinkGimbal *const manager = _managerForTargetComponent(request.target_component);
+        if (manager && manager != this) {
+            return manager->handleMavlinkMessage(msg);
+        }
+    }
     const uint8_t ackComponent = request.target_component == 0
         ? _managerCompId : request.target_component;
 
