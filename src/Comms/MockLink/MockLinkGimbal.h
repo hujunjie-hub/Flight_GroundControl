@@ -65,6 +65,7 @@ public:
 
     /// Test hook for simulating one device disconnecting and rediscovering.
     bool setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool online);
+    bool setSimulatedDeviceOnline(uint8_t managerCompId, uint8_t gimbalDeviceId, bool online);
 
     /// Send periodic gimbal status messages (call from 1Hz tasks)
     void run1HzTasks();
