@@ -416,7 +416,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 参数确认事件保留参数写入前值与飞控确认值，先记录当前 FCU boot ID、controlProfileId 与最后一个已接收控制时间戳，随后只在同一 boot ID / controlProfileId 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话/同控制配置遥测基线时只显示未关联说明，不伪造曲线标记。
 - 参数标记与曲线样本在 boot ID、controlProfileId、时间戳回退、GroundControl 机型调参上下文或 activeVehicle 变化时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
 - 仿真接口盘点：当前仓库的 `tools/simulation/mock_vehicle.py` 明确不模拟飞行动力学；`run-arducopter-sitl.sh` 启动的是 ArduCopter，不是 Flight SIL；`Flight-UDP-SIL-20261114.md` 记录的是外部 Flight Host SIL 经临时本地转发补丁接入的遥测验证，未提供 GroundControl 可调用的 Flight SIL 启停或参数注入 API。因此参数中心只读已连接 FCU 的真实遥测，不启动/控制仿真进程，也不将 ArduCopter SITL 冒充 Flight 模型仿真。
-- 影响关系盘点：schema v2 已提供 dependencies 与 validationRules 字段，但当前 49 项均为空数组，尚无经审核的参数依赖图或组合规则；`FlightVehicleModelCatalog.json` 提供机型、适用性、控制律、域和参数白名单。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
+- 影响关系盘点：已核查 Flight main 的 `middleware/protocol/mavlink/parameters/ground_parameters.json`（127 项）及 `tools/generate_qgc_parameter_metadata.py`；当前源参数项均未声明 dependencies / validationRules，生成器虽支持显式字段，但缺省为空数组；`controller_tuning.yaml` / `vehicle_model.yaml` 也没有独立的参数依赖图或组合校验规则定义。GroundControl 当前暴露的 49 项因此全部为空数组。不得从参数名前缀、group、向量索引、min/max 或描述文字自动推断跨参数关系；只有上游源文件明确登记并配套验证后，才展示真实依赖与规则。影响分析继续显示依据不足空态。
 - 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
 - ParameterEditorController 回归测试增加“非 Flight SIL 未授权写入不得产生 parameterWriteConfirmed 事件”断言；本轮不运行构建、QML UI 测试、单元测试或 CI，新增测试保持 NOT_RUN。
 
