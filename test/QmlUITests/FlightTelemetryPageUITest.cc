@@ -817,6 +817,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventTime_1"), 3000);
             QQuickItem* historyEventTime = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistoryTime_1"), 3000);
+            QQuickItem* historyEventMetaGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistoryMeta_1"), 3000);
             QQuickItem* historyEventSeverity = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistorySeverity_1"), 3000);
             QQuickItem* historyEventDetails = findVisibleItem(
@@ -827,6 +829,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_eventHistorySequence_1"), 3000);
             QVERIFY(alarmEventTime);
             QVERIFY(historyEventTime);
+            QVERIFY(historyEventMetaGrid);
             QVERIFY(historyEventSeverity);
             QVERIFY(historyEventDetails);
             QVERIFY(alarmEventMeta);
@@ -845,6 +848,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(historyEventDetails->property("text").toString().contains(
                                          translatedTelemetryText("硬件故障")), 3000);
+            const qreal originalEventHistoryPageWidth = page->width();
+            page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventTime->y() - historyEventSeverity->y()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                historyEventSequence->width() >= historyEventSequence->implicitWidth() - 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
+            page->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(historyEventSeverity->y() > historyEventTime->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                historyEventSequence->width() >= historyEventSequence->implicitWidth() - 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
+            page->setWidth(originalEventHistoryPageWidth);
+            QTRY_VERIFY_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt() >= 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),

@@ -3363,32 +3363,40 @@ SetupPage {
                             Layout.fillWidth: true
                             spacing: 3
 
-                            RowLayout {
+                            GridLayout {
+                                objectName: "flightTelemetry_eventHistoryMeta_" + modelData.sequence
                                 Layout.fillWidth: true
-                                spacing: 8
+                                columns: root.availableWidth >= 520 ? 3 : 2
+                                columnSpacing: 8
+                                rowSpacing: 3
                                 QGCLabel {
                                     objectName: "flightTelemetry_eventHistorySequence_" + modelData.sequence
-                                    Layout.preferredWidth: 76
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: qsTr("本地序号 #%1").arg(modelData.sequence)
                                     color: "#C7E3E9"
                                     font.pointSize: ScreenTools.microFontPointSize
-                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_eventHistoryTime_" + modelData.sequence
-                                    Layout.preferredWidth: 94
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: root._eventBootTimeText(modelData.timeBootUs)
                                     color: "#8298A2"
                                     font.pointSize: ScreenTools.microFontPointSize
-                                    elide: Text.ElideRight
+                                    wrapMode: Text.NoWrap
                                 }
-                                Item { Layout.fillWidth: true }
                                 QGCLabel {
                                     objectName: "flightTelemetry_eventHistorySeverity_" + modelData.sequence
+                                    Layout.fillWidth: true
+                                    Layout.columnSpan: root.availableWidth < 520 ? 2 : 1
+                                    Layout.alignment: Qt.AlignRight
                                     text: root._eventSeverityLabel(modelData.severity)
                                     color: root._eventSeverityColor(modelData.severity)
                                     font.pointSize: ScreenTools.microFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
+                                    horizontalAlignment: Text.AlignRight
                                 }
                             }
                             QGCLabel {

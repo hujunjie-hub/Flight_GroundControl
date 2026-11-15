@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.20
+- 版本：6.21
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；飞行健康页存储/预检 freshness 与严重度语义已补齐；本轮补齐 RC 页面 400 px 四面板和双摇杆边界回归；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率、顶部摘要与链路指标窄屏布局已闭环；本轮补齐事件历史序号/FCU 启动时间/严重程度元信息的无省略响应式重排；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -773,3 +773,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 在每个窄屏宽度下检查左右摇杆都完整位于「遥控输入监视」面板内部，且保持并排，不得越界或被裁切。
 - 该补充只增强 UI Integration 断言，不改变 RC 摇杆绘制、FlightRadio 手型映射、有效轴 mask 或遥控输入数据。
 - 本轮未运行 UI Integration、Windows Release 或 CI；新增断言为 NOT_RUN，待集中验收。
+
+
+## 48. Phase 2.10 事件历史元信息响应式布局（2026-11-15）
+
+- 最近事件历史的本地接收序号、FCU 启动相对时间、严重程度从固定宽度 RowLayout 改为响应式 GridLayout。
+- 内容宽度 >=520 px 时三列同排；低于 520 px 时两列，序号与启动时间保持同排，严重程度移动至下一行右对齐。
+- 序号与时间取消固定 preferredWidth 和 ElideRight，使用自然文本宽度参与网格分配，禁止单行省略；严重程度继续使用原有严重度颜色映射。
+- 事件 ID、来源 ID 和原因详情仍独立保留并 WordWrap，不修改事件排序、接收序号含义、FCU 启动相对时间或事件严重程度。
+- MockLink UI Integration 在 700 px 检查三列同排，在 400 px 检查两列及严重程度换行，并验证序号/时间宽度不小于文本 implicitWidth。
+- 仅修改 GroundControl QML、UI Integration 与 SPEC/G15；不修改 MAVLink、FactGroup、事件缓存、协议时间戳或飞控行为。本轮不运行 CI，新增回归待集中验收。

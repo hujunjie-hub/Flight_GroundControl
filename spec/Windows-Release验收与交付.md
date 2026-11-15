@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.12  
+版本：4.13  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -410,3 +410,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 在 1000/900/700/400 px 断点逐一验证遥控输入、逻辑通道、链路质量、失效保护四个面板垂直排列、统一左边界和等宽。
 - 左右摇杆必须完整位于遥控输入监视面板内部并保持并排；不允许越界、裁切或因窄屏丢失摇杆。
 - 对应断言位于 FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts；本轮不运行 CI，集中验收执行。
+
+
+### G15 事件历史元信息窄屏可读性（2026-11-15）
+
+- 事件序号、FCU 启动时间和严重程度在 >=520 px 三列同排；<520 px 两列，严重程度独立换至下一行右对齐。
+- 序号和启动时间不得使用固定宽度或 ElideRight；集中验收需确认 700/400 px 下文本完整、无横向溢出，严重度颜色保持原语义。
+- 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。

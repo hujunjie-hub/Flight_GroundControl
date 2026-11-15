@@ -354,7 +354,10 @@
         "health_maintenance_latest_event_color_tracks_event_severity",
         "health_maintenance_prearm_color_reflects_failed_warning_stale_and_incomplete_checks",
         "health_maintenance_resource_metric_colors_follow_field_validity_and_instance_freshness",
-        "health_safety_and_maintenance_prearm_summaries_share_status_color"
+        "health_safety_and_maintenance_prearm_summaries_share_status_color",
+        "overview_event_history_metadata_reflows_three_to_two_columns_at_700_and_400_px",
+        "overview_event_history_sequence_and_boot_time_are_not_elided",
+        "overview_event_history_severity_moves_to_second_row_below_520_px"
       ]
     },
     {
@@ -544,7 +547,7 @@
     "rc_link_page_uses_four_equal_width_three_column_hero_panels_on_desktop",
     "rc_link_page_hero_panels_align_to_a_shared_desktop_row_height",
     "rc_link_page_hero_panels_reflow_to_full_width_rows_at_medium_and_single_column_on_narrow_layouts",
-        "rc_link_page_400px_panels_and_dual_sticks_fit_within_parent_bounds",
+    "rc_link_page_400px_panels_and_dual_sticks_fit_within_parent_bounds",
     "failsafe_and_multi_instance_link_panels_do_not_show_single_family_aggregate_badges",
     "stick_readouts_show_invalid_axis_state_instead_of_zero_when_validity_bit_clears",
     "each_link_instance_renders_rssi_quality_and_packet_loss_as_separate_validity_gated_metrics",
@@ -593,7 +596,10 @@
     "health_maintenance_latest_event_color_tracks_event_severity",
     "health_maintenance_prearm_color_reflects_failed_warning_stale_and_incomplete_checks",
     "health_maintenance_resource_metric_colors_follow_field_validity_and_instance_freshness",
-    "health_safety_and_maintenance_prearm_summaries_share_status_color"
+    "health_safety_and_maintenance_prearm_summaries_share_status_color",
+    "overview_event_history_metadata_reflows_three_to_two_columns_at_700_and_400_px",
+    "overview_event_history_sequence_and_boot_time_are_not_elided",
+    "overview_event_history_severity_moves_to_second_row_below_520_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
