@@ -158,6 +158,17 @@ Item {
                 return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
             }
 
+            function resetResponseHistory(reason) {
+                responseSamples = []
+                parameterChangeMarkers = []
+                pendingParameterChangeMarkers = []
+                lastControlTimestamp = ""
+                lastControlBootId = ""
+                lastControlProfileId = ""
+                parameterChangeSummary = reason
+                responseCanvas.requestPaint()
+            }
+
             function recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
                 if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
                     parameterChangeSummary =
@@ -404,6 +415,11 @@ Item {
                                              !dashboardRoot.tuningBusy
                                     onActivated: index => {
                                         root._selectedModelProfileIndex = index
+                                        if (dashboardLoader.item &&
+                                            typeof dashboardLoader.item.resetResponseHistory === "function") {
+                                            dashboardLoader.item.resetResponseHistory(
+                                                qsTr("机型调参上下文已切换，已清空遥测与参数确认标记"))
+                                        }
                                         if (dashboardLoader.item &&
                                             typeof dashboardLoader.item.syncParameterDomain === "function") {
                                             dashboardLoader.item.syncParameterDomain()
@@ -952,13 +968,8 @@ Item {
                                         root._syncModelProfileSelection(true)
                                         // ParameterEditorController captures activeVehicle at construction.
                                         dashboardRoot.parameterDomainAvailable = false
-                                        dashboardRoot.responseSamples = []
-                                        dashboardRoot.parameterChangeMarkers = []
-                                        dashboardRoot.pendingParameterChangeMarkers = []
-                                        dashboardRoot.parameterChangeSummary = qsTr("飞行器已切换，已清空遥测与参数确认标记")
-                                        dashboardRoot.lastControlTimestamp = ""
-                                        dashboardRoot.lastControlBootId = ""
-                                        dashboardRoot.lastControlProfileId = ""
+                                        dashboardRoot.resetResponseHistory(
+                                            qsTr("飞行器已切换，已清空遥测与参数确认标记"))
                                         parameterEditorLoader.sourceComponent = undefined
                                         parameterEditorLoader.sourceComponent = parameterEditorComponent
                                     }
