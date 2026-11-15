@@ -161,6 +161,9 @@ Item {
         QGCMenuSeparator { }
         QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
+            enabled:        _activeVehicle && !_activeVehicle.armed && !_activeVehicle.flying &&
+                            !_activeVehicle.vehicleLinkManager.communicationLost &&
+                            !_activeVehicle.parameterManager.pendingWrites
             onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reboot Vehicle"),
                                                          qsTr("Select Ok to reboot vehicle."),
                                                          Dialog.Cancel | Dialog.Ok,
