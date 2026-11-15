@@ -262,6 +262,7 @@ private slots:
 private:
     bool _profileAllowsSelectedParameter() const;
     QString _tuningBlockReason() const;
+    QString _selectedValueValidationError(double targetValue) const;
     QString _selectedParameterKey() const;
     bool _flightParameterCenterSafeMode() const;
     bool _shouldShow(Fact *fact) const;
