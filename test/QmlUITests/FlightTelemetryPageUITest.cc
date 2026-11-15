@@ -101,6 +101,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyCanvas"), 3000);
             QQuickItem* topologyNodesGrid =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyNodesGrid"), 3000);
+            QQuickItem* topologyLegend =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyLegend"), 3000);
+            QQuickItem* topologyLegendTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyLegendTitle"), 3000);
             QQuickItem* alarmPriorityHint =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmPriorityHint"), 3000);
             QQuickItem* alarmList =
@@ -279,6 +283,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryBand);
             QVERIFY(topologyCanvas);
             QVERIFY(topologyNodesGrid);
+            QVERIFY(topologyLegend);
+            QVERIFY(topologyLegendTitle);
             QVERIFY(alarmPriorityHint);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
@@ -369,6 +375,33 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             const char* topologyFamilies[] = {
                 "sensorHealth", "navigation", "link", "control", "actuator", "time"};
+            const char* topologyLegendKeys[] = {"received", "stale", "waiting"};
+            const char* topologyLegendTexts[] = {"已接收", "数据超时", "等待遥测"};
+            const QColor topologyLegendColors[] = {
+                QColor(QStringLiteral("#45D39A")),
+                QColor(QStringLiteral("#F0B94B")),
+                QColor(QStringLiteral("#8A9A94"))};
+            QQuickItem* topologyLegendRows[3]{};
+            QQuickItem* topologyLegendLabels[3]{};
+            QQuickItem* topologyLegendDots[3]{};
+            for (int index = 0; index < 3; ++index) {
+                const QString key = QString::fromLatin1(topologyLegendKeys[index]);
+                topologyLegendRows[index] = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_topologyLegend_") + key, 3000);
+                topologyLegendLabels[index] = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_topologyLegendLabel_") + key, 3000);
+                topologyLegendDots[index] = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_topologyLegendDot_") + key, 3000);
+                QVERIFY(topologyLegendRows[index]);
+                QVERIFY(topologyLegendLabels[index]);
+                QVERIFY(topologyLegendDots[index]);
+                QCOMPARE(topologyLegendLabels[index]->property("text").toString(),
+                         translatedTelemetryText(topologyLegendTexts[index]));
+                QCOMPARE(topologyLegendLabels[index]->property("color").value<QColor>(),
+                         topologyLegendColors[index]);
+                QCOMPARE(topologyLegendDots[index]->property("color").value<QColor>(),
+                         topologyLegendColors[index]);
+            }
             QQuickItem* topologyNodeItems[6]{};
             for (int index = 0; index < 6; ++index) {
                 const QString nodeName = QStringLiteral("flightTelemetry_topologyNode_")
@@ -505,6 +538,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto topologyLegendItemsFit = [&]() {
+                QQuickItem* items[] = {
+                    topologyLegendTitle,
+                    topologyLegendRows[0], topologyLegendRows[1], topologyLegendRows[2]};
+                for (QQuickItem* item : items) {
+                    if (!item || !item->isVisible()) return false;
+                    const QPointF topLeft = item->mapToItem(topologyLegend, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + item->width() > topologyLegend->width() + 1.0 ||
+                        topLeft.y() + item->height() > topologyLegend->height() + 1.0) {
+                        return false;
+                    }
+                }
+                const QPointF legendTopLeft = topologyLegend->mapToItem(heroNavigation, 0, 0);
+                return legendTopLeft.x() >= -1.0 && legendTopLeft.y() >= -1.0 &&
+                       legendTopLeft.x() + topologyLegend->width() <= heroNavigation->width() + 1.0 &&
+                       legendTopLeft.y() + topologyLegend->height() <= heroNavigation->height() + 1.0;
+            };
+
             const auto trendFooterItemsFit = [&]() {
                 for (int index = 0; index < 4; ++index) {
                     for (QQuickItem* item : {trendGapLabels[index], trendSampleStateLabels[index]}) {
@@ -638,6 +690,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationCard->y(), latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(operationCard->x() < latestEventCard->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(eventHistoryCard->y() > latestEventCard->y(), 3000);
@@ -657,6 +710,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             page->setWidth(1000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
@@ -673,6 +727,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
@@ -684,6 +739,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
@@ -703,6 +759,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
@@ -720,6 +777,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendFooterItemsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
