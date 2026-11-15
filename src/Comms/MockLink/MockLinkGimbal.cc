@@ -17,8 +17,13 @@ MockLinkGimbal::MockLinkGimbal(
     bool hasYawFollow,
     bool hasYawLock,
     bool hasRetract,
-    bool hasNeutral)
+    bool hasNeutral,
+    uint8_t gimbalDeviceId,
+    uint8_t managerCompId)
     : _mockLink(mockLink)
+    , _gimbalDeviceId(gimbalDeviceId)
+    , _managerCompId(managerCompId)
+    , _deviceCompId(gimbalDeviceId <= 6 ? managerCompId : gimbalDeviceId)
     , _hasRollAxis(hasRollAxis)
     , _hasPitchAxis(hasPitchAxis)
     , _hasYawAxis(hasYawAxis)
@@ -27,6 +32,58 @@ MockLinkGimbal::MockLinkGimbal(
     , _hasRetract(hasRetract)
     , _hasNeutral(hasNeutral)
 {
+}
+
+MockLinkGimbal::~MockLinkGimbal()
+{
+    for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+        delete device;
+    }
+}
+
+bool MockLinkGimbal::addSimulatedDevice(
+    uint8_t gimbalDeviceId,
+    bool hasRollAxis,
+    bool hasPitchAxis,
+    bool hasYawAxis,
+    bool hasYawFollow,
+    bool hasYawLock,
+    bool hasRetract,
+    bool hasNeutral)
+{
+    if (_gimbalDeviceId != kDefaultGimbalDeviceId ||
+        gimbalDeviceId == 0 ||
+        gimbalDeviceId == _gimbalDeviceId ||
+        _deviceForId(gimbalDeviceId)) {
+        return false;
+    }
+
+    _additionalDevices.append(new MockLinkGimbal(
+        _mockLink,
+        hasRollAxis,
+        hasPitchAxis,
+        hasYawAxis,
+        hasYawFollow,
+        hasYawLock,
+        hasRetract,
+        hasNeutral,
+        gimbalDeviceId,
+        _managerCompId));
+    return true;
+}
+
+MockLinkGimbal *MockLinkGimbal::_deviceForId(uint8_t gimbalDeviceId)
+{
+    if (gimbalDeviceId == 0 || gimbalDeviceId == _gimbalDeviceId) {
+        return this;
+    }
+
+    for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+        if (device->_gimbalDeviceId == gimbalDeviceId) {
+            return device;
+        }
+    }
+    return nullptr;
 }
 
 void MockLinkGimbal::run1HzTasks()
@@ -69,6 +126,11 @@ void MockLinkGimbal::run1HzTasks()
             _deviceAttitudeStatusLastSentMs = nowMs;
         }
     }
+
+    // Every device owns its own intervals, attitude, rate state and owner pairs.
+    for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+        device->run1HzTasks();
+    }
 }
 
 bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
@@ -76,7 +138,8 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE) {
         mavlink_gimbal_manager_set_attitude_t request{};
         mavlink_msg_gimbal_manager_set_attitude_decode(&msg, &request);
-        return _handleGimbalManagerSetAttitude(request, msg.sysid, msg.compid);
+        MockLinkGimbal *const device = _deviceForId(request.gimbal_device_id);
+        return device && device->_handleGimbalManagerSetAttitude(request, msg.sysid, msg.compid);
     }
 
     if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) {
@@ -86,37 +149,84 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     mavlink_command_long_t request{};
     mavlink_msg_command_long_decode(&msg, &request);
 
-    // Handle gimbal-specific commands
     switch (request.command) {
-    case MAV_CMD_SET_MESSAGE_INTERVAL:
-        if (_handleSetMessageInterval(request)) {
-            _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
-            return true;
+    case MAV_CMD_SET_MESSAGE_INTERVAL: {
+        const int messageId = static_cast<int>(request.param1);
+        bool handled = false;
+        if (messageId == MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS) {
+            // The manager publishes one status stream containing one frame per device.
+            handled = _handleSetMessageInterval(request);
+            for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+                handled = device->_handleSetMessageInterval(request) || handled;
+            }
+        } else if (messageId == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
+            if (request.target_component == _managerCompId) {
+                // Device IDs 1-6 publish attitude status through the manager component.
+                for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+                    if (device->_gimbalDeviceId <= 6) {
+                        handled = device->_handleSetMessageInterval(request) || handled;
+                    }
+                }
+                if (_gimbalDeviceId <= 6) {
+                    handled = _handleSetMessageInterval(request) || handled;
+                }
+            } else {
+                MockLinkGimbal *const device = _deviceForId(
+                    request.target_component == _deviceCompId ? _gimbalDeviceId : request.target_component);
+                if (device && device->_deviceCompId == request.target_component) {
+                    handled = device->_handleSetMessageInterval(request);
+                } else {
+                    for (MockLinkGimbal *candidate : std::as_const(_additionalDevices)) {
+                        if (candidate->_deviceCompId == request.target_component) {
+                            handled = candidate->_handleSetMessageInterval(request);
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        return false;
+
+        if (!handled) {
+            return false;
+        }
+        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+        return true;
+    }
 
     case MAV_CMD_REQUEST_MESSAGE:
-        if (_handleRequestMessage(request)) {
-            _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
-            return true;
+        if (!_handleRequestMessage(request)) {
+            return false;
         }
-        return false;
-
-    case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW:
-        if (_handleGimbalManagerPitchYaw(request, msg.sysid, msg.compid)) {
-            _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
-            return true;
-        }
-        _sendCommandAck(request.command, MAV_RESULT_DENIED, request.target_component);
+        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
         return true;
 
-    case MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE:
-        if (_handleGimbalManagerConfigure(request, msg.sysid, msg.compid)) {
-            _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
-            return true;
+    case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW: {
+        MockLinkGimbal *device = this;
+        if (qIsFinite(request.param7) && request.param7 >= 0.0f &&
+            request.param7 <= 255.0f && qFloor(request.param7) == request.param7) {
+            device = _deviceForId(static_cast<uint8_t>(request.param7));
         }
-        _sendCommandAck(request.command, MAV_RESULT_DENIED, request.target_component);
+        const bool accepted = device &&
+            device->_handleGimbalManagerPitchYaw(request, msg.sysid, msg.compid);
+        _sendCommandAck(request.command, accepted ? MAV_RESULT_ACCEPTED : MAV_RESULT_DENIED,
+                        request.target_component);
         return true;
+    }
+
+    case MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE: {
+        MockLinkGimbal *device = this;
+        if (qIsFinite(request.param7) && request.param7 >= 0.0f &&
+            request.param7 <= 255.0f && qFloor(request.param7) == request.param7) {
+            device = _deviceForId(static_cast<uint8_t>(request.param7));
+        } else if (!qIsNaN(request.param7)) {
+            device = nullptr;
+        }
+        const bool accepted = device &&
+            device->_handleGimbalManagerConfigure(request, msg.sysid, msg.compid);
+        _sendCommandAck(request.command, accepted ? MAV_RESULT_ACCEPTED : MAV_RESULT_DENIED,
+                        request.target_component);
+        return true;
+    }
 
     default:
         return false;
@@ -127,8 +237,8 @@ bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     const mavlink_gimbal_manager_set_attitude_t &request, uint8_t sourceSysid, uint8_t sourceCompid)
 {
     if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
-        (request.target_component != 0 && request.target_component != MAV_COMP_ID_AUTOPILOT1) ||
-        (request.gimbal_device_id != 0 && request.gimbal_device_id != kGimbalCompId) ||
+        (request.target_component != 0 && request.target_component != _managerCompId) ||
+        (request.gimbal_device_id != 0 && request.gimbal_device_id != _gimbalDeviceId) ||
         (request.flags & ~0x7Cu) != 0) {
         return false;
     }
@@ -248,6 +358,9 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {
         qCDebug(MockLinkGimbalLog) << "REQUEST_MESSAGE -" << QString("%1(%2)").arg(msgName).arg(msgId);
         _sendGimbalManagerInformation();
+        for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+            device->_sendGimbalManagerInformation();
+        }
         return true;
     }
 
@@ -284,7 +397,7 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
                                << "yaw:" << requestedYaw << "flags:" << flags;
 
     const uint8_t targetDeviceId = static_cast<uint8_t>(requestedDeviceId);
-    if (targetDeviceId != 0 && targetDeviceId != kGimbalCompId) {
+    if (targetDeviceId != 0 && targetDeviceId != _gimbalDeviceId) {
         qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW denied for unknown device" << targetDeviceId;
         return false;
     }
@@ -359,6 +472,13 @@ bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t 
     //   0: no one in control; -1: leave unchanged; -2: set this sender in control;
     //   -3: release only if this sender currently owns the complete pair.
     // Positive integer values set an explicit system/component ID.
+    // param7 selects the device; NaN is accepted for legacy callers targeting the default device.
+    if (!qIsNaN(request.param7) &&
+        (!qIsFinite(request.param7) || request.param7 < 0.0f ||
+         request.param7 > 255.0f || qFloor(request.param7) != request.param7 ||
+         (request.param7 != 0.0f && request.param7 != _gimbalDeviceId))) {
+        return false;
+    }
     QMutexLocker locker(&_stateMutex);
 
     const auto isRelease = [](float value) { return qIsFinite(value) && value == -3.0f; };
@@ -456,12 +576,12 @@ void MockLinkGimbal::_sendGimbalManagerStatus()
     mavlink_message_t msg{};
     (void) mavlink_msg_gimbal_manager_status_pack_chan(
         _mockLink->vehicleId(),
-        MAV_COMP_ID_AUTOPILOT1,
+        _managerCompId,
         _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, // time_boot_ms
         0, // flags
-        kGimbalCompId, // gimbal_device_id
+        _gimbalDeviceId, // gimbal_device_id
         _gimbalManagerSysidPrimary,
         _gimbalManagerCompidPrimary,
         _gimbalManagerSysidSecondary,
@@ -504,7 +624,7 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
 
     (void) mavlink_msg_gimbal_device_attitude_status_pack_chan(
         _mockLink->vehicleId(),
-        kGimbalCompId,
+        _deviceCompId,
         _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, 0,   // target system, component
@@ -514,7 +634,7 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
         0.0f, 0.0f, 0.0f,   // angular_velocity_x, y, z
         0,                  // failure flags
         _pitch, _yaw,       // delta_pitch, delta_yaw (Euler angles in degrees)
-        0);                 // gimbal_device_id = 0 means the device id is the same as the message component ID
+        _gimbalDeviceId <= 6 ? _gimbalDeviceId : 0); // Device IDs above 6 use their component ID
     _mockLink->respondWithMavlinkMessage(msg);
 }
 
@@ -535,12 +655,12 @@ void MockLinkGimbal::_sendGimbalManagerInformation()
     mavlink_message_t msg{};
     (void) mavlink_msg_gimbal_manager_information_pack_chan(
         _mockLink->vehicleId(),
-        MAV_COMP_ID_AUTOPILOT1,
+        _managerCompId,
         _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, // time_boot_ms
         capFlags,
-        kGimbalCompId,
+        _gimbalDeviceId,
         -45, 45,
         -45, 45,
         -180, 180);
