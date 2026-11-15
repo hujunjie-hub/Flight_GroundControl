@@ -44,7 +44,8 @@ Item {
     }
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
-                                              !_activeVehicle.parameterManager.missingParameters
+                                              !_activeVehicle.parameterManager.missingParameters &&
+                                              !_activeVehicle.parameterManager.parameterDownloadSkipped
     readonly property bool _pendingWrites: _activeVehicle && _activeVehicle.parameterManager.pendingWrites
     readonly property string _vehicleName: _activeVehicle ? _activeVehicle.vehicleTypeString : qsTr("未连接飞行器")
     readonly property string _vehicleLayout: !_activeVehicle ? qsTr("等待飞行器连接")
@@ -747,7 +748,8 @@ Item {
                                         parameterCenterSafeMode: true
                                         selectedModelProfileId: root._selectedModelProfileId
                                         enabled: root._flightModelAvailable && root._linkHealthy && root._parametersReady &&
-                                                 dashboardRoot.parameterDomainAvailable && !dashboardRoot.tuningBusy
+                                                 dashboardRoot.modelProfileBound && dashboardRoot.parameterDomainAvailable &&
+                                                 !dashboardRoot.tuningBusy
                                     }
                                 }
 
