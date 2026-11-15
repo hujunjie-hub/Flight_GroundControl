@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.55
+- 版本：6.56
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -144,6 +144,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 矩阵宽屏 4 列、中屏 2 列、窄屏 1 列；单元内容随文本自然增高。
 - 矩阵下方显示维护与可靠性横条：启动 ID、最近真实事件、预检通过/警告/失败/未知计数、真实系统资源摘要。
 - 页面底部复用地面站本地 1 Hz 趋势，使用真实 CPU 负载、WCET、栈剩余和存储剩余；resource taskId=0 实例超时或 validity bit 缺失时形成断点。不把健康分、振动 RMS、电池温度或电压一致性等未提供字段伪装成遥测。
+- VehicleLinkManager.communicationLost 为 true 时，健康概览 headline 立即显示红色「通信丢失」，并说明遥测矩阵仍按各 family 的独立接收年龄判定；不得把全链路丢失机械扩散为 13 个遥测域统一 stale。链路恢复后隐藏提示，矩阵继续沿用各 family 自身 freshness。
 
 ### 2.9 导航时序页面
 
@@ -1091,3 +1092,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - FlightTelemetryPageUITest 增加图例文字、色点颜色、状态色一致性及 1600/1400/1000/900/700/400 px 面板边界断言。
 - 本阶段只修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、设计 SPEC、项目 SPEC 索引、Windows Release 验收指南和 G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、VehicleLinkManager 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增断言状态为 NOT_RUN，等待后续集中验收。
+
+
+## 80. Phase 2.34 飞行健康页全链路通信丢失提示（2026-11-15）
+
+- 飞行健康页「遥测域概览」直接读取 VehicleLinkManager.communicationLost；全链路心跳丢失时 headline 优先显示红色「通信丢失」，不再继续显示普通「遥测域状态已接收」。
+- 增加说明行：链路心跳已丢失时，13 域矩阵仍按各自 family 接收年龄独立判定，缓存状态不代表链路在线；不把全链路丢失机械扩散为所有 family stale。
+- 链路恢复后说明行隐藏，headline 恢复由各域 freshness 计数决定的中性状态；原有 family/instance freshness、validity mask、传感器与预检逐项年龄规则均不改变。
+- MockLink UI Integration 在真实 communicationLost 信号路径下验证健康页红色 headline、说明行可见，以及恢复后提示隐藏和中性色恢复。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、项目 SPEC 入口、Windows Release G15 与机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager、freshness 阈值或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归为 NOT_RUN，等待集中验收。
