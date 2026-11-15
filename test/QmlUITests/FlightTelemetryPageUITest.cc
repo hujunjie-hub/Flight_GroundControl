@@ -108,11 +108,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* diagnosticDetailsTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
             QQuickItem* summaryLink =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"));
             QQuickItem* summaryLinkDetail =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink_detail"));
             QQuickItem* summaryTime =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTime"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryTime"));
             QQuickItem* dashboardTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
             QQuickItem* dashboardSubtitle =
@@ -124,13 +124,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* connectionStatus =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_connectionStatus"), 3000);
             QQuickItem* summaryTelemetry =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"));
             QQuickItem* summaryOperation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"));
             QQuickItem* summaryFailsafe =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryFailsafe"));
             QQuickItem* summaryNavigation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"));
             QQuickItem* summaryTileContents[6]{};
             const char* summaryContentNames[] = {
                 "flightTelemetry_summaryTelemetry_content", "flightTelemetry_summaryOperation_content",
@@ -138,7 +138,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 "flightTelemetry_summaryLink_content", "flightTelemetry_summaryTime_content"};
             for (int index = 0; index < 6; ++index) {
                 const QString objectName = QString::fromLatin1(summaryContentNames[index]);
-                summaryTileContents[index] = findVisibleItem(_rootItem, objectName, 3000);
+                summaryTileContents[index] = findItem(_rootItem, objectName);
                 QVERIFY2(summaryTileContents[index], qPrintable(objectName));
             }
             QQuickItem* summaryTileDetails[6]{};
@@ -179,8 +179,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthorityRow"), 3000);
             QQuickItem* heroAuthority =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthority"), 3000);
-            QQuickItem* primaryHealthGrid =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_primaryHealthGrid"), 3000);
             QQuickItem* heroNavigation =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* heroRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
@@ -313,7 +311,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(heroFailsafeBand);
             QVERIFY(heroAuthorityRow);
             QVERIFY(heroAuthority);
-            QVERIFY(primaryHealthGrid);
             QVERIFY(heroFlight->property("statusFamily").toString().isEmpty());
             QVERIFY(heroNavigation);
             QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
@@ -468,7 +465,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             const auto flightPriorityItemsFit = [&]() {
                 for (QQuickItem* item : {heroFlightMode, heroArmState, heroFailsafeBand,
-                                         heroAuthorityRow, heroAuthority, primaryHealthGrid}) {
+                                         heroAuthorityRow, heroAuthority}) {
                     if (!item || !item->isVisible()) return false;
                     const QPointF topLeft = item->mapToItem(heroFlight, 0, 0);
                     if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
@@ -521,7 +518,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                     QQuickItem* tile = summaryTiles[index];
                     QQuickItem* content = summaryTileContents[index];
                     QQuickItem* detail = summaryTileDetails[index];
-                    if (!tile || !content || !detail || content->height() + 1.0 < content->implicitHeight()) {
+                    if (!tile) return false;
+                    if (!tile->isVisible()) continue;
+                    if (!content || !detail || content->height() + 1.0 < content->implicitHeight()) {
                         return false;
                     }
                     const QPointF topLeft = content->mapToItem(tile, 0, 0);
@@ -542,6 +541,28 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                             detailTopLeft.y() + detail->height() > tile->height() + 1.0) {
                             return false;
                         }
+                    }
+                }
+                return true;
+            };
+
+            const auto overviewKpisFit = [&]() {
+                const QPointF gridTopLeft = summaryGrid->mapToItem(summaryBand, 0, 0);
+                if (gridTopLeft.x() < 0 || gridTopLeft.y() < 0 ||
+                    gridTopLeft.x() + summaryGrid->width() > summaryBand->width() + 1.0 ||
+                    gridTopLeft.y() + summaryGrid->height() > summaryBand->height() + 1.0) {
+                    return false;
+                }
+                QQuickItem* kpis[] = {metricPosition, metricVelocity, metricHeading};
+                for (QQuickItem* kpi : kpis) {
+                    if (!kpi || !kpi->isVisible() || kpi->height() + 1.0 < kpi->implicitHeight()) {
+                        return false;
+                    }
+                    const QPointF topLeft = kpi->mapToItem(summaryGrid, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + kpi->width() > summaryGrid->width() + 1.0 ||
+                        topLeft.y() + kpi->height() > summaryGrid->height() + 1.0) {
+                        return false;
                     }
                 }
                 return true;
@@ -579,9 +600,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 3000);
             QTRY_VERIFY_WITH_TIMEOUT(dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
@@ -645,10 +667,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->isVisible(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("wrapMode").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->height() > 0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
@@ -658,8 +677,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->isVisible(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -1010,6 +1028,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!metricPosition->isVisible() && !metricVelocity->isVisible() &&
+                                     !metricHeading->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLink->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(),
                                       translatedTelemetryText("接收机失效保护未触发"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
@@ -1938,6 +1959,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount, 5000);
             QTRY_COMPARE_WITH_TIMEOUT(replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
 
+            // SummaryTile summaries are page-specific; open the RC/link page before
+            // exercising the compact data-link detail layout.
+            QQuickItem* const rcSummaryTab =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
+            QVERIFY(rcSummaryTab);
+            QVERIFY(_clickItemAt(rcSummaryTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(replacementPage->property("_activeDashboardPage").toInt(), 3, 3000);
+
             // Force a long detail string through the real SummaryTile layout at
             // the narrowest breakpoint. This proves WordWrap, the two-line cap,
             // and implicit-height growth instead of only checking property presence.
@@ -2121,11 +2150,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* diagnosticDetailsTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
             QQuickItem* summaryOperation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"));
             QQuickItem* summaryNavigation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"));
             QQuickItem* summaryLink =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"));
             QQuickItem* storageFreeRow = findItem(_rootItem, QStringLiteral("flightTelemetry_storageFreeKib"));
             QQuickItem* storageSdState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageSdState"));
             QQuickItem* storageNorState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageNorState"));
