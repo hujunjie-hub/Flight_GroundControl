@@ -33,6 +33,7 @@ SetupPage {
                                              ? _telemetry.resourceStatuses : []
     readonly property int _dashboardColumns: availableWidth >= 1280 ? 12 : availableWidth >= 1000 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1280 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property int _overviewKpiColumns: availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _healthColumns: availableWidth >= 1280 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
@@ -1837,15 +1838,50 @@ SetupPage {
                     objectName: "flightTelemetry_summaryGrid"
                     anchors.fill: parent
                     anchors.margins: 1
-                    columns: root._summaryColumns
+                    columns: root._activeDashboardPage === 0 ? root._overviewKpiColumns : root._summaryColumns
                     columnSpacing: 0
                     rowSpacing: 0
-                    SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconSource: "/InstrumentValueIcons/radio.svg"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconSource: "/InstrumentValueIcons/layers.svg"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2); iconSource: "/InstrumentValueIcons/shield.svg"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3); iconSource: "/InstrumentValueIcons/location-current.svg"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4); iconSource: "/InstrumentValueIcons/link.svg"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5); iconSource: "/InstrumentValueIcons/time.svg"; showDivider: false }
+                    // Overview KPIs own the three navigation uncertainty values; the topology panel below
+                    // owns domain freshness and no longer repeats these metrics.
+                    MetricReadout {
+                        objectName: "flightTelemetry_metricPosition"
+                        visible: root._activeDashboardPage === 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        labelText: qsTr("水平位置 σ")
+                        valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3)
+                        unitText: "m"
+                        statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
+                        accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
+                    }
+                    MetricReadout {
+                        objectName: "flightTelemetry_metricVelocity"
+                        visible: root._activeDashboardPage === 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        labelText: qsTr("速度 σ")
+                        valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3)
+                        unitText: "m/s"
+                        statusText: root._navigationMetricStatus(root._navCapabilityVelocity)
+                        accentColor: root._navigationMetricColor(root._navCapabilityVelocity)
+                    }
+                    MetricReadout {
+                        objectName: "flightTelemetry_metricHeading"
+                        visible: root._activeDashboardPage === 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        labelText: qsTr("航向 σ")
+                        valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3)
+                        unitText: "rad"
+                        statusText: root._navigationMetricStatus(root._navCapabilityHeading)
+                        accentColor: root._navigationMetricColor(root._navCapabilityHeading)
+                    }
+                    SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconSource: "/InstrumentValueIcons/radio.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryOperation"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconSource: "/InstrumentValueIcons/layers.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2); iconSource: "/InstrumentValueIcons/shield.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryNavigation"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3); iconSource: "/InstrumentValueIcons/location-current.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryLink"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4); iconSource: "/InstrumentValueIcons/link.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryTime"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5); iconSource: "/InstrumentValueIcons/time.svg"; showDivider: false }
                 }
             }
 
@@ -2019,47 +2055,11 @@ SetupPage {
                         }
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: "#104B55"
-                    }
-
                     QGCLabel {
+                        objectName: "flightTelemetry_authorityNote"
                         Layout.fillWidth: true
-                        text: qsTr("关键系统状态")
-                        color: "#73DCE8"
-                        typographyRole: "section-heading"
-                    }
-                    GridLayout {
-                        objectName: "flightTelemetry_primaryHealthGrid"
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: 7
-                        rowSpacing: 7
-                        Repeater {
-                            model: [
-                                { label: qsTr("飞控状态"), family: "operation", available: "operationAvailable" },
-                                { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
-                                { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
-                                { label: qsTr("数据链路"), family: "link", available: "linkAvailable" },
-                                { label: qsTr("系统资源"), family: "resource", available: "resourceAvailable" },
-                                { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
-                            ]
-                            delegate: HealthCell {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                objectName: "flightTelemetry_primaryHealth_" + modelData.family
-                                labelText: modelData.label
-                                familyName: modelData.family
-                                availableFact: modelData.available
-                            }
-                        }
-                    }
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        text: qsTr("各系统独立显示接收状态，不生成综合健康分")
-                        color: "#83AEB8"
+                        text: qsTr("控制权仅显示 FCU 上报值；地面站不推断或授予控制权")
+                        color: "#8298A2"
                         font.pointSize: ScreenTools.microFontPointSize
                         wrapMode: Text.WordWrap
                     }
@@ -2070,8 +2070,8 @@ SetupPage {
                     objectName: "flightTelemetry_heroNavigation"
                     fillRowHeight: true
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 5 : root._dashboardColumns >= 6 ? 2 : 1
-                    eyebrow: "SYSTEM TOPOLOGY & NAVIGATION"
-                    titleText: qsTr("系统拓扑与导航估计")
+                    eyebrow: "SYSTEM TOPOLOGY & TELEMETRY FRESHNESS"
+                    titleText: qsTr("系统拓扑与遥测域状态")
 
                     QGCLabel {
                         Layout.fillWidth: true
@@ -2314,40 +2314,10 @@ SetupPage {
                         }
                     }
 
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: root.availableWidth >= 1280 ? 3
-                                 : root.availableWidth >= 1000 ? 1
-                                 : root.availableWidth >= 760 ? 3 : 1
-                        columnSpacing: 8
-                        MetricReadout {
-                            objectName: "flightTelemetry_metricPosition"
-                            labelText: qsTr("水平位置 σ")
-                            valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3)
-                            unitText: "m"
-                            statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
-                            accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
-                        }
-                        MetricReadout {
-                            objectName: "flightTelemetry_metricVelocity"
-                            labelText: qsTr("速度 σ")
-                            valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3)
-                            unitText: "m/s"
-                            statusText: root._navigationMetricStatus(root._navCapabilityVelocity)
-                            accentColor: root._navigationMetricColor(root._navCapabilityVelocity)
-                        }
-                        MetricReadout {
-                            objectName: "flightTelemetry_metricHeading"
-                            labelText: qsTr("航向 σ")
-                            valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3)
-                            unitText: "rad"
-                            statusText: root._navigationMetricStatus(root._navCapabilityHeading)
-                            accentColor: root._navigationMetricColor(root._navCapabilityHeading)
-                        }
-                    }
                     QGCLabel {
+                        objectName: "flightTelemetry_topologyKpiNote"
                         Layout.fillWidth: true
-                        text: qsTr("显示估计标准差原值；未定义阈值，不推断定位等级")
+                        text: qsTr("顶部 KPI 展示导航估计标准差原值；本区仅映射各遥测域独立 freshness，不合成健康分")
                         color: "#8298A2"
                         font.pointSize: ScreenTools.captionFontPointSize
                         wrapMode: Text.WordWrap
