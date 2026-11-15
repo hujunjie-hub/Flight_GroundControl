@@ -378,7 +378,8 @@
         "link_detail_distinguishes_family_message_receive_age_from_per_instance_receive_age_and_fcu_age",
         "overview_topology_connector_colors_follow_each_family_fresh_stale_recovered_state",
         "overview_topology_node_cards_share_status_text_color_and_receive_age_with_canvas",
-        "multi_domain_topology_panel_has_no_navigation_only_status_badge"
+        "multi_domain_topology_panel_has_no_navigation_only_status_badge",
+        "invalid_link_metric_validity_summary_uses_warning_amber_color"
       ]
     },
     {
