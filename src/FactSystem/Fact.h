@@ -54,6 +54,9 @@ class Fact : public QObject
     Q_PROPERTY(QString      updatePolicy             READ updatePolicy                                            CONSTANT)
     Q_PROPERTY(QVariantList dependencies             READ dependencies                                            CONSTANT)
     Q_PROPERTY(QVariantList validationRules          READ validationRules                                         CONSTANT)
+    Q_PROPERTY(QString      sourceFile               READ sourceFile                                              CONSTANT)
+    Q_PROPERTY(QString      sourcePath               READ sourcePath                                              CONSTANT)
+    Q_PROPERTY(QString      sourceKind               READ sourceKind                                              CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                       CONSTANT)
     Q_PROPERTY(QString      label                   READ label                                                  CONSTANT)
@@ -152,6 +155,9 @@ public:
     QString updatePolicy() const;
     QVariantList dependencies() const;
     QVariantList validationRules() const;
+    QString sourceFile() const;
+    QString sourcePath() const;
+    QString sourceKind() const;
     bool qgcRebootRequired() const;
     QString enumOrValueString();         // This is not const, since an unknown value can modify the enum lists
     double rawIncrement() const;
