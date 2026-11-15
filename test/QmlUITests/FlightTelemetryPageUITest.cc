@@ -65,7 +65,23 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             if (QTest::currentTestFailed()) {
                 return;
             }
+
+            QQuickItem* configToolbar =
+                findVisibleItem(_rootItem, QStringLiteral("mainView_flightConfigToolbar"), 3000);
+            QQuickItem* brandTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightConfig_brandTitle"), 3000);
+            QQuickItem* configSidebar =
+                findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_flightSidebar"), 3000);
+            QVERIFY(configToolbar);
+            QVERIFY(brandTitle);
+            QVERIFY(configSidebar);
+            QTRY_COMPARE_WITH_TIMEOUT(configToolbar->height(), qreal(56), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(configSidebar->width(), qreal(160), 3000);
+
             QVERIFY(clickSidebarButton(componentButtonName));
+            QQuickItem* componentButton = findVisibleItem(_rootItem, componentButtonName, 3000);
+            QVERIFY(componentButton);
+            QTRY_VERIFY_WITH_TIMEOUT(componentButton->property("flightStyle").toBool(), 3000);
 
             QQuickItem* page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             QVERIFY2(page, "FlightTelemetry setup page did not load");
@@ -298,6 +314,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
@@ -306,16 +323,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).y() >=

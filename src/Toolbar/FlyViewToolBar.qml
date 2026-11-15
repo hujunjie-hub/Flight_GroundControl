@@ -76,8 +76,8 @@ Item {
                             id:                 qgcButton
                             objectName:         "toolbar_qgcLogo"
                             Layout.fillHeight:  true
-                            icon.source:        "/res/QGCLogoFull.svg"
-                            logo:               true
+                            icon.source:        control.configuring ? "/InstrumentValueIcons/drone.svg" : "/res/QGCLogoFull.svg"
+                            logo:               !control.configuring
                             onClicked:          mainWindow.showToolSelectDialog()
                         }
 
@@ -86,12 +86,14 @@ Item {
                             Layout.alignment: Qt.AlignVCenter
                             spacing: 1
                             QGCLabel {
+                                objectName: "flightConfig_brandTitle"
                                 text: qsTr("无人机飞行地面控制站")
                                 color: "#E7F4F6"
                                 font.pointSize: ScreenTools.titleFontPointSize
                                 font.weight: ScreenTools.strongFontWeight
                             }
                             QGCLabel {
+                                objectName: "flightConfig_brandSubtitle"
                                 text: "UAV GROUND CONTROL STATION"
                                 color: "#83B7C0"
                                 font.pointSize: ScreenTools.microFontPointSize
@@ -109,6 +111,7 @@ Item {
                         MainStatusIndicator {
                             id:                 mainStatusIndicator
                             objectName:         "toolbar_mainStatusIndicator"
+                            disconnectedStatusColor: control.configuring ? "#063640" : qgcPal.brandingPurple
                             Layout.fillHeight:  true
                         }
                     }

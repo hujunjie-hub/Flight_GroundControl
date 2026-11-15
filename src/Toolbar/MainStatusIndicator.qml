@@ -15,6 +15,7 @@ RowLayout {
     property bool   _allowForceArm:      false
     property bool   _healthAndArmingChecksSupported: _activeVehicle ? _activeVehicle.healthAndArmingCheckReport.supported : false
     property bool   _vehicleFlies:      _activeVehicle ? _activeVehicle.airShip || _activeVehicle.fixedWing || _activeVehicle.vtol || _activeVehicle.multiRotor : false
+    property color  disconnectedStatusColor: qgcPal.brandingPurple
     property var    _vehicleInAir:      _activeVehicle ? _activeVehicle.flying || _activeVehicle.landing : false
     property bool   _vtolInFWDFlight:   _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
 
@@ -123,7 +124,7 @@ RowLayout {
                     }
                 }
             } else {
-                _mainStatusBGColor = qgcPal.brandingPurple
+                _mainStatusBGColor = control.disconnectedStatusColor
                 return mainStatusLabel._disconnectedText
             }
         }

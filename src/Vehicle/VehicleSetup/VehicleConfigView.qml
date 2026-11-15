@@ -432,6 +432,7 @@ Rectangle {
 
     ColumnLayout {
         id:                 leftPanel
+        objectName:         "vehicleConfig_flightSidebar"
         width:              _flightLayout ? 160 :
                                 Math.max(buttonColumn.implicitWidth + _horizontalMargin, _defaultTextWidth * 22)
         anchors.topMargin:  _flightLayout ? 18 : _verticalMargin
@@ -719,7 +720,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  _flightLayout ? "#253330" : qgcPal.windowShade
+        color:                  _flightLayout ? "#0B6873" : qgcPal.windowShade
     }
 
     Loader {

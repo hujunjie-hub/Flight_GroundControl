@@ -1226,12 +1226,12 @@ SetupPage {
                     columns: root._summaryColumns
                     columnSpacing: 0
                     rowSpacing: 0
-                    SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconText: "◉"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconText: "◈"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2); iconText: "⛨"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3); iconText: "◎"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4); iconText: "⌁"; showDivider: true }
-                    SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5); iconText: "◷"; showDivider: false }
+                    SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconSource: "/InstrumentValueIcons/radio.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconSource: "/InstrumentValueIcons/layers.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2); iconSource: "/InstrumentValueIcons/shield.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3); iconSource: "/InstrumentValueIcons/location-current.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4); iconSource: "/InstrumentValueIcons/link.svg"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5); iconSource: "/InstrumentValueIcons/time.svg"; showDivider: false }
                 }
             }
 
@@ -3113,7 +3113,7 @@ SetupPage {
         required property string titleText
         required property string valueText
         property string detailText: ""
-        property string iconText: "◉"
+        property string iconSource: ""
         property bool showDivider: true
         property color accentColor: "#42CFA8"
 
@@ -3130,13 +3130,14 @@ SetupPage {
             anchors.margins: 10
             spacing: 10
 
-            QGCLabel {
-                Layout.preferredWidth: 28
+            QGCColoredImage {
+                Layout.preferredWidth: 26
+                Layout.preferredHeight: 26
                 Layout.alignment: Qt.AlignVCenter
-                text: tile.iconText
+                source: tile.iconSource
                 color: tile.accentColor
-                font.pointSize: ScreenTools.titleFontPointSize
-                horizontalAlignment: Text.AlignHCenter
+                sourceSize.height: height
+                fillMode: Image.PreserveAspectFit
             }
 
             ColumnLayout {

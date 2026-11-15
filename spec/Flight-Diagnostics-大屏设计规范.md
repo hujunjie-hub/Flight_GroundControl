@@ -354,6 +354,9 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 第二阶段允许修改：
 
 - `src/FirmwarePlugin/Flight/FlightTelemetry.qml`
+- `src/MainWindow/MainWindow.qml`（仅 Flight 配置工具栏高度/底色与选择器）
+- `src/Toolbar/FlyViewToolBar.qml`、`src/Toolbar/MainStatusIndicator.qml`（仅 Flight 配置品牌与状态背景皮肤）
+- `src/Vehicle/VehicleSetup/VehicleConfigView.qml`、`src/QmlControls/SettingsButton.qml`（仅 Flight 配置侧栏皮肤）
 - `test/QmlUITests/FlightTelemetryPageUITest.cc`
 - `doc/gcs/FCU_TELEMETRY.md`
 - 本设计规范、Windows Release 验收规范和机器可读 manifest
@@ -455,7 +458,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 
 - Flight 配置工具栏桌面高度调整为 56 px，使用深青蓝背景；在真实 QGC Logo 与原有状态指示器之间增加中英品牌锁定区。
 - Flight 配置左侧导航宽度调整为 160 px，背景和选中态采用参考图深青蓝/青色边框；原有组件入口、点击行为和权限约束保持不变，不添加无功能的导航项。
-- 六项 KPI 从六张独立浮动卡片改为一个连续边框带，桌面 6 等分，图标、标签和状态值组合；窄屏仍保留 3/2/1 列响应式布局。
+- 六项 KPI 从六张独立浮动卡片改为一个连续边框带，桌面 6 等分，使用资源内 SVG 图标；窄屏仍保留 3/2/1 列响应式布局。
 - HeroPanel、StatusCard、HealthCell、TrendCard、RC 摇杆轨道采用更接近参考图的深青蓝面板和 6 px/5 px 圆角。
-- `FlightTelemetryPageUITest` 新增 KPI 带容器与内部网格边界断言；原有真实 MockLink 数据链路、freshness/validity/capability 语义和只读边界不变。
+- `FlightTelemetryPageUITest` 新增工具栏高度、品牌锁定区、侧栏宽度/Flight 专属按钮皮肤，以及 1600/1400/1000/900/700/400 px KPI 带容器与内部网格边界断言；原有真实 MockLink 数据链路、freshness/validity/capability 语义和只读边界不变。
 - 本轮不宣称 1:1 像素验收完成；必须在 1672×941 与 100/125/150% DPI 下取得运行截图，进行叠加差异检查后才能关闭 FGC-0044。
