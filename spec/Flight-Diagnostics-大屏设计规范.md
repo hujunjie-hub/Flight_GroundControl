@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.41
+- 版本：6.42
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情按数值/诊断上下文去重；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例链路聚合徽标；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -939,3 +939,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 经原始 MAVLink wire path 覆盖：新鲜实例 3/3 有效、全字段无效实例 0/3、实例超时后的指标 freshness、FCU 数据年龄从有效值切换为超时状态、主视觉指标数值仍正确显示、原因只在下方详情出现且地面站接收年龄保留独立标签。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、Windows Release 验收指南与 G15 机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、链路状态生成、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归状态为 NOT_RUN，待后续集中验收。
+
+
+## 66. Phase 2.20 多实例链路状态去聚合徽标（2026-11-15）
+
+- 遥控与链路页的「链路质量」主视觉 HeroPanel 与下方「通信链路」详情 StatusCard 均不使用 `linkAvailable` 作为整卡 `statusFamily`；避免 family 级 freshness 被误读为所有链路实例均健康。
+- 两张卡片的左侧状态色条与标题区保持中性，不生成 family-wide 健康徽标；每个链路实例在主视觉内独立显示当前/最近状态与各指标 freshness/validity，在详情内独立显示当前/最近状态、原因、指标有效性摘要和地面站接收年龄。
+- 详情卡保留显式「消息」行展示 linkAvailable family 接收状态，并保留新鲜/超时/等待实例覆盖统计；这是消息接收事实与实例覆盖，不是综合健康评分或整卡健康结论。
+- `FlightTelemetryPageUITest` 使用真实 MockLink 数据验证主视觉链路面板与详情卡 `statusFamily` 均为空、失控保护卡也不显示 operation family 聚合徽标；实例状态、覆盖数、字段有效性与接收年龄继续独立断言。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 与本 SPEC；不修改链路实例状态生成、VehicleLinkManager、MAVLink、FactGroup、Flight ICD、飞控判定或控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归断言为 NOT_RUN，待后续集中验收。
