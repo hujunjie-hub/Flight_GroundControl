@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.85
+版本：4.86
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -790,3 +790,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 150% 使用 1672×941 物理视口对应的约 1115×627 逻辑尺寸，健康矩阵/维护横条双列；200% 使用 1280×720 物理视口对应的 640×360 逻辑尺寸，健康矩阵/维护横条单列。
 - 200% 场景注入长中文异常摘要，验证文字换行、外层增高、列与内容边界；测试结束恢复原始 UI Scale 与页面视口。
 - 按用户要求不运行 CI、Build、Unit、Integration 或 Windows Release；新增断言保持 NOT_RUN，等待集中 exact-HEAD 验收。
+
+
+### G15 遥控与链路页高 DPI / 内容自适应收口（2026-11-15）
+
+- RC 模式按钮、双摇杆网格、逻辑轴网格、链路实例与指标卡片的 spacing/inset/track/marker 尺寸必须与 FlightTelemetry 根对象公开的 ScreenTools token 一致；100% 基准密度保持当前设计值，125%/150% DPI 下按字体像素宽高同步扩展。
+- 摇杆卡片高度必须覆盖内容隐式高度 + 双侧缩放内边距；摇杆舞台保持正方形、位置标记不越出舞台安全内缩范围；手型按钮/通道映射/实时读数可换行。
+- RSSI、链路质量、丢包率三类指标卡片高度必须覆盖内容隐式高度 + 双侧缩放内边距；链路质量条高度随 ScreenTools 缩放；各链路实例 freshness、validity、receive-age 门控保持独立。
+- MockLink FlightTelemetryPageUITest 在 1000/900/760/759/700/400 px 检查 RC 网格 spacing、AxisGauge track、StickVisualizer 内容高度、链路指标卡片父子边界和文本换行；保留 1600/1672×941 桌面/紧凑视口验收。
+- 本轮按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增验收保持 NOT_RUN，集中验收时执行 exact-HEAD 回归并完成 Windows 100/125/150% DPI 实机截图签收。
