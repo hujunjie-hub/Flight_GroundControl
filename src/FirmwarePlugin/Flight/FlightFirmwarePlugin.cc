@@ -264,7 +264,8 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
             !isSupportedUpdatePolicy(updatePolicy) ||
             !readOnly.isBool() ||
             readOnly.toBool() != (tuningPolicy == QStringLiteral("READ_ONLY")) ||
-            (parameter.contains(QStringLiteral("writeOnly")) && !writeOnly.isBool()) ||
+            (parameter.contains(QStringLiteral("writeOnly")) &&
+             (!writeOnly.isBool() || (writeOnly.toBool() && readOnly.toBool()))) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("modelVariants")), parameterVariants) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("modelProfiles")), parameterProfiles) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("dependencies")), parameterDependencies, true) ||
