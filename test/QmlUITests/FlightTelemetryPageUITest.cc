@@ -793,6 +793,23 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 if (index > 0) QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), 12, 3000);
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000));
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000));
+                const QString trendNames[] = {
+                    QStringLiteral("flightTelemetry_trend_position"),
+                    QStringLiteral("flightTelemetry_trend_velocity"),
+                    QStringLiteral("flightTelemetry_trend_heading"),
+                    QStringLiteral("flightTelemetry_trend_control")
+                };
+                const QString trendKeys[4][4] = {
+                    {QStringLiteral("position"), QStringLiteral("velocity"), QStringLiteral("heading"), QStringLiteral("control")},
+                    {QStringLiteral("resourceCpu"), QStringLiteral("resourceWcet"), QStringLiteral("resourceStack"), QStringLiteral("storageFree")},
+                    {QStringLiteral("position"), QStringLiteral("velocity"), QStringLiteral("heading"), QStringLiteral("time")},
+                    {QStringLiteral("linkRssi"), QStringLiteral("linkQuality"), QStringLiteral("linkLoss"), QStringLiteral("rcAge")}
+                };
+                for (int trendIndex = 0; trendIndex < 4; ++trendIndex) {
+                    QQuickItem* trend = findVisibleItem(_rootItem, trendNames[trendIndex], 3000);
+                    QVERIFY(trend);
+                    QTRY_COMPARE_WITH_TIMEOUT(trend->property("valueKey").toString(), trendKeys[index][trendIndex], 3000);
+                }
             }
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
