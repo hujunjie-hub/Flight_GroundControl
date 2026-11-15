@@ -1164,16 +1164,15 @@ SetupPage {
         const familyStatus = _familyStatus("linkAvailable")
         if (familyStatus !== qsTr("已接收")) return _familyStatusColor("linkAvailable")
         if (_linkStatuses.length === 0) return "#8A9A94"
-        let degraded = false
-        let unknown = false
+        let fresh = 0, stale = 0, waiting = 0
         for (let index = 0; index < _linkStatuses.length; ++index) {
-            const color = _linkStateColor(_linkStatuses[index].linkState, _linkStatuses[index].receiveAgeMs)
-            if (color === "#F06464") return "#F06464"
-            if (color === "#F0B94B") degraded = true
-            else if (color === "#8A9A94") unknown = true
+            const freshness = _linkInstanceFreshnessStatus(_linkStatuses[index].receiveAgeMs)
+            if (freshness === qsTr("已接收")) ++fresh
+            else if (freshness === qsTr("数据超时")) ++stale
+            else ++waiting
         }
-        if (degraded) return "#F0B94B"
-        if (unknown) return "#8A9A94"
+        if (stale > 0) return "#F0B94B"
+        if (waiting > 0 || fresh === 0) return "#8A9A94"
         return "#45D39A"
     }
 
