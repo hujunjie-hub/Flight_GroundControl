@@ -346,7 +346,14 @@
         "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths",
         "rc_link_metric_grid_reflows_three_two_one_at_responsive_breakpoints",
         "rc_link_metric_loss_cell_spans_full_row_in_two_column_layout",
-        "rc_link_metric_cells_fill_available_width_at_700_and_400_px"
+        "rc_link_metric_cells_fill_available_width_at_700_and_400_px",
+        "health_storage_detail_values_follow_storage_family_freshness_and_validity_masks",
+        "health_prearm_metadata_values_follow_prearm_family_freshness",
+        "health_prearm_check_rows_use_three_three_six_desktop_grid_and_stacked_narrow_layout",
+        "health_maintenance_latest_event_color_tracks_event_severity",
+        "health_maintenance_prearm_color_reflects_failed_warning_stale_and_incomplete_checks",
+        "health_maintenance_resource_metric_colors_follow_field_validity_and_instance_freshness",
+        "health_safety_and_maintenance_prearm_summaries_share_status_color"
       ]
     },
     {
@@ -577,7 +584,14 @@
     "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths",
     "rc_link_metric_grid_reflows_three_two_one_at_responsive_breakpoints",
     "rc_link_metric_loss_cell_spans_full_row_in_two_column_layout",
-    "rc_link_metric_cells_fill_available_width_at_700_and_400_px"
+    "rc_link_metric_cells_fill_available_width_at_700_and_400_px",
+    "health_storage_detail_values_follow_storage_family_freshness_and_validity_masks",
+    "health_prearm_metadata_values_follow_prearm_family_freshness",
+    "health_prearm_check_rows_use_three_three_six_desktop_grid_and_stacked_narrow_layout",
+    "health_maintenance_latest_event_color_tracks_event_severity",
+    "health_maintenance_prearm_color_reflects_failed_warning_stale_and_incomplete_checks",
+    "health_maintenance_resource_metric_colors_follow_field_validity_and_instance_freshness",
+    "health_safety_and_maintenance_prearm_summaries_share_status_color"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

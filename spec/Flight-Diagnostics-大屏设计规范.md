@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.18
+- 版本：6.19
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率和窄屏辅助说明已闭环；本轮补齐遥控链路 RSSI/质量/丢包三项指标的 3/2/1 列自适应及中等宽度丢包格整行布局；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；本轮飞行健康页补齐存储/预检元数据 freshness、预检行响应式布局、维护摘要严重度语义和资源字段有效性颜色；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -753,3 +753,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 三个指标仍独立使用各自 validity mask 和实例 freshness，不合并、不降级、不隐藏。
 - MockLink UI Integration 使用真实 GCS 链路实例验证 700 px 时两列与丢包格整行，400 px 时三格全宽；恢复原始窗口宽度后恢复桌面布局。
 - 仅修改 GroundControl QML 布局、UI Integration 和 SPEC/G15；不修改链路协议、FactGroup、链路状态语义或飞控控制行为。本轮不运行 CI，回归待集中验收。
+
+
+## 47. Phase 2.10 飞行健康页 freshness 与状态表达补强（2026-11-15）
+
+- 存储卡的 SD/NOR 状态、剩余空间、事件/日志丢弃计数、设置代次、原因和 FCU 发布时间统一受 storageAvailable family freshness 门控；字段本身继续遵守 storageValidityMask。family 等待或超时后不得展示旧启动周期或旧消息缓存值。
+- 预检卡的检查代次、适用模式掩码、最近检查原因和 FCU 发布时间统一受 prearmAvailable family freshness 门控；逐项 checkId 的 receiveAgeMs 规则保持不变。
+- 预检列表使用响应式 12 列网格：桌面/中屏按检查名称 3 列、状态 3 列、原因与恢复条件 6 列排列；小于 760 px 时改为单列纵向排列，三项均完整换行，不再挤压原因/恢复条件文本。
+- 维护横条的最近事件颜色直接对应最新事件严重度；预检摘要仅在 15 项全部新鲜且全部通过时显示健康绿，失败红色、警告/超时琥珀色、等待/未完整上报中性灰。
+- 系统汇总 CPU 和资源实例 CPU/WCET/栈/AXI 使用青色表示“有效测量值”，字段无效使用中性灰、family/实例超时使用琥珀色；颜色不代表 CPU 负载处于健康阈值，也不引入未定义的资源告警门限。
+- 安全监测中的预检摘要与维护横条使用同一预检状态颜色 helper，避免同一数据在同页出现冲突颜色。
+- MockLink UI Integration 覆盖 storage 新鲜无效 → family 超时、prearm 元数据超时、事件严重度颜色、预检未完整/失败/警告/超时颜色、资源 CPU 有效/无效字段颜色，以及 1600/1000/900/700/400 px 的预检行布局。
+- 仅修改飞行健康页 QML、对应 UI Integration 断言与 SPEC/验收清单；不修改 MAVLink、FactGroup、Flight ICD、数据 freshness 阈值、控制行为或只读边界。本轮不运行 CI，新增断言状态 NOT_RUN，等待集中验收。

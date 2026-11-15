@@ -231,6 +231,28 @@ SetupPage {
                ? _rawValidPermillePercent(item[fieldName], item.validityMask, bit)
                : _rawValidValue(item[fieldName], item.validityMask, bit, decimals, suffix)
     }
+    function _resourceInstanceMetricColor(item, fieldName, bit) {
+        const status = _resourceInstanceStatus(item)
+        if (status !== qsTr("已接收")) return _freshnessStatusColor(status)
+        const value = Number(item[fieldName])
+        return _rawMaskState(item.validityMask, bit) === 1 && Number.isFinite(value) && value >= 0
+               ? "#49C7E7" : "#8A9A94"
+    }
+    function _resourceInstanceMetricsColor(item) {
+        const status = _resourceInstanceStatus(item)
+        if (status !== qsTr("已接收")) return _freshnessStatusColor(status)
+        const fields = [["wcetUs", 0], ["stackFreeBytes", 1], ["axiFreeBytes", 3]]
+        for (let index = 0; index < fields.length; ++index) {
+            const value = Number(item[fields[index][0]])
+            if (_rawMaskState(item.validityMask, fields[index][1]) !== 1 ||
+                    !Number.isFinite(value) || value < 0) return "#8A9A94"
+        }
+        const deadlineMisses = Number(item.deadlineMissCount)
+        return Number.isFinite(deadlineMisses) && deadlineMisses >= 0 ? "#49C7E7" : "#8A9A94"
+    }
+    function _resourceMetricColor(fieldName, bit) {
+        return _resourceInstanceMetricColor(_resourceTaskZero(), fieldName, bit)
+    }
     function _resourceMetricSample(fieldName, bit, divisor) {
         if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return null
         const item = _resourceTaskZero()
@@ -281,6 +303,32 @@ SetupPage {
         return qsTr("%1 通过 · %2 警告 · %3 失败 · %4 未知")
                 .arg(passed).arg(warnings).arg(failed).arg(unknown)
     }
+    function _prearmSummaryColor() {
+        const familyStatus = _familyStatus("prearmAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("prearmAvailable")
+        const checks = _prearmChecks
+        if (checks.length === 0) return "#8A9A94"
+        let stale = 0, waiting = 0, failed = 0, warnings = 0, unknown = 0
+        for (let index = 0; index < checks.length; ++index) {
+            const check = checks[index]
+            const status = _prearmCheckStatus(check)
+            if (status !== qsTr("已接收")) {
+                if (status === qsTr("数据超时")) ++stale
+                else ++waiting
+                continue
+            }
+            switch (Number(check.checkState)) {
+            case 1: break
+            case 2: ++failed; break
+            case 3: ++warnings; break
+            default: ++unknown; break
+            }
+        }
+        if (failed > 0) return "#F06464"
+        if (warnings > 0 || stale > 0) return "#F0B94B"
+        if (waiting > 0 || unknown > 0 || checks.length < 15) return "#8A9A94"
+        return "#45D39A"
+    }
     function _prearmCheckCoverageText() {
         const checks = _prearmChecks
         const familyStatus = _familyStatus("prearmAvailable")
@@ -301,6 +349,12 @@ SetupPage {
         if (!_telemetry || _telemetry.recentEvents.length === 0) return qsTr("当前启动周期暂无事件")
         const event = _telemetry.recentEvents[0]
         return qsTr("%1 · %2").arg(_eventSeverityLabel(event.severity)).arg(_reasonText(event.reasonNamespace, event.reasonCode))
+    }
+    function _latestEventSummaryColor() {
+        const familyStatus = _familyStatus("eventAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("eventAvailable")
+        if (!_telemetry || _telemetry.recentEvents.length === 0) return "#8A9A94"
+        return _eventSeverityColor(_telemetry.recentEvents[0].severity)
     }
     function _summaryTileTitle(index) {
         const titles = [
@@ -2221,7 +2275,12 @@ SetupPage {
                                      : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
                     }
                     TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
-                    TelemetryRow { labelText: qsTr("解锁前检查"); valueText: root._prearmSummaryText() }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_healthSafetyPrearmSummary"
+                        labelText: qsTr("解锁前检查")
+                        valueText: root._prearmSummaryText()
+                        valueColor: root._prearmSummaryColor()
+                    }
                     TelemetryRow {
                         labelText: qsTr("控制求解器")
                         valueText: root._familyFreshValue("controlAvailable", root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")]))
@@ -2263,15 +2322,32 @@ SetupPage {
                         Layout.fillWidth: true
                         spacing: 3
                         QGCLabel { text: qsTr("最近异常"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
-                        QGCLabel { Layout.fillWidth: true; text: root._latestEventSummaryText(); color: root._familyStatusColor("eventAvailable"); wrapMode: Text.WordWrap }
+                        QGCLabel {
+                            objectName: "flightTelemetry_healthMaintenanceEventSummary"
+                            Layout.fillWidth: true
+                            text: root._latestEventSummaryText()
+                            color: root._latestEventSummaryColor()
+                            wrapMode: Text.WordWrap
+                        }
                         QGCLabel { text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event")); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 3
                         QGCLabel { text: qsTr("预检与系统资源"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
-                        QGCLabel { Layout.fillWidth: true; text: root._prearmSummaryText(); color: root._familyStatusColor("prearmAvailable"); wrapMode: Text.WordWrap }
-                        QGCLabel { text: qsTr("系统汇总 CPU：%1").arg(root._resourceCpuLoadText()); color: "#45D39A"; font.pointSize: ScreenTools.captionFontPointSize }
+                        QGCLabel {
+                            objectName: "flightTelemetry_healthMaintenancePrearmSummary"
+                            Layout.fillWidth: true
+                            text: root._prearmSummaryText()
+                            color: root._prearmSummaryColor()
+                            wrapMode: Text.WordWrap
+                        }
+                        QGCLabel {
+                            objectName: "flightTelemetry_healthMaintenanceCpuLoad"
+                            text: qsTr("系统汇总 CPU：%1").arg(root._resourceCpuLoadText())
+                            color: root._resourceMetricColor("cpuLoadPermille", 2)
+                            font.pointSize: ScreenTools.captionFontPointSize
+                        }
                     }
                 }
             }
@@ -3018,18 +3094,31 @@ SetupPage {
                     title: qsTr("解锁前检查")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
-                    TelemetryRow { labelText: qsTr("检查代次"); valueText: root._integer("prearmCheckEpoch") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_prearmCheckEpoch"
+                        labelText: qsTr("检查代次")
+                        valueText: root._familyFreshValue("prearmAvailable", root._integer("prearmCheckEpoch"))
+                    }
                     TelemetryRow {
                         labelText: qsTr("检查项新鲜度")
                         valueText: root._prearmCheckCoverageText()
                     }
-                    TelemetryRow { labelText: qsTr("适用模式掩码"); valueText: root._mask("prearmModeMask") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_prearmModeMask"
+                        labelText: qsTr("适用模式掩码")
+                        valueText: root._familyFreshValue("prearmAvailable", root._mask("prearmModeMask"))
+                    }
                     TelemetryRow {
                         labelText: root._familyStatus("prearmAvailable") === qsTr("已接收")
                                    ? qsTr("最新检查原因") : qsTr("最近检查原因")
-                        valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode"))
+                        objectName: "flightTelemetry_prearmReason"
+                        valueText: root._familyFreshValue("prearmAvailable", root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")))
                     }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_prearmTimestamp"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._familyFreshValue("prearmAvailable", root._timestamp("prearmTimeBootUs"))
+                    }
                     QGCLabel {
                         Layout.fillWidth: true
                         visible: root._prearmChecks.length === 0
@@ -3037,23 +3126,33 @@ SetupPage {
                     }
                     Repeater {
                         model: root._prearmChecks
-                        delegate: RowLayout {
+                        delegate: GridLayout {
                             required property var modelData
+                            objectName: "flightTelemetry_prearmCheckRow_" + modelData.checkId
                             Layout.fillWidth: true
-                            spacing: 8
+                            columns: root.availableWidth >= 760 ? 12 : 1
+                            columnSpacing: 8
+                            rowSpacing: 3
                             QGCLabel {
-                                Layout.preferredWidth: 140
+                                objectName: "flightTelemetry_prearmCheckId_" + modelData.checkId
+                                Layout.columnSpan: root.availableWidth >= 760 ? 3 : 1
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                wrapMode: Text.WordWrap
                                 text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_prearmCheckState_" + modelData.checkId
-                                Layout.preferredWidth: 150
+                                Layout.columnSpan: root.availableWidth >= 760 ? 3 : 1
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 wrapMode: Text.WordWrap
                                 text: root._prearmCheckResultText(modelData)
                                 color: root._prearmCheckStateColor(modelData)
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_prearmCheckDetails_" + modelData.checkId
+                                Layout.columnSpan: root.availableWidth >= 760 ? 6 : 1
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
                                 wrapMode: Text.WordWrap
@@ -3119,7 +3218,7 @@ SetupPage {
                                     text: root._resourceInstanceFresh(modelData)
                                           ? qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
                                           : qsTr("CPU %1").arg(root._resourceInstanceStatus(modelData))
-                                    color: root._resourceInstanceStatusColor(modelData)
+                                    color: root._resourceInstanceMetricColor(modelData, "cpuLoadPermille", 2)
                                 }
                             }
                             QGCLabel {
@@ -3133,7 +3232,7 @@ SetupPage {
                                             .arg(modelData.deadlineMissCount)
                                             .arg(root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B"))
                                       : qsTr("WCET / 栈 / 截止期 / AXI：%1").arg(root._resourceInstanceStatus(modelData))
-                                color: root._resourceInstanceStatusColor(modelData)
+                                color: root._resourceInstanceMetricsColor(modelData)
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
@@ -3153,23 +3252,25 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
                     TelemetryRow {
+                        objectName: "flightTelemetry_storageSdState"
                         labelText: qsTr("SD")
-                        valueText: root._validEnum("sdState", "storageValidityMask", 0, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                        valueText: root._familyFreshValue("storageAvailable", root._validEnum("sdState", "storageValidityMask", 0, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")]))
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_storageNorState"
                         labelText: qsTr("NOR")
-                        valueText: root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")])
+                        valueText: root._familyFreshValue("storageAvailable", root._validEnum("norState", "storageValidityMask", 1, [qsTr("未知"), qsTr("就绪"), qsTr("降级"), qsTr("不可用")]))
                     }
                     TelemetryRow {
                         objectName: "flightTelemetry_storageFreeKib"
                         labelText: qsTr("剩余空间")
-                        valueText: root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
+                        valueText: root._familyFreshValue("storageAvailable", root._validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB"))
                     }
-                    TelemetryRow { labelText: qsTr("事件丢弃"); valueText: root._integer("storageCriticalEventDrops") }
-                    TelemetryRow { labelText: qsTr("日志丢弃"); valueText: root._integer("storageLogDrops") }
-                    TelemetryRow { labelText: qsTr("设置代次"); valueText: root._integer("storageSettingsGeneration") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("storageReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("storageTimeBootUs") }
+                    TelemetryRow { labelText: qsTr("事件丢弃"); valueText: root._familyFreshValue("storageAvailable", root._integer("storageCriticalEventDrops")) }
+                    TelemetryRow { labelText: qsTr("日志丢弃"); valueText: root._familyFreshValue("storageAvailable", root._integer("storageLogDrops")) }
+                    TelemetryRow { labelText: qsTr("设置代次"); valueText: root._familyFreshValue("storageAvailable", root._integer("storageSettingsGeneration")) }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._familyFreshValue("storageAvailable", root._reasonText(0, root._fact("storageReasonCode"))) }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._familyFreshValue("storageAvailable", root._timestamp("storageTimeBootUs")) }
                 }
 
                 StatusCard {

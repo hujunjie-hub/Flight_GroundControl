@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.10  
+版本：4.11  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -394,3 +394,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 两列时丢包率指标跨两列占满第二行；窄屏单列时三个指标分别整行显示。
 - 集中验收需验证 700 px 双列和 400 px 单列，检查三个指标格完整、数值不被挤压，恢复桌面后回到三列。
 - 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。
+
+
+### G15 飞行健康页 freshness 与状态表达补充（2026-11-15）
+
+- storageAvailable stale/等待时，SD、NOR、剩余空间、丢弃计数、设置代次、原因和 FCU 时间统一显示 freshness 状态，并继续校验 validity mask。
+- prearmAvailable stale/等待时，检查代次、模式掩码、原因和 FCU 时间统一显示 freshness 状态；预检行在 >=760 px 使用 3/3/6 网格、小于 760 px 使用纵向单列。
+- 维护横条事件颜色与最新严重度一致；预检颜色仅在 15/15 新鲜且全通过时为绿，失败红、警告/超时琥珀、等待/不完整中性。
+- CPU/WCET/栈/AXI 颜色只表示测量字段有效性：有效青色、无效中性灰、过期琥珀，不代表负载健康阈值。
+- FlightTelemetryPageUITest 对应断言本轮 NOT_RUN，按用户要求留待集中 CI/本地验证。
