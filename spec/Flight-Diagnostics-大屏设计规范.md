@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：4.7
+- 版本：4.8
 - 日期：2026-11-15
 - 状态：四页主体、应用外壳、连续 KPI 带和 SVG 页签已实现；本轮完成趋势图与面板几何精修；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -53,6 +53,7 @@
 
 - 四个页签图标统一使用 `resources/InstrumentValueIcons/` 中的 SVG 资源（dashboard、heart、location-current、radio），由 `QGCColoredImage` 渲染；禁止使用依赖系统字体回退的 Unicode 图形字符，避免不同 DPI/平台出现字形粗细、基线和占位不一致。
 - 图标使用固定 20×20 布局盒并随选中态切换强调色；图标不得挤压页签标题，也不得改变页面切换行为。
+- 页签支持轻量悬停反馈：未选中悬停时背景/边框提升一档，移出恢复默认态；选中态始终优先于悬停态。背景和边框颜色使用 140 ms 过渡，不改变点击切页逻辑。
 
 - 四个页签均可点击，选中态使用青色描边/底部强调线；未选中态保持深青蓝面板。
 - 点击后只切换 FlightTelemetry.qml 内的页面内容，不创建新 Setup 路由，不改变遥测协议或数据模型。
@@ -494,3 +495,10 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 主视觉卡、趋势卡、详细诊断卡和页签统一为 8 px 圆角；13 类健康矩阵单元使用 6 px 次级圆角；RC 双摇杆卡使用 8 px。
 - `TrendCard` 暴露 `hasRenderableSeries` 和 `gapCount` 只读属性，便于 UI Integration 验证数据可绘制状态与断点数量；不改变任何遥测值或采样器行为。
 - 当前阶段按用户要求暂缓逐次 CI；后续集中执行 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和证据归档。该安排不降低正式验收门槛，也不将未运行测试记录为 PASS。
+
+
+## 23. Phase 2.4 页签交互反馈（2026-11-15）
+
+- 四个页面入口增加轻量 hover 背景/描边反馈，未选中页签悬停时提升对比度，指针移出恢复默认态；当前选中态优先，不会被 hover 覆盖。
+- 背景色与边框色采用 140 ms 过渡，鼠标仍使用指针样式；点击只修改 _activeDashboardPage，不创建路由或触发飞控命令。
+- UI Integration 检查每个页签 MouseArea 开启 hover、未选中 hover/idle 颜色和点击后的 active 颜色，避免交互态在后续样式调整中退化。

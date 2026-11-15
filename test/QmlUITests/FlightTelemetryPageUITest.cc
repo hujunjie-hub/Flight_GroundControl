@@ -822,6 +822,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(index), 3000);
                 QVERIFY2(tab, qPrintable(QStringLiteral("Missing dashboard tab %1").arg(index)));
                 QTRY_COMPARE_WITH_TIMEOUT(tab->property("radius").toInt(), 8, 3000);
+                QQuickItem* tabMouseArea = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_visualTabMouseArea_%1").arg(index), 3000);
+                QVERIFY(tabMouseArea);
+                QVERIFY(tabMouseArea->property("hoverEnabled").toBool());
+                if (index > 0) {
+                    tab->setProperty("hovered", true);
+                    QTRY_COMPARE_WITH_TIMEOUT(tab->property("color").value<QColor>(), QColor("#10323C"), 3000);
+                    tab->setProperty("hovered", false);
+                    QTRY_COMPARE_WITH_TIMEOUT(tab->property("color").value<QColor>(), QColor("#0B252E"), 3000);
+                }
                 QQuickItem* tabIcon = findVisibleItem(
                     _rootItem, QStringLiteral("flightTelemetry_visualTabIcon_%1").arg(index), 3000);
                 QVERIFY2(tabIcon, qPrintable(QStringLiteral("Missing dashboard SVG icon %1").arg(index)));
@@ -830,6 +840,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_VERIFY_WITH_TIMEOUT(tabIcon->width() >= 18 && tabIcon->height() >= 18, 3000);
                 QVERIFY(_clickItemAt(tab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_%1").arg(index)));
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), index, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(tab->property("color").value<QColor>(), QColor("#07545E"), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(title->property("text").toString(), titles[index], 3000);
                 QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[index], 3000);
                 QVERIFY2(grid, qPrintable(QStringLiteral("Missing active dashboard page %1").arg(index)));

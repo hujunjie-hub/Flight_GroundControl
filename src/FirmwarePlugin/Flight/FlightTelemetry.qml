@@ -1173,12 +1173,17 @@ SetupPage {
                         required property int index
                         required property var modelData
                         objectName: "flightTelemetry_visualTab_" + index
+                        property bool hovered: false
                         Layout.fillWidth: true
                         implicitHeight: 46
                         radius: 8
-                        color: root._activeDashboardPage === index ? "#07545E" : "#0B252E"
+                        color: root._activeDashboardPage === index ? "#07545E"
+                               : hovered ? "#10323C" : "#0B252E"
                         border.width: 1
-                        border.color: root._activeDashboardPage === index ? "#18DAD4" : "#0D5964"
+                        border.color: root._activeDashboardPage === index ? "#18DAD4"
+                                      : hovered ? "#167B86" : "#0D5964"
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
@@ -1212,9 +1217,12 @@ SetupPage {
                             color: "#18E5E0"
                         }
                         MouseArea {
+                            objectName: "flightTelemetry_visualTabMouseArea_" + index
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            onEntered: parent.hovered = true
+                            onExited: parent.hovered = false
                             onClicked: root._activeDashboardPage = index
                         }
                     }
