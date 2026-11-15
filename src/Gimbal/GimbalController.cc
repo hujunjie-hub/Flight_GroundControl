@@ -35,6 +35,8 @@ GimbalController::GimbalController(Vehicle *vehicle)
         for (auto it = _potentialGimbals.cbegin(); it != _potentialGimbals.cend(); ++it) {
             it.value()->setGimbalHaveControl(false);
             it.value()->setGimbalOthersHaveControl(false);
+            it.value()->setPitchRate(0.0f);
+            it.value()->setYawRate(0.0f);
             it.value()->invalidateStatus();
         }
     });
@@ -60,11 +62,49 @@ void GimbalController::setActiveGimbal(Gimbal *gimbal)
         return;
     }
 
-    if (gimbal != _activeGimbal) {
-        qCDebug(GimbalControllerLog) << "Set active gimbal:" << gimbal;
-        _activeGimbal = gimbal;
-        emit activeGimbalChanged();
+    if (gimbal == _activeGimbal) {
+        return;
     }
+
+    bool isKnownCompleteGimbal = false;
+    for (auto it = _potentialGimbals.cbegin(); it != _potentialGimbals.cend(); ++it) {
+        if (it.value() == gimbal && gimbal->_isComplete) {
+            isKnownCompleteGimbal = true;
+            break;
+        }
+    }
+    if (!isKnownCompleteGimbal) {
+        qCWarning(GimbalControllerLog) << "Set active gimbal: refusing an unknown or incomplete device";
+        return;
+    }
+
+    // Do not orphan a device while this GCS still has confirmed control of it.
+    // The operator must release ownership before selecting another device.
+    if (_activeGimbal && _activeGimbal->ownershipStatusValid() &&
+        _activeGimbal->managerStatusFresh() && _activeGimbal->gimbalHaveControl() &&
+        !_vehicle->vehicleLinkManager()->communicationLost()) {
+        qCWarning(GimbalControllerLog) << "Set active gimbal: release control before switching devices";
+        return;
+    }
+
+    if (_activeGimbal) {
+        // A stale or disconnected device must never keep a local rate sender alive
+        // after the active-device pointer changes. A zero-rate frame is only sent
+        // while ownership and both telemetry streams are still confirmed.
+        const bool rateControlActive = _rateSenderTimer.isActive() ||
+            !qFuzzyIsNull(_activeGimbal->pitchRate()) ||
+            !qFuzzyIsNull(_activeGimbal->yawRate());
+        if (rateControlActive && _tryGetGimbalControl()) {
+            _sendGimbalAttitudeRates(0.0f, 0.0f);
+        }
+        _rateSenderTimer.stop();
+        _activeGimbal->setPitchRate(0.0f);
+        _activeGimbal->setYawRate(0.0f);
+    }
+
+    qCDebug(GimbalControllerLog) << "Set active gimbal:" << gimbal;
+    _activeGimbal = gimbal;
+    emit activeGimbalChanged();
 }
 
 void GimbalController::_mavlinkMessageReceived(const mavlink_message_t &message)
@@ -856,6 +896,19 @@ void GimbalController::releaseGimbalControl()
         qCDebug(GimbalControllerLog) << "releaseGimbalControl: link or confirmed ownership is not ready, refusing request";
         return;
     }
+
+    // Stop any joystick/rate command while we still have confirmed ownership.
+    // Sending the zero-rate frame before releasing the owner pair avoids leaving
+    // the gimbal executing the last rate until its own command timeout expires.
+    const bool rateControlActive = _rateSenderTimer.isActive() ||
+        !qFuzzyIsNull(_activeGimbal->pitchRate()) ||
+        !qFuzzyIsNull(_activeGimbal->yawRate());
+    _rateSenderTimer.stop();
+    if (rateControlActive) {
+        _sendGimbalAttitudeRates(0.0f, 0.0f);
+    }
+    _activeGimbal->setPitchRate(0.0f);
+    _activeGimbal->setYawRate(0.0f);
 
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
