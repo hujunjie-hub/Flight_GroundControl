@@ -297,7 +297,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(sortedPriorityEvents.at(2).toMap().value(QStringLiteral("severity")).toInt(), 2);
             QCOMPARE(sortedPriorityEvents.at(3).toMap().value(QStringLiteral("sequence")).toInt(), 12);
             QCOMPARE(alarmPriorityHint->property("text").toString(),
-                     translatedTelemetryText("严重度优先 · 同级按最新序号"));
+                     translatedTelemetryText("严重度优先 · 同级按本地接收序号"));
 
             QVariant eventBootTimeOutput;
             QVERIFY(QMetaObject::invokeMethod(page, "_eventBootTimeText", Qt::DirectConnection,
@@ -803,13 +803,24 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_eventHistorySeverity_1"), 3000);
             QQuickItem* historyEventDetails = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistoryDetails_1"), 3000);
+            QQuickItem* alarmEventMeta = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventMeta_1"), 3000);
+            QQuickItem* historyEventSequence = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistorySequence_1"), 3000);
             QVERIFY(alarmEventTime);
             QVERIFY(historyEventTime);
             QVERIFY(historyEventSeverity);
             QVERIFY(historyEventDetails);
+            QVERIFY(alarmEventMeta);
+            QVERIFY(historyEventSequence);
             const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("1.700"));
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventTime->property("text").toString(), expectedEventBootTime, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventMeta->property("text").toString(),
+                                      translatedTelemetryText("本地序号 #%1 · ID %2 · 来源 %3")
+                                          .arg(1).arg(4321).arg(25), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventSequence->property("text").toString(),
+                                      translatedTelemetryText("本地序号 #%1").arg(1), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventSeverity->property("text").toString(),
                                       translatedTelemetryText("严重"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventSeverity->property("color").value<QColor>(),

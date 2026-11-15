@@ -323,7 +323,8 @@
         "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
         "health_safety_solver_summary_matches_control_family_freshness",
         "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling",
-        "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette"
+        "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette",
+        "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order"
       ]
     },
     {
@@ -512,7 +513,8 @@
     "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
     "health_safety_solver_summary_matches_control_family_freshness",
     "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling",
-    "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette"
+    "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette",
+    "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

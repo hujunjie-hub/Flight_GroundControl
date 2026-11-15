@@ -1905,7 +1905,7 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_alarmPriorityHint"
                         Layout.fillWidth: true
-                        text: qsTr("严重度优先 · 同级按最新序号")
+                        text: qsTr("严重度优先 · 同级按本地接收序号")
                         color: "#6F9DA7"
                         font.pointSize: ScreenTools.microFontPointSize
                     }
@@ -1954,8 +1954,9 @@ SetupPage {
                                     Layout.fillWidth: true
                                     spacing: 2
                                     QGCLabel {
+                                        objectName: "flightTelemetry_alarmEventMeta_" + modelData.sequence
                                         Layout.fillWidth: true
-                                        text: qsTr("事件 #%1 · ID %2 · 来源 %3")
+                                        text: qsTr("本地序号 #%1 · ID %2 · 来源 %3")
                                               .arg(modelData.sequence).arg(modelData.eventId).arg(modelData.sourceId)
                                         color: "#D5E9ED"
                                         font.pointSize: ScreenTools.captionFontPointSize
@@ -3172,10 +3173,12 @@ SetupPage {
                                 Layout.fillWidth: true
                                 spacing: 8
                                 QGCLabel {
-                                    Layout.preferredWidth: 38
-                                    text: qsTr("#%1").arg(modelData.sequence)
+                                    objectName: "flightTelemetry_eventHistorySequence_" + modelData.sequence
+                                    Layout.preferredWidth: 76
+                                    text: qsTr("本地序号 #%1").arg(modelData.sequence)
                                     color: "#C7E3E9"
                                     font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_eventHistoryTime_" + modelData.sequence
