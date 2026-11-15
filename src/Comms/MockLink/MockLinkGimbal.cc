@@ -73,6 +73,43 @@ bool MockLinkGimbal::addSimulatedDevice(
     return true;
 }
 
+bool MockLinkGimbal::setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool online)
+{
+    MockLinkGimbal *const device = _deviceForId(gimbalDeviceId);
+    if (!device) {
+        return false;
+    }
+
+    {
+        QMutexLocker locker(&device->_stateMutex);
+        if (device->_deviceOnline == online) {
+            return true;
+        }
+
+        device->_deviceOnline = online;
+        if (online) {
+            device->_managerStatusLastSentMs = 0;
+            device->_deviceAttitudeStatusLastSentMs = 0;
+        } else {
+            // An offline device cannot retain an actionable owner/rate state.
+            device->_gimbalManagerSysidPrimary = 0;
+            device->_gimbalManagerCompidPrimary = 0;
+            device->_gimbalManagerSysidSecondary = 0;
+            device->_gimbalManagerCompidSecondary = 0;
+            device->_pitchRateDegS = 0.0f;
+            device->_yawRateDegS = 0.0f;
+            device->_rateControl = false;
+        }
+    }
+
+    if (online) {
+        // Re-advertise the device. Its status and attitude streams resume on
+        // the next worker tick using the intervals previously requested.
+        device->_sendGimbalManagerInformation();
+    }
+    return true;
+}
+
 MockLinkGimbal *MockLinkGimbal::_deviceForId(uint8_t gimbalDeviceId)
 {
     if (gimbalDeviceId == 0 || gimbalDeviceId == _gimbalDeviceId) {
@@ -94,6 +131,13 @@ void MockLinkGimbal::run1HzTasks()
     //   - Auto-movement overwriting manual control commands
     //   - Reading stale/inconsistent interval values for status transmission
     QMutexLocker locker(&_stateMutex);
+    if (!_deviceOnline) {
+        locker.unlock();
+        for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+            device->run1HzTasks();
+        }
+        return;
+    }
     const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
 
     // Send GIMBAL_MANAGER_STATUS if interval is set
@@ -258,7 +302,8 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     const mavlink_gimbal_manager_set_attitude_t &request, uint8_t sourceSysid, uint8_t sourceCompid)
 {
-    if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+    if (!_deviceOnline ||
+        (request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
         (request.target_component != 0 && request.target_component != _managerCompId) ||
         (request.gimbal_device_id != 0 && request.gimbal_device_id != _gimbalDeviceId) ||
         (request.flags & ~0x7Cu) != 0) {
@@ -379,9 +424,13 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
 
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {
         qCDebug(MockLinkGimbalLog) << "REQUEST_MESSAGE -" << QString("%1(%2)").arg(msgName).arg(msgId);
-        _sendGimbalManagerInformation();
+        if (_deviceOnline) {
+            _sendGimbalManagerInformation();
+        }
         for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
-            device->_sendGimbalManagerInformation();
+            if (device->_deviceOnline) {
+                device->_sendGimbalManagerInformation();
+            }
         }
         return true;
     }
@@ -392,6 +441,10 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
 bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &request,
                                                     uint8_t sourceSysid, uint8_t sourceCompid)
 {
+    if (!_deviceOnline) {
+        return false;
+    }
+
     // param1: pitch angle (degrees, positive: down, negative: up)
     // param2: yaw angle (degrees, positive: to the right, negative: to the left)
     // param3: pitch rate (deg/s)
@@ -490,6 +543,10 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
 bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t &request,
                                                    uint8_t sourceSysid, uint8_t sourceCompid)
 {
+    if (!_deviceOnline) {
+        return false;
+    }
+
     // MAVLink Gimbal Manager Configure semantics (per parameter):
     //   0: no one in control; -1: leave unchanged; -2: set this sender in control;
     //   -3: release only if this sender currently owns the complete pair.
