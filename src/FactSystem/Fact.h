@@ -47,6 +47,13 @@ class Fact : public QObject
     Q_PROPERTY(QString      name                    READ name                                                   CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         vehicleRebootRequiredKnown READ vehicleRebootRequiredKnown                            CONSTANT)
+    Q_PROPERTY(QString      vehicleFamily            READ vehicleFamily                                           CONSTANT)
+    Q_PROPERTY(QStringList  modelVariants            READ modelVariants                                           CONSTANT)
+    Q_PROPERTY(QString      controlLaw               READ controlLaw                                              CONSTANT)
+    Q_PROPERTY(QString      tuningPolicy             READ tuningPolicy                                            CONSTANT)
+    Q_PROPERTY(QString      updatePolicy             READ updatePolicy                                            CONSTANT)
+    Q_PROPERTY(QVariantList dependencies             READ dependencies                                            CONSTANT)
+    Q_PROPERTY(QVariantList validationRules          READ validationRules                                         CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                       CONSTANT)
     Q_PROPERTY(QString      label                   READ label                                                  CONSTANT)
@@ -138,6 +145,13 @@ public:
     bool valueEqualsDefault() const;
     bool vehicleRebootRequired() const;
     bool vehicleRebootRequiredKnown() const;
+    QString vehicleFamily() const;
+    QStringList modelVariants() const;
+    QString controlLaw() const;
+    QString tuningPolicy() const;
+    QString updatePolicy() const;
+    QVariantList dependencies() const;
+    QVariantList validationRules() const;
     bool qgcRebootRequired() const;
     QString enumOrValueString();         // This is not const, since an unknown value can modify the enum lists
     double rawIncrement() const;
