@@ -2,6 +2,7 @@
 
 #include <QtCore/QString>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QAbstractTableModel>
 #include <QtTest/QTest>
 #include <QtTest/QSignalSpy>
 
@@ -316,6 +317,27 @@ void ParameterEditorControllerTest::_diffSignalsEmitOnlyOnChange()
     QCOMPARE(noVehicleSpy.count(), 0);
     QCOMPARE(otherVehicleSpy.count(), 0);
     QCOMPARE(multipleComponentsSpy.count(), 0);
+}
+
+void ParameterEditorControllerTest::_categoryFilterRestrictsSearch()
+{
+    ParameterEditorController controller;
+
+    const auto parameterRowCount = [&controller]() {
+        const auto* model = controller.property("parameters").value<QAbstractTableModel*>();
+        return model ? model->rowCount() : -1;
+    };
+
+    // The MockLink fixture contains SYS_AUTOSTART. An empty filter preserves the
+    // original native editor behaviour; a non-matching domain must hide it.
+    controller.setProperty("searchText", QStringLiteral("SYS_AUTOSTART"));
+    QTRY_VERIFY(parameterRowCount() >= 1);
+
+    controller.setProperty("categoryFilter", QStringLiteral("__NO_MATCH__"));
+    QTRY_COMPARE(parameterRowCount(), 0);
+
+    controller.setProperty("categoryFilter", QString());
+    QTRY_VERIFY(parameterRowCount() >= 1);
 }
 
 void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure()

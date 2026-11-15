@@ -36,6 +36,7 @@ Item {
     }
 
     function selectCategoryByName(categoryName) {
+        controller.categoryFilter = categoryName
         searchText.text = ""
         controller.searchText = ""
         tabBar.currentIndex = 0

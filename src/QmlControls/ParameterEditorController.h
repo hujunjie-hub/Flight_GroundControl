@@ -130,6 +130,7 @@ class ParameterEditorController : public FactPanelController
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QString              searchText              MEMBER _searchText                                          NOTIFY searchTextChanged)
+    Q_PROPERTY(QString              categoryFilter          MEMBER _categoryFilter                                      NOTIFY categoryFilterChanged)
     Q_PROPERTY(QmlObjectListModel*  categories              READ categories                                             CONSTANT)
     Q_PROPERTY(QObject*             currentCategory         READ currentCategory            WRITE setCurrentCategory    NOTIFY currentCategoryChanged)
     Q_PROPERTY(QObject*             currentGroup            READ currentGroup               WRITE setCurrentGroup       NOTIFY currentGroupChanged)
@@ -185,6 +186,7 @@ public:
 
 signals:
     void searchTextChanged              (QString searchText);
+    void categoryFilterChanged          (QString categoryFilter);
     void currentCategoryChanged         (void);
     void currentGroupChanged            (void);
     void showModifiedOnlyChanged        (void);
@@ -224,6 +226,7 @@ private:
 
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
+    QString                     _categoryFilter;
     QTimer                      _searchTimer;
     ParameterEditorCategory*    _currentCategory        = nullptr;
     ParameterEditorGroup*       _currentGroup           = nullptr;

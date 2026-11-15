@@ -166,6 +166,7 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
     connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_currentCategoryChanged);
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_currentGroupChanged);
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_searchTextChanged);
+    connect(this, &ParameterEditorController::categoryFilterChanged,    this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showFavoritesOnlyChanged, this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::hideReadOnlyChanged,     this, &ParameterEditorController::_hideReadOnlyChanged);
@@ -690,11 +691,13 @@ void ParameterEditorController::_hideReadOnlyChanged(void)
 {
     _buildLists();
 
-    ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
+    ParameterEditorCategory* category = _categoryFilter.isEmpty()
+        ? (_categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr)
+        : _mapCategoryName2Category.value(_categoryFilter, nullptr);
     setCurrentCategory(category);
 
-    // Re-trigger search if active
-    if (!_searchText.isEmpty() || _showModifiedOnly) {
+    // Re-trigger filtered results if search, modified or favorites view is active.
+    if (!_searchText.isEmpty() || _showModifiedOnly || _showFavoritesOnly) {
         _performSearch();
     }
 }
@@ -706,7 +709,9 @@ void ParameterEditorController::_performSearch(void)
     QStringList rgSearchStrings = _searchText.split(' ', Qt::SkipEmptyParts);
 
     if (rgSearchStrings.isEmpty() && !_showModifiedOnly && !_showFavoritesOnly) {
-        ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
+        ParameterEditorCategory* category = _categoryFilter.isEmpty()
+            ? (_categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr)
+            : _mapCategoryName2Category.value(_categoryFilter, nullptr);
         setCurrentCategory(category);
         _searchParameters.clear();
     } else {
@@ -723,6 +728,9 @@ void ParameterEditorController::_performSearch(void)
         for (int compId : _parameterMgr->componentIds()) {
             for (const QString &paraName: _parameterMgr->parameterNames(compId)) {
                 Fact* fact = _parameterMgr->getParameter(compId, paraName);
+                if (!_categoryFilter.isEmpty() && fact->category() != _categoryFilter) {
+                    continue;
+                }
                 bool matched = _shouldShow(fact);
                 // All of the search items must match in order for the parameter to be added to the list
                 if (matched) {

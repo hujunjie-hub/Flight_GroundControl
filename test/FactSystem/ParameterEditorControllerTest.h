@@ -17,5 +17,6 @@ private slots:
     void _buildDiffMixedMP();
     void _clearDiffResetsState();
     void _diffSignalsEmitOnlyOnChange();
+    void _categoryFilterRestrictsSearch();
     void _sendDiffUnknownParamStopsAfterWriteFailure();
 };

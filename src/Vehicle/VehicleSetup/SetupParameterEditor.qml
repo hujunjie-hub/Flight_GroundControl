@@ -34,7 +34,7 @@ Item {
     property int activeDomain: 0
 
     onActiveDomainChanged: {
-        if (dashboardLoader.item) {
+        if (dashboardLoader.item && typeof dashboardLoader.item.syncParameterDomain === "function") {
             dashboardLoader.item.syncParameterDomain()
         }
     }
@@ -55,6 +55,7 @@ Item {
         Item {
             id: dashboardRoot
             anchors.fill: parent
+            property bool parameterDomainAvailable: false
 
             function domainCategoryName(domainIndex) {
                 switch (domainIndex) {
@@ -64,14 +65,18 @@ Item {
                 case 3: return "INS"
                 case 4: return "PLANT"
                 case 5: return "ACTUATOR"
+                case 6: return "__NO_PARAMETER_DOMAIN__"
                 case 7: return "SIMULATION"
                 default: return ""
                 }
             }
 
             function syncParameterDomain() {
+                parameterDomainAvailable = false
                 if (parameterEditorLoader.item) {
-                    parameterEditorLoader.item.selectCategoryByName(domainCategoryName(root.activeDomain))
+                    const categoryName = domainCategoryName(root.activeDomain)
+                    parameterDomainAvailable = categoryName !== "" && parameterEditorLoader.item.hasCategory(categoryName)
+                    parameterEditorLoader.item.selectCategoryByName(categoryName)
                 }
             }
 
@@ -643,7 +648,7 @@ Item {
                                     id: parameterEditorComponent
                                     ParameterEditor {
                                         externalCategoryNavigation: true
-                                        enabled: root._linkHealthy && root._parametersReady
+                                        enabled: root._linkHealthy && root._parametersReady && dashboardRoot.parameterDomainAvailable
                                     }
                                 }
 
@@ -651,6 +656,7 @@ Item {
                                     target: QGroundControl.multiVehicleManager
                                     function onActiveVehicleChanged(vehicle) {
                                         // ParameterEditorController captures activeVehicle at construction.
+                                        dashboardRoot.parameterDomainAvailable = false
                                         parameterEditorLoader.sourceComponent = undefined
                                         parameterEditorLoader.sourceComponent = parameterEditorComponent
                                     }
@@ -661,8 +667,7 @@ Item {
                                     visible: parameterEditorLoader.status === Loader.Ready &&
                                              parameterEditorLoader.item &&
                                              root._parametersReady && root._linkHealthy &&
-                                             (root.activeDomain === 6 ||
-                                              !parameterEditorLoader.item.hasCategory(dashboardRoot.domainCategoryName(root.activeDomain)))
+                                             !dashboardRoot.parameterDomainAvailable
                                     color: "#E606202A"
                                     border.width: 1
                                     border.color: "#14505B"
