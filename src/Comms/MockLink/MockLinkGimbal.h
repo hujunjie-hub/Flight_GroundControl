@@ -9,7 +9,7 @@ class MockLink;
 
 /// \brief Simulates MAVLink Gimbal Manager Protocol for MockLink.
 ///
-/// Supports one Gimbal Manager with multiple independently simulated gimbal devices.
+/// Supports multiple Gimbal Managers, each with independently simulated gimbal devices.
 /// Gimbal attitude is simulated with a slow oscillation when not under manual control.
 ///
 /// Gimbal capabilities are configurable via MockLink config.
@@ -42,6 +42,18 @@ public:
     /// use the manager component for attitude telemetry; IDs above 6 use their
     /// own component ID, as required by the MAVLink Gimbal protocol.
     bool addSimulatedDevice(
+        uint8_t gimbalDeviceId,
+        bool hasRollAxis,
+        bool hasPitchAxis,
+        bool hasYawAxis,
+        bool hasYawFollow,
+        bool hasYawLock,
+        bool hasRetract,
+        bool hasNeutral);
+
+    /// Add a second independently addressable Gimbal Manager component.
+    bool addSimulatedManager(
+        uint8_t managerCompId,
         uint8_t gimbalDeviceId,
         bool hasRollAxis,
         bool hasPitchAxis,
@@ -93,12 +105,14 @@ private:
     static constexpr int kDefaultIntervalUs = 1000000; // 1 Hz default
 
     MockLinkGimbal *_deviceForId(uint8_t gimbalDeviceId);
+    MockLinkGimbal *_managerForTargetComponent(uint8_t targetComponent);
 
     MockLink *_mockLink = nullptr;
     uint8_t _gimbalDeviceId = kDefaultGimbalDeviceId;
     uint8_t _managerCompId = MAV_COMP_ID_AUTOPILOT1;
     uint8_t _deviceCompId = kDefaultGimbalDeviceId;
     QList<MockLinkGimbal*> _additionalDevices;
+    QList<MockLinkGimbal*> _additionalManagers;
     int       _managerStatusIntervalUs = 0;          // 0 = disabled
     int       _deviceAttitudeStatusIntervalUs = 0;  // 0 = disabled by default
     qint64    _managerStatusLastSentMs = 0;
