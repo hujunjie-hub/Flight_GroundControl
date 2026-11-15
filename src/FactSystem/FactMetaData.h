@@ -149,6 +149,13 @@ public:
     QString cookedUnits() const { return _cookedUnits; }
     bool vehicleRebootRequired() const { return _vehicleRebootRequired; }
     bool vehicleRebootRequiredKnown() const { return _vehicleRebootRequiredKnown; }
+    QString vehicleFamily() const { return _vehicleFamily; }
+    QStringList modelVariants() const { return _modelVariants; }
+    QString controlLaw() const { return _controlLaw; }
+    QString tuningPolicy() const { return _tuningPolicy; }
+    QString updatePolicy() const { return _updatePolicy; }
+    QVariantList dependencies() const { return _dependencies; }
+    QVariantList validationRules() const { return _validationRules; }
     bool qgcRebootRequired() const { return _qgcRebootRequired; }
     bool hasControl() const { return _hasControl; }
     bool readOnly() const { return _readOnly; }
@@ -197,6 +204,13 @@ public:
     void setRawUnits(const QString &rawUnits);
     void setVehicleRebootRequired(bool rebootRequired) { _vehicleRebootRequired = rebootRequired; _vehicleRebootRequiredKnown = true; }
     void setVehicleRebootRequiredKnown(bool known) { _vehicleRebootRequiredKnown = known; }
+    void setVehicleFamily(const QString &value) { _vehicleFamily = value; }
+    void setModelVariants(const QStringList &value) { _modelVariants = value; }
+    void setControlLaw(const QString &value) { _controlLaw = value; }
+    void setTuningPolicy(const QString &value) { _tuningPolicy = value; }
+    void setUpdatePolicy(const QString &value) { _updatePolicy = value; }
+    void setDependencies(const QVariantList &value) { _dependencies = value; }
+    void setValidationRules(const QVariantList &value) { _validationRules = value; }
     void setQGCRebootRequired(bool rebootRequired) { _qgcRebootRequired = rebootRequired; }
     void setRawIncrement(double increment) { _rawIncrement = increment; }
     void setHasControl(bool bValue) { _hasControl = bValue; }
@@ -365,6 +379,13 @@ private:
     Translator _cookedTranslator = _defaultTranslator;
     bool _vehicleRebootRequired = false;
     bool _vehicleRebootRequiredKnown = false;
+    QString _vehicleFamily;
+    QStringList _modelVariants;
+    QString _controlLaw;
+    QString _tuningPolicy;
+    QString _updatePolicy;
+    QVariantList _dependencies;
+    QVariantList _validationRules;
     bool _qgcRebootRequired = false;
     double _rawIncrement = std::numeric_limits<double>::quiet_NaN();
     bool _hasControl = true;
