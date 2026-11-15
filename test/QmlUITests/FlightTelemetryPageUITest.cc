@@ -136,6 +136,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_alarmScopeNote"));
             QQuickItem* alarmEmptyState =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyState"), 3000);
+            QQuickItem* alarmEmptyContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyContent"), 3000);
             QQuickItem* alarmEmptyTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyTitle"), 3000);
             QQuickItem* alarmEmptyDescription =
@@ -328,8 +330,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(alarmPriorityHint);
             QVERIFY(alarmScopeNote);
             QVERIFY(alarmEmptyState);
+            QVERIFY(alarmEmptyContent);
             QVERIFY(alarmEmptyTitle);
             QVERIFY(alarmEmptyDescription);
+            const qreal alarmEmptyMinimumHeight = page->property("_overviewAlarmEmptyMinimumHeight").toReal();
+            const qreal alarmEmptyHorizontalInset = alarmEmptyState->property("contentHorizontalInset").toReal();
+            const qreal alarmEmptyVerticalInset = alarmEmptyState->property("contentVerticalInset").toReal();
+            QVERIFY(alarmEmptyMinimumHeight > 0.0);
+            QVERIFY(alarmEmptyHorizontalInset > 0.0);
+            QVERIFY(alarmEmptyVerticalInset > 0.0);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEmptyState->height() + 1.0 >= alarmEmptyMinimumHeight, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmEmptyContent->height() + 1.0 >=
+                                         alarmEmptyContent->property("implicitHeight").toReal(), 3000);
+            const QPointF alarmEmptyContentTopLeft = alarmEmptyContent->mapToItem(alarmEmptyState, 0, 0);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(alarmEmptyContentTopLeft.x() - alarmEmptyHorizontalInset) < 1.0 &&
+                                         qAbs(alarmEmptyContentTopLeft.y() - alarmEmptyVerticalInset) < 1.0 &&
+                                         alarmEmptyContent->width() + 2.0 * alarmEmptyHorizontalInset <=
+                                             alarmEmptyState->width() + 1.0 &&
+                                         alarmEmptyContent->height() + 2.0 * alarmEmptyVerticalInset <=
+                                             alarmEmptyState->height() + 1.0, 3000);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
             QVERIFY(summaryLink);
@@ -1745,12 +1764,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QQuickItem* alarmCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
+            QQuickItem* alarmHeaderRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmHeaderRow"), 3000);
             QQuickItem* alarmEventCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_1"), 3000);
             QQuickItem* alarmEventContent = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventContent_1"), 3000);
+            QQuickItem* alarmEventBadge = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventSeverityBadge_1"), 3000);
+            QQuickItem* alarmEventStripe = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventStatusStripe_1"), 3000);
             QQuickItem* alarmEventTime = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventTime_1"), 3000);
+            QQuickItem* historyEventRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistoryRow_1"), 3000);
             QQuickItem* historyEventTime = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistoryTime_1"), 3000);
             QQuickItem* historyEventMetaGrid = findVisibleItem(
@@ -1769,9 +1796,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventCount"), 3000);
             QQuickItem* historyEventSequence = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistorySequence_1"), 3000);
+            QQuickItem* alarmSeverityChipContents[5]{};
+            for (int index = 0; index < 5; ++index) {
+                alarmSeverityChipContents[index] = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_alarmSeverityChipContent_") +
+                                   QString::fromLatin1(alarmSeverityKeys[index]), 3000);
+            }
             QVERIFY(alarmCard);
+            QVERIFY(alarmHeaderRow);
             QVERIFY(alarmEventCard);
             QVERIFY(alarmEventContent);
+            QVERIFY(alarmEventBadge);
+            QVERIFY(alarmEventStripe);
+            QVERIFY(historyEventRow);
+            for (QQuickItem* content : alarmSeverityChipContents) QVERIFY(content);
             QVERIFY(alarmEventTime);
             QVERIFY(historyEventTime);
             QVERIFY(historyEventMetaGrid);
@@ -1819,6 +1857,111 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(historyEventDetails->property("text").toString().contains(
                                          translatedTelemetryText("硬件故障")), 3000);
             const qreal originalEventHistoryPageWidth = page->width();
+
+            const auto alarmItemFitsInParent = [](QQuickItem* item, QQuickItem* parent) {
+                if (!item || !parent || !item->isVisible()) return false;
+                const QPointF topLeft = item->mapToItem(parent, 0, 0);
+                return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                       topLeft.x() + item->width() <= parent->width() + 1.0 &&
+                       topLeft.y() + item->height() <= parent->height() + 1.0;
+            };
+            const auto alarmSeverityDensityMatches = [&]() {
+                const qreal columnSpacing = page->property("_overviewAlarmSeverityGridColumnSpacing").toReal();
+                const qreal rowSpacing = page->property("_overviewAlarmSeverityGridRowSpacing").toReal();
+                const qreal chipInset = page->property("_overviewAlarmSeverityChipHorizontalInset").toReal();
+                const qreal chipVerticalInset = page->property("_overviewAlarmSeverityChipVerticalInset").toReal();
+                const qreal chipContentSpacing = page->property("_overviewAlarmSeverityChipContentSpacing").toReal();
+                const qreal chipMinimumHeight = page->property("_overviewAlarmSeverityChipMinimumHeight").toReal();
+                if (columnSpacing <= 0.0 || rowSpacing <= 0.0 || chipInset <= 0.0 ||
+                    chipVerticalInset <= 0.0 || chipContentSpacing <= 0.0 || chipMinimumHeight <= 0.0 ||
+                    qAbs(alarmSeverityGrid->property("columnSpacing").toReal() - columnSpacing) > 0.01 ||
+                    qAbs(alarmSeverityGrid->property("rowSpacing").toReal() - rowSpacing) > 0.01) {
+                    return false;
+                }
+                for (int index = 0; index < 5; ++index) {
+                    QQuickItem* chip = alarmSeverityChips[index];
+                    QQuickItem* content = alarmSeverityChipContents[index];
+                    if (!chip || !content || chip->height() + 1.0 < chipMinimumHeight ||
+                        qAbs(content->property("spacing").toReal() - chipContentSpacing) > 0.01) {
+                        return false;
+                    }
+                    const QPointF topLeft = content->mapToItem(chip, 0, 0);
+                    if (qAbs(topLeft.x() - chipInset) > 1.0 ||
+                        qAbs(topLeft.y() - chipVerticalInset) > 1.0 ||
+                        content->width() + 2.0 * chipInset > chip->width() + 1.0 ||
+                        content->height() + 2.0 * chipVerticalInset > chip->height() + 1.0 ||
+                        content->height() + 1.0 < content->property("implicitHeight").toReal()) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            const auto alarmEventAndHistoryDensityMatches = [&]() {
+                const qreal headerSpacing = page->property("_overviewAlarmHeaderSpacing").toReal();
+                const qreal cardSpacing = page->property("_overviewAlarmEventContentSpacing").toReal();
+                const qreal cardLeftInset = alarmEventCard->property("contentLeftInset").toReal();
+                const qreal cardRightInset = alarmEventCard->property("contentRightInset").toReal();
+                const qreal cardVerticalInset = alarmEventCard->property("contentVerticalInset").toReal();
+                const qreal cardMinimumHeight = alarmEventCard->property("minimumHeight").toReal();
+                const qreal expectedCardHeight = qMax(
+                    cardMinimumHeight, alarmEventContent->property("implicitHeight").toReal() +
+                                           2.0 * cardVerticalInset);
+                const qreal badgeWidth = alarmEventCard->property("severityBadgeWidth").toReal();
+                const qreal badgeHeight = alarmEventCard->property("severityBadgeHeight").toReal();
+                const qreal stripeWidth = alarmEventCard->property("statusStripeWidth").toReal();
+                const qreal historyRowSpacing = page->property("_overviewEventHistoryRowSpacing").toReal();
+                const qreal historyColumnSpacing =
+                    page->property("_overviewEventHistoryGridColumnSpacing").toReal();
+                const qreal historyRowGap = page->property("_overviewEventHistoryGridRowSpacing").toReal();
+                if (headerSpacing <= 0.0 || cardSpacing <= 0.0 || cardLeftInset <= 0.0 ||
+                    cardRightInset <= 0.0 || cardVerticalInset <= 0.0 || cardMinimumHeight <= 0.0 ||
+                    badgeWidth <= 0.0 || badgeHeight <= 0.0 || stripeWidth <= 0.0 ||
+                    historyRowSpacing <= 0.0 || historyColumnSpacing <= 0.0 || historyRowGap <= 0.0 ||
+                    qAbs(alarmHeaderRow->property("spacing").toReal() - headerSpacing) > 0.01 ||
+                    qAbs(alarmEventContent->property("spacing").toReal() - cardSpacing) > 0.01 ||
+                    alarmEventCard->height() + 1.0 < expectedCardHeight ||
+                    qAbs(alarmEventCard->property("implicitHeight").toReal() - expectedCardHeight) > 1.0 ||
+                    qAbs(alarmEventBadge->width() - badgeWidth) > 1.0 ||
+                    qAbs(alarmEventBadge->height() - badgeHeight) > 1.0 ||
+                    qAbs(alarmEventStripe->width() - stripeWidth) > 1.0 ||
+                    qAbs(historyEventRow->property("spacing").toReal() - historyRowSpacing) > 0.01 ||
+                    qAbs(historyEventMetaGrid->property("columnSpacing").toReal() - historyColumnSpacing) > 0.01 ||
+                    qAbs(historyEventMetaGrid->property("rowSpacing").toReal() - historyRowGap) > 0.01 ||
+                    alarmPriorityHint->property("wrapMode").toInt() == 0 ||
+                    alarmEventReason->property("wrapMode").toInt() == 0 ||
+                    alarmEventMeta->property("wrapMode").toInt() == 0 ||
+                    alarmEventTime->property("wrapMode").toInt() == 0 ||
+                    alarmEventPrimaryTag->property("wrapMode").toInt() == 0 ||
+                    historyEventDetails->property("wrapMode").toInt() == 0) {
+                    return false;
+                }
+                const QPointF cardContentTopLeft = alarmEventContent->mapToItem(alarmEventCard, 0, 0);
+                if (qAbs(cardContentTopLeft.x() - cardLeftInset) > 1.0 ||
+                    qAbs(cardContentTopLeft.y() - cardVerticalInset) > 1.0 ||
+                    alarmEventContent->width() + cardLeftInset + cardRightInset > alarmEventCard->width() + 1.0 ||
+                    alarmEventContent->height() + 2.0 * cardVerticalInset > alarmEventCard->height() + 1.0) {
+                    return false;
+                }
+                return alarmItemFitsInParent(alarmHeaderRow, alarmCard) &&
+                       alarmItemFitsInParent(alarmPriorityHint, alarmCard) &&
+                       alarmItemFitsInParent(alarmEventCard, alarmCard) &&
+                       alarmItemFitsInParent(alarmEventContent, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventBadge, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventStripe, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventReason, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventMeta, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventTime, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmEventPrimaryTag, alarmEventCard) &&
+                       alarmItemFitsInParent(alarmScopeNote, alarmCard) &&
+                       alarmItemFitsInParent(historyEventRow, eventHistoryCard) &&
+                       alarmItemFitsInParent(historyEventMetaGrid, historyEventRow) &&
+                       alarmItemFitsInParent(historyEventSequence, historyEventMetaGrid) &&
+                       alarmItemFitsInParent(historyEventTime, historyEventMetaGrid) &&
+                       alarmItemFitsInParent(historyEventSeverity, historyEventMetaGrid) &&
+                       alarmItemFitsInParent(historyEventDetails, historyEventRow) &&
+                       historyEventSequence->width() + 1.0 >= historyEventSequence->implicitWidth() &&
+                       historyEventTime->width() + 1.0 >= historyEventTime->implicitWidth();
+            };
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
@@ -1898,6 +2041,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 historyEventSequence->width() >= historyEventSequence->implicitWidth() - 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
+            const int alarmLayoutWidths[] = {1600, 1400, 1000, 900, 700, 400};
+            const int expectedAlarmSeverityColumns[] = {5, 5, 3, 5, 5, 5};
+            const int expectedHistoryMetadataColumns[] = {3, 3, 3, 3, 3, 2};
+            for (int widthIndex = 0; widthIndex < 6; ++widthIndex) {
+                page->setWidth(alarmLayoutWidths[widthIndex]);
+                QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(),
+                                          expectedAlarmSeverityColumns[widthIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(),
+                                          expectedHistoryMetadataColumns[widthIndex], 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit() && alarmSeverityDensityMatches(), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(alarmEventAndHistoryDensityMatches(), 3000);
+            }
             page->setWidth(originalEventHistoryPageWidth);
             QTRY_VERIFY_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt() >= 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
