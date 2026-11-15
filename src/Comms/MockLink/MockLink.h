@@ -86,6 +86,7 @@ public:
 
     /// Test API: simulate one gimbal device going offline and rediscovering.
     bool setGimbalDeviceOnlineForTesting(uint8_t gimbalDeviceId, bool online);
+    bool setGimbalDeviceOnlineForTesting(uint8_t managerCompId, uint8_t gimbalDeviceId, bool online);
 
     MockLinkFTP *mockLinkFTP() const;
 
