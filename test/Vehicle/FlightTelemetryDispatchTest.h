@@ -20,6 +20,7 @@ private slots:
     void _newBootIdResetsWatermark();
     void _delayedOldBootFrameIsRejected();
     void _unknownBootIdDoesNotResetWatermark();
+    void _multipleBootEpochsKeepRecentRetiredIdsRejected();
     void _familyIsFreshAfterAcceptedFrame();
     void _familyBecomesStaleWithoutFrames();
     void _familyRecoversToFreshAfterNewFrame();
