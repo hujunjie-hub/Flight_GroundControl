@@ -1311,7 +1311,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
-                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(3).arg(0).arg(0), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
                                       translatedTelemetryText("健康 %1").arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
@@ -1966,7 +1967,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
                                       QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
-                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(3).arg(0).arg(0), 3000);
 
             // One lost instance must remain visible as a red partial outage.
             sendLinkStatus(lastOperationTime + 700, bootId, 2, -68, 700, 30000, 0x700, 4);
@@ -1990,7 +1992,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             // reported link instance is currently lost.
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailMessage->property("valueText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
-                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
+                                          .arg(3).arg(0).arg(0), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
                                       translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
