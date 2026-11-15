@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.73
+版本：4.74
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -703,4 +703,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - 在 1672×941 紧凑垂直模式下，左侧整机状态、中间系统拓扑、右侧遥控输入三张 HeroPanel 应同排、同高、无重叠且完全位于 heroGrid 内。
 - 保持左/中/右宽度顺序 3/4/5，12 列桌面结构不因纵向密度模式改变；同时验证 1672×1100 标准垂直模式恢复。
+- 在同一 1672×941 紧凑模式下依次切换总览、飞行健康、导航时序、遥控与链路，逐页断言主视觉网格与详情网格为 12 列、趋势网格为 4 列、共享间距与紧凑 token 一致、趋势绘图区至少 64 px；最后恢复总览页。
 - 该断言与 1672×941 垂直密度、页签、趋势绘图区和详情标题保留断言共同执行；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
