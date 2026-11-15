@@ -1176,9 +1176,10 @@ Item {
                             QGCLabel {
                                 Layout.fillWidth: true
                                 text: dashboardRoot.lastResponseSample
-                                      ? qsTr("控制求解耗时 · %1 μs · %2")
+                                      ? qsTr("控制求解耗时 · %1 μs · %2 · %3 点")
                                         .arg(dashboardRoot.lastResponseSample.value.toFixed(0))
                                         .arg(dashboardRoot.controlTelemetryAvailable ? qsTr("实时遥测") : qsTr("遥测中断 · 历史样本"))
+                                        .arg(dashboardRoot.responseSamples.length)
                                       : qsTr("控制求解耗时 · 等待 FCU_CONTROL_STATUS 实测数据")
                                 color: dashboardRoot.controlTelemetryAvailable ? root.cyan : root.amber
                                 font.pointSize: ScreenTools.microFontPointSize
