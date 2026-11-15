@@ -149,6 +149,15 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
         require('topologyNodeContent.implicitHeight + 2 * contentVerticalInset' in content and
                 'anchors.topMargin: parent.contentVerticalInset' in content,
                 "FlightTelemetry topology node cards must use scaled insets and content-driven height")
+        require('readonly property real _overviewFlightFailsafeMinimumHeight:' in content and
+                'heroFailsafeContent.implicitHeight + 2 * contentVerticalInset' in content and
+                'heroAuthorityContent.implicitHeight + 2 * contentVerticalInset' in content,
+                "FlightTelemetry left flight safety rows must use ScreenTools-scaled content geometry")
+        require('flightTelemetry_heroArmStateBadge' in content and
+                'armStateText.implicitWidth + horizontalInset * 2' in content and
+                'root._overviewFlightStatusStripeWidth' in content,
+                "FlightTelemetry left flight safety badge and status stripe must use ScreenTools density tokens")
+
 
 
     elif name == "FlightRadio.qml":
