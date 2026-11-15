@@ -257,7 +257,9 @@ private:
     // Reject delayed packets from recently retired FCU boot sessions.
     QSet<quint64> _retiredBootIds;
     QQueue<quint64> _retiredBootIdOrder;
-    static constexpr int _retiredBootIdCapacity = 8;
+    // Retain enough recent sessions to reject delayed frames across repeated FCU reboots
+    // without allowing the retired-session cache to grow without bound.
+    static constexpr int _retiredBootIdCapacity = 64;
     quint64 _lastOperationTimeBootUs = 0;
     quint64 _lastNavigationTimeBootUs = 0;
     QHash<quint32, quint64> _lastSensorTimeByInstance;
