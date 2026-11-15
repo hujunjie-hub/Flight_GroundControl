@@ -1270,6 +1270,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("FCU +0.009200 s"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineEventRow->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineEventRow->y() < navigationTimelineTimeRow->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationOrder->property("text").toString(),
+                                      QStringLiteral("01"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
+                                      QStringLiteral("02"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
+                                      QStringLiteral("03"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
@@ -1372,12 +1378,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
                                       QStringLiteral("02"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
-                                      QStringLiteral("03"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationOrder->property("text").toString(),
-                                      QStringLiteral("01"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
-                                      QStringLiteral("02"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
                                       QStringLiteral("03"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
