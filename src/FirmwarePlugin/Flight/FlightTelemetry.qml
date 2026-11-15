@@ -92,6 +92,9 @@ SetupPage {
         { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
         { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
     ]
+    // The aggregate is a count only; it never replaces or infers any individual domain state.
+    readonly property var _overviewTopologyStatusCounts:
+        _overviewTopologyStatusCountsFor(_overviewTopologyFamilies)
     readonly property var _healthDomains: [
         { label: qsTr("飞行操作"), family: "operation", available: "operationAvailable" },
         { label: qsTr("导航估计"), family: "navigation", available: "navigationAvailable" },
@@ -118,6 +121,21 @@ SetupPage {
         for (let index = 0; index < _healthDomains.length; ++index)
             if (_familyStatus(_healthDomains[index].available) === statusText) ++count
         return count
+    }
+
+    function _overviewTopologyStatusCountsFor(families) {
+        const counts = { received: 0, stale: 0, waiting: 0 }
+        for (let index = 0; index < families.length; ++index) {
+            const status = _familyStatus(families[index].available)
+            if (status === qsTr("已接收")) {
+                ++counts.received
+            } else if (status === qsTr("数据超时")) {
+                ++counts.stale
+            } else {
+                ++counts.waiting
+            }
+        }
+        return counts
     }
     function _healthHeadline() {
         if (!_vehicle) return qsTr("未连接")
@@ -2403,7 +2421,7 @@ SetupPage {
                         spacing: 10
                         QGCLabel {
                             objectName: "flightTelemetry_topologyLegendTitle"
-                            text: qsTr("状态图例")
+                            text: qsTr("状态统计")
                             color: "#8298A2"
                             font.pointSize: ScreenTools.microFontPointSize
                         }
@@ -2429,7 +2447,8 @@ SetupPage {
                                 QGCLabel {
                                     objectName: "flightTelemetry_topologyLegendLabel_" + modelData.key
                                     Layout.fillWidth: true
-                                    text: modelData.label
+                                    text: qsTr("%1 %2").arg(modelData.label)
+                                          .arg(root._overviewTopologyStatusCounts[modelData.key])
                                     color: modelData.color
                                     font.pointSize: ScreenTools.microFontPointSize
                                     elide: Text.ElideRight
