@@ -446,7 +446,8 @@
         "health_sensor_instances_render_as_separated_cards_with_health_action_reason_and_receive_age",
         "health_prearm_metadata_uses_two_columns_at_760_px_and_above_then_stacks_below",
         "health_prearm_check_cards_preserve_name_result_reason_recovery_and_freshness_semantics",
-        "health_resource_task_cards_render_cpu_and_four_independent_validity_gated_metric_tiles"
+        "health_resource_task_cards_render_cpu_and_four_independent_validity_gated_metric_tiles",
+        "rc_axis_out_of_range_with_validity_bit_set_hides_matching_stick_and_recovers_with_valid_sample"
       ]
     },
     {
@@ -778,7 +779,8 @@
     "link_instance_state_summary_tracks_healthy_partial_loss_all_loss_recovery_and_freshness",
     "navigation_page_grid_breakpoints_are_verified_at_1280_1279_760_759_px",
     "link_state_severity_and_freshness_coverage_colors_are_independent_during_total_outage",
-    "health_sensor_prearm_and_resource_detail_cards_fit_parent_bounds_at_1600_1000_900_700_400_px"
+    "health_sensor_prearm_and_resource_detail_cards_fit_parent_bounds_at_1600_1000_900_700_400_px",
+    "rc_axis_out_of_range_with_validity_bit_set_hides_matching_stick_and_recovers_with_valid_sample"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
