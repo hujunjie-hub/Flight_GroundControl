@@ -253,6 +253,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(readOnlyBadge);
             QVERIFY(connectionStatus);
             QVERIFY(summaryTelemetry);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("titleText").toString(),
+                                      translatedTelemetryText("FCU 通信状态"), 3000);
             QVERIFY(summaryOperation);
             QVERIFY(summaryFailsafe);
             QVERIFY(summaryNavigation);
