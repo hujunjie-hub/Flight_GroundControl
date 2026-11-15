@@ -15,6 +15,7 @@
 #include "GimbalController.h"
 #include "MAVLinkLib.h"
 #include "QGCMAVLink.h"
+#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 #include "VehicleLinkManager.h"
@@ -325,8 +326,64 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
             QVERIFY(activeGimbal);
 
-            // Only a fully discovered device may become active. A stray or
-            // partially constructed Gimbal instance must not replace the live one.
+            // Inject a second manager/device pair through the same MAVLink wire
+            // path used by a real device. Device 155 reports its attitude from
+            // its own component ID with gimbal_device_id=0.
+            constexpr uint8_t secondDeviceId = 155;
+            auto sendSecondGimbalTelemetry = [&]() {
+                mavlink_message_t message{};
+                const uint32_t secondCapabilities =
+                    GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS |
+                    GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS |
+                    GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_LOCK |
+                    GIMBAL_MANAGER_CAP_FLAGS_HAS_RETRACT;
+                mavlink_msg_gimbal_manager_information_pack_chan(
+                    static_cast<uint8_t>(vehicle->id()), MAV_COMP_ID_AUTOPILOT1,
+                    mockLink->outgoingMavlinkChannel(), &message,
+                    0, secondCapabilities, secondDeviceId, -45, 45, -45, 45, -180, 180);
+                mockLink->respondWithMavlinkMessage(message);
+
+                mavlink_gimbal_manager_status_t secondStatus{};
+                secondStatus.gimbal_device_id = secondDeviceId;
+                mavlink_msg_gimbal_manager_status_encode(
+                    static_cast<uint8_t>(vehicle->id()), MAV_COMP_ID_AUTOPILOT1,
+                    &message, &secondStatus);
+                mockLink->respondWithMavlinkMessage(message);
+
+                const float secondQuaternion[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+                mavlink_msg_gimbal_device_attitude_status_pack_chan(
+                    static_cast<uint8_t>(vehicle->id()), secondDeviceId,
+                    mockLink->outgoingMavlinkChannel(), &message,
+                    0, 0, 0,
+                    GIMBAL_DEVICE_FLAGS_NEUTRAL |
+                        GIMBAL_DEVICE_FLAGS_ROLL_LOCK |
+                        GIMBAL_DEVICE_FLAGS_PITCH_LOCK,
+                    secondQuaternion,
+                    0.0f, 0.0f, 0.0f, 0,
+                    0.0f, 10.0f, 0);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+            sendSecondGimbalTelemetry();
+
+            QTRY_COMPARE_WITH_TIMEOUT(vehicle->gimbalController()->gimbals()->count(), 2, 5000);
+            Gimbal *secondGimbal = nullptr;
+            for (int index = 0; index < vehicle->gimbalController()->gimbals()->count(); ++index) {
+                auto *candidate = qobject_cast<Gimbal *>(
+                    vehicle->gimbalController()->gimbals()->get(index));
+                if (candidate && candidate->deviceId()->rawValue().toUInt() == secondDeviceId) {
+                    secondGimbal = candidate;
+                    break;
+                }
+            }
+            QVERIFY(secondGimbal);
+
+            // Switching away from a device with confirmed local ownership is
+            // rejected, so the operator cannot orphan an actively controlled unit.
+            vehicle->gimbalController()->setActiveGimbal(secondGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
+
+            // A stray or partially constructed Gimbal instance must not replace
+            // the live device either.
             Gimbal unregisteredGimbal(nullptr);
             vehicle->gimbalController()->setActiveGimbal(&unregisteredGimbal);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
