@@ -412,7 +412,8 @@
         "overview_top_kpis_are_not_repeated_in_system_topology_panel",
         "overview_left_panel_does_not_repeat_six_domain_topology_health_matrix",
         "overview_summary_tiles_are_hidden_on_page_zero_and_restored_on_pages_one_to_three",
-        "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px"
+        "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px",
+        "four_dashboard_pages_and_detail_grid_share_screen_tools_scaled_spacing_across_responsive_widths"
       ]
     },
     {
