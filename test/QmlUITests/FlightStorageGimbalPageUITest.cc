@@ -736,6 +736,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, NAN);
             QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedNonFiniteIntervalAckCount, 1000);
             QCOMPARE(broadcastAckResult, static_cast<uint8_t>(MAV_RESULT_UNSUPPORTED));
+            QTest::qWait(1500);
             QVERIFY(!activeGimbal->attitudeStatusFresh());
             QVERIFY(!secondGimbal->attitudeStatusFresh());
 
