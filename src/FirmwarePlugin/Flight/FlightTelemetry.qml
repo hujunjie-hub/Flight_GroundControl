@@ -1280,6 +1280,7 @@ SetupPage {
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroFlight"
+                    fillRowHeight: true
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 2 : 1
                     eyebrow: "AIRCRAFT STATUS / TELEMETRY"
                     titleText: qsTr("整机状态概览")
@@ -1407,6 +1408,7 @@ SetupPage {
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroNavigation"
+                    fillRowHeight: true
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 5 : root._dashboardColumns >= 6 ? 2 : 1
                     eyebrow: "SYSTEM TOPOLOGY & NAVIGATION"
                     titleText: qsTr("系统拓扑与导航估计")
@@ -1570,6 +1572,7 @@ SetupPage {
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroRcInput"
+                    fillRowHeight: true
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 2 : 1
                     eyebrow: "ALARM EVENTS"
                     titleText: qsTr("告警事件（优先级）")
@@ -1668,6 +1671,7 @@ SetupPage {
                 rowSpacing: 10
                 HeroPanel {
                     objectName: "flightTelemetry_healthOverview"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "TELEMETRY DOMAIN OVERVIEW"
                     titleText: qsTr("遥测域概览")
@@ -1708,6 +1712,7 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_healthPageMatrix"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "TELEMETRY FRESHNESS MATRIX"
                     titleText: qsTr("遥测域接收矩阵")
@@ -1764,6 +1769,7 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_healthSafety"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "SAFETY MONITORING"
                     titleText: qsTr("安全监测")
@@ -2705,12 +2711,14 @@ SetupPage {
         required property string titleText
         property string eyebrow: "FLIGHT STATUS"
         property string statusFamily: ""
+        property bool fillRowHeight: false
         readonly property color currentStatusColor: statusFamily.length > 0
                                                             ? root._familyStatusColor(statusFamily) : "#0B6873"
         default property alias contentData: bodyColumn.data
 
         Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
+        Layout.fillHeight: hero.fillRowHeight
+        Layout.alignment: hero.fillRowHeight ? Qt.AlignLeft : Qt.AlignTop
         implicitWidth: 300
         implicitHeight: heroColumn.implicitHeight + 20
         radius: 8

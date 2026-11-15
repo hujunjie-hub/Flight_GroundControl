@@ -288,7 +288,10 @@
         "health_page_matrix_explicitly_represents_message_freshness_not_aggregate_device_health",
         "health_page_overview_matrix_and_safety_panels_do_not_show_single_family_status_badges",
         "health_detail_cards_use_balanced_4_4_4_and_6_3_3_desktop_rows",
-        "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px"
+        "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px",
+        "overview_hero_panels_fill_the_same_desktop_grid_row_height",
+        "health_overview_matrix_and_safety_panels_align_to_a_shared_desktop_row_height",
+        "hero_panel_fill_row_height_is_opt_in_and_other_cards_keep_implicit_height"
       ]
     },
     {
@@ -442,7 +445,10 @@
     "health_page_matrix_explicitly_represents_message_freshness_not_aggregate_device_health",
     "health_page_overview_matrix_and_safety_panels_do_not_show_single_family_status_badges",
     "health_detail_cards_use_balanced_4_4_4_and_6_3_3_desktop_rows",
-    "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px"
+    "health_detail_cards_reflow_to_full_and_half_rows_at_1000_px_and_stack_below_760_px",
+    "overview_hero_panels_fill_the_same_desktop_grid_row_height",
+    "health_overview_matrix_and_safety_panels_align_to_a_shared_desktop_row_height",
+    "hero_panel_fill_row_height_is_opt_in_and_other_cards_keep_implicit_height"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

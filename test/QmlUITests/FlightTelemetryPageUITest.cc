@@ -843,6 +843,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* overviewFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
             QVERIFY(summaryBand);
             QVERIFY(overviewFlight);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(heroFlight->height() - heroNavigation->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(heroFlight->height() - heroRcInput->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryBand->property("radius").toInt(), 8, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("radius").toInt(), 8, 3000);
             const QString pageGrids[] = {
@@ -994,6 +996,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(storageDetail);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->property("titleText").toString(),
                                       translatedTelemetryText("遥测域概览"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthMatrixPanel->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthSafety->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthSafety->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixPanel->property("titleText").toString(),
                                       translatedTelemetryText("遥测域接收矩阵"), 3000);
             QVERIFY(healthOverview->property("statusFamily").toString().isEmpty());
