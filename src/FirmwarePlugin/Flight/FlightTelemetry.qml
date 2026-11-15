@@ -1855,6 +1855,8 @@ SetupPage {
                         unitText: "m"
                         statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
                         accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityHorizontalPosition)
+                        statusColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
                     }
                     MetricReadout {
                         objectName: "flightTelemetry_metricVelocity"
@@ -1866,6 +1868,8 @@ SetupPage {
                         unitText: "m/s"
                         statusText: root._navigationMetricStatus(root._navCapabilityVelocity)
                         accentColor: root._navigationMetricColor(root._navCapabilityVelocity)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityVelocity)
+                        statusColor: root._navigationMetricColor(root._navCapabilityVelocity)
                     }
                     MetricReadout {
                         objectName: "flightTelemetry_metricHeading"
@@ -1877,6 +1881,8 @@ SetupPage {
                         unitText: "rad"
                         statusText: root._navigationMetricStatus(root._navCapabilityHeading)
                         accentColor: root._navigationMetricColor(root._navCapabilityHeading)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityHeading)
+                        statusColor: root._navigationMetricColor(root._navCapabilityHeading)
                     }
                     SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconSource: "/InstrumentValueIcons/radio.svg"; showDivider: true }
                     SummaryTile { objectName: "flightTelemetry_summaryOperation"; visible: root._activeDashboardPage !== 0; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconSource: "/InstrumentValueIcons/layers.svg"; showDivider: true }
