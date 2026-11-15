@@ -406,7 +406,13 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 仅在 controlAvailable 为真且收到新的飞控时间戳时采样；最多保留最近 120 个有效样本，不用地面站定时器重复采样旧值。
 - 控制器 boot ID 变化、飞控时间戳回退或活动飞行器切换时清空历史样本，避免跨启动/跨飞行器拼接曲线。 相邻有效样本间隔超过 FlightTelemetryFactGroup 的 3 秒 stale threshold 时断开曲线并单独绘制采样点，不跨缺样区间连线。
 - 当前曲线明确标记为“控制求解耗时”，显示最近真实值；控制遥测失效时标注历史样本，样本不足两个时显示等待态。
-- 该曲线是控制计算耗时趋势，不冒充参数目标/反馈误差响应曲线；参数变化标记、实际反馈、仿真预测、仿真接口、影响关系和 AI 建议仍待后续实现。
+- 曲线横轴按 FCU 启动时间戳等比例绘制，不按样本序号压缩时间；相邻有效样本间隔超过 3 秒时断开连线，并保留间隔两侧的真实采样点。实时可用状态同时要求 controlAvailable=true、链路正常且 familyStale.control=false。
+- 曲线从当前有效样本计算最小值、平均值、峰值和实际时间窗；没有样本时显示等待态，不生成示例值。
+- ParameterEditorController 仅在匹配的 PARAM_VALUE 写入确认成功后发出 parameterWriteConfirmed(componentId, parameterName, confirmedValue)；失败、超时或未授权写入不产生确认事件。
+- 参数确认事件先记录当前 FCU boot ID 与最后一个已接收控制时间戳，随后只在同一 boot ID 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话遥测基线时只显示未关联说明，不伪造曲线标记。
+- 参数标记与曲线样本在 boot ID 变化、时间戳回退或 activeVehicle 切换时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
+- 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
+- ParameterEditorController 回归测试增加“非 Flight SIL 未授权写入不得产生 parameterWriteConfirmed 事件”断言；本轮不运行构建、QML UI 测试、单元测试或 CI，新增测试保持 NOT_RUN。
 - 本轮未运行 Windows 构建、QML UI 测试、单元测试或 CI，所有运行时验收保持 NOT_RUN。
 
 ### Phase 5：视觉收口与集中验收
