@@ -375,7 +375,7 @@ SetupPage {
     }
     function _summaryTileTitle(index) {
         const titles = [
-            [qsTr("FCU 遥测接收"), qsTr("飞行状态"), qsTr("失效保护等级"), qsTr("导航估计"), qsTr("数据链路"), qsTr("时间同步")],
+            [qsTr("FCU 通信状态"), qsTr("飞行状态"), qsTr("失效保护等级"), qsTr("导航估计"), qsTr("数据链路"), qsTr("时间同步")],
             [qsTr("飞控操作"), qsTr("传感器健康"), qsTr("控制器状态"), qsTr("执行器状态"), qsTr("系统资源"), qsTr("事件记录")],
             [qsTr("导航状态"), qsTr("水平位置 σ"), qsTr("速度 σ"), qsTr("航向 σ"), qsTr("时间质量"), qsTr("UTC 不确定度")],
             [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("数据链路"), qsTr("链路实例"), qsTr("RC 遥测接收年龄")]
