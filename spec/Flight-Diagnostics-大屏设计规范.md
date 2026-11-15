@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.53
+- 版本：6.54
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -1068,3 +1068,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - FlightTelemetryPageUITest 增加总览主视觉与详情卡片跨组件断言，检查标题/眉题/徽标字体属性（point size、weight、color）、徽标尺寸/圆角、状态文本/颜色、卡片背景/圆角和内边距/区块间距一致。
 - 本阶段仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、SPEC 入口、Windows Release G15 与机器可读 manifest；不修改 MAVLink、FactGroup、Flight ICD、freshness 阈值、VehicleLinkManager、飞控控制行为或其他页面导航。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增跨组件视觉回归断言为 NOT_RUN，待后续集中验收。
+
+## 78. Phase 2.32 总览顶部 KPI 与三栏主视觉信息去重（2026-11-15）
+
+- 总览页顶部摘要带不再重复展示 FCU 通信、飞行操作、失效保护、链路和时间质量状态；改为三项导航估计关键指标：水平位置标准差 σ、速度标准差 σ、航向标准差 σ。
+- 三项 KPI 沿用既有 navigation family freshness、capability mask、字段有效性与标准差原值，不引入阈值或推断定位等级；桌面/中屏为三列，700 px 为两列，400 px 为单列。
+- 三项 MetricReadout 从中栏「系统拓扑与导航估计」迁移至顶部摘要带；中栏只负责六个遥测域拓扑节点、连接状态与各 family 独立接收年龄，不重复展示导航标准差数值。
+- 左栏保留飞行模式、解锁状态、失效保护等级、控制权；移除与中栏拓扑重叠的六域 HealthCell 矩阵，保留 FCU 控制权只读说明。右栏继续专注最高优先级告警事件。
+- 形成明确职责：顶部 KPI = 导航估计关键数值；左栏 = 飞行操作与安全状态；中栏 = 六域系统拓扑与 freshness；右栏 = 告警事件与原因。
+- 飞行健康/导航时序/遥控与链路三个详情页的六项 SummaryTile 保持原有内容和响应式规则；只有总览页使用三项导航 KPI。
+- MockLink UI Integration 验证总览页三项 KPI 显示、其他页面摘要卡切换、1600/1400/1000/900/700/400 px KPI 边界，以及拓扑面板不再重复导航标准差；左栏不再渲染重复六域矩阵。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、设计 SPEC、SPEC 入口、Windows Release G15 和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增 UI 回归为 NOT_RUN，等待集中验收。
