@@ -314,6 +314,62 @@ void FlightTelemetryDispatchTest::_allFcuFamiliesTraverseVehicleDispatch()
     QCOMPARE(telemetry->getFact(QStringLiteral("buildDigestKind"))->rawValue().toUInt(), 3U);
 }
 
+void FlightTelemetryDispatchTest::_controlStatusUpdatedSignalFiresOnlyForAcceptedFrames()
+{
+    Vehicle *vehicle = createMockLinkAndWaitForVehicle(
+        QStringLiteral("Flight control frame signal"), MAV_AUTOPILOT_GENERIC);
+    QVERIFY(vehicle);
+
+    SharedLinkInterfacePtr sharedLink;
+    MockLink *mockLink = mockLinkFor(vehicle, sharedLink);
+    QVERIFY(sharedLink);
+    QVERIFY(mockLink);
+
+    FlightTelemetryFactGroup *telemetry = telemetryFor(vehicle);
+    QVERIFY(telemetry);
+    QSignalSpy controlStatusSpy(telemetry, &FlightTelemetryFactGroup::controlStatusUpdated);
+    QVERIFY(controlStatusSpy.isValid());
+
+    mavlink_fcu_control_status_t control{};
+    control.time_boot_us = 1000;
+    control.boot_id = 0x5566778899AABBCCULL;
+    control.profile_id = 0x00010001U;
+    control.control_sequence = 1;
+    control.controllable_dof_mask = 0x0F;
+    control.degraded_dof_mask = 0;
+    control.solve_time_us = 1800;
+    control.solver_status = 2;
+
+    auto send = [mockLink, vehicle, &control]() {
+        mavlink_message_t message{};
+        mavlink_msg_fcu_control_status_encode(
+            static_cast<uint8_t>(vehicle->id()),
+            static_cast<uint8_t>(vehicle->compId()),
+            &message, &control);
+        mockLink->respondWithMavlinkMessage(message);
+    };
+
+    send();
+    QTRY_COMPARE(controlStatusSpy.count(), 1);
+
+    // Duplicate timestamps and invalid solver states must not notify consumers.
+    send();
+    QTest::qWait(100);
+    QCOMPARE(controlStatusSpy.count(), 1);
+
+    control.time_boot_us = 2000;
+    control.solver_status = 9;
+    send();
+    QTest::qWait(100);
+    QCOMPARE(controlStatusSpy.count(), 1);
+
+    control.time_boot_us = 3000;
+    control.solver_status = 2;
+    control.control_sequence = 2;
+    send();
+    QTRY_COMPARE(controlStatusSpy.count(), 2);
+}
+
 void FlightTelemetryDispatchTest::_invalidFramesAndSourcesDoNotUpdateTelemetry()
 {
     Vehicle *vehicle = createMockLinkAndWaitForVehicle(
