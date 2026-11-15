@@ -263,10 +263,16 @@ SetupPage {
             if (Number(_linkStatuses[index].linkKind) === 1) return _linkStatuses[index]
         return _linkStatuses.length > 0 ? _linkStatuses[0] : null
     }
+    function _linkInstanceFresh(receiveAgeMs) {
+        if (_familyStatus("linkAvailable") !== qsTr("已接收")) return false
+        const age = Number(receiveAgeMs)
+        return Number.isFinite(age) && age >= 0 && age <= _familyFreshnessLimitMs("link")
+    }
     function _linkMetricText(fieldName, bit, decimals, suffix) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return _familyStatus("linkAvailable")
         const link = _primaryLinkStatus()
         if (!link) return qsTr("未上报")
+        if (!_linkInstanceFresh(link.receiveAgeMs)) return qsTr("数据超时")
         if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
         if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
         return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
@@ -279,7 +285,7 @@ SetupPage {
     function _linkTrendSampleValue(fieldName, bit, divisor, allowNegative) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return null
         const link = _primaryLinkStatus()
-        if (!link || _rawMaskState(link.validityMask, bit) !== 1) return null
+        if (!link || !_linkInstanceFresh(link.receiveAgeMs) || _rawMaskState(link.validityMask, bit) !== 1) return null
         const value = Number(link[fieldName])
         if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
         return value / divisor
@@ -1866,10 +1872,12 @@ SetupPage {
                             QGCLabel {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3")
-                                      .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
-                                      .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
-                                      .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
+                                text: root._linkInstanceFresh(modelData.receiveAgeMs)
+                                      ? qsTr("RSSI %1 · 质量 %2 · 丢包 %3")
+                                            .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
+                                            .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
+                                            .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
+                                      : qsTr("链路实例数据超时")
                                 color: "#A8BBC3"
                             }
                             QGCLabel {
