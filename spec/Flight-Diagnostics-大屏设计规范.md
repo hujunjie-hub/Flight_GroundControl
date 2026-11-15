@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.34
+- 版本：6.35
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；本轮完成遥控链路页主视觉分区与响应式比例调整；保留并继续维护当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -894,7 +894,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 GroundControl QML、MockLink UI Integration 与 SPEC/G15；不修改 BUILD_INFO 协议、构建快照缓存、Profile ID 定义或飞控控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
 
 
-## 60. Phase 2.16 遥控与链路页大屏主视觉布局适配（2026-11-15）
+## 61. Phase 2.16 遥控与链路页大屏主视觉布局适配（2026-11-15）
 
 - 本阶段适配对象是 Flight Diagnostics 第四页「遥控与链路」（FlightTelemetry.qml 的 flightTelemetry_rcLinkPageGrid），不是独立遥控校准页 FlightRadio.qml；后者保留既有校准、CRSF 绑定、微调量复制和原始 RC PWM 通道职责。
 - 16:9 桌面大屏（availableWidth ≥ 1280）采用两行主视觉布局：第一行「遥控输入监视」与「逻辑轴输入（实时）」各占 6/12；第二行「链路质量」占 8/12、「失控保护」占 4/12。优先给双摇杆和链路实例指标足够宽度，避免四张卡片等宽横排造成信息拥挤。
