@@ -275,6 +275,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(heroFlight);
             QVERIFY(heroFlight->property("statusFamily").toString().isEmpty());
             QVERIFY(heroNavigation);
+            QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
+            QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
             QVERIFY(heroRcInput);
             QVERIFY(trendPanel);
             QVERIFY(trendGrid);
@@ -327,6 +329,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 topologyNodeItems[index] = findVisibleItem(_rootItem, nodeName, 3000);
                 QVERIFY2(topologyNodeItems[index], qPrintable(nodeName));
                 QVERIFY(topologyNodeItems[index]->property("stateColor").canConvert<QColor>());
+                QVERIFY(topologyNodeItems[index]->property("stateText").isValid());
+                const QString statusName = QStringLiteral("flightTelemetry_topologyNodeStatus_")
+                                           + QString::fromLatin1(topologyFamilies[index]);
+                QQuickItem* statusItem = findVisibleItem(_rootItem, statusName, 3000);
+                QVERIFY2(statusItem, qPrintable(statusName));
+                QCOMPARE(statusItem->property("text").toString(),
+                         topologyNodeItems[index]->property("stateText").toString());
                 const QString ageName = QStringLiteral("flightTelemetry_topologyNodeAge_")
                                          + QString::fromLatin1(topologyFamilies[index]);
                 QQuickItem* ageItem = findVisibleItem(_rootItem, ageName, 3000);
@@ -334,6 +343,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 const QString receiveAgePrefix =
                     translatedTelemetryText("接收 %1").section(QStringLiteral("%1"), 0, 0);
                 QVERIFY(ageItem->property("text").toString().startsWith(receiveAgePrefix));
+            }
+            const QVariantList initialTopologyConnections =
+                topologyCanvas->property("familyConnectionStates").toList();
+            QCOMPARE(initialTopologyConnections.size(), 6);
+            for (int index = 0; index < 6; ++index) {
+                const QVariantMap connection = initialTopologyConnections.at(index).toMap();
+                QCOMPARE(connection.value(QStringLiteral("family")).toString(),
+                         QString::fromLatin1(topologyFamilies[index]));
+                QCOMPARE(connection.value(QStringLiteral("available")).toString(),
+                         QString::fromLatin1(topologyFamilies[index]) + QStringLiteral("Available"));
+                QVERIFY(!connection.value(QStringLiteral("status")).toString().isEmpty());
+                QVERIFY(connection.value(QStringLiteral("color")).canConvert<QColor>());
             }
 
             const QVariantList priorityEventInput{
@@ -1229,6 +1250,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#45D39A")),
                 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodeItems[1]->property("stateText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("status")).toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
@@ -1626,6 +1654,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#F0B94B")),
                 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodeItems[1]->property("stateText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("status")).toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendPosition->property("lastSampleValid").toBool(), 3000);
             // RC input uses a longer 5500 ms family freshness window.
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), staleText, 6500);
@@ -1657,6 +1692,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#45D39A")),
                 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodeItems[1]->property("stateText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("status")).toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
+                    .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#45D39A")), 3000);
 
             // A new FCU boot epoch clears the local trend buffer before new-session samples are appended.
             const int previousBootTrendSampleCount = trendPosition->property("sampleCount").toInt();
