@@ -215,6 +215,13 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
             3, false, true, true, true, true, true, true);
         Q_ASSERT(addedLegacyDevice);
         Q_UNUSED(addedLegacyDevice);
+
+        // A second manager component with its own device verifies that
+        // discovery, command routing and telemetry are isolated by manager ID.
+        const bool addedSecondManager = _mockLinkGimbal->addSimulatedManager(
+            2, 156, false, true, true, true, true, false, true);
+        Q_ASSERT(addedSecondManager);
+        Q_UNUSED(addedSecondManager);
     }
 
     if (_mockConfig->startArmed()) {
