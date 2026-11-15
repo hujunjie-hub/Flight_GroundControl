@@ -61,6 +61,28 @@ Item {
             id: dashboardRoot
             anchors.fill: parent
             property bool parameterDomainAvailable: false
+            property string targetValueText: ""
+            readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
+            readonly property var confirmedValue: parameterEditorLoader.item ? parameterEditorLoader.item.confirmedValue : undefined
+            readonly property bool tuningBusy: parameterEditorLoader.item ? parameterEditorLoader.item.tuningBusy : false
+            readonly property string tuningStatus: parameterEditorLoader.item ? parameterEditorLoader.item.tuningStatus : qsTr("请选择参数")
+            readonly property string tuningError: parameterEditorLoader.item ? parameterEditorLoader.item.tuningError : ""
+            readonly property bool canApplySelectedValue: parameterEditorLoader.item ? parameterEditorLoader.item.canApplySelectedValue : false
+            readonly property bool canReadbackSelectedValue: parameterEditorLoader.item ? parameterEditorLoader.item.canReadbackSelectedValue : false
+            readonly property bool canRestorePreviousValue: parameterEditorLoader.item ? parameterEditorLoader.item.canRestorePreviousValue : false
+
+            onSelectedFactChanged: targetValueText = selectedFact ? selectedFact.valueString : ""
+
+            function applySelectedValue() {
+                return parameterEditorLoader.item
+                        ? parameterEditorLoader.item.applySelectedValue(targetValueText) : false
+            }
+            function refreshSelectedValue() {
+                return parameterEditorLoader.item ? parameterEditorLoader.item.refreshSelectedValue() : false
+            }
+            function restorePreviousValue() {
+                return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
+            }
 
             function domainCategoryName(domainIndex) {
                 if (!root._flightModelAvailable) {
@@ -683,7 +705,9 @@ Item {
                                     id: parameterEditorComponent
                                     ParameterEditor {
                                         externalCategoryNavigation: true
-                                        enabled: root._flightModelAvailable && root._linkHealthy && root._parametersReady && dashboardRoot.parameterDomainAvailable
+                                        parameterCenterSafeMode: true
+                                        enabled: root._flightModelAvailable && root._linkHealthy && root._parametersReady &&
+                                                 dashboardRoot.parameterDomainAvailable && !dashboardRoot.tuningBusy
                                     }
                                 }
 
@@ -815,19 +839,34 @@ Item {
                                 Layout.fillWidth: true
                                 spacing: 4
                                 Repeater {
-                                    model: [qsTr("实时在线"), qsTr("试探调参"), qsTr("批量调参")]
+                                    model: [
+                                        { title: qsTr("实时在线"), enabled: true },
+                                        { title: qsTr("试探调参"), enabled: false },
+                                        { title: qsTr("批量调参"), enabled: false }
+                                    ]
                                     delegate: Rectangle {
                                         required property int index
-                                        required property string modelData
+                                        required property var modelData
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 40
                                         radius: 5
                                         color: index === 0 ? "#0A4652" : "#061F29"
                                         border.color: index === 0 ? root.cyan : "#16424C"
-                                        opacity: 0.72
-                                        QGCLabel { anchors.centerIn: parent; text: modelData; color: index === 0 ? root.mainText : root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
+                                        opacity: modelData.enabled ? 1.0 : 0.42
+                                        QGCLabel {
+                                            anchors.centerIn: parent
+                                            text: modelData.title
+                                            color: index === 0 ? root.mainText : root.mutedText
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                        }
                                     }
                                 }
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("SIL ONLY · 仅限解除锁定、未飞行状态")
+                                color: root.amber
+                                font.pointSize: ScreenTools.microFontPointSize
                             }
                             Rectangle {
                                 Layout.fillWidth: true
@@ -838,29 +877,92 @@ Item {
                                 ColumnLayout {
                                     anchors.fill: parent
                                     anchors.margins: root.gap
-                                    spacing: 7
+                                    spacing: 6
                                     QGCLabel { text: qsTr("当前调参参数"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
                                     QGCLabel {
-                                        text: qsTr("请先在左侧参数表中选择参数")
+                                        Layout.fillWidth: true
+                                        text: dashboardRoot.selectedFact
+                                              ? dashboardRoot.selectedFact.name + " · " + dashboardRoot.selectedFact.shortDescription
+                                              : qsTr("请先在左侧参数表中选择参数")
                                         color: root.mainText
                                         font.pointSize: ScreenTools.bodyEmphasisFontPointSize
                                         wrapMode: Text.WordWrap
                                     }
-                                    QGCLabel { text: qsTr("当前值 / 目标值 / 单位 / 范围"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: dashboardRoot.selectedFact
+                                              ? qsTr("当前确认值：%1 %2").arg(Number(dashboardRoot.confirmedValue).toFixed(dashboardRoot.selectedFact.decimalPlaces)).arg(dashboardRoot.selectedFact.units)
+                                              : qsTr("当前确认值：—")
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: dashboardRoot.selectedFact
+                                              ? qsTr("允许范围：%1 – %2 %3").arg(dashboardRoot.selectedFact.minString).arg(dashboardRoot.selectedFact.maxString).arg(dashboardRoot.selectedFact.units)
+                                              : qsTr("允许范围：—")
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
                                     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424C" }
-                                    QGCLabel { text: qsTr("参数值调节控件将在 Phase 3 接入"); color: root.amber; font.pointSize: ScreenTools.captionFontPointSize; wrapMode: Text.WordWrap }
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        QGCLabel { text: qsTr("目标值"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
+                                        Item { Layout.fillWidth: true }
+                                        TextField {
+                                            Layout.preferredWidth: 116
+                                            Layout.preferredHeight: 32
+                                            enabled: dashboardRoot.canApplySelectedValue
+                                            text: dashboardRoot.targetValueText
+                                            placeholderText: qsTr("目标值")
+                                            selectByMouse: true
+                                            inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                            color: root.mainText
+                                            font.pointSize: ScreenTools.bodyFontPointSize
+                                            onTextEdited: dashboardRoot.targetValueText = text
+                                            background: Rectangle {
+                                                radius: 4
+                                                color: "#04151D"
+                                                border.color: root.borderColor
+                                            }
+                                        }
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: dashboardRoot.tuningError !== ""
+                                              ? dashboardRoot.tuningError : dashboardRoot.tuningStatus
+                                        color: dashboardRoot.tuningError !== "" ? root.red : root.amber
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        wrapMode: Text.WordWrap
+                                    }
                                     Item { Layout.fillHeight: true }
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        Button { Layout.fillWidth: true; text: qsTr("应用到飞控"); enabled: false }
-                                        Button { Layout.fillWidth: true; text: qsTr("回读验证"); enabled: false }
-                                        Button { Layout.fillWidth: true; text: qsTr("恢复上一次"); enabled: false }
+                                        spacing: 4
+                                        QGCButton {
+                                            Layout.fillWidth: true
+                                            text: qsTr("应用到飞控")
+                                            enabled: dashboardRoot.canApplySelectedValue && dashboardRoot.targetValueText.trim() !== ""
+                                            onClicked: dashboardRoot.applySelectedValue()
+                                        }
+                                        QGCButton {
+                                            Layout.fillWidth: true
+                                            text: qsTr("回读验证")
+                                            enabled: dashboardRoot.canReadbackSelectedValue
+                                            onClicked: dashboardRoot.refreshSelectedValue()
+                                        }
+                                        QGCButton {
+                                            Layout.fillWidth: true
+                                            text: qsTr("恢复上一次")
+                                            enabled: dashboardRoot.canRestorePreviousValue
+                                            onClicked: dashboardRoot.restorePreviousValue()
+                                        }
                                     }
                                 }
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
-                                text: qsTr("保留原生 Fact 编辑；独立在线调参闭环尚未启用")
+                                text: qsTr("单参数写入复用 Fact / ParameterManager；试探调参与批量调参仍保持关闭")
                                 color: root.mutedText
                                 font.pointSize: ScreenTools.microFontPointSize
                                 wrapMode: Text.WordWrap
