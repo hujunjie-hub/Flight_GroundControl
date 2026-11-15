@@ -36,6 +36,8 @@ SetupPage {
     readonly property int _overviewKpiColumns: availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _overviewPriorityEventLimit: 4
     readonly property int _eventHistoryDisplayLimit: 8
+    readonly property var _overviewEventSeverityCounts:
+        _eventSeverityCountsFor(_telemetry ? _telemetry.recentEvents : [])
     readonly property int _healthColumns: availableWidth >= 1280 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
@@ -175,6 +177,25 @@ SetupPage {
     function _eventCountText() {
         if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
         return _telemetry ? String(_telemetry.recentEvents.length) : qsTr("未上报")
+    }
+    function _eventSeverityCountsFor(events) {
+        const counts = { critical: 0, error: 0, warning: 0, info: 0, unknown: 0 }
+        const records = events && typeof events.length === "number" ? events : []
+        for (let index = 0; index < records.length; ++index) {
+            const severity = Number(records[index].severity)
+            if (!Number.isInteger(severity)) {
+                ++counts.unknown
+            } else {
+                switch (severity) {
+                case 0: ++counts.info; break
+                case 1: ++counts.warning; break
+                case 2: ++counts.error; break
+                case 3: ++counts.critical; break
+                default: ++counts.unknown; break
+                }
+            }
+        }
+        return counts
     }
     function _priorityEventsFor(events) {
         const records = events && typeof events.slice === "function" ? events.slice() : []
@@ -2655,6 +2676,58 @@ SetupPage {
                         text: qsTr("最高严重度置顶 · 同级按本地接收序号")
                         color: "#6F9DA7"
                         font.pointSize: ScreenTools.microFontPointSize
+                    }
+                    GridLayout {
+                        objectName: "flightTelemetry_alarmSeverityGrid"
+                        visible: root._familyStatus("eventAvailable") === qsTr("已接收") &&
+                                 root._telemetry && root._telemetry.recentEvents.length > 0
+                        Layout.fillWidth: true
+                        columns: root.availableWidth >= 1000 ? 5 : 3
+                        columnSpacing: 5
+                        rowSpacing: 4
+                        Repeater {
+                            model: [
+                                { key: "critical", label: qsTr("严重"), color: "#F06464" },
+                                { key: "error", label: qsTr("错误"), color: "#F08B45" },
+                                { key: "warning", label: qsTr("警告"), color: "#F0B94B" },
+                                { key: "info", label: qsTr("信息"), color: "#45C6E5" },
+                                { key: "unknown", label: qsTr("未知"), color: "#8A9A94" }
+                            ]
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property color severityColor: modelData.color
+                                objectName: "flightTelemetry_alarmSeverityChip_" + modelData.key
+                                Layout.fillWidth: true
+                                implicitHeight: 25
+                                radius: 4
+                                color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.10)
+                                border.width: 1
+                                border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.38)
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 7
+                                    anchors.rightMargin: 7
+                                    spacing: 4
+                                    QGCLabel {
+                                        objectName: "flightTelemetry_alarmSeverityLabel_" + modelData.key
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        text: modelData.label
+                                        color: severityColor
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        elide: Text.ElideRight
+                                    }
+                                    QGCLabel {
+                                        objectName: "flightTelemetry_alarmSeverityCount_" + modelData.key
+                                        text: String(root._overviewEventSeverityCounts[modelData.key])
+                                        color: severityColor
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        font.weight: ScreenTools.strongFontWeight
+                                        horizontalAlignment: Text.AlignRight
+                                    }
+                                }
+                            }
+                        }
                     }
                     Rectangle {
                         objectName: "flightTelemetry_alarmEmptyState"
