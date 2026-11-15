@@ -184,6 +184,18 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
                 'width: root._dashboardPanelAccentStripeWidth' in content and
                 'Layout.preferredHeight: root._dashboardPanelDividerHeight' in content,
                 "FlightTelemetry hero and detail panel frame geometry must scale with ScreenTools")
+        require('readonly property real _dashboardTrendGridSpacing: (_compactDashboardVertical ? 8 : 10) * _dashboardVerticalDensityScale' in content and
+                'readonly property real _dashboardTrendCanvasMinimumHeight: 64 * _dashboardVerticalDensityScale' in content and
+                'Layout.preferredHeight: root._dashboardTrendCanvasMinimumHeight' in content and
+                'readonly property real contentInset: root._dashboardTrendInset' in content and
+                'readonly property real contentSpacing: root._dashboardTrendSpacing' in content,
+                "FlightTelemetry trend cards and plot minimum height must preserve the reference baseline and scale")
+        require('const density = root._dashboardVerticalDensityScale' in content and
+                'ctx.lineWidth = density' in content and
+                'ctx.lineWidth = 2 * density' in content and
+                'ctx.arc(currentX, currentY, 5 * density' in content and
+                'ctx.shadowBlur = 6 * density' in content,
+                "FlightTelemetry trend Canvas plot inset, strokes, glow and markers must scale with UI density")
 
 
 
