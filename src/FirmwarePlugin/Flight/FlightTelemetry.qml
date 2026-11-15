@@ -84,6 +84,20 @@ SetupPage {
     readonly property real _dashboardTrendSpacing: _compactDashboardVertical ? 4 : 5
     readonly property real _dashboardTrendMinimumHeight: _compactDashboardVertical ? 128 : 134
 
+    // Keep the FCU monotonic timeline legible as the application font scale changes.
+    // The default scale retains the current compact geometry; high-DPI layouts grow with ScreenTools.
+    readonly property real _navigationTimelineRowHeight: Math.max(36, ScreenTools.defaultFontPixelHeight * 2.0)
+    readonly property real _navigationTimelineRowGap: Math.max(3, ScreenTools.defaultFontPixelHeight * 0.16)
+    readonly property real _navigationTimelineRowPitch: _navigationTimelineRowHeight + _navigationTimelineRowGap
+    readonly property real _navigationTimelineHeight: _navigationTimelineRowHeight * 3 + _navigationTimelineRowGap * 2
+    readonly property real _navigationTimelineMarkerSize: Math.max(8, ScreenTools.defaultFontPixelHeight * 0.45)
+    readonly property real _navigationTimelineOrderSize: Math.max(14, ScreenTools.defaultFontPixelHeight * 0.8)
+    readonly property real _navigationTimelineMarkerColumnWidth: Math.max(28, ScreenTools.defaultFontPixelWidth * 3.2)
+    readonly property real _navigationTimelineValueColumnWidth: Math.max(144, ScreenTools.defaultFontPixelWidth * 18)
+    readonly property real _navigationTimelineValueMinimumWidth: Math.max(124, ScreenTools.defaultFontPixelWidth * 15.5)
+    readonly property real _navigationTimelineColumnSpacing: Math.max(8, ScreenTools.defaultFontPixelWidth * 0.8)
+    readonly property real _navigationTimelineConnectorWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.2)
+
     readonly property int _dashboardPanelRadius: 8
     readonly property color _dashboardPanelBackground: "#06232B"
     readonly property color _dashboardPanelBorder: "#0B6873"
@@ -3383,33 +3397,33 @@ SetupPage {
                     Item {
                         objectName: "flightTelemetry_navigationTimeline"
                         Layout.fillWidth: true
-                        implicitHeight: 114
+                        implicitHeight: root._navigationTimelineHeight
 
                         RowLayout {
                             objectName: "flightTelemetry_navigationTimeline_row_navigation"
                             x: 0
-                            y: root._navigationTimelineOrder.navigation * 38
+                            y: root._navigationTimelineOrder.navigation * root._navigationTimelineRowPitch
                             width: parent.width
-                            height: 36
-                            spacing: 8
+                            height: root._navigationTimelineRowHeight
+                            spacing: root._navigationTimelineColumnSpacing
                             Item {
-                                Layout.preferredWidth: 28
+                                Layout.preferredWidth: root._navigationTimelineMarkerColumnWidth
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_navigation"
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    x: 1
-                                    y: 3
+                                    width: root._navigationTimelineMarkerSize
+                                    height: root._navigationTimelineMarkerSize
+                                    radius: width / 2
+                                    x: root._navigationTimelineMarkerSize * 0.125
+                                    y: root._navigationTimelineMarkerSize * 0.375
                                     color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_navigation"
-                                    x: 12
+                                    x: root._navigationTimelineMarkerSize + root._navigationTimelineColumnSpacing * 0.5
                                     y: 0
-                                    width: 14
-                                    height: 14
+                                    width: root._navigationTimelineOrderSize
+                                    height: root._navigationTimelineOrderSize
                                     text: ("0" + (root._navigationTimelineOrder.navigation + 1)).slice(-2)
                                     color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3420,16 +3434,16 @@ SetupPage {
                                 }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.navigation < 2
-                                    width: 2
-                                    height: 22
-                                    x: 4
-                                    y: 12
+                                    width: root._navigationTimelineConnectorWidth
+                                    height: root._navigationTimelineRowHeight - root._navigationTimelineOrderSize
+                                    x: root._navigationTimelineMarkerSize * 0.125 + root._navigationTimelineMarkerSize * 0.5 - width * 0.5
+                                    y: root._navigationTimelineOrderSize - root._navigationTimelineMarkerSize * 0.25
                                     color: "#15505A"
                                 }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 8
+                                spacing: root._navigationTimelineColumnSpacing
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_navigation"
                                     Layout.fillWidth: true
@@ -3442,8 +3456,8 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_navigation"
-                                    Layout.preferredWidth: 144
-                                    Layout.minimumWidth: 124
+                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
+                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
                                     text: root._navigationTimelineValueText("navigationAvailable", "navTimeBootUs")
                                     color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3457,28 +3471,28 @@ SetupPage {
                         RowLayout {
                             objectName: "flightTelemetry_navigationTimeline_row_time"
                             x: 0
-                            y: root._navigationTimelineOrder.time * 38
+                            y: root._navigationTimelineOrder.time * root._navigationTimelineRowPitch
                             width: parent.width
-                            height: 36
-                            spacing: 8
+                            height: root._navigationTimelineRowHeight
+                            spacing: root._navigationTimelineColumnSpacing
                             Item {
-                                Layout.preferredWidth: 28
+                                Layout.preferredWidth: root._navigationTimelineMarkerColumnWidth
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_time"
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    x: 1
-                                    y: 3
+                                    width: root._navigationTimelineMarkerSize
+                                    height: root._navigationTimelineMarkerSize
+                                    radius: width / 2
+                                    x: root._navigationTimelineMarkerSize * 0.125
+                                    y: root._navigationTimelineMarkerSize * 0.375
                                     color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_time"
-                                    x: 12
+                                    x: root._navigationTimelineMarkerSize + root._navigationTimelineColumnSpacing * 0.5
                                     y: 0
-                                    width: 14
-                                    height: 14
+                                    width: root._navigationTimelineOrderSize
+                                    height: root._navigationTimelineOrderSize
                                     text: ("0" + (root._navigationTimelineOrder.time + 1)).slice(-2)
                                     color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3489,16 +3503,16 @@ SetupPage {
                                 }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.time < 2
-                                    width: 2
-                                    height: 22
-                                    x: 4
-                                    y: 12
+                                    width: root._navigationTimelineConnectorWidth
+                                    height: root._navigationTimelineRowHeight - root._navigationTimelineOrderSize
+                                    x: root._navigationTimelineMarkerSize * 0.125 + root._navigationTimelineMarkerSize * 0.5 - width * 0.5
+                                    y: root._navigationTimelineOrderSize - root._navigationTimelineMarkerSize * 0.25
                                     color: "#15505A"
                                 }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 8
+                                spacing: root._navigationTimelineColumnSpacing
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_time"
                                     Layout.fillWidth: true
@@ -3511,8 +3525,8 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_time"
-                                    Layout.preferredWidth: 144
-                                    Layout.minimumWidth: 124
+                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
+                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
                                     text: root._navigationTimelineValueText("timeAvailable", "timeStatusTimeBootUs")
                                     color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3526,28 +3540,28 @@ SetupPage {
                         RowLayout {
                             objectName: "flightTelemetry_navigationTimeline_row_event"
                             x: 0
-                            y: root._navigationTimelineOrder.event * 38
+                            y: root._navigationTimelineOrder.event * root._navigationTimelineRowPitch
                             width: parent.width
-                            height: 36
-                            spacing: 8
+                            height: root._navigationTimelineRowHeight
+                            spacing: root._navigationTimelineColumnSpacing
                             Item {
-                                Layout.preferredWidth: 28
+                                Layout.preferredWidth: root._navigationTimelineMarkerColumnWidth
                                 Layout.fillHeight: true
                                 Rectangle {
                                     objectName: "flightTelemetry_navigationTimeline_marker_event"
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    x: 1
-                                    y: 3
+                                    width: root._navigationTimelineMarkerSize
+                                    height: root._navigationTimelineMarkerSize
+                                    radius: width / 2
+                                    x: root._navigationTimelineMarkerSize * 0.125
+                                    y: root._navigationTimelineMarkerSize * 0.375
                                     color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_event"
-                                    x: 12
+                                    x: root._navigationTimelineMarkerSize + root._navigationTimelineColumnSpacing * 0.5
                                     y: 0
-                                    width: 14
-                                    height: 14
+                                    width: root._navigationTimelineOrderSize
+                                    height: root._navigationTimelineOrderSize
                                     text: ("0" + (root._navigationTimelineOrder.event + 1)).slice(-2)
                                     color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3558,16 +3572,16 @@ SetupPage {
                                 }
                                 Rectangle {
                                     visible: root._navigationTimelineOrder.event < 2
-                                    width: 2
-                                    height: 22
-                                    x: 4
-                                    y: 12
+                                    width: root._navigationTimelineConnectorWidth
+                                    height: root._navigationTimelineRowHeight - root._navigationTimelineOrderSize
+                                    x: root._navigationTimelineMarkerSize * 0.125 + root._navigationTimelineMarkerSize * 0.5 - width * 0.5
+                                    y: root._navigationTimelineOrderSize - root._navigationTimelineMarkerSize * 0.25
                                     color: "#15505A"
                                 }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                spacing: 8
+                                spacing: root._navigationTimelineColumnSpacing
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_label_event"
                                     Layout.fillWidth: true
@@ -3580,8 +3594,8 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_event"
-                                    Layout.preferredWidth: 144
-                                    Layout.minimumWidth: 124
+                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
+                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
                                     text: root._navigationTimelineValueText("eventAvailable", "eventTimeBootUs")
                                     color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                     font.family: ScreenTools.fixedFontFamily
