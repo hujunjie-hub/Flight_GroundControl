@@ -142,6 +142,10 @@ SetupPage {
         repeat: true
         running: root.visible
         onTriggered: {
+            // QElapsedTimer values do not emit a change signal as time passes.
+            // Advance the binding dependency so freshness gates expire even
+            // when a gimbal status stream stops while vehicle heartbeats continue.
+            root._freshnessTick += 1
             if (!root._pitchDragging && !root._yawDragging && !root.controlTimerRunning)
                 root._syncTargets()
         }
