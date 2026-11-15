@@ -481,7 +481,9 @@
         "rc_stick_cards_display_live_horizontal_vertical_channel_mapping_for_mode_1_2_3",
         "link_quality_progress_bar_requires_fresh_family_fresh_instance_validity_and_0_to_1000_permille",
         "link_quality_bar_fraction_matches_permille_and_hides_for_invalid_or_out_of_range_values",
-        "link_quality_null_or_empty_value_is_invalid_even_when_validity_bit_is_set"
+        "link_quality_null_or_empty_value_is_invalid_even_when_validity_bit_is_set",
+        "overview_topology_canvas_text_uses_screen_tools_font_family_and_micro_point_size",
+        "overview_topology_canvas_label_geometry_uses_the_rendered_font_metrics_without_overlap"
       ]
     },
     {
