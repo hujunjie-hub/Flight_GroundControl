@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.46        
+版本：4.47        
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -587,3 +587,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 图例色点与文字颜色必须一致，且只解释六域 family freshness；不得生成全局健康结论，也不得把全链路通信丢失状态传播到各遥测域。
 - FlightTelemetryPageUITest 通过稳定 objectName 检查图例标题、三项文字、色点颜色，并在 1600/1400/1000/900/700/400 px 下检查图例及各项均位于拓扑 HeroPanel 边界内。
 - 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
+
+
+### G15 飞行健康页全链路通信丢失提示补充（2026-11-15）
+
+- MockLink 触发 VehicleLinkManager.communicationLost 后，飞行健康页概览 headline 必须优先显示红色「通信丢失」，说明行明确指出各遥测域仍按独立接收年龄判定。
+- 通信丢失不能把 13 个 family 的 freshness 统一改写为 stale；矩阵继续显示各自真实状态。链路恢复后提示隐藏，headline 回到 family freshness 汇总。
+- Integration 覆盖丢失、恢复两个状态，检查 headline 文案/颜色和说明行可见性；本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
