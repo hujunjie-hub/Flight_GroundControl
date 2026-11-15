@@ -902,7 +902,12 @@
     "health_page_ui_scale_preference_is_restored_after_mocklink_test",
     "rc_monitor_and_link_metric_geometry_scale_with_screen_tools",
     "health_page_ui_scale_150_200_percent_sensor_prearm_resource_detail_cards_and_metrics_fit",
-    "flight_configuration_shell_toolbar_sidebar_scale_with_screen_tools"
+    "flight_configuration_shell_toolbar_sidebar_scale_with_screen_tools",
+    "navigation_time_sync_card_separates_clock_discipline_and_utc_reference_groups",
+    "navigation_time_quality_discipline_and_utc_validity_use_matching_state_badges",
+    "valid_utc_uncertainty_and_timestamp_use_neutral_value_colors",
+    "navigation_time_groups_reflow_at_840px_and_utc_timestamp_spans_the_full_width",
+    "navigation_and_time_family_statuses_remain_independent_in_the_monotonic_timeline"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
