@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.92
+- 版本 4.93
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -248,3 +248,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 总览拓扑文字高 DPI 统一：Canvas 中心 FCU 与六域端点标签改为 `ScreenTools.normalFontFamily` + `microFontPointSize`（point），移除硬编码 sans-serif/px；MockLink UI Integration 使用相同字体族和点字号计算 QFontMetricsF，覆盖 1600/1400/1000/900/700/400 px 越界与重叠检查。新增静态字体契约；按要求未运行 CI/Unit/Integration，新增回归 NOT_RUN。
+
+
+- 2026-11-15 飞行健康页 Phase 2.61：健康矩阵单元与维护横条改用 ScreenTools 缩放内边距和内容驱动高度；补充长中文异常摘要换行、维护三/二/一列边界，以及 1672×941/1100 垂直密度切换的 MockLink UI Integration 验收。本轮未运行 CI/Unit/Integration/Windows Release，新增回归 NOT_RUN。
