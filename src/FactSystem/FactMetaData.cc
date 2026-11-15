@@ -117,6 +117,7 @@ const FactMetaData &FactMetaData::operator=(const FactMetaData &other)
     _rawTranslator = other._rawTranslator;
     _cookedTranslator = other._cookedTranslator;
     _vehicleRebootRequired = other._vehicleRebootRequired;
+    _vehicleRebootRequiredKnown = other._vehicleRebootRequiredKnown;
     _qgcRebootRequired = other._qgcRebootRequired;
     _rawIncrement = other._rawIncrement;
     _hasControl = other._hasControl;
@@ -1426,11 +1427,11 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     }
     metaData->setQGCRebootRequired(qgcRebootRequired);
 
-    bool rebootRequired = false;
     if (json.contains(_rebootRequiredJsonKey)) {
-        rebootRequired = json[_rebootRequiredJsonKey].toBool();
+        metaData->setVehicleRebootRequired(json[_rebootRequiredJsonKey].toBool());
+    } else {
+        metaData->setVehicleRebootRequiredKnown(false);
     }
-    metaData->setVehicleRebootRequired(rebootRequired);
 
     bool readOnly = false;
     if (json.contains(_readOnlyJsonKey)) {
