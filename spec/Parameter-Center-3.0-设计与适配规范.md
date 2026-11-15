@@ -404,7 +404,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 - 参数中心响应面板开始接入 Vehicle.flightTelemetry 的真实 FCU_CONTROL_STATUS 数据，采集 controlTimeBootUs、controlBootId 和 controlSolveTimeUs。
 - FlightTelemetryFactGroup 在每帧 FCU_CONTROL_STATUS 通过 boot/profile/时间戳/字段校验并完成 Fact 更新后发出 controlStatusUpdated；参数中心通过该信号逐帧采样，不再用 100 ms 地面站定时器轮询最新 Fact，避免高频控制遥测被轮询漏采或重复采样旧值。仅在 controlAvailable 为真且 familyStale.control=false 时记录，最多保留最近 120 个有效样本。
-- 控制器 boot ID、controlProfileId 变化、飞控时间戳回退或活动飞行器切换时清空历史样本，避免跨启动/跨控制配置/跨飞行器拼接曲线。相邻有效样本间隔超过 FlightTelemetryFactGroup 的 3 秒 stale threshold 时断开曲线并单独绘制采样点，不跨缺样区间连线。
+- 控制器 boot ID、controlProfileId 变化、飞控时间戳回退、GroundControl 机型调参上下文切换或活动飞行器切换时清空历史样本，避免跨启动/跨控制配置/跨机型上下文/跨飞行器拼接曲线。相邻有效样本间隔超过 FlightTelemetryFactGroup 的 3 秒 stale threshold 时断开曲线并单独绘制采样点，不跨缺样区间连线。
 - 当前曲线明确标记为“控制求解耗时”，显示最近真实值；控制遥测失效时标注历史样本，样本不足两个时显示等待态。
 - 曲线横轴按 FCU 启动时间戳等比例绘制，不按样本序号压缩时间；相邻有效样本间隔超过 3 秒时断开连线，并保留间隔两侧的真实采样点。实时可用状态同时要求 controlAvailable=true、链路正常且 familyStale.control=false。
 - 曲线从当前有效样本计算最小值、平均值、峰值和实际时间窗；没有样本时显示等待态，不生成示例值。
