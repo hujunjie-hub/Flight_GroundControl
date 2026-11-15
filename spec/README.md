@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 3.1
+- 版本 3.2
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -114,7 +114,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
-- FGC-0044（飞控诊断四页高级大屏重构）保持 RETESTING；四个页面已在 main 实现，健康矩阵仅在飞行健康页显示。新增回归检查 13 个矩阵单元及 1600/1000/700/400 px 下 4/2/1/1 列边界，避免旧总览矩阵隐藏后测试仍引用过期 objectName。待 exact-HEAD Windows Release、Unit、Integration、Installer 和本地 1672×941 / 100/125/150% DPI 视觉验收；当前不得标记 VERIFIED。
+- FGC-0044（飞控诊断四页高级大屏重构）保持 RETESTING；四个页面和页面专属 KPI/趋势已在 main 实现，13 类健康矩阵仅在飞行健康页显示。Integration 已迁移到新页面选择器，逐项检查 13 个矩阵单元及 1600/1000/700/400 px 下 4/2/1/1 列边界，同时验证维护横条 3/2/1/1 列。待 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地 1672×941 / 100/125/150% DPI 视觉验收；当前不得标记 VERIFIED。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
 - FGC-0047（全项目字体体系、中文字体回退与渲染一致性）继续扩展到全仓 QML：旧 default/small/medium/large 字号令牌引用迁移到语义令牌；三维视图固定 pixelSize 改为 pointSize；摇杆遥测等宽字族改用 ScreenTools.fixedFontFamily；新增 body-emphasis、caption-emphasis、section-heading、world-overlay 语义令牌。`qml-typography-check --all` 递归扫描全部 `src/**/*.qml`（当前 459 个文件），覆盖旧字号别名、固定 pixelSize、硬编码字体族和页面局部字号乘数；动态地图罗盘缩放和 DebugWindow 字体预览列为明确例外。新提交的精确 HEAD CI 尚待运行；Windows 100%/125%/150% 实机视觉检查尚未完成，保持 NOT_RUN。

@@ -812,7 +812,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const int expectedColumns[] = {6, 1, 1};
             const int expectedHealthMatrixColumns[] = {2, 1, 1};
             const int expectedMaintenanceColumns[] = {2, 1, 1};
-            for (int widthIndex = 0; widthIndex < 2; ++widthIndex) {
+            for (int widthIndex = 0; widthIndex < 3; ++widthIndex) {
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
