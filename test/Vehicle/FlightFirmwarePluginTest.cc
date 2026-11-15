@@ -187,6 +187,103 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     }
 }
 
+void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetadata()
+{
+    const QString sourceSha(64, QLatin1Char('a'));
+    const QJsonObject vehicleMass {
+        { QStringLiteral("name"), QStringLiteral("VEH_MASS") },
+        { QStringLiteral("type"), QStringLiteral("float") },
+        { QStringLiteral("domain"), QStringLiteral("VEHICLE_MODEL") },
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} }
+    };
+    const QJsonObject rateGain {
+        { QStringLiteral("name"), QStringLiteral("CTL_RATE_KP_X") },
+        { QStringLiteral("type"), QStringLiteral("float") },
+        { QStringLiteral("domain"), QStringLiteral("CONTROL") },
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} }
+    };
+    const QJsonObject metadata {
+        { QStringLiteral("version"), 1 },
+        { QStringLiteral("sha256"), sourceSha },
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("parameters"), QJsonArray{vehicleMass, rateGain} }
+    };
+
+    const QJsonObject profile {
+        { QStringLiteral("id"), QStringLiteral("QUAD_X4") },
+        { QStringLiteral("status"), QStringLiteral("SIM_ONLY") },
+        { QStringLiteral("hardwareEligible"), false },
+        { QStringLiteral("parameterWriteScope"), QStringLiteral("SIL_ONLY") },
+        { QStringLiteral("parameterDomains"), QJsonArray{
+              QStringLiteral("VEHICLE_MODEL"), QStringLiteral("CONTROL") } },
+        { QStringLiteral("parameterNames"), QJsonArray{
+              QStringLiteral("VEH_MASS"), QStringLiteral("CTL_RATE_KP_X") } }
+    };
+    const QJsonObject catalog {
+        { QStringLiteral("schema_version"), 1 },
+        { QStringLiteral("source"), QJsonObject{
+              { QStringLiteral("repository"), QStringLiteral("hujunjie-hub/Flight") },
+              { QStringLiteral("parameterCatalog"), QJsonObject{
+                    { QStringLiteral("path"), QStringLiteral("middleware/protocol/mavlink/parameters/ground_parameters.json") },
+                    { QStringLiteral("sha256"), sourceSha } } } } },
+        { QStringLiteral("profiles"), QJsonArray{profile} }
+    };
+
+    const QVariantList validProfiles =
+        FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, metadata);
+    QCOMPARE(validProfiles.size(), 1);
+    QCOMPARE(validProfiles.first().toMap().value(QStringLiteral("id")).toString(),
+             QStringLiteral("QUAD_X4"));
+
+    // A registry generated from a different firmware parameter catalog must not expose a profile.
+    QJsonObject mismatchedHashCatalog = catalog;
+    QJsonObject source = mismatchedHashCatalog.value(QStringLiteral("source")).toObject();
+    QJsonObject parameterCatalog = source.value(QStringLiteral("parameterCatalog")).toObject();
+    parameterCatalog.insert(QStringLiteral("sha256"), QString(64, QLatin1Char('b')));
+    source.insert(QStringLiteral("parameterCatalog"), parameterCatalog);
+    mismatchedHashCatalog.insert(QStringLiteral("source"), source);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(mismatchedHashCatalog, metadata).isEmpty());
+
+    // Every registered name must exist in metadata and be assigned to this exact profile.
+    QJsonObject missingParameterProfile = profile;
+    missingParameterProfile.insert(QStringLiteral("parameterNames"), QJsonArray{
+        QStringLiteral("VEH_MASS"), QStringLiteral("CTL_RATE_KP_X"), QStringLiteral("NO_SUCH_PARAMETER") });
+    QJsonObject missingParameterCatalog = catalog;
+    missingParameterCatalog.insert(QStringLiteral("profiles"), QJsonArray{missingParameterProfile});
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(missingParameterCatalog, metadata).isEmpty());
+
+    // The declared profile domains must equal the domains of its registered parameters.
+    QJsonArray mismatchedDomainParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject mismatchedDomainGain = mismatchedDomainParameters.at(1).toObject();
+    mismatchedDomainGain.insert(QStringLiteral("domain"), QStringLiteral("FMS"));
+    mismatchedDomainParameters.replace(1, mismatchedDomainGain);
+    QJsonObject mismatchedDomainMetadata = metadata;
+    mismatchedDomainMetadata.insert(QStringLiteral("parameters"), mismatchedDomainParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, mismatchedDomainMetadata).isEmpty());
+
+    // Per-parameter model scope cannot reference an unregistered profile.
+    QJsonArray mismatchedProfileParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject mismatchedProfileMass = mismatchedProfileParameters.at(0).toObject();
+    mismatchedProfileMass.insert(QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("OTHER_PROFILE")});
+    mismatchedProfileParameters.replace(0, mismatchedProfileMass);
+    QJsonObject mismatchedProfileMetadata = metadata;
+    mismatchedProfileMetadata.insert(QStringLiteral("parameters"), mismatchedProfileParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, mismatchedProfileMetadata).isEmpty());
+
+    // Ambiguous parameter identities and malformed hardware eligibility fail closed.
+    QJsonArray duplicateParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    duplicateParameters.append(vehicleMass);
+    QJsonObject duplicateMetadata = metadata;
+    duplicateMetadata.insert(QStringLiteral("parameters"), duplicateParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, duplicateMetadata).isEmpty());
+
+    QJsonObject malformedHardwareProfile = profile;
+    malformedHardwareProfile.insert(QStringLiteral("hardwareEligible"), QStringLiteral("false"));
+    QJsonObject malformedHardwareCatalog = catalog;
+    malformedHardwareCatalog.insert(QStringLiteral("profiles"), QJsonArray{malformedHardwareProfile});
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(malformedHardwareCatalog, metadata).isEmpty());
+}
+
 void FlightFirmwarePluginTest::_flightOperationTelemetryIsDecodedPerVehicle()
 {
     Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR);
