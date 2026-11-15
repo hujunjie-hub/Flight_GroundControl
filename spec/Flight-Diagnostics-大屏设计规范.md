@@ -935,7 +935,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 下方「通信链路」详情卡不再重复显示 RSSI、质量、丢包率数值；保留 family 消息状态、链路实例新鲜/超时/等待覆盖、实例当前/最近状态、当前/最近原因、指标字段有效性摘要和地面站接收年龄。
 - 指标字段有效性摘要逐实例统计 3 项指标：有效字段显示 N/3；无效字段明确列出 RSSI/链路质量/丢包率；未上报字段单独列出；实例 freshness 等待/超时时显示 freshness 状态，不得把旧指标标记为当前有效。
 - 摘要颜色与实例 freshness/字段值对齐：超时琥珀色、无效字段琥珀色、未上报字段中性灰、有效字段使用中性辅助色。主视觉指标仍保留各字段独立颜色与数值门控。
-- 保留既有 link detail objectName 选择器（包括 flightTelemetry_linkDetailMetrics_*），避免破坏既有 UI Integration 查找路径；该选择器现在承载指标有效性摘要，不再承载重复的指标数值。
+- 保留既有 link detail objectName 选择器（包括 flightTelemetry_linkDetailReason_*、flightTelemetry_linkDetailMetrics_*、flightTelemetry_linkDetailReceiveAge_*），避免破坏既有 UI Integration 查找路径；主视觉实例原因使用独立 flightTelemetry_linkInstanceReason_*，防止主视觉与详情卡出现重复 objectName；linkDetailMetrics 选择器现在承载指标有效性摘要，不再承载重复的指标数值。
 - MockLink UI Integration 经原始 MAVLink wire path 覆盖：新鲜实例 3/3 有效、全字段无效实例 0/3、实例超时后的指标 freshness、FCU 数据年龄从有效值切换为超时状态，以及主视觉指标数值仍正确显示。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、Windows Release 验收指南与 G15 机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、链路状态生成、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归状态为 NOT_RUN，待后续集中验收。
