@@ -5672,7 +5672,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 if (navigationTimeGridForDpi->property("columns").toInt() != expectedColumns ||
                     navigationClockGroupForDpi->property("minimumGroupWidth").toReal() <
                         baseNavigationTimeGroupMinimumWidth * minimumWidthScale ||
+                    navigationUtcGroupForDpi->property("minimumGroupWidth").toReal() <
+                        baseNavigationTimeGroupMinimumWidth * minimumWidthScale ||
                     navigationClockGroupForDpi->property("contentInset").toReal() <
+                        baseNavigationTimeGroupInset * insetScale ||
+                    navigationUtcGroupForDpi->property("contentInset").toReal() <
                         baseNavigationTimeGroupInset * insetScale ||
                     page->property("_navigationTimeTwoColumnMinimumWidth").toReal() <
                         baseNavigationTimeTwoColumnThreshold * thresholdScale ||
@@ -5691,7 +5695,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     !navigationDpiItemFits(navigationTimeMetricRowsForDpi[2], navigationUtcGroupForDpi) ||
                     !navigationDpiItemFits(navigationTimeMetricRowsForDpi[3], navigationUtcGroupForDpi) ||
                     !navigationDpiItemFits(navigationTimeMetricRowsForDpi[4], navigationTimePanelForDpi) ||
+                    navigationTimeMetricRowsForDpi[4]->width() < navigationTimePanelForDpi->width() * 0.82 ||
+                    navigationUtcTimestampValueForDpi->width() <
+                        navigationTimeMetricRowsForDpi[4]->width() * 0.9 ||
                     !navigationDpiItemFits(navigationUtcTimestampValueForDpi, navigationTimeMetricRowsForDpi[4]) ||
+                    navigationClockGroupForDpi->width() + 1.0 <
+                        navigationClockGroupForDpi->property("minimumGroupWidth").toReal() ||
+                    navigationUtcGroupForDpi->width() + 1.0 <
+                        navigationUtcGroupForDpi->property("minimumGroupWidth").toReal() ||
                     !navigationDpiItemFits(navigationTimelineForDpi, navigationChecksPanelForDpi) ||
                     navigationTimelineForDpi->height() + 1.0 <
                         page->property("_navigationTimelineHeight").toReal()) {
