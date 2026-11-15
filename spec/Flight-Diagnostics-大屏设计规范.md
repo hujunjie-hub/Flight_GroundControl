@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.52
+- 版本：6.53
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -1047,4 +1047,14 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - UTC 不确定度仍独立服从 UTC validity 与 time family freshness 门控；本次只改变布局，不改变数值、颜色、有效性判定和时间质量枚举语义。
 - MockLink UI Integration 增加 1600 px 桌面和 1000/900/700/400 px 响应式断言：双列时末行宽度至少为普通指标行的 1.8 倍，单列时与普通指标行等宽；末行位于 UTC 时间戳之后，五项时间指标均完整落在时间同步主视觉卡片边界内。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、spec/README.md 与 Windows Release G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间同步服务、freshness 阈值、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
+
+
+## 76. Phase 2.30 RC 轴读数 freshness 与有效性颜色分层（2026-11-15）
+
+- `AxisGauge` 数值颜色与数据语义一致：fresh 且有效时使用中性白 `#E6F0F4`；fresh 但 validity bit 清零或数值越界/非有限时使用警告琥珀 `#F0B94B`；字段未上报使用中性灰 `#8298A2`；family 未收到时沿用 family 状态色（等待中性灰、超时琥珀），不把所有非有效状态一律涂成警告色。
+- `StickVisualizer` 组合读数按两轴状态表达：两轴均有效使用薄荷绿 `#9DD9D0`；任一轴无效或 family stale 使用琥珀；等待遥测或轴未上报使用中性灰。摇杆 marker 仍仅在水平/垂直轴都有效时显示，不绘制缓存值或零值替代。
+- 仅改变 QML 展示颜色，不改变 `_rcAxisStatusTextForChannel`、`rcValidAxesMask`、family freshness 阈值、手型映射、通道顺序或摇杆数值；FlightRadio 与 FlightTelemetry 仍共用 `FlightRadio` Settings 中的 mode。
+- MockLink `FlightTelemetryPageUITest` 验证等待时 AxisGauge/摇杆读数为中性灰、有效轴数值为中性白/有效双轴读数为薄荷绿、validity bit 清零后数值与摇杆组合读数变为琥珀；现有 marker 隐藏/显示和三种手型通道映射断言保留。
+- 仅修改 `FlightTelemetry.qml`、`FlightTelemetryPageUITest.cc`、本 SPEC、Windows Release 验收指南、G15 manifest 与项目 SPEC 索引；不修改 MAVLink、FlightTelemetryFactGroup、FlightRadio 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
