@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.36    
+版本：4.37      
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -521,7 +521,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - RC family `rcInputAvailable` 的状态徽标只在「遥控输入监视」主视觉面板显示；「逻辑轴输入（实时）」不得重复显示同一个 family 状态徽标。
 - 逻辑轴面板必须继续绑定 `statusFamily: "rcInputAvailable"`，保留与 RC family freshness 一致的状态色条；只隐藏 badge，不得移除 freshness 语义。
-- FlightTelemetryPageUITest 通过 MockLink 断言 `flightTelemetry_rcStickMonitor_statusBadge` 可见、`flightTelemetry_rcChannelMonitor_statusBadge` 不可见，并确认逻辑轴面板的 `statusFamily` 仍为 `rcInputAvailable`。
+- FlightTelemetryPageUITest 通过 MockLink 在 1600/1000/900/700/400 px 下断言 `flightTelemetry_rcStickMonitor_statusBadge` 可见、`flightTelemetry_rcChannelMonitor_statusBadge` 不可见，并确认逻辑轴面板的 `statusFamily` 仍为 `rcInputAvailable`。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
 
 ### G15 总览整机状态安全优先级（2026-11-15）
