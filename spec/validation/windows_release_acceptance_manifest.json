@@ -441,7 +441,8 @@
         "overview_topology_legend_counts_match_individual_family_freshness",
         "overview_topology_legend_counts_update_on_stale_and_recovery",
         "overview_topology_legend_count_labels_fit_responsive_layout",
-        "navigation_page_grid_breakpoints_are_verified_at_1280_1279_760_759_px"
+        "navigation_page_grid_breakpoints_are_verified_at_1280_1279_760_759_px",
+        "link_state_severity_and_freshness_coverage_colors_are_independent_during_total_outage"
       ]
     },
     {
@@ -761,7 +762,8 @@
     "rc_link_summary_labels_family_message_freshness_separately_from_instance_health",
     "navigation_timeline_equal_boot_timestamps_use_deterministic_domain_order",
     "link_instance_state_summary_tracks_healthy_partial_loss_all_loss_recovery_and_freshness",
-    "navigation_page_grid_breakpoints_are_verified_at_1280_1279_760_759_px"
+    "navigation_page_grid_breakpoints_are_verified_at_1280_1279_760_759_px",
+    "link_state_severity_and_freshness_coverage_colors_are_independent_during_total_outage"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
