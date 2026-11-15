@@ -8,8 +8,10 @@ import QGroundControl.Controls
 
 Item {
     id:     control
+    objectName: "flightConfig_toolbarContent"
     width:  parent.width
-    height: control.configuring ? 56 : ScreenTools.toolbarHeight
+    readonly property real configToolbarHeight: Math.max(56, ScreenTools.defaultFontPixelHeight * 5.6)
+    height: control.configuring ? control.configToolbarHeight : ScreenTools.toolbarHeight
 
     property bool configuring: false
     property bool parameterCenter: false
@@ -85,7 +87,7 @@ Item {
                         ColumnLayout {
                             visible: control.configuring
                             Layout.alignment: Qt.AlignVCenter
-                            spacing: 1
+                            spacing: Math.max(1, ScreenTools.defaultFontPixelHeight * 0.1)
                             QGCLabel {
                                 objectName: "flightConfig_brandTitle"
                                 text: control.parameterCenter ? qsTr("参数中心 3.0") : qsTr("无人机飞行地面控制站")
@@ -104,7 +106,7 @@ Item {
                         Rectangle {
                             visible: control.configuring
                             Layout.preferredWidth: 1
-                            Layout.preferredHeight: 32
+                            Layout.preferredHeight: Math.max(32, ScreenTools.defaultFontPixelHeight * 3.2)
                             Layout.alignment: Qt.AlignVCenter
                             color: "#0D6670"
                         }
@@ -112,7 +114,7 @@ Item {
                         ColumnLayout {
                             visible: control.parameterCenter
                             Layout.alignment: Qt.AlignVCenter
-                            spacing: 0
+                            spacing: Math.max(1, ScreenTools.defaultFontPixelHeight * 0.1)
                             QGCLabel {
                                 text: qsTr("参数中心 3.0")
                                 color: "#E8F4F6"
@@ -137,7 +139,7 @@ Item {
                     RowLayout {
                         visible: control.parameterCenter
                         Layout.alignment: Qt.AlignVCenter
-                        spacing: 10
+                        spacing: Math.max(10, ScreenTools.defaultFontPixelWidth)
                         Repeater {
                             model: [qsTr("参数调优"), qsTr("仿真验证"), qsTr("参数应用")]
                             delegate: QGCLabel {
