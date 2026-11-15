@@ -537,10 +537,15 @@ SetupPage {
         return link ? qsTr("%1 · %2").arg(_linkKindText(link.linkKind)).arg(metricName)
                     : qsTr("数据链路 · %1").arg(metricName)
     }
-    function _linkInstanceFresh(receiveAgeMs) {
-        if (_familyStatus("linkAvailable") !== qsTr("已接收")) return false
+    function _linkInstanceFreshnessStatus(receiveAgeMs) {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
         const age = Number(receiveAgeMs)
-        return Number.isFinite(age) && age >= 0 && age <= _familyFreshnessLimitMs("link")
+        if (!Number.isFinite(age) || age < 0) return qsTr("等待遥测")
+        return age > _familyFreshnessLimitMs("link") ? qsTr("数据超时") : qsTr("已接收")
+    }
+    function _linkInstanceFresh(receiveAgeMs) {
+        return _linkInstanceFreshnessStatus(receiveAgeMs) === qsTr("已接收")
     }
     function _linkMetricText(fieldName, bit, decimals, suffix) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return _familyStatus("linkAvailable")
@@ -565,17 +570,49 @@ SetupPage {
         return value / divisor
     }
     function _linkInstanceMetricText(link, fieldName, bit, decimals, suffix) {
-        if (!link) return qsTr("未上报")
-        if (!_linkInstanceFresh(link.receiveAgeMs)) return qsTr("数据超时")
+        if (!link) {
+            const familyStatus = _familyStatus("linkAvailable")
+            return familyStatus === qsTr("已接收") ? qsTr("未上报") : familyStatus
+        }
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        if (freshness !== qsTr("已接收")) return freshness
         if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
         if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
         return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
     }
     function _linkInstanceMetricColor(link, bit) {
-        if (!link) return "#8A9A94"
-        if (!_linkInstanceFresh(link.receiveAgeMs)) return "#F0B94B"
+        if (!link) {
+            return _familyStatus("linkAvailable") === qsTr("数据超时") ? "#F0B94B" : "#8A9A94"
+        }
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        if (freshness !== qsTr("已接收")) return _freshnessStatusColor(freshness)
         const state = _rawMaskState(link.validityMask, bit)
         return state === 1 ? "#E6F0F4" : state === 0 ? "#F0B94B" : "#8A9A94"
+    }
+    function _linkInstanceStateText(link) {
+        if (!link) {
+            const familyStatus = _familyStatus("linkAvailable")
+            return familyStatus === qsTr("已接收") ? qsTr("未上报") : familyStatus
+        }
+        const stateText = _enumValue(link.linkState,
+                                     [qsTr("未知"), qsTr("初始化"), qsTr("健康"),
+                                      qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        return freshness === qsTr("已接收")
+               ? stateText : qsTr("%1 · 最近状态：%2").arg(freshness).arg(stateText)
+    }
+    function _linkInstanceReasonText(link) {
+        if (!link) return qsTr("未上报")
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        const reason = _reasonText(0, link.reasonCode)
+        return freshness === qsTr("已接收")
+               ? qsTr("原因：%1").arg(reason)
+               : qsTr("最近原因（%1）：%2").arg(freshness).arg(reason)
+    }
+    function _linkInstanceAgeText(link) {
+        if (!link) return qsTr("未上报")
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        return freshness === qsTr("已接收") ? _ageUsText(link.ageUs) : freshness
     }
     function _rcAgeDisplayText() {
         if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return _familyStatus("rcInputAvailable")
@@ -920,17 +957,8 @@ SetupPage {
     }
 
     function _linkStateColor(state, receiveAgeMs) {
-        const familyStatus = _familyStatus("linkAvailable")
-        if (familyStatus !== qsTr("已接收")) {
-            return _familyStatusColor("linkAvailable")
-        }
-        const ageMs = Number(receiveAgeMs)
-        if (!Number.isFinite(ageMs) || ageMs < 0) {
-            return "#8A9A94"
-        }
-        if (ageMs > _familyFreshnessLimitMs("link")) {
-            return "#F0B94B"
-        }
+        const freshness = _linkInstanceFreshnessStatus(receiveAgeMs)
+        if (freshness !== qsTr("已接收")) return _freshnessStatusColor(freshness)
         switch (Number(state)) {
         case 2: return "#45D39A"
         case 3:
@@ -2538,6 +2566,7 @@ SetupPage {
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "DATA LINK QUALITY"
                     titleText: qsTr("链路质量")
+                    statusFamily: "linkAvailable"
                     QGCLabel {
                         Layout.fillWidth: true
                         visible: root._linkStatuses.length === 0
@@ -2560,8 +2589,9 @@ SetupPage {
                                     font.weight: ScreenTools.strongFontWeight
                                 }
                                 QGCLabel {
-                                    text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                                    text: root._linkInstanceStateText(modelData)
                                     color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs)
+                                    wrapMode: Text.WordWrap
                                 }
                             }
                             GridLayout {
@@ -2646,7 +2676,7 @@ SetupPage {
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
-                                text: qsTr("原因：%1 · 接收年龄：%2").arg(root._reasonText(0, modelData.reasonCode)).arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
+                                text: qsTr("%1 · 接收年龄：%2").arg(root._linkInstanceReasonText(modelData)).arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                                 color: "#8298A2"
                                 font.pointSize: ScreenTools.microFontPointSize
                                 wrapMode: Text.WordWrap
@@ -2676,7 +2706,11 @@ SetupPage {
                                      : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
                     }
                     TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
-                    TelemetryRow { labelText: qsTr("RC 接收年龄"); valueText: root._ageUsFact("rcAgeUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_rcFailsafeRcAge"
+                        labelText: qsTr("RC 接收年龄")
+                        valueText: root._rcAgeDisplayText()
+                    }
                     TelemetryRow { labelText: qsTr("数据链路"); valueText: root._familyStatus("linkAvailable") }
                     TelemetryRow { labelText: qsTr("飞控操作接收年龄"); valueText: root._receiveAgeText("operation") }
                 }
@@ -3096,19 +3130,23 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
                     TelemetryRow {
-                        labelText: qsTr("已上报链路实例")
-                        valueText: root._fact("linkAvailable") && root._telemetry
-                                   ? String(root._linkStatuses.length) : qsTr("未上报")
+                        objectName: "flightTelemetry_linkDetailCoverage"
+                        labelText: qsTr("链路实例覆盖")
+                        valueText: root._linkInstanceSummaryValue()
                     }
                     QGCLabel {
+                        objectName: "flightTelemetry_linkDetailEmptyState"
                         Layout.fillWidth: true
-                        visible: !root._telemetry || root._linkStatuses.length === 0
-                        text: qsTr("暂无链路状态")
+                        visible: root._linkStatuses.length === 0
+                        text: root._familyStatus("linkAvailable") === qsTr("已接收")
+                              ? qsTr("当前无链路实例") : root._familyStatus("linkAvailable")
+                        color: "#8298A2"
                     }
                     Repeater {
                         model: root._linkStatuses
                         delegate: ColumnLayout {
                             required property var modelData
+                            objectName: "flightTelemetry_linkDetailInstance_" + modelData.linkInstanceId
                             Layout.fillWidth: true
                             spacing: 3
                             RowLayout {
@@ -3118,24 +3156,32 @@ SetupPage {
                                     text: root._enumValue(modelData.linkKind, [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")])
                                 }
                                 QGCLabel {
+                                    objectName: "flightTelemetry_linkDetailState_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
-                                    text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                                    text: root._linkInstanceStateText(modelData)
                                     color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs)
-                                }
-                                QGCLabel {
-                                    text: root._reasonText(0, modelData.reasonCode)
+                                    wrapMode: Text.WordWrap
                                 }
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_linkDetailReason_" + modelData.linkInstanceId
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: root._linkInstanceReasonText(modelData)
+                                color: "#8298A2"
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_linkDetailMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · FCU 数据年龄 %4")
-                                      .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
-                                      .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
-                                      .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
-                                      .arg(root._ageUsText(modelData.ageUs))
+                                      .arg(root._linkInstanceMetricText(modelData, "rssiDbm", 8, 0, " dBm"))
+                                      .arg(root._linkInstanceMetricText(modelData, "linkQualityPermille", 9, 1, " %"))
+                                      .arg(root._linkInstanceMetricText(modelData, "packetLossPpm", 10, 2, " %"))
+                                      .arg(root._linkInstanceAgeText(modelData))
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_linkDetailReceiveAge_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
                                 text: qsTr("地面站接收年龄：%1").arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                             }
