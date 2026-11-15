@@ -490,7 +490,9 @@
         "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px",
         "link_quality_trend_value_and_samples_share_the_same_range_validity_gate",
         "overview_topology_canvas_vector_geometry_and_height_follow_screen_tools_density_scale",
-        "overview_topology_node_cards_use_scaled_spacing_insets_and_content_driven_height_at_all_six_widths"
+        "overview_topology_node_cards_use_scaled_spacing_insets_and_content_driven_height_at_all_six_widths",
+        "overview_left_flight_mode_and_arm_badge_use_screen_tools_scaled_spacing_and_text_insets",
+        "overview_left_failsafe_and_authority_rows_use_content_driven_screen_tools_heights_and_fit_at_1600_1400_1000_900_700_400_px"
       ]
     },
     {
