@@ -511,6 +511,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
 - readOnly 参数允许查看和单参数回读，但禁止在线写入；writeOnly 参数因无法完成 PARAM_VALUE 回读确认，禁止进入在线调参闭环。详情卡片明确显示当前 Fact 的权限类型。
 - 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY，以及当前参数名和参数域仍在注册白名单中；不能只依赖首次绑定时缓存的资格。
+- `FlightFirmwarePlugin::vehicleModelProfiles` 在向 UI 暴露机型前同时读取参数元数据与模型注册表，校验两份文件的 schema/source、64 位十六进制 SHA-256、顶层 profile ID、逐参数 modelProfiles、参数名、参数域和写入资格；参数目录 SHA 不一致、重复/缺失/未知参数、域不匹配或权限字段类型错误时，整个注册表 fail-closed 并返回空列表，不向参数中心暴露可选 profile。
+- 新增模型注册表一致性回归用例，覆盖 SHA 不匹配、未知参数、参数域错配、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
 - 参数工具菜单的飞控重启操作仅在已连接、解除锁定、未飞行且 ParameterManager 无待写入时启用，避免在飞行中、链路异常或参数同步过程中触发重启。
 - C++ 单参数回读资格也检查 `parameterDownloadSkipped`，与写入资格和 QML 页面就绪门控保持一致，避免 UI 隐藏后仍可通过控制器调用回读路径。
 - QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
@@ -537,7 +539,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、参数元数据与模型注册表 SHA/参数名/domain 双向一致性校验、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
 - Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：NOT_RUN。
