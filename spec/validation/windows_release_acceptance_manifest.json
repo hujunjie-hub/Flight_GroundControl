@@ -432,7 +432,8 @@
         "overview_alarm_scope_note_hidden_when_no_events",
         "overview_alarm_scope_note_reports_priority_summary_and_recent_history_counts",
         "overview_alarm_summary_shows_top_four_and_history_keeps_fifth_event",
-        "overview_alarm_scope_note_fits_700_and_400_px"
+        "overview_alarm_scope_note_fits_700_and_400_px",
+        "navigation_time_discipline_unknown_enum_remains_neutral"
       ]
     },
     {
@@ -747,7 +748,8 @@
     "health_maintenance_resource_snapshot_grid_keeps_four_metric_cells_inside_parent_at_1600_1000_900_700_400_px",
     "rc_receiver_failsafe_color_tracks_triggered_not_triggered_waiting_stale_and_recovered_states",
     "navigation_time_discipline_state_color_tracks_nominal_acquiring_locked_holdover_degraded_invalid_and_family_freshness",
-    "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color"
+    "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color",
+    "navigation_time_discipline_unknown_enum_remains_neutral"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
