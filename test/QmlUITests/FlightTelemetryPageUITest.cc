@@ -3721,12 +3721,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmState->y(), prearmDetails->y(), 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
-            const int widths[] = {1000, 900, 700, 400};
-            const int expectedColumns[] = {6, 6, 1, 1};
-            const int expectedHealthMatrixColumns[] = {2, 2, 1, 1};
-            const int expectedMaintenanceColumns[] = {2, 2, 1, 1};
-            const int expectedDetailColumns[] = {6, 6, 1, 1};
-            for (int widthIndex = 0; widthIndex < 4; ++widthIndex) {
+            const int widths[] = {1000, 900, 760, 759, 700, 400};
+            const int expectedColumns[] = {6, 6, 6, 1, 1, 1};
+            const int expectedHealthMatrixColumns[] = {2, 2, 2, 1, 1, 1};
+            const int expectedMaintenanceColumns[] = {2, 2, 2, 1, 1, 1};
+            const int expectedDetailColumns[] = {6, 6, 6, 1, 1, 1};
+            for (int widthIndex = 0; widthIndex < 6; ++widthIndex) {
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
@@ -3736,16 +3736,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceResourceGrid->property("columns").toInt(), 2, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(maintenanceResourceMetricsFit(), 3000);
-                QTRY_COMPARE_WITH_TIMEOUT(sensorHeaderGrid->property("columns").toInt(), widthIndex < 2 ? 12 : 2, 3000);
-                QTRY_COMPARE_WITH_TIMEOUT(prearmMetadataGrid->property("columns").toInt(), widthIndex < 2 ? 2 : 1, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(sensorHeaderGrid->property("columns").toInt(), widthIndex < 3 ? 12 : 2, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(prearmMetadataGrid->property("columns").toInt(), widthIndex < 3 ? 2 : 1, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(resourceMetricGrid->property("columns").toInt(), 2, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit(), 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(resourceWcetTile->height() >= resourceMetrics->height() &&
                                              resourceStackTile->height() >= resourceStackFree->height() &&
                                              resourceDeadlineTile->height() >= resourceDeadlineMiss->height() &&
                                              resourceAxiTile->height() >= resourceAxiFree->height(), 3000);
-                QTRY_COMPARE_WITH_TIMEOUT(prearmRow->property("columns").toInt(), widthIndex < 2 ? 12 : 1, 3000);
-                if (widthIndex < 2) {
+                QTRY_COMPARE_WITH_TIMEOUT(prearmRow->property("columns").toInt(), widthIndex < 3 ? 12 : 1, 3000);
+                if (widthIndex < 3) {
                     QTRY_COMPARE_WITH_TIMEOUT(sensorTitle->y(), sensorState->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(sensorState->y(), sensorAction->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(sensorTitle->x() < sensorState->x() &&
