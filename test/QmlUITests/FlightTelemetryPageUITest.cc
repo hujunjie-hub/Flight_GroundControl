@@ -4641,6 +4641,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxesGrid"), 3000);
                         QQuickItem* linkMetricsAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
+                        QQuickItem* rcSticksGridAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcSticksGrid"), 3000);
+                        QQuickItem* rcModeButtonAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_1"), 3000);
+                        QQuickItem* rcModeLabelAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcModeLabel_1"), 3000);
+                        QQuickItem* leftStickContentAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_content"), 3000);
+                        QQuickItem* leftStickMappingAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_channelMapping"), 3000);
+                        QQuickItem* rollGaugeAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll"), 3000);
+                        QQuickItem* rssiMetricCardAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_linkMetric_rssi_2"), 3000);
+                        QQuickItem* rssiMetricContentAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_linkMetricContent_rssi_2"), 3000);
                         QQuickItem* stickBadgeAtWidth = findItem(
                             _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor_statusBadge"));
                         QQuickItem* axisBadgeAtWidth = findItem(
@@ -4665,6 +4681,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         QVERIFY(rightStickAtWidth);
                         QVERIFY(axesGridAtWidth);
                         QVERIFY(linkMetricsAtWidth);
+                        QVERIFY(rcSticksGridAtWidth);
+                        QVERIFY(rcModeButtonAtWidth);
+                        QVERIFY(rcModeLabelAtWidth);
+                        QVERIFY(leftStickContentAtWidth);
+                        QVERIFY(leftStickMappingAtWidth);
+                        QVERIFY(rollGaugeAtWidth);
+                        QVERIFY(rssiMetricCardAtWidth);
+                        QVERIFY(rssiMetricContentAtWidth);
                         if (widthIndex < 2) {
                             QTRY_COMPARE_WITH_TIMEOUT(rcPanels[0]->y(), rcPanels[1]->y(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->x() < rcPanels[1]->x(), 3000);
@@ -4692,6 +4716,32 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         }
                         QTRY_COMPARE_WITH_TIMEOUT(linkMetricsAtWidth->property("columns").toInt(),
                                                   widthIndex == 3 ? 1 : 2, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcSticksGridAtWidth->property("columnSpacing").toReal() -
+                                                           page->property("_rcStickGridSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcSticksGridAtWidth->property("rowSpacing").toReal() -
+                                                           page->property("_rcStickGridSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(axesGridAtWidth->property("columnSpacing").toReal() -
+                                                           page->property("_rcAxesGridColumnSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(axesGridAtWidth->property("rowSpacing").toReal() -
+                                                           page->property("_rcAxesGridRowSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(linkMetricsAtWidth->property("columnSpacing").toReal() -
+                                                           page->property("_rcLinkMetricColumnSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(linkMetricsAtWidth->property("rowSpacing").toReal() -
+                                                           page->property("_rcLinkMetricRowSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStickAtWidth->property("contentInset").toReal() -
+                                                           page->property("_rcStickInset").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStickAtWidth->property("contentSpacing").toReal() -
+                                                           page->property("_rcStickSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(rollGaugeAtWidth->property("contentSpacing").toReal() -
+                                                           page->property("_rcAxisGaugeSpacing").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(rollGaugeAtWidth->property("trackHeight").toReal() -
+                                                           page->property("_rcAxisGaugeTrackHeight").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStickAtWidth->property("markerSize").toReal() -
+                                                           page->property("_rcStickMarkerSize").toReal()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(rcModeButtonAtWidth->height() + 1.0 >=
+                                                           page->property("_rcModeButtonHeight").toReal(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(rcModeLabelAtWidth->property("wrapMode").toInt() != 0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(leftStickMappingAtWidth->property("wrapMode").toInt() != 0, 3000);
                         const auto itemFitsInPanel = [](QQuickItem* item, QQuickItem* panel) {
                             const auto topLeft = item->mapToItem(panel, 0, 0);
                             return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
@@ -4700,6 +4750,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         };
                         QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(leftStickAtWidth, rcPanels[0]), 3000);
                         QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(rightStickAtWidth, rcPanels[0]), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(rssiMetricCardAtWidth, rcPanels[2]), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(leftStickAtWidth->height() + 1.0 >=
+                                                     leftStickContentAtWidth->property("implicitHeight").toReal() +
+                                                         page->property("_rcStickInset").toReal() * 2, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(rssiMetricCardAtWidth->height() + 1.0 >=
+                                                     rssiMetricContentAtWidth->property("implicitHeight").toReal() +
+                                                         page->property("_rcLinkMetricCardInset").toReal() * 2, 3000);
                         const auto sticksRemainSideBySide = [&]() {
                             const auto leftTopLeft = leftStickAtWidth->mapToItem(rcPanels[0], 0, 0);
                             const auto rightTopLeft = rightStickAtWidth->mapToItem(rcPanels[0], 0, 0);
