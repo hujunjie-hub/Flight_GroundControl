@@ -153,16 +153,24 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 
     switch (request.command) {
     case MAV_CMD_SET_MESSAGE_INTERVAL: {
+        if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId())) {
+            return false;
+        }
         const int messageId = static_cast<int>(request.param1);
         bool handled = false;
         if (messageId == MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS) {
+            if (request.target_component != 0 && request.target_component != _managerCompId) {
+                return false;
+            }
             // The manager publishes one status stream containing one frame per device.
             handled = _handleSetMessageInterval(request);
             for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
                 handled = device->_handleSetMessageInterval(request) || handled;
             }
         } else if (messageId == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
-            if (request.target_component == _managerCompId) {
+            if (request.target_component == 0) {
+                handled = _handleSetMessageInterval(request);
+            } else if (request.target_component == _managerCompId) {
                 // Device IDs 1-6 publish attitude status through the manager component.
                 for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
                     if (device->_gimbalDeviceId <= 6) {
@@ -196,6 +204,10 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     }
 
     case MAV_CMD_REQUEST_MESSAGE:
+        if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+            (request.target_component != 0 && request.target_component != _managerCompId)) {
+            return false;
+        }
         if (!_handleRequestMessage(request)) {
             return false;
         }
@@ -203,6 +215,10 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         return true;
 
     case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW: {
+        if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+            (request.target_component != 0 && request.target_component != _managerCompId)) {
+            return false;
+        }
         MockLinkGimbal *device = this;
         if (qIsFinite(request.param7) && request.param7 >= 0.0f &&
             request.param7 <= 255.0f && qFloor(request.param7) == request.param7) {
@@ -216,6 +232,10 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     }
 
     case MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE: {
+        if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+            (request.target_component != 0 && request.target_component != _managerCompId)) {
+            return false;
+        }
         MockLinkGimbal *device = this;
         if (qIsFinite(request.param7) && request.param7 >= 0.0f &&
             request.param7 <= 255.0f && qFloor(request.param7) == request.param7) {
