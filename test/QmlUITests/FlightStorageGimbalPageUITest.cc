@@ -962,6 +962,26 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                       QStringLiteral("未取得控制权"), 6000);
             QVERIFY(!secondManagerGimbal->gimbalHaveControl());
 
+            // Switch away before taking manager 2's device offline. The same
+            // legacy device ID 3 under manager 1 must remain live and isolated.
+            vehicle->gimbalController()->setActiveGimbal(activeGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(),
+                                      activeGimbalIndex, 1000);
+            QVERIFY(mockLink->setGimbalDeviceOnlineForTesting(2, 3, false));
+            QTRY_VERIFY_WITH_TIMEOUT(!secondManagerGimbal->attitudeStatusFresh(), 5000);
+            QTRY_VERIFY_WITH_TIMEOUT(!secondManagerGimbal->managerStatusFresh(), 8000);
+            QVERIFY(legacyGimbal->managerStatusFresh());
+            QVERIFY(legacyGimbal->attitudeStatusFresh());
+            QVERIFY(!secondManagerGimbal->gimbalHaveControl());
+
+            QVERIFY(mockLink->setGimbalDeviceOnlineForTesting(2, 3, true));
+            QTRY_VERIFY_WITH_TIMEOUT(secondManagerGimbal->managerStatusFresh(), 5000);
+            QTRY_VERIFY_WITH_TIMEOUT(secondManagerGimbal->attitudeStatusFresh(), 5000);
+            QVERIFY(!secondManagerGimbal->gimbalHaveControl());
+            QVERIFY(legacyGimbal->managerStatusFresh());
+            QVERIFY(legacyGimbal->attitudeStatusFresh());
+
             // Switch back to the rediscovered first device and verify that its
             // owner state is fresh, empty, and can be explicitly acquired again.
             vehicle->gimbalController()->setActiveGimbal(activeGimbal);
