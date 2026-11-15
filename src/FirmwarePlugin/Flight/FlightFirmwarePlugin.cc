@@ -83,6 +83,25 @@ bool isSupportedVehicleFamily(const QString &value)
     return families.contains(value);
 }
 
+bool isControlLawId(const QString &value)
+{
+    if (value.isEmpty() || value != value.trimmed()) {
+        return false;
+    }
+    for (qsizetype i = 0; i < value.size(); ++i) {
+        const ushort code = value.at(i).unicode();
+        const bool upper = code >= 'A' && code <= 'Z';
+        const bool decimal = code >= '0' && code <= '9';
+        if (!upper && !decimal && code != '_') {
+            return false;
+        }
+        if (i == 0 && !upper) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool isSupportedTuningPolicy(const QString &value)
 {
     static const QSet<QString> policies {
@@ -233,7 +252,7 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
             parameter.value(QStringLiteral("type")).toString() != QStringLiteral("float") ||
             !supportedModelParameterDomains().contains(domain) ||
             !isSupportedVehicleFamily(vehicleFamily) ||
-            controlLaw.isEmpty() || controlLaw != controlLaw.trimmed() ||
+            !isControlLawId(controlLaw) ||
             !isSupportedTuningPolicy(tuningPolicy) ||
             !isSupportedUpdatePolicy(updatePolicy) ||
             !readOnly.isBool() ||
