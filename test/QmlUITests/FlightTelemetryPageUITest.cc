@@ -3198,12 +3198,21 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor_statusBadge"));
                         QQuickItem* axisBadgeAtWidth = findItem(
                             _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor_statusBadge"));
+                        QQuickItem* rcDetailCardAtWidth = findItem(
+                            _rootItem, QStringLiteral("flightTelemetry_card_rcInput"));
+                        QQuickItem* rcDetailBadgeAtWidth = findItem(
+                            _rootItem, QStringLiteral("flightTelemetry_card_rcInput_statusBadge"));
                         for (QQuickItem* panel : rcPanels) QVERIFY(panel);
                         QVERIFY(stickBadgeAtWidth);
                         QVERIFY(axisBadgeAtWidth);
+                        QVERIFY(rcDetailCardAtWidth);
+                        QVERIFY(rcDetailBadgeAtWidth);
                         QTRY_VERIFY_WITH_TIMEOUT(stickBadgeAtWidth->isVisible(), 3000);
                         QTRY_VERIFY_WITH_TIMEOUT(!axisBadgeAtWidth->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(!rcDetailBadgeAtWidth->property("visible").toBool(), 3000);
                         QTRY_COMPARE_WITH_TIMEOUT(rcPanels[1]->property("statusFamily").toString(),
+                                                  QStringLiteral("rcInputAvailable"), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(rcDetailCardAtWidth->property("statusFamily").toString(),
                                                   QStringLiteral("rcInputAvailable"), 3000);
                         QVERIFY(leftStickAtWidth);
                         QVERIFY(rightStickAtWidth);
