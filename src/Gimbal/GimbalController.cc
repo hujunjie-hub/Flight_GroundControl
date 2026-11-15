@@ -139,8 +139,12 @@ void GimbalController::_handleHeartbeat(const mavlink_message_t &message)
     // Note that we are working over potential gimbal managers here, instead of potential gimbals.
     // This is because we address the gimbal manager by compid, but a gimbal device might have an
     // id different than the message compid it comes from. For more information see https://mavlink.io/en/services/gimbal_v2.html
-    if (!gimbalManager.receivedGimbalManagerInformation && (gimbalManager.requestGimbalManagerInformationRetries > 0)) {
-        _requestGimbalInformation(message.compid);
+    if (!gimbalManager.receivedGimbalManagerInformation &&
+        gimbalManager.requestGimbalManagerInformationRetries > 0 &&
+        _requestGimbalInformation(message.compid)) {
+        // A retry is consumed only when this component actually owns the
+        // serialized request slot. Other managers must not burn retries while
+        // a different component's request is in flight.
         --gimbalManager.requestGimbalManagerInformationRetries;
     }
 }
@@ -333,16 +337,16 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     _checkComplete(*gimbal, pairId);
 }
 
-void GimbalController::_requestGimbalInformation(uint8_t compid)
+bool GimbalController::_requestGimbalInformation(uint8_t compid)
 {
     qCDebug(GimbalControllerLog) << "_requestGimbalInformation(" << compid << ")";
 
     if (!_vehicle) {
-        return;
+        return false;
     }
     if (_pendingInformationRequestCompId != -1) {
         qCDebug(GimbalControllerLog) << "_requestGimbalInformation: request already in flight for compid" << _pendingInformationRequestCompId;
-        return;
+        return false;
     }
 
     // Must go through requestMessage rather than sending MAV_CMD_REQUEST_MESSAGE directly so
@@ -353,6 +357,7 @@ void GimbalController::_requestGimbalInformation(uint8_t compid)
                              this,
                              compid,
                              MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
+    return true;
 }
 
 void GimbalController::_requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
@@ -376,14 +381,17 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
         return;
     }
 
-    if (!gimbal._receivedGimbalManagerInformation && gimbal._requestInformationRetries > 0) {
-        _requestGimbalInformation(pairId.managerCompid);
+    if (!gimbal._receivedGimbalManagerInformation &&
+        gimbal._requestInformationRetries > 0 &&
+        _requestGimbalInformation(pairId.managerCompid)) {
         --gimbal._requestInformationRetries;
     }
-    // Limit to 1 second between set message interface requests
-    static qint64 lastRequestStatusMessage = 0;
-    qint64 now = QDateTime::currentMSecsSinceEpoch();
-    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) && (now - lastRequestStatusMessage > 1000)) {
+    // Throttle status requests per manager/device pair. A global static timer
+    // lets one manager delay discovery of every other manager in the vehicle.
+    qint64 &lastRequestStatusMessage = _lastManagerStatusRequestMs[pairId];
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) &&
+        (now - lastRequestStatusMessage > 1000)) {
         lastRequestStatusMessage = now;
         _vehicle->sendMavCommand(pairId.managerCompid,
                                  MAV_CMD_SET_MESSAGE_INTERVAL,
