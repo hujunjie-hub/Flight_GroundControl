@@ -75,15 +75,39 @@ Item {
             }
 
             RowLayout {
-                QGCButton {
-                    text: qsTr("Select programmer")
-                    enabled: !FlightFirmwareInstaller.busy
-                    onClicked: programmerDialog.open()
-                }
-                QGCLabel {
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                ColumnLayout {
                     Layout.fillWidth: true
-                    elide: Text.ElideMiddle
-                    text: root.programmer.toString()
+                    spacing: 4
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Select programmer")
+                        enabled: !FlightFirmwareInstaller.busy
+                        onClicked: programmerDialog.open()
+                    }
+                    QGCLabel {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.programmer.toString() === "" ? qsTr("Not configured") : qsTr("Configured")
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    QGCButton {
+                        Layout.fillWidth: true
+                        text: qsTr("Select firmware")
+                        enabled: !FlightFirmwareInstaller.busy
+                        onClicked: imageDialog.open()
+                    }
+                    QGCLabel {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.image.toString() === "" ? qsTr("Not selected") : qsTr("Selected")
+                    }
                 }
             }
 
@@ -106,16 +130,12 @@ Item {
             }
 
             RowLayout {
-                QGCButton {
-                    text: qsTr("Select Flight.bin")
-                    enabled: !FlightFirmwareInstaller.busy
-                    onClicked: imageDialog.open()
-                }
-                QGCLabel {
+                Layout.fillWidth: true
+
+                Item {
                     Layout.fillWidth: true
-                    elide: Text.ElideMiddle
-                    text: root.image.toString()
                 }
+
                 QGCButton {
                     text: qsTr("Write and verify")
                     primary: true
@@ -124,7 +144,7 @@ Item {
                     onClicked: {
                         const selectedImage = root.image
                         QGroundControl.showMessageDialog(root, qsTr("Write Flight firmware"),
-                            qsTr("Write %1 to %2 at 0x08000000?").arg(selectedImage).arg(FlightFirmwareInstaller.target),
+                            qsTr("Write the selected firmware to %1 at 0x08000000 and verify it?").arg(FlightFirmwareInstaller.target),
                             Dialog.Yes | Dialog.Cancel, function() {
                                 if (root.disconnected) {
                                     FlightFirmwareInstaller.flash(selectedImage)
