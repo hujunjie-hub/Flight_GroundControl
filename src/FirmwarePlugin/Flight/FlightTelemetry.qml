@@ -2315,6 +2315,47 @@ SetupPage {
                         }
                     }
 
+                    RowLayout {
+                        objectName: "flightTelemetry_topologyLegend"
+                        Layout.fillWidth: true
+                        spacing: 10
+                        QGCLabel {
+                            objectName: "flightTelemetry_topologyLegendTitle"
+                            text: qsTr("状态图例")
+                            color: "#8298A2"
+                            font.pointSize: ScreenTools.microFontPointSize
+                        }
+                        Repeater {
+                            model: [
+                                { key: "received", label: qsTr("已接收"), color: "#45D39A" },
+                                { key: "stale", label: qsTr("数据超时"), color: "#F0B94B" },
+                                { key: "waiting", label: qsTr("等待遥测"), color: "#8A9A94" }
+                            ]
+                            delegate: RowLayout {
+                                required property var modelData
+                                objectName: "flightTelemetry_topologyLegend_" + modelData.key
+                                Layout.fillWidth: true
+                                spacing: 5
+                                Rectangle {
+                                    objectName: "flightTelemetry_topologyLegendDot_" + modelData.key
+                                    Layout.preferredWidth: 7
+                                    Layout.preferredHeight: 7
+                                    Layout.alignment: Qt.AlignVCenter
+                                    radius: 4
+                                    color: modelData.color
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_topologyLegendLabel_" + modelData.key
+                                    Layout.fillWidth: true
+                                    text: modelData.label
+                                    color: modelData.color
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
+                                }
+                            }
+                        }
+                    }
+
                     QGCLabel {
                         objectName: "flightTelemetry_topologyKpiNote"
                         Layout.fillWidth: true
