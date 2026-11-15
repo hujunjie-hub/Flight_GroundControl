@@ -302,7 +302,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         const bool accepted = device &&
             device->_handleGimbalManagerConfigure(request, msg.sysid, msg.compid);
         _sendCommandAck(request.command, accepted ? MAV_RESULT_ACCEPTED : MAV_RESULT_DENIED,
-                        request.target_component);
+                        ackComponent);
         return true;
     }
 
