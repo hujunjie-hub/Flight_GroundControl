@@ -754,3 +754,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - G15 增加飞行健康页 HealthCell 内容驱动高度、ScreenTools 缩放内边距、维护横条长中文文本自然换行与外层动态增高验收。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增断言保持 NOT_RUN，等待集中验收。
+
+
+### G15 导航 UTC 时间戳全宽堆叠显示（2026-11-15）
+
+- 导航页 FCU UTC 时间必须采用独立全宽堆叠行，值区固定宽度字体、自然换行，不得省略或截断日期、时分秒、六位微秒或 UTC 后缀。
+- 双列时间同步网格中 UTC 时间戳行横跨两列；UTC 有效性与 UTC 不确定度并排；窄屏单列下时间戳仍占满内容宽度。
+- MockLink UI Integration 覆盖 1600/1000/900/700/400 px，验证时间戳行和值标签宽度、内容高度、UTC 时间同步卡片边界及原有 freshness/utc_valid 状态。
+- 不改变 FCU_TIME_STATUS、时间服务、MAVLink、FactGroup、UTC 有效性和 freshness 语义；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
