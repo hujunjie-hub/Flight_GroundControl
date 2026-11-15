@@ -5158,6 +5158,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             // Exercise the real application UI scale preference, not only logical viewport resizing.
             Fact* uiScaleFact = SettingsManager::instance()->appSettings()->uiScalePercent();
             QVERIFY(uiScaleFact);
+            QQuickItem* flightConfigToolbar = findVisibleItem(
+                _rootItem, QStringLiteral("mainView_flightConfigToolbar"), 3000);
+            QQuickItem* flightConfigToolbarContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightConfig_toolbarContent"), 3000);
+            QQuickItem* vehicleConfigView = findVisibleItem(
+                _rootItem, QStringLiteral("vehicleConfig_root"), 3000);
+            QQuickItem* flightSidebar = findVisibleItem(
+                _rootItem, QStringLiteral("vehicleConfig_flightSidebar"), 3000);
+            QQuickItem* flightSidebarButton = findVisibleItem(
+                _rootItem, QStringLiteral("vehicleConfig_parametersButton"), 3000);
+            QVERIFY(flightConfigToolbar);
+            QVERIFY(flightConfigToolbarContent);
+            QVERIFY(vehicleConfigView);
+            QVERIFY(flightSidebar);
+            QVERIFY(flightSidebarButton);
+            const qreal originalFlightToolbarHeight = flightConfigToolbar->height();
+            const qreal originalFlightSidebarWidth = flightSidebar->width();
+            const qreal originalFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
             const QVariant originalUiScale = uiScaleFact->rawValue();
             const qreal originalDpiPageWidth = page->width();
             const qreal originalDpiPageHeight = page->height();
@@ -5174,6 +5192,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(
                 qAbs(page->property("_dashboardPanelPadding").toReal() - expectedBasePanelPadding) < 2.0,
                 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightConfigToolbar->height() -
+                     flightConfigToolbarContent->property("configToolbarHeight").toReal()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightSidebar->width() -
+                     vehicleConfigView->property("_flightSidebarWidth").toReal()) < 1.0, 3000);
+            const qreal baseFlightToolbarHeight = flightConfigToolbar->height();
+            const qreal baseFlightSidebarWidth = flightSidebar->width();
+            const qreal baseFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
             const qreal basePanelPadding = page->property("_dashboardPanelPadding").toReal();
             QVERIFY(basePanelPadding > 0.0);
 
@@ -5181,6 +5208,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             uiScaleFact->setRawValue(150);
             QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.35, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.35, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                flightSidebarButton->property("padding").toReal() >= baseFlightSidebarButtonPadding * 1.35,
+                3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightConfigToolbar->height() -
+                     flightConfigToolbarContent->property("configToolbarHeight").toReal()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightSidebar->width() -
+                     vehicleConfigView->property("_flightSidebarWidth").toReal()) < 1.0, 3000);
             page->setWidth(1672.0 / 1.5);
             page->setHeight(941.0 / 1.5);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 2, 3000);
@@ -5195,6 +5233,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             uiScaleFact->setRawValue(200);
             QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.8, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.8, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                flightSidebarButton->property("padding").toReal() >= baseFlightSidebarButtonPadding * 1.8,
+                3000);
             page->setWidth(1280.0 / 2.0);
             page->setHeight(720.0 / 2.0);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 1, 3000);
@@ -5228,6 +5271,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(
                 qAbs(page->property("_dashboardPanelPadding").toReal() - originalDpiPanelPadding) < 1.0,
                 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightConfigToolbar->height() - originalFlightToolbarHeight) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightSidebar->width() - originalFlightSidebarWidth) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(flightSidebarButton->property("padding").toReal() -
+                     originalFlightSidebarButtonPadding) < 1.0, 3000);
 
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcTab);
