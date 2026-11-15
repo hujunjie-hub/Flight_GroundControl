@@ -446,7 +446,7 @@ SetupPage {
             [qsTr("FCU 通信状态"), qsTr("飞行状态"), qsTr("失效保护等级"), qsTr("导航估计"), qsTr("数据链路"), qsTr("时间同步")],
             [qsTr("飞控操作"), qsTr("传感器健康"), qsTr("控制器状态"), qsTr("执行器状态"), qsTr("系统资源"), qsTr("事件记录")],
             [qsTr("导航状态"), qsTr("水平位置 σ"), qsTr("速度 σ"), qsTr("航向 σ"), qsTr("时间质量"), qsTr("UTC 不确定度")],
-            [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("数据链路"), qsTr("链路实例"), qsTr("RC 遥测接收年龄")]
+            [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("链路消息"), qsTr("链路实例"), qsTr("RC 遥测接收年龄")]
         ]
         return titles[_activeDashboardPage][index]
     }
@@ -551,7 +551,7 @@ SetupPage {
         case 0: return qsTr("地面站接收 RC 状态：%1").arg(_receiveAgeText("rcInput"))
         case 1: return qsTr("有效轴由 rcValidAxesMask 与归一化数值范围共同决定")
         case 2: return _rcReceiverFailsafeSummaryText()
-        case 3: return qsTr("链路接收年龄：%1").arg(_receiveAgeText("link"))
+        case 3: return qsTr("链路状态消息接收年龄：%1").arg(_receiveAgeText("link"))
         case 4: return _linkInstanceCoverageText()
         default: return _receiveAgeText("rcInput")
         }
