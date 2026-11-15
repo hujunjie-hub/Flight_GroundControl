@@ -2678,8 +2678,43 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 {false, true,  false, false, false, false, false, false, true,  false, false, false, false, false},
                 {false, false, false, false, false, true,  false, false, false, false, false, false, true,  false}
             };
+            const qreal originalPageHeight = page->height();
+            QQuickItem* contentRoot = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_contentRoot"), 3000);
+            QVERIFY(contentRoot);
+
+            // Reference viewport: verify the adaptive vertical density without hiding telemetry.
+            page->setWidth(1672);
+            page->setHeight(1100);
+            QTRY_VERIFY_WITH_TIMEOUT(!page->property("_compactDashboardVertical").toBool(), 3000);
+            const qreal expandedPanelPadding = page->property("_dashboardPanelPadding").toReal();
+            page->setHeight(941);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(contentRoot->property("spacing").toReal(), 8.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTabHeight").toReal(), 42.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTrendMinimumHeight").toReal(), 128.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_dashboardPanelPadding").toReal() < expandedPanelPadding, 3000);
+            QQuickItem* compactTab = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
+            QQuickItem* compactDetailsEyebrow = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsEyebrow"));
+            QQuickItem* compactTrendCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
+            QQuickItem* compactTrendCanvas = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_trend_position_canvas"), 3000);
+            QVERIFY(compactTab);
+            QVERIFY(compactDetailsEyebrow);
+            QVERIFY(compactTrendCard);
+            QVERIFY(compactTrendCanvas);
+            QTRY_COMPARE_WITH_TIMEOUT(compactTab->property("implicitHeight").toReal(), 42.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!compactDetailsEyebrow->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(compactTrendCanvas->height() >= 64, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), 4, 3000);
+
+            page->setHeight(originalPageHeight);
             page->setWidth(1600);
-            QTRY_COMPARE_WITH_TIMEOUT(page->property("spacing").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(contentRoot->property("spacing").toReal(),
+                                      page->property("_dashboardOuterSpacing").toReal(), 3000);
             QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
             QQuickItem* diagnosticDetailsTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
