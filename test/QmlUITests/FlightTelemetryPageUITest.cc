@@ -457,6 +457,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto overviewHeroPanelsSameHeight = [&]() {
+                return qAbs(heroFlight->height() - heroNavigation->height()) < 1.0 &&
+                       qAbs(heroNavigation->height() - heroRcInput->height()) < 1.0;
+            };
+
             const auto flightPriorityItemsFit = [&]() {
                 for (QQuickItem* item : {heroFlightMode, heroArmState, heroFailsafeBand,
                                          heroAuthorityRow, heroAuthority, primaryHealthGrid}) {
@@ -585,6 +590,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
@@ -602,6 +608,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             page->setWidth(1000);
@@ -614,6 +621,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
