@@ -188,12 +188,24 @@ void GimbalController::_handleGimbalManagerStatus(const mavlink_message_t &messa
     gimbal->_receivedGimbalManagerStatus = true;
     gimbal->markManagerStatusReceived();
 
-    const bool haveControl =
+    const bool primaryOwnerPairEmpty =
+        status.primary_control_sysid == 0 && status.primary_control_compid == 0;
+    const bool primaryOwnerPairComplete =
+        status.primary_control_sysid != 0 && status.primary_control_compid != 0;
+    const bool secondaryOwnerPairEmpty =
+        status.secondary_control_sysid == 0 && status.secondary_control_compid == 0;
+    const bool secondaryOwnerPairComplete =
+        status.secondary_control_sysid != 0 && status.secondary_control_compid != 0;
+    const bool ownershipStatusValid =
+        (primaryOwnerPairEmpty || primaryOwnerPairComplete) &&
+        (secondaryOwnerPairEmpty || secondaryOwnerPairComplete);
+    gimbal->setOwnershipStatusValid(ownershipStatusValid);
+
+    const bool haveControl = ownershipStatusValid &&
         (status.primary_control_sysid == MAVLinkProtocol::instance()->getSystemId()) &&
         (status.primary_control_compid == MAVLinkProtocol::getComponentId());
 
-    const bool othersHaveControl = !haveControl &&
-        (status.primary_control_sysid != 0 && status.primary_control_compid != 0);
+    const bool othersHaveControl = ownershipStatusValid && !haveControl && primaryOwnerPairComplete;
 
     if (gimbal->gimbalHaveControl() != haveControl) {
         gimbal->setGimbalHaveControl(haveControl);
@@ -401,13 +413,17 @@ bool GimbalController::_tryGetGimbalControl()
         return false;
     }
 
-    if (_activeGimbal->gimbalOthersHaveControl()) {
-        qCDebug(GimbalControllerLog) << "Others in control, showing popup for user to confirm control..";
-        emit showAcquireGimbalControlPopup();
+    if (!_activeGimbal->ownershipStatusValid()) {
+        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: manager owner pair is invalid";
         return false;
-    } else if (!_activeGimbal->gimbalHaveControl()) {
-        qCDebug(GimbalControllerLog) << "Nobody in control, acquiring control ourselves..";
-        acquireGimbalControl();
+    }
+    if (_activeGimbal->gimbalOthersHaveControl()) {
+        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: another controller owns the primary slot";
+        return false;
+    }
+    if (!_activeGimbal->gimbalHaveControl()) {
+        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: explicit control acquisition is required";
+        return false;
     }
 
     return true;
@@ -540,13 +556,18 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError)
     const unsigned flags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK
                          | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;
+    const float pitchTarget = _activeGimbal->supportsPitchAxis() ? pitch : NAN;
+    const float yawTarget = _activeGimbal->supportsYawAxis() ? yaw : NAN;
+    if (std::isnan(pitchTarget) && std::isnan(yawTarget)) {
+        return;
+    }
 
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
         showError,
-        pitch,
-        yaw,
+        pitchTarget,
+        yawTarget,
         NAN,
         NAN,
         flags,
@@ -578,13 +599,18 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
                          | GIMBAL_MANAGER_FLAGS_PITCH_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_LOCK
                          | GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME;
+    const float pitchTarget = _activeGimbal->supportsPitchAxis() ? pitch : NAN;
+    const float yawTarget = _activeGimbal->supportsYawAxis() ? yaw : NAN;
+    if (std::isnan(pitchTarget) && std::isnan(yawTarget)) {
+        return;
+    }
 
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
         showError,
-        pitch,
-        yaw,
+        pitchTarget,
+        yawTarget,
         NAN,
         NAN,
         flags,
@@ -707,18 +733,27 @@ void GimbalController::setGimbalYawLock(bool set)
 void GimbalController::sendPitchYawFlags(uint32_t flags)
 {
     if (!_activeGimbal || !_vehicle || !_vehicle->vehicleLinkManager() ||
-        _vehicle->vehicleLinkManager()->communicationLost() || !_activeGimbal->managerStatusFresh()) {
-        qCDebug(GimbalControllerLog) << "sendPitchYawFlags: link or manager status is not fresh, refusing command";
+        _vehicle->vehicleLinkManager()->communicationLost() ||
+        !_activeGimbal->managerStatusFresh() || !_activeGimbal->attitudeStatusFresh() ||
+        !_activeGimbal->ownershipStatusValid() || !_activeGimbal->gimbalHaveControl() ||
+        _activeGimbal->gimbalOthersHaveControl()) {
+        qCDebug(GimbalControllerLog) << "sendPitchYawFlags: link, telemetry, or ownership is not ready, refusing command";
         return;
     }
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
+    const float pitchTarget = _activeGimbal->supportsPitchAxis()
+                                  ? _activeGimbal->absolutePitch()->rawValue().toFloat() : NAN;
+    const float yawTarget = _activeGimbal->supportsYawAxis()
+                                ? (yaw_in_vehicle_frame ? _activeGimbal->bodyYaw()->rawValue().toFloat()
+                                                        : _activeGimbal->absoluteYaw()->rawValue().toFloat())
+                                : NAN;
 
     _vehicle->sendMavCommand(
         _activeGimbal->managerCompid()->rawValue().toUInt(),
         MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
         true,
-        _activeGimbal->absolutePitch()->rawValue().toFloat(),
-        yaw_in_vehicle_frame ? _activeGimbal->bodyYaw()->rawValue().toFloat() : _activeGimbal->absoluteYaw()->rawValue().toFloat(),
+        pitchTarget,
+        yawTarget,
         NAN,
         NAN,
         flags,
@@ -733,8 +768,10 @@ void GimbalController::acquireGimbalControl()
         return;
     }
     if (!_vehicle || !_vehicle->vehicleLinkManager() ||
-        _vehicle->vehicleLinkManager()->communicationLost() || !_activeGimbal->managerStatusFresh()) {
-        qCDebug(GimbalControllerLog) << "acquireGimbalControl: link or manager status is not fresh, refusing request";
+        _vehicle->vehicleLinkManager()->communicationLost() || !_activeGimbal->managerStatusFresh() ||
+        !_activeGimbal->ownershipStatusValid() || _activeGimbal->gimbalHaveControl() ||
+        _activeGimbal->gimbalOthersHaveControl()) {
+        qCDebug(GimbalControllerLog) << "acquireGimbalControl: link, manager status, or ownership is not ready, refusing request";
         return;
     }
 
@@ -758,8 +795,10 @@ void GimbalController::releaseGimbalControl()
         return;
     }
     if (!_vehicle || !_vehicle->vehicleLinkManager() ||
-        _vehicle->vehicleLinkManager()->communicationLost()) {
-        qCDebug(GimbalControllerLog) << "releaseGimbalControl: communication is lost, refusing request";
+        _vehicle->vehicleLinkManager()->communicationLost() ||
+        !_activeGimbal->managerStatusFresh() || !_activeGimbal->ownershipStatusValid() ||
+        !_activeGimbal->gimbalHaveControl() || _activeGimbal->gimbalOthersHaveControl()) {
+        qCDebug(GimbalControllerLog) << "releaseGimbalControl: link or confirmed ownership is not ready, refusing request";
         return;
     }
 
