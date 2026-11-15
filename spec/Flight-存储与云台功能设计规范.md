@@ -120,6 +120,7 @@ MockLink 的多设备模拟必须遵守以下规则：
 - 管理器收到 `MAV_CMD_REQUEST_MESSAGE(GIMBAL_MANAGER_INFORMATION)` 时，必须分别为每台设备发送一帧信息；`GIMBAL_MANAGER_STATUS` 必须按设备分别发送，且每帧携带对应 `gimbal_device_id`。
 - 设备 ID 大于 6 时，`GIMBAL_DEVICE_ATTITUDE_STATUS` 使用设备 ID 作为 MAVLink component ID，消息内 `gimbal_device_id=0`；设备 ID 1-6 使用 manager component ID，并在消息字段中携带真实设备 ID。
 - manager status 消息间隔设置应用于该 manager 下的所有设备；姿态状态间隔按设备 component ID 路由。设备 ID 1-6 的姿态状态间隔由 manager component 路由。
+- `MAV_CMD_SET_MESSAGE_INTERVAL` 的 target component 为 0 时视为广播，manager status / device attitude status 的间隔必须应用于该 manager 下全部在线设备；广播命令的 ACK 必须由 manager component 发出。
 - `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 与 `MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE` 的 param7 必须路由到对应设备；兼容值 0 仅指向默认设备 154，不得广播改变所有设备。
 - `GIMBAL_MANAGER_SET_ATTITUDE.gimbal_device_id` 为 0 时兼容指向默认设备 154；显式设备 ID 只改变对应设备。
 - 未知设备 ID 必须拒绝；不同设备的姿态、角速度和 owner pair 不得互相覆盖。
@@ -156,6 +157,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 第二设备 155 的角速度控制必须只改变设备 155 的姿态；发送双轴零速后停止设备 155 的速率运动，设备 154 的姿态保持不变。
 - 设备 154 单独离线时，设备 155 的管理状态与姿态状态继续保持新鲜；活动设备选择器必须允许切换到设备 155。
 - 设备 154 重新上线后必须重新收到 manager information、manager status 和 attitude status，旧 owner 不得恢复；重新选择设备 154 后必须允许显式重新获取控制权。
+- target component 为 0 的姿态状态消息间隔广播必须同时停止并恢复设备 154/155 的 attitude status；未知设备 ID 的离线模拟请求必须拒绝。
 - 设备选择器的禁用条件必须基于新鲜且有效的本机 primary owner 状态；manager status 超时后不得因缓存的 `gimbalHaveControl` 位而永久锁定设备选择。
 - QML 的管理状态/姿态状态年龄必须由可见页面的周期刷新依赖驱动；不得假设 `QElapsedTimer::elapsed()` 会自行触发属性通知。停止状态流后，界面仍须分别跨过 6500 ms / 3500 ms 超时门限。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
