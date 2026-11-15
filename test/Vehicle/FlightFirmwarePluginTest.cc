@@ -124,6 +124,14 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     invalidReadOnlyFlagEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_READ_ONLY_FLAG"));
     invalidReadOnlyFlagEntry.insert(QStringLiteral("readOnly"), QStringLiteral("false"));
 
+    QJsonObject readOnlyEntry = validEntry;
+    readOnlyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_READ_ONLY"));
+    readOnlyEntry.insert(QStringLiteral("readOnly"), true);
+
+    QJsonObject writeOnlyEntry = validEntry;
+    writeOnlyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_WRITE_ONLY"));
+    writeOnlyEntry.insert(QStringLiteral("writeOnly"), true);
+
     QJsonObject duplicateEntryA = validEntry;
     duplicateEntryA.insert(QStringLiteral("name"), QStringLiteral("TEST_DUPLICATE"));
     QJsonObject duplicateEntryB = duplicateEntryA;
@@ -136,6 +144,8 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     parameters.append(unsupportedTypeEntry);
     parameters.append(invalidRebootRequiredEntry);
     parameters.append(invalidReadOnlyFlagEntry);
+    parameters.append(readOnlyEntry);
+    parameters.append(writeOnlyEntry);
     parameters.append(duplicateEntryA);
     parameters.append(duplicateEntryB);
     metadata.parseParameterJson(QJsonObject{{ QStringLiteral("parameters"), parameters }});
@@ -148,6 +158,16 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QVERIFY(valid->vehicleRebootRequired());
     QVERIFY(!valid->readOnly());
     QVERIFY(!valid->writeOnly());
+
+    FactMetaData *readOnly = metadata.getMetaDataForFact(QStringLiteral("TEST_READ_ONLY"),
+                                                         FactMetaData::valueTypeFloat);
+    QVERIFY(readOnly);
+    QVERIFY(readOnly->readOnly());
+
+    FactMetaData *writeOnly = metadata.getMetaDataForFact(QStringLiteral("TEST_WRITE_ONLY"),
+                                                          FactMetaData::valueTypeFloat);
+    QVERIFY(writeOnly);
+    QVERIFY(writeOnly->writeOnly());
 
     // Rejected entries must not be cached as partially valid metadata. The base
     // class may still create an unclassified fallback for a live parameter.
