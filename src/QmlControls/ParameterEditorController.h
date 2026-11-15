@@ -3,6 +3,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QHash>
 #include <QtCore/QSet>
+#include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -183,6 +184,7 @@ public:
     Q_INVOKABLE bool isFavorite                     (const QString& paramName) const;
     Q_INVOKABLE void clearAllFavorites              (void);
 
+    Q_INVOKABLE bool setSelectedModelProfileId(const QString &profileId);
     Q_INVOKABLE bool selectParameterFact(QObject *fact);
     Q_INVOKABLE bool applySelectedValue(const QVariant &cookedValue);
     Q_INVOKABLE bool refreshSelectedValue();
@@ -289,6 +291,9 @@ private:
     QSet<QString>               _favoriteNames;
 
     Fact*                       _selectedFact = nullptr;
+    QString                     _selectedModelProfileId;
+    QStringList                 _selectedModelParameterNames;
+    QStringList                 _selectedModelParameterDomains;
     QVariant                    _confirmedValue;
     QVariant                    _previousValue;
     QVariant                    _pendingOriginalValue;
