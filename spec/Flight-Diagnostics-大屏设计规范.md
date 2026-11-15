@@ -1487,3 +1487,11 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 桌面主视觉维持 3:6:3（重点域概览/13 域矩阵/安全监测）宽度比例和等高对齐；左侧六个重点域状态保持单列，不压缩成难以阅读的多列。
 - MockLink UI Integration 检查六个重点域状态单元与 13 个矩阵单元的内容高度、缩放内边距、父子边界；验证矩阵/重点域间距使用独立紧凑 token，桌面比例与高 DPI 150%/200% 回归继续有效。
 - 不修改遥测字段、family/instance freshness、validity mask、状态判定、MAVLink、FactGroup、飞控行为或只读安全边界；按用户要求不运行 CI/Build/Unit/Integration/Windows Release，新增验收保持 NOT_RUN。
+
+## 117. Phase 2.72 FCU 单调时序标记/序号/时间值颜色一致性（2026-11-16）
+
+- FCU 单调时序三条数据行（导航状态发布、时间同步发布、最近事件）的时间点标记、排序序号与右侧时间值必须共享同一状态颜色，避免状态点与数值对同一条遥测呈现相互矛盾的视觉结论。
+- 有效时间戳沿用各域专属强调色；超时沿用告警色；无效沿用错误色；未上报/等待沿用中性弱化色。颜色来源继续由 `_navigationTimelineColor()` 统一计算，不增加第二套状态映射。
+- MockLink UI Integration 新增三条时间线 marker/order/value 的 QColor 一致性断言；保留既有有效值早到晚排序、无效/未上报/超时置后、相同时间戳按定义顺序稳定排序、FCU + 秒与微秒精度、UTC 独立性及多视口边界检查。
+- 仅增加 FlightTelemetryPageUITest 回归和本节文档/验收 manifest；不改变 QML 展示、时间戳解析、排序算法、MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 或飞控行为。
+- 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中 exact-HEAD 验收。
