@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.61
+- 版本：6.62
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -142,9 +142,11 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 主体按左/中/右三栏排列：左侧健康状态概览（逐项状态计数，不显示 96/100 等综合健康分）、中间 13 类遥测域矩阵、右侧安全监测。
 - 健康矩阵逐项显示 operation、navigation、sensor health、control、actuator、link、storage、resource、time、event、pre-arm、RC input、build info 的独立状态和接收年龄。
 - 矩阵宽屏 4 列、中屏 2 列、窄屏 1 列；单元内容随文本自然增高。
-- 矩阵下方显示维护与可靠性横条：启动 ID、最近真实事件、预检通过/警告/失败/未知计数、真实系统资源摘要。
+- 矩阵下方显示维护与可靠性横条：启动 ID、最近真实事件、预检覆盖数（有效/超时/未收到）和 CPU/WCET/系统栈/存储四项真实资源快照；预检通过/警告/失败/未知结论只在安全监测区显示，避免同一结论重复。
 - 页面底部复用地面站本地 1 Hz 趋势，使用真实 CPU 负载、WCET、栈剩余和存储剩余；resource taskId=0 实例超时或 validity bit 缺失时形成断点。不把健康分、振动 RMS、电池温度或电压一致性等未提供字段伪装成遥测。
 - VehicleLinkManager.communicationLost 为 true 时，健康概览 headline 立即显示红色「通信丢失」，并说明遥测矩阵仍按各 family 的独立接收年龄判定；不得把全链路丢失机械扩散为 13 个遥测域统一 stale。链路恢复后隐藏提示，矩阵继续沿用各 family 自身 freshness。
+- 「安全监测」只显示预检通过/警告/失败/未知结论及其安全语义色；维护横条只显示预检覆盖数（fresh/stale/missing），覆盖色仅表达数据完整度：全部 15 项 fresh 为绿、存在 stale 为琥珀、不完整/等待为灰，不因检查失败或警告而改变覆盖色。
+- 维护横条的系统资源快照复用 taskId=0 的 CPU/WCET/系统栈剩余和 storage family 的剩余空间，逐项沿用 resource/storage family freshness、实例年龄和 validity mask；底部四张趋势图仍表达这些量的本地 1 Hz 历史，不以缓存值填补无效/过期样本。
 
 ### 2.9 导航时序页面
 
@@ -1141,3 +1143,14 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 修正 UI Integration 中告警优先级提示的预期文案，使其与页面实际「最高严重度置顶 · 同级按本地接收序号」一致；不改变严重度排序算法、事件序号生成、FCU_EVENT 字段或历史容量。
 - 不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager 或飞控控制行为；总览仍只读，不授予 ARM、FMS、Permit 或执行器权限。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待后续集中验收。
+
+
+## 85. Phase 2.39 飞行健康页预检覆盖与资源快照信息分层（2026-11-15）
+
+- 「安全监测」保留唯一的预检结果摘要，继续显示通过/警告/失败/未知结论及风险语义色；维护横条不再重复同一结果摘要，改为「预检覆盖」并展示有效/超时/未收到数量。
+- 新增 _prearmCheckCoverageColor()：全部 15 项 fresh 才显示绿色；存在 stale 显示琥珀；缺项/等待显示灰色。该颜色只表达数据覆盖，不受 checkState 的失败/警告影响；安全结论仍由 _prearmSummaryColor() 独立着色。
+- 维护横条增加 CPU 负载、任务 WCET、系统栈剩余、存储剩余四项资源快照；taskId=0 resource 指标按各自 validity bit 和实例 freshness 门控，storage 按 storage family freshness 与 validity bit 门控；趋势仍保留四项指标的本地 1 Hz 历史。
+- 增加 resource snapshot 子网格稳定 objectName，并在 1600/1000/900/700/400 px 检查四个指标均位于父网格边界内；MockLink 断言覆盖资源值、字段有效性颜色、预检覆盖/结论分色。
+- 保留原有预检摘要 objectName flightTelemetry_healthMaintenancePrearmSummary 以兼容现有 UI 选择器，但其语义改为覆盖摘要；安全结论唯一显示在 flightTelemetry_healthSafetyPrearmSummary。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、设计 SPEC、项目 SPEC 入口、Windows Release G15 和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager、预检判定、资源统计或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归为 NOT_RUN，等待集中验收。
