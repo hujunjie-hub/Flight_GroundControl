@@ -1717,6 +1717,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueColor").toString(),
                                           QStringLiteral("#45D39A"), 3000);
             }
+            sendTimeStatusWithQuality(lastOperationTime + 386, bootId,
+                                      1700000007123456ULL, 1, 2, 255);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueColor").toString(),
+                                      QStringLiteral("#8A9A94"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueColor").toString(),
+                                      QStringLiteral("#8A9A94"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendControl->property("valueKey").toString(), QStringLiteral("time"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("validSampleCount").toInt() >= 2, 3000);
 
