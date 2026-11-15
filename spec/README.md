@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.00
+- 版本 5.1
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -272,3 +272,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 遥控与链路页高 DPI 收口：手型切换按钮、双摇杆舞台/标记/通道映射、逻辑轴刻度条和多链路 RSSI/质量/丢包卡片统一使用 ScreenTools 缩放 token；摇杆和链路指标卡片改为内容驱动高度，避免高 DPI/窄屏裁切。MockLink UI Integration 新增 1000/900/760/759/700/400 px spacing 与父子内容边界断言。按要求未运行 CI，新增回归 NOT_RUN。
+
+
+- 2026-11-15 飞行健康页 Phase 2.67：150%/200% UI Scale 回归扩展到传感器实例、预检、任务资源详情卡和 CPU/WCET/栈/存储资源指标，逐项检查父子边界与内容高度；测试恢复原始 UI Scale。本轮未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
