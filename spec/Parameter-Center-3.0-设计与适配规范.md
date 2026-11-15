@@ -481,13 +481,27 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 在线调参、参数行与目标值面板联动、仿真曲线和应用/回读闭环仍未实现。
 - 新增 ParameterEditorController categoryFilter 搜索隔离回归测试；测试代码已登记，但本轮未执行 Windows 构建、QML 运行、单元测试或 CI，必须在集中验收阶段验证。
 
+### Phase 3 实施记录（首轮 SIL 单参数在线调参闭环）
+
+本轮开始接入在线调参，但不开放实机写入，也不启用试探调参/批量调参：
+
+- ParameterEditor 增加参数行选择能力；Flight 参数中心启用 safe mode，参数表值单元格不再直接打开原生写入对话框，重置操作禁用，参数文件仍可导入预览但禁止批量上传。
+- 在线调参控制器复用 ParameterEditorController、Fact、ParameterManager 和既有 MAVLink PARAM_SET 状态机，不建立第二套参数缓存或写入队列。
+- 写入资格必须同时满足：当前 activeVehicle 唯一匹配 FLTSIL01 且固件版本不低于 1.9.2；唯一注册 profile 为 QUAD_X4 / SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名与 domain 均在 profile 注册清单中；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数本身不是只读/只写项。
+- 目标值先经 Fact 元数据范围/类型校验，再通过 Fact::setCookedValue 进入原有 ParameterManager PARAM_SET 流程；只有收到匹配参数的 PARAM_VALUE 确认才标记应用成功。
+- confirmedValue 只从 Fact 的 vehicleUpdated（飞控回传）更新，不把 UI 乐观目标值冒充当前确认值；失败后要求回读确认实际值，失败后的下一次写入必须先完成回读。
+- “回读验证”使用 ParameterManager 的单参数 refresh 路径；“恢复上一次”只恢复当前会话内该参数上一次已确认的值，并重新经过相同资格检查、范围校验、写入确认。
+- 实时在线为当前唯一开放模式；试探调参和批量调参保持禁用。所有实机 profile、未知固件、非活动 Vehicle、失联、参数未就绪、armed/flying 状态均 fail-closed。C++ 层同时禁止 Flight 参数页的批量导入写入和批量重置，避免仅依赖 QML 禁用态。
+
+本轮仅登记实现与回归测试代码；Windows 构建、QML 运行、Unit/Integration 和 CI 均未执行。该实现是 QUAD_X4 SIL 的单参数调参试点，不构成实机在线调参放行。
+
 ## 13. 当前实施状态
 
-- SPEC：已定义，等待分阶段实施。
+- SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 参数元数据已由固件源配置生成；模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 参数域门控和未登记机型锁定已接入；硬件模型注册、在线调参安全策略、仿真/回读闭环未完成，构建与测试 NOT_RUN）。
-- Phase 3：NOT_RUN。
+- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 参数域门控和未登记机型锁定已接入；硬件模型注册及兼容性元数据仍未完成；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。
 
