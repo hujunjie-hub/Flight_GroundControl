@@ -599,13 +599,43 @@ SetupPage {
         const state = _rawMaskState(link.validityMask, bit)
         return state === 1 ? "#E6F0F4" : state === 0 ? "#F0B94B" : "#8A9A94"
     }
+    function _linkInstanceMetricValidityText(link) {
+        if (!link) {
+            const familyStatus = _familyStatus("linkAvailable")
+            return qsTr("指标 freshness：%1").arg(
+                        familyStatus === qsTr("已接收") ? qsTr("未上报") : familyStatus)
+        }
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        if (freshness !== qsTr("已接收")) return qsTr("指标 freshness：%1").arg(freshness)
+        const metrics = [
+            { label: qsTr("RSSI"), value: _linkInstanceMetricText(link, "rssiDbm", 8, 0, " dBm") },
+            { label: qsTr("链路质量"), value: _linkInstanceMetricText(link, "linkQualityPermille", 9, 1, " %") },
+            { label: qsTr("丢包率"), value: _linkInstanceMetricText(link, "packetLossPpm", 10, 2, " %") }
+        ]
+        let validCount = 0
+        const invalid = []
+        const unreported = []
+        for (let index = 0; index < metrics.length; ++index) {
+            if (metrics[index].value === qsTr("无效")) invalid.push(metrics[index].label)
+            else if (metrics[index].value === qsTr("未上报")) unreported.push(metrics[index].label)
+            else ++validCount
+        }
+        let result = qsTr("指标有效性：%1 / 3").arg(validCount)
+        if (invalid.length > 0) result += qsTr(" · 无效：%1").arg(invalid.join(" / "))
+        if (unreported.length > 0) result += qsTr(" · 未上报：%1").arg(unreported.join(" / "))
+        return result
+    }
     function _linkInstanceDetailsColor(link) {
         if (!link) return "#8A9A94"
         const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
         if (freshness !== qsTr("已接收")) return _freshnessStatusColor(freshness)
-        const states = [8, 9, 10].map(bit => _rawMaskState(link.validityMask, bit))
-        if (states.indexOf(0) >= 0) return "#F0B94B"
-        if (states.some(state => state !== 1)) return "#8A9A94"
+        const values = [
+            _linkInstanceMetricText(link, "rssiDbm", 8, 0, " dBm"),
+            _linkInstanceMetricText(link, "linkQualityPermille", 9, 1, " %"),
+            _linkInstanceMetricText(link, "packetLossPpm", 10, 2, " %")
+        ]
+        if (values.indexOf(qsTr("无效")) >= 0) return "#F0B94B"
+        if (values.indexOf(qsTr("未上报")) >= 0) return "#8A9A94"
         return "#8298A2"
     }
     function _linkInstanceStateText(link) {
@@ -632,6 +662,11 @@ SetupPage {
         if (!link) return qsTr("未上报")
         const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
         return freshness === qsTr("已接收") ? _ageUsText(link.ageUs) : freshness
+    }
+    function _linkInstanceAgeColor(link) {
+        if (!link) return "#8A9A94"
+        const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+        return freshness === qsTr("已接收") ? "#8298A2" : _freshnessStatusColor(freshness)
     }
     function _rcAgeDisplayText() {
         if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return _familyStatus("rcInputAvailable")
@@ -3017,9 +3052,17 @@ SetupPage {
                                     }
                                 }
                             }
+                            TelemetryRow {
+                                objectName: "flightTelemetry_linkMetricAge_" + modelData.linkInstanceId
+                                labelText: qsTr("FCU 数据年龄")
+                                valueText: root._linkInstanceAgeText(modelData)
+                                valueColor: root._linkInstanceAgeColor(modelData)
+                            }
                             QGCLabel {
                                 Layout.fillWidth: true
-                                text: qsTr("%1 · 接收年龄：%2").arg(root._linkInstanceReasonText(modelData)).arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
+                                text: qsTr("%1 · 地面站接收年龄：%2")
+                                      .arg(root._linkInstanceReasonText(modelData))
+                                      .arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                                 color: "#8298A2"
                                 font.pointSize: ScreenTools.microFontPointSize
                                 wrapMode: Text.WordWrap
@@ -3517,11 +3560,7 @@ SetupPage {
                                 objectName: "flightTelemetry_linkDetailMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3 · FCU 数据年龄 %4")
-                                      .arg(root._linkInstanceMetricText(modelData, "rssiDbm", 8, 0, " dBm"))
-                                      .arg(root._linkInstanceMetricText(modelData, "linkQualityPermille", 9, 1, " %"))
-                                      .arg(root._linkInstanceMetricText(modelData, "packetLossPpm", 10, 2, " %"))
-                                      .arg(root._linkInstanceAgeText(modelData))
+                                text: root._linkInstanceMetricValidityText(modelData)
                                 color: root._linkInstanceDetailsColor(modelData)
                             }
                             QGCLabel {
