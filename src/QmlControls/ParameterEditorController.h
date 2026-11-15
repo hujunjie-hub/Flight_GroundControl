@@ -196,7 +196,7 @@ public:
     QVariant            confirmedValue() const { return _confirmedValue; }
     QVariant            previousValue() const { return _previousValue; }
     bool                hasPreviousValue() const { return _hasPreviousValue; }
-    bool                tuningBusy() const { return _tuningBusy || _readbackPending || _writeFailureNeedsReadback; }
+    bool                tuningBusy() const { return _tuningBusy || _readbackPending || _writeFailureNeedsReadback || (_parameterMgr && _parameterMgr->pendingWrites()); }
     QString             tuningStatus() const { return _tuningStatus; }
     QString             tuningError() const { return _tuningError; }
     bool                canApplySelectedValue() const;
