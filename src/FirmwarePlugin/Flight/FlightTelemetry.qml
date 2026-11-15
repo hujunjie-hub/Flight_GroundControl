@@ -4646,6 +4646,14 @@ SetupPage {
                     font.pointSize: ScreenTools.microFontPointSize
                 }
                 QGCLabel {
+                    objectName: plotCard.objectName + "_gaps"
+                    text: qsTr("断点 %1").arg(plotCard.gapCount)
+                    color: plotCard.gapCount > 0 ? "#F0B94B" : "#688A94"
+                    font.pointSize: ScreenTools.microFontPointSize
+                    font.weight: plotCard.gapCount > 0 ? ScreenTools.strongFontWeight : Font.Normal
+                }
+                QGCLabel {
+                    objectName: plotCard.objectName + "_sampleState"
                     text: plotCard.validSampleCount === 0 ? qsTr("WAIT")
                           : plotCard.lastSampleValid ? qsTr("NOW") : qsTr("GAP")
                     color: plotCard.validSampleCount === 0 ? "#8298A2"
