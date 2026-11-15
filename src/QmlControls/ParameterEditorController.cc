@@ -239,7 +239,8 @@ bool ParameterEditorController::_flightParameterCenterSafeMode() const
 bool ParameterEditorController::setSelectedModelProfileId(const QString &profileId)
 {
     if (!_flightParameterCenterSafeMode() || !_vehicle ||
-        _tuningBusy || _readbackPending || _writeFailureNeedsReadback) {
+        _tuningBusy || _readbackPending || _writeFailureNeedsReadback ||
+        (_parameterMgr && _parameterMgr->pendingWrites())) {
         return false;
     }
 
