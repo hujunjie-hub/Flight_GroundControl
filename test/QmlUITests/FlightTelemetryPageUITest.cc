@@ -836,6 +836,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_timeDisciplineDetail"));
             QQuickItem* rcFailsafeDetail =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_rcFailsafeDetail"));
+            QQuickItem* rcFailsafeHeroStatus =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_rcFailsafeReceiverStatus"));
             QQuickItem* rcLinkStateDetail =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_rcLinkStateDetail"));
             QQuickItem* storageFreeRow =
@@ -861,6 +863,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(timeQualityDetail);
             QVERIFY(timeDisciplineDetail);
             QVERIFY(rcFailsafeDetail);
+            QVERIFY(rcFailsafeHeroStatus);
             QVERIFY(rcLinkStateDetail);
             QVERIFY(storageFreeRow);
             QVERIFY(storageSdState);
@@ -1059,7 +1062,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             };
 
             auto sendRcInputStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint8_t validAxesMask, float roll,
-                                         float pitch, float yaw, float throttle) {
+                                         float pitch, float yaw, float throttle, uint8_t receiverFailsafe) {
                 mavlink_fcu_rc_input_status_t payload{};
                 payload.time_boot_us = timeBootUs;
                 payload.boot_id = sessionBootId;
@@ -1070,7 +1073,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 payload.yaw_norm = yaw;
                 payload.throttle_norm = throttle;
                 payload.age_us = 2500;
-                payload.receiver_failsafe = 0;
+                payload.receiver_failsafe = receiverFailsafe;
                 payload.link_state = 2;
 
                 mavlink_message_t message{};
@@ -1116,7 +1119,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendOperationStatus(1000, bootId);
             sendNavigationStatus(1100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
-            sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
+            sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F, 0);
             sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700);
             sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
             sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
@@ -1142,6 +1145,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("接收机失效保护未触发"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
                                       translatedTelemetryText("未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeHeroStatus->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(),
                                       translatedTelemetryText("健康"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
@@ -1294,10 +1301,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#8298A2")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("%1 / 4").arg(4), 3000);
-            sendRcInputStatus(1750, bootId, 0x0F, 1.50F, -0.25F, 0.50F, 0.40F);
+            sendRcInputStatus(1750, bootId, 0x0F, 1.50F, -0.25F, 0.50F, 0.40F, 0);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("%1 / 4").arg(3), 3000);
-            sendRcInputStatus(1800, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
+            sendRcInputStatus(1800, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F, 0);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("%1 / 4").arg(4), 3000);
             const QVariantMap staleLinkSample{
@@ -1926,7 +1933,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
 
             // Clearing one validity bit must hide the last RC axis value rather than drawing it as zero.
-            sendRcInputStatus(lastOperationTime + 300, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F);
+            sendRcInputStatus(lastOperationTime + 300, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F, 0);
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(axisRoll->property("displayValue").toString(), invalidText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
@@ -1941,6 +1948,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->property("text").toString().contains(invalidText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+            sendRcInputStatus(lastOperationTime + 400, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F, 1);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
+                                      translatedTelemetryText("触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#F06464"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeHeroStatus->property("valueText").toString(),
+                                      translatedTelemetryText("触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeHeroStatus->property("valueColor").toString(),
+                                      QStringLiteral("#F06464"), 3000);
+            sendRcInputStatus(lastOperationTime + 500, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
+                                      translatedTelemetryText("未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
@@ -2007,6 +2028,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendPositionSampleState->property("text").toString(), QStringLiteral("GAP"), 3000);
             // RC input uses a longer 5500 ms family freshness window.
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), staleText, 6500);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueColor").toString(),
                                       QStringLiteral("#F0B94B"), 3000);
