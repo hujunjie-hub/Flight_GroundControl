@@ -438,9 +438,10 @@ SetupPage {
     }
     function _utcUncertaintyColor() {
         if (_utcValidityText() !== qsTr("是")) return _utcValidityColor()
-        const uncertainty = _utcUncertaintyText()
-        if (uncertainty === qsTr("未上报")) return "#8A9A94"
-        if (uncertainty === qsTr("无效")) return "#F06464"
+        const raw = _fact("utcUncertaintyUs")
+        if (raw === null || raw === undefined || raw === "") return "#8A9A94"
+        const uncertainty = Number(raw)
+        if (!Number.isFinite(uncertainty) || uncertainty < 0) return "#F06464"
         return "#A8BBC3"
     }
     function _utcTimestampColor() {
