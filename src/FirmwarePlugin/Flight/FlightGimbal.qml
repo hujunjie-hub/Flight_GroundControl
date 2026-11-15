@@ -31,6 +31,9 @@ SetupPage {
     }
     readonly property bool _managerStatusFresh: _managerStatusAgeMs >= 0 && _managerStatusAgeMs <= 6500
     readonly property bool _attitudeStatusFresh: _attitudeStatusAgeMs >= 0 && _attitudeStatusAgeMs <= 3500
+    readonly property bool _hasConfirmedControl: !!_activeGimbal && !_communicationLost &&
+                                                  _managerStatusFresh && _ownershipStatusValid &&
+                                                  _hasControl && !_otherHasControl
     readonly property bool _controlReady: !!_activeGimbal && !_communicationLost &&
                                           _managerStatusFresh && _attitudeStatusFresh &&
                                           _ownershipStatusValid && _hasControl && !_otherHasControl
@@ -221,7 +224,9 @@ SetupPage {
                         Layout.fillWidth: true
                         readonly property var availableGimbals: root._gimbals
                         model: root._deviceNames()
-                        enabled: root.deviceCount > 0 && !root._hasControl
+                        // A cached owner bit must not lock device selection after
+                        // manager telemetry has gone stale. Only confirmed ownership blocks switching.
+                        enabled: root.deviceCount > 0 && !root._hasConfirmedControl
                         currentIndex: {
                             if (!root._activeGimbal || !availableGimbals)
                                 return 0
