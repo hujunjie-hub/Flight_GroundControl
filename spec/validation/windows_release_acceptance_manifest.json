@@ -436,7 +436,11 @@
         "navigation_time_discipline_unknown_enum_remains_neutral",
         "rc_link_summary_labels_family_message_freshness_separately_from_instance_health",
         "navigation_timeline_equal_boot_timestamps_use_deterministic_domain_order",
-        "link_instance_state_summary_tracks_healthy_partial_loss_all_loss_recovery_and_freshness"
+        "link_instance_state_summary_tracks_healthy_partial_loss_all_loss_recovery_and_freshness",
+        "overview_topology_legend_counts_six_domains_as_received_stale_waiting",
+        "overview_topology_legend_counts_match_individual_family_freshness",
+        "overview_topology_legend_counts_update_on_stale_and_recovery",
+        "overview_topology_legend_count_labels_fit_responsive_layout"
       ]
     },
     {
