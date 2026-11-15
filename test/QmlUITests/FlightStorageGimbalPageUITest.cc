@@ -524,9 +524,26 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                 std::abs(pitchValue->property("text").toString().remove(QChar(0x00B0)).toDouble() + pitchTargetAfter) < 3.0,
                 3000);
 
+            // Re-enter rate control and release ownership while the periodic
+            // sender is active. The controller must send zero rates before
+            // releasing the owner pair, so the mock device stops moving.
+            const double pitchBeforeReleaseRate = currentPitch();
+            const double yawBeforeReleaseRate = currentYaw();
+            vehicle->gimbalController()->sendGimbalRate(8.0f, 12.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentPitch() - pitchBeforeReleaseRate) > 1.0, 4000);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentYaw() - yawBeforeReleaseRate) > 1.0, 4000);
+
             QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 6000);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 2500);
+            const double pitchAfterRelease = currentPitch();
+            const double yawAfterRelease = currentYaw();
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 2500);
+            QVERIFY(std::abs(currentPitch() - pitchAfterRelease) < 0.5);
+            QVERIFY(std::abs(currentYaw() - yawAfterRelease) < 0.5);
 
             // A raw attitude command without an owner must be rejected by MockLink.
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2000);
