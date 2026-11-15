@@ -98,7 +98,9 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("max"), 10.0 },
         { QStringLiteral("default"), 5.0 },
         { QStringLiteral("decimalPlaces"), 2 },
-        { QStringLiteral("rebootRequired"), true }
+        { QStringLiteral("rebootRequired"), true },
+        { QStringLiteral("readOnly"), false },
+        { QStringLiteral("writeOnly"), false }
     };
 
     QJsonObject unknownDomainEntry = validEntry;
@@ -118,6 +120,10 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     invalidRebootRequiredEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"));
     invalidRebootRequiredEntry.insert(QStringLiteral("rebootRequired"), QStringLiteral("yes"));
 
+    QJsonObject invalidReadOnlyFlagEntry = validEntry;
+    invalidReadOnlyFlagEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_READ_ONLY_FLAG"));
+    invalidReadOnlyFlagEntry.insert(QStringLiteral("readOnly"), QStringLiteral("false"));
+
     QJsonObject duplicateEntryA = validEntry;
     duplicateEntryA.insert(QStringLiteral("name"), QStringLiteral("TEST_DUPLICATE"));
     QJsonObject duplicateEntryB = duplicateEntryA;
@@ -129,6 +135,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     parameters.append(invalidRangeEntry);
     parameters.append(unsupportedTypeEntry);
     parameters.append(invalidRebootRequiredEntry);
+    parameters.append(invalidReadOnlyFlagEntry);
     parameters.append(duplicateEntryA);
     parameters.append(duplicateEntryB);
     metadata.parseParameterJson(QJsonObject{{ QStringLiteral("parameters"), parameters }});
@@ -139,6 +146,8 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QCOMPARE(valid->category(), QStringLiteral("CONTROL"));
     QCOMPARE(valid->shortDescription(), QStringLiteral("Valid test parameter"));
     QVERIFY(valid->vehicleRebootRequired());
+    QVERIFY(!valid->readOnly());
+    QVERIFY(!valid->writeOnly());
 
     // Rejected entries must not be cached as partially valid metadata. The base
     // class may still create an unclassified fallback for a live parameter.
@@ -147,6 +156,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         QStringLiteral("TEST_INVALID_RANGE"),
         QStringLiteral("TEST_UNSUPPORTED_TYPE"),
         QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"),
+        QStringLiteral("TEST_INVALID_READ_ONLY_FLAG"),
         QStringLiteral("TEST_DUPLICATE")
     };
     for (const QString &name : rejectedNames) {
