@@ -180,99 +180,104 @@ Item {
                                              .arg(parameterName).arg(String(confirmedValue))
             }
 
-            Timer {
-                id: responseSampleTimer
-                interval: 100
-                repeat: true
-                running: root._linkHealthy && root._parametersReady && root._flightModelAvailable
-                onTriggered: {
-                    const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
-                    if (!telemetry || !telemetry.factExists("controlAvailable") ||
-                        !telemetry.factExists("controlTimeBootUs") ||
-                        !telemetry.factExists("controlBootId") ||
-                        !telemetry.factExists("controlSolveTimeUs") ||
-                        !telemetry.getFact("controlAvailable").value ||
-                        telemetry.familyStale["control"] !== false) {
-                        return
-                    }
+            function captureControlSample() {
+                if (!root._linkHealthy || !root._parametersReady || !root._flightModelAvailable) {
+                    return
+                }
 
-                    const timestamp = Number(telemetry.getFact("controlTimeBootUs").value)
-                    const timestampText = String(timestamp)
-                    const bootIdText = telemetry.getFact("controlBootId").valueString
-                    if (!Number.isFinite(timestamp) || timestamp <= 0 || bootIdText === "") {
-                        return
-                    }
+                const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
+                if (!telemetry || !telemetry.factExists("controlAvailable") ||
+                    !telemetry.factExists("controlTimeBootUs") ||
+                    !telemetry.factExists("controlBootId") ||
+                    !telemetry.factExists("controlSolveTimeUs") ||
+                    !telemetry.getFact("controlAvailable").value ||
+                    telemetry.familyStale["control"] !== false) {
+                    return
+                }
 
-                    const sessionChanged =
-                        (dashboardRoot.lastControlBootId !== "" &&
-                         bootIdText !== dashboardRoot.lastControlBootId) ||
-                        (dashboardRoot.lastControlTimestamp !== "" &&
-                         timestamp <= Number(dashboardRoot.lastControlTimestamp))
-                    if (sessionChanged) {
-                        const hadParameterMarkers = dashboardRoot.parameterChangeMarkers.length > 0 ||
-                                                     dashboardRoot.pendingParameterChangeMarkers.length > 0
-                        dashboardRoot.responseSamples = []
-                        dashboardRoot.parameterChangeMarkers = []
-                        dashboardRoot.pendingParameterChangeMarkers = []
-                        dashboardRoot.lastControlTimestamp = ""
-                        if (hadParameterMarkers) {
-                            dashboardRoot.parameterChangeSummary =
-                                qsTr("飞控启动会话或时间戳发生变化，已清空旧参数确认标记")
-                        }
-                    }
-                    if (timestampText === dashboardRoot.lastControlTimestamp) {
-                        return
-                    }
+                const timestamp = Number(telemetry.getFact("controlTimeBootUs").value)
+                const timestampText = String(timestamp)
+                const bootIdText = telemetry.getFact("controlBootId").valueString
+                if (!Number.isFinite(timestamp) || timestamp <= 0 || bootIdText === "") {
+                    return
+                }
 
-                    const solveTimeUs = Number(telemetry.getFact("controlSolveTimeUs").value)
-                    if (!Number.isFinite(solveTimeUs) || solveTimeUs < 0) {
-                        return
-                    }
-
-                    const samples = dashboardRoot.responseSamples.slice()
-                    samples.push({ time: timestamp, value: solveTimeUs })
-                    if (samples.length > 120) {
-                        samples.shift()
-                    }
-
-                    const pending = dashboardRoot.pendingParameterChangeMarkers.slice()
-                    const waiting = []
-                    const correlated = []
-                    for (let i = 0; i < pending.length; i++) {
-                        const marker = pending[i]
-                        if (marker.bootId !== bootIdText) {
-                            continue
-                        }
-                        if (timestamp > marker.afterTimestamp) {
-                            correlated.push({
-                                time: timestamp,
-                                name: marker.name,
-                                value: marker.value,
-                                componentId: marker.componentId
-                            })
-                        } else {
-                            waiting.push(marker)
-                        }
-                    }
-                    dashboardRoot.pendingParameterChangeMarkers = waiting
-                    if (correlated.length > 0) {
-                        const markers = dashboardRoot.parameterChangeMarkers.concat(correlated)
-                        dashboardRoot.parameterChangeMarkers = markers.slice(-16)
-                        const latestMarker = correlated[correlated.length - 1]
+                const sessionChanged =
+                    (dashboardRoot.lastControlBootId !== "" &&
+                     bootIdText !== dashboardRoot.lastControlBootId) ||
+                    (dashboardRoot.lastControlTimestamp !== "" &&
+                     timestamp <= Number(dashboardRoot.lastControlTimestamp))
+                if (sessionChanged) {
+                    const hadParameterMarkers = dashboardRoot.parameterChangeMarkers.length > 0 ||
+                                                 dashboardRoot.pendingParameterChangeMarkers.length > 0
+                    dashboardRoot.responseSamples = []
+                    dashboardRoot.parameterChangeMarkers = []
+                    dashboardRoot.pendingParameterChangeMarkers = []
+                    dashboardRoot.lastControlTimestamp = ""
+                    if (hadParameterMarkers) {
                         dashboardRoot.parameterChangeSummary =
-                            qsTr("参数 %1 = %2 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
-                                .arg(latestMarker.name).arg(latestMarker.value)
+                            qsTr("飞控启动会话或时间戳发生变化，已清空旧参数确认标记")
                     }
+                }
+                if (timestampText === dashboardRoot.lastControlTimestamp) {
+                    return
+                }
 
-                    if (samples.length > 0) {
-                        const firstTimestamp = samples[0].time
-                        dashboardRoot.parameterChangeMarkers =
-                            dashboardRoot.parameterChangeMarkers.filter(marker => marker.time >= firstTimestamp)
+                const solveTimeUs = Number(telemetry.getFact("controlSolveTimeUs").value)
+                if (!Number.isFinite(solveTimeUs) || solveTimeUs < 0) {
+                    return
+                }
+
+                const samples = dashboardRoot.responseSamples.slice()
+                samples.push({ time: timestamp, value: solveTimeUs })
+                if (samples.length > 120) {
+                    samples.shift()
+                }
+
+                const pending = dashboardRoot.pendingParameterChangeMarkers.slice()
+                const waiting = []
+                const correlated = []
+                for (let i = 0; i < pending.length; i++) {
+                    const marker = pending[i]
+                    if (marker.bootId !== bootIdText) {
+                        continue
                     }
-                    dashboardRoot.responseSamples = samples
-                    dashboardRoot.lastControlTimestamp = timestampText
-                    dashboardRoot.lastControlBootId = bootIdText
-                    responseCanvas.requestPaint()
+                    if (timestamp > marker.afterTimestamp) {
+                        correlated.push({
+                            time: timestamp,
+                            name: marker.name,
+                            value: marker.value,
+                            componentId: marker.componentId
+                        })
+                    } else {
+                        waiting.push(marker)
+                    }
+                }
+                dashboardRoot.pendingParameterChangeMarkers = waiting
+                if (correlated.length > 0) {
+                    const markers = dashboardRoot.parameterChangeMarkers.concat(correlated)
+                    dashboardRoot.parameterChangeMarkers = markers.slice(-16)
+                    const latestMarker = correlated[correlated.length - 1]
+                    dashboardRoot.parameterChangeSummary =
+                        qsTr("参数 %1 = %2 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
+                            .arg(latestMarker.name).arg(latestMarker.value)
+                }
+
+                if (samples.length > 0) {
+                    const firstTimestamp = samples[0].time
+                    dashboardRoot.parameterChangeMarkers =
+                        dashboardRoot.parameterChangeMarkers.filter(marker => marker.time >= firstTimestamp)
+                }
+                dashboardRoot.responseSamples = samples
+                dashboardRoot.lastControlTimestamp = timestampText
+                dashboardRoot.lastControlBootId = bootIdText
+                responseCanvas.requestPaint()
+            }
+
+            Connections {
+                target: root._activeVehicle ? root._activeVehicle.flightTelemetry : null
+                function onControlStatusUpdated() {
+                    dashboardRoot.captureControlSample()
                 }
             }
 
