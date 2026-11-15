@@ -75,8 +75,9 @@ Item {
                 parameterDomainAvailable = false
                 if (parameterEditorLoader.item) {
                     const categoryName = domainCategoryName(root.activeDomain)
-                    parameterDomainAvailable = categoryName !== "" && parameterEditorLoader.item.hasCategory(categoryName)
+                    const hasCategory = categoryName !== "" && parameterEditorLoader.item.hasCategory(categoryName)
                     parameterEditorLoader.item.selectCategoryByName(categoryName)
+                    parameterDomainAvailable = hasCategory
                 }
             }
 
