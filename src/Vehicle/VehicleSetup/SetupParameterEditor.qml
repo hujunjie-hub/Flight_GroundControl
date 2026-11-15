@@ -180,6 +180,82 @@ Item {
                 return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
             }
 
+            function parameterTypeLabel(fact) {
+                if (!fact) {
+                    return qsTr("—")
+                }
+                if (fact.typeIsBool) {
+                    return qsTr("布尔")
+                }
+                if (fact.typeIsString) {
+                    return qsTr("文本")
+                }
+                return qsTr("数值")
+            }
+
+            function parameterDependencySummary(fact) {
+                if (!fact) {
+                    return qsTr("—")
+                }
+                const dependencies = fact.dependencies || []
+                if (dependencies.length === 0) {
+                    return qsTr("未声明（不推断）")
+                }
+                const names = []
+                for (let i = 0; i < dependencies.length; i++) {
+                    const dependency = dependencies[i]
+                    if (typeof dependency === "string" && dependency.trim() !== "") {
+                        names.push(dependency)
+                    } else if (dependency && typeof dependency.name === "string" &&
+                               dependency.name.trim() !== "") {
+                        names.push(dependency.name)
+                    } else {
+                        names.push(qsTr("未知依赖项"))
+                    }
+                }
+                return names.join("、")
+            }
+
+            function parameterValidationSummary(fact) {
+                if (!fact) {
+                    return qsTr("—")
+                }
+                const rules = fact.validationRules || []
+                if (rules.length === 0) {
+                    return qsTr("未声明（不推断）")
+                }
+                const types = []
+                for (let i = 0; i < rules.length; i++) {
+                    const rule = rules[i]
+                    types.push(rule && typeof rule.type === "string" && rule.type.trim() !== ""
+                               ? rule.type : qsTr("未知规则类型"))
+                }
+                return types.join("、")
+            }
+
+            function parameterSourceKindLabel(fact) {
+                if (!fact) {
+                    return qsTr("—")
+                }
+                switch (fact.sourceKind) {
+                case "scalar": return qsTr("标量")
+                case "vector": return qsTr("向量")
+                case "matrix": return qsTr("矩阵")
+                case "stored": return qsTr("存储项")
+                default: return qsTr("未登记")
+                }
+            }
+
+            function parameterIncrementLabel(fact) {
+                if (!fact) {
+                    return qsTr("—")
+                }
+                const increment = Number(fact.increment)
+                return Number.isFinite(increment)
+                       ? increment.toFixed(Math.max(0, Math.min(6, fact.decimalPlaces)))
+                       : qsTr("未声明")
+            }
+
             function resetResponseHistory(reason) {
                 responseSamples = []
                 parameterChangeMarkers = []
@@ -1230,9 +1306,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.29
-                        Layout.preferredHeight: root._narrowLayout ? 360
-                                                : root._mediumLayout ? 360
-                                                : Math.max(320, workArea.height * 0.64)
+                        Layout.preferredHeight: root._narrowLayout ? 500
+                                                : root._mediumLayout ? 460
+                                                : Math.max(420, workArea.height * 0.64)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -1243,9 +1319,18 @@ Item {
                             spacing: 5
                             RowLayout {
                                 Layout.fillWidth: true
-                                QGCLabel { text: qsTr("在线调参"); color: root.mainText; font.pointSize: ScreenTools.subtitleFontPointSize; font.weight: ScreenTools.strongFontWeight }
+                                QGCLabel {
+                                    text: qsTr("参数详情与在线调参")
+                                    color: root.mainText
+                                    font.pointSize: ScreenTools.subtitleFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                }
                                 Item { Layout.fillWidth: true }
-                                QGCLabel { text: "ONLINE TUNING"; color: root.cyan; font.pointSize: ScreenTools.microFontPointSize }
+                                QGCLabel {
+                                    text: "PARAMETER DETAIL"
+                                    color: root.cyan
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
                             }
                             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#14505B" }
                             QGCLabel { text: qsTr("调参模式"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
@@ -1262,7 +1347,7 @@ Item {
                                         required property int index
                                         required property var modelData
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 40
+                                        Layout.preferredHeight: 36
                                         radius: 5
                                         color: index === 0 ? "#0A4652" : "#061F29"
                                         border.color: index === 0 ? root.cyan : "#16424C"
@@ -1285,120 +1370,233 @@ Item {
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
+                                Layout.minimumHeight: 190
                                 radius: 5
                                 color: "#06202A"
                                 border.color: "#10434E"
                                 ColumnLayout {
                                     anchors.fill: parent
                                     anchors.margins: root.gap
-                                    spacing: 6
-                                    QGCLabel { text: qsTr("当前调参参数"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
-                                    QGCLabel {
+                                    spacing: 5
+
+                                    Flickable {
+                                        id: parameterDetailsScroll
                                         Layout.fillWidth: true
-                                        text: dashboardRoot.selectedFact
-                                              ? dashboardRoot.selectedFact.name + " · " + dashboardRoot.selectedFact.shortDescription
-                                              : qsTr("请先在左侧参数表中选择参数")
-                                        color: root.mainText
-                                        font.pointSize: ScreenTools.bodyEmphasisFontPointSize
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: dashboardRoot.selectedFact
-                                              ? qsTr("当前确认值：%1 %2").arg(Number(dashboardRoot.confirmedValue).toFixed(dashboardRoot.selectedFact.decimalPlaces)).arg(dashboardRoot.selectedFact.units)
-                                              : qsTr("当前确认值：—")
-                                        color: root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: dashboardRoot.selectedFact
-                                              ? qsTr("允许范围：%1 – %2 %3").arg(dashboardRoot.selectedFact.minString).arg(dashboardRoot.selectedFact.maxString).arg(dashboardRoot.selectedFact.units)
-                                              : qsTr("允许范围：—")
-                                        color: root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("生效要求：—")
-                                              : !dashboardRoot.selectedFact.vehicleRebootRequiredKnown
-                                                ? qsTr("生效要求：固件未声明，请查阅固件说明")
-                                                : dashboardRoot.selectedFact.vehicleRebootRequired
-                                                  ? qsTr("生效要求：应用后需要重启飞控")
-                                                  : qsTr("生效要求：无需重启飞控")
-                                        color: dashboardRoot.selectedFact &&
-                                               (!dashboardRoot.selectedFact.vehicleRebootRequiredKnown ||
-                                                dashboardRoot.selectedFact.vehicleRebootRequired)
-                                               ? root.amber : root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("适用范围 / 控制架构：—")
-                                              : qsTr("适用：%1 · %2 · %3")
-                                                .arg(dashboardRoot.selectedFact.vehicleFamily)
-                                                .arg(dashboardRoot.selectedFact.modelVariants.join(", "))
-                                                .arg(dashboardRoot.selectedFact.controlLaw)
-                                        color: root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("配置来源：—")
-                                              : qsTr("配置来源：%1 · %2 · %3")
-                                                .arg(dashboardRoot.selectedFact.sourceFile)
-                                                .arg(dashboardRoot.selectedFact.sourcePath)
-                                                .arg(dashboardRoot.selectedFact.sourceKind === "scalar" ? qsTr("标量")
-                                                     : dashboardRoot.selectedFact.sourceKind === "vector" ? qsTr("向量")
-                                                       : dashboardRoot.selectedFact.sourceKind === "matrix" ? qsTr("矩阵")
-                                                         : qsTr("存储项"))
-                                        color: root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("调参 / 更新策略：—")
-                                              : qsTr("策略：%1 · %2")
-                                                .arg(dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY" ? qsTr("只读")
-                                                     : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE" ? qsTr("地面可调")
-                                                       : dashboardRoot.selectedFact.tuningPolicy === "ONLINE_ADJUSTABLE" ? qsTr("在线可调")
-                                                         : dashboardRoot.selectedFact.tuningPolicy === "FLIGHT_RESTRICTED" ? qsTr("飞行受限")
-                                                           : qsTr("未声明"))
-                                                .arg(dashboardRoot.selectedFact.updatePolicy === "IMMEDIATE" ? qsTr("即时生效")
-                                                     : dashboardRoot.selectedFact.updatePolicy === "FIRMWARE_CONFIRMATION" ? qsTr("飞控确认")
-                                                       : dashboardRoot.selectedFact.updatePolicy === "REBOOT_REQUIRED" ? qsTr("需重启")
-                                                         : dashboardRoot.selectedFact.updatePolicy === "OFFLINE_ONLY" ? qsTr("仅离线")
-                                                           : qsTr("更新方式未声明"))
-                                        color: dashboardRoot.selectedFact &&
-                                               dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE" &&
-                                               dashboardRoot.selectedFact.updatePolicy !== "OFFLINE_ONLY"
-                                               ? root.green : root.amber
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("参数权限：—")
-                                              : dashboardRoot.selectedFact.readOnly ||
-                                                dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
-                                                ? qsTr("参数权限：只读 · 允许查看和回读")
-                                                : dashboardRoot.selectedFact.writeOnly
-                                                  ? qsTr("参数权限：只写 · 禁止在线调参")
-                                                  : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
-                                                    ? qsTr("参数权限：地面调参 · SIL 专用")
-                                                    : qsTr("参数权限：受限策略 · 禁止在线写入")
-                                        color: !dashboardRoot.selectedFact ? root.mutedText
-                                               : dashboardRoot.selectedFact.readOnly ||
-                                                 dashboardRoot.selectedFact.writeOnly ||
-                                                 dashboardRoot.selectedFact.tuningPolicy !== "GROUND_ADJUSTABLE"
-                                                 ? root.amber : root.green
-                                        font.pointSize: ScreenTools.captionFontPointSize
+                                        Layout.fillHeight: true
+                                        Layout.minimumHeight: 150
+                                        clip: true
+                                        contentWidth: width
+                                        contentHeight: parameterDetailsColumn.implicitHeight
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        ScrollBar.vertical: ScrollBar {
+                                            policy: parameterDetailsScroll.contentHeight > parameterDetailsScroll.height
+                                                    ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                                        }
+
+                                        ColumnLayout {
+                                            id: parameterDetailsColumn
+                                            width: parameterDetailsScroll.width
+                                            spacing: 5
+
+                                            QGCLabel {
+                                                text: qsTr("当前选中参数")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? dashboardRoot.selectedFact.name + " · " + dashboardRoot.selectedFact.shortDescription
+                                                      : qsTr("请先在左侧参数表中选择参数")
+                                                color: root.mainText
+                                                font.pointSize: ScreenTools.bodyEmphasisFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? (dashboardRoot.selectedFact.longDescription !== ""
+                                                         ? dashboardRoot.selectedFact.longDescription
+                                                         : dashboardRoot.selectedFact.shortDescription)
+                                                      : qsTr("选择参数后显示固件提供的详细说明")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? qsTr("参数域 / 分组：%1 · %2")
+                                                        .arg(dashboardRoot.selectedFact.category)
+                                                        .arg(dashboardRoot.selectedFact.group || qsTr("未分组"))
+                                                      : qsTr("参数域 / 分组：—")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? qsTr("数据类型：%1 · 默认值：%2 %3")
+                                                        .arg(dashboardRoot.parameterTypeLabel(dashboardRoot.selectedFact))
+                                                        .arg(dashboardRoot.selectedFact.defaultValueAvailable
+                                                             ? dashboardRoot.selectedFact.defaultValueString : qsTr("未声明"))
+                                                        .arg(dashboardRoot.selectedFact.units)
+                                                      : qsTr("数据类型 / 默认值：—")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? qsTr("当前飞控确认值：%1 %2")
+                                                        .arg(dashboardRoot.confirmedValue !== undefined &&
+                                                             dashboardRoot.confirmedValue !== null &&
+                                                             Number.isFinite(Number(dashboardRoot.confirmedValue))
+                                                             ? Number(dashboardRoot.confirmedValue).toFixed(dashboardRoot.selectedFact.decimalPlaces)
+                                                             : qsTr("等待回传"))
+                                                        .arg(dashboardRoot.selectedFact.units)
+                                                      : qsTr("当前飞控确认值：—")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? qsTr("允许范围：%1 – %2 %3")
+                                                        .arg(dashboardRoot.selectedFact.minString)
+                                                        .arg(dashboardRoot.selectedFact.maxString)
+                                                        .arg(dashboardRoot.selectedFact.units)
+                                                      : qsTr("允许范围：—")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: dashboardRoot.selectedFact
+                                                      ? qsTr("调整步长：%1 %2")
+                                                        .arg(dashboardRoot.parameterIncrementLabel(dashboardRoot.selectedFact))
+                                                        .arg(dashboardRoot.selectedFact.units)
+                                                      : qsTr("调整步长：—")
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("生效要求：—")
+                                                      : !dashboardRoot.selectedFact.vehicleRebootRequiredKnown
+                                                        ? qsTr("生效要求：固件未声明，请查阅固件说明")
+                                                        : dashboardRoot.selectedFact.vehicleRebootRequired
+                                                          ? qsTr("生效要求：应用后需要重启飞控")
+                                                          : qsTr("生效要求：无需重启飞控")
+                                                color: dashboardRoot.selectedFact &&
+                                                       (!dashboardRoot.selectedFact.vehicleRebootRequiredKnown ||
+                                                        dashboardRoot.selectedFact.vehicleRebootRequired)
+                                                       ? root.amber : root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("适用范围 / 控制架构：—")
+                                                      : qsTr("适用：%1 · %2 · %3")
+                                                        .arg(dashboardRoot.selectedFact.vehicleFamily)
+                                                        .arg(dashboardRoot.selectedFact.modelVariants.join(", "))
+                                                        .arg(dashboardRoot.selectedFact.controlLaw)
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("配置来源：—")
+                                                      : qsTr("配置来源：%1 · %2 · %3")
+                                                        .arg(dashboardRoot.selectedFact.sourceFile || qsTr("未登记"))
+                                                        .arg(dashboardRoot.selectedFact.sourcePath || qsTr("未登记"))
+                                                        .arg(dashboardRoot.parameterSourceKindLabel(dashboardRoot.selectedFact))
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("调参策略：—")
+                                                      : dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
+                                                        ? qsTr("调参策略：只读")
+                                                        : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                                          ? qsTr("调参策略：地面可调 · 仅解除锁定后")
+                                                          : dashboardRoot.selectedFact.tuningPolicy === "ONLINE_ADJUSTABLE"
+                                                            ? qsTr("调参策略：在线可调 · 需固件授权")
+                                                            : dashboardRoot.selectedFact.tuningPolicy === "FLIGHT_RESTRICTED"
+                                                              ? qsTr("调参策略：飞行中受限")
+                                                              : qsTr("调参策略：未声明")
+                                                color: dashboardRoot.selectedFact &&
+                                                       dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                                       ? root.green : root.amber
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("更新策略：—")
+                                                      : dashboardRoot.selectedFact.updatePolicy === "IMMEDIATE"
+                                                        ? qsTr("更新策略：即时生效")
+                                                        : dashboardRoot.selectedFact.updatePolicy === "FIRMWARE_CONFIRMATION"
+                                                          ? qsTr("更新策略：等待飞控确认")
+                                                          : dashboardRoot.selectedFact.updatePolicy === "REBOOT_REQUIRED"
+                                                            ? qsTr("更新策略：飞控确认后需重启")
+                                                            : dashboardRoot.selectedFact.updatePolicy === "OFFLINE_ONLY"
+                                                              ? qsTr("更新策略：仅离线修改")
+                                                              : qsTr("更新策略：未声明")
+                                                color: dashboardRoot.selectedFact &&
+                                                       dashboardRoot.selectedFact.updatePolicy !== "FIRMWARE_CONFIRMATION"
+                                                       ? root.amber : root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: !dashboardRoot.selectedFact
+                                                      ? qsTr("参数权限：—")
+                                                      : dashboardRoot.selectedFact.readOnly ||
+                                                        dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
+                                                        ? qsTr("参数权限：只读 · 允许查看和回读")
+                                                        : dashboardRoot.selectedFact.writeOnly
+                                                          ? qsTr("参数权限：只写 · 禁止在线调参")
+                                                          : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                                            ? qsTr("参数权限：地面调参 · SIL 专用")
+                                                            : qsTr("参数权限：受限策略 · 禁止在线写入")
+                                                color: !dashboardRoot.selectedFact ? root.mutedText
+                                                       : dashboardRoot.selectedFact.readOnly ||
+                                                         dashboardRoot.selectedFact.writeOnly ||
+                                                         dashboardRoot.selectedFact.tuningPolicy !== "GROUND_ADJUSTABLE"
+                                                         ? root.amber : root.green
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: qsTr("显式依赖：%1").arg(
+                                                          dashboardRoot.parameterDependencySummary(dashboardRoot.selectedFact))
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                            QGCLabel {
+                                                Layout.fillWidth: true
+                                                text: qsTr("已登记校验规则类型：%1").arg(
+                                                          dashboardRoot.parameterValidationSummary(dashboardRoot.selectedFact))
+                                                color: root.mutedText
+                                                font.pointSize: ScreenTools.captionFontPointSize
+                                                wrapMode: Text.WordWrap
+                                            }
+                                        }
                                     }
                                     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424C" }
                                     RowLayout {
@@ -1445,7 +1643,6 @@ Item {
                                         font.pointSize: ScreenTools.microFontPointSize
                                         wrapMode: Text.WordWrap
                                     }
-                                    Item { Layout.fillHeight: true }
                                     RowLayout {
                                         Layout.fillWidth: true
                                         spacing: 4
@@ -1667,7 +1864,20 @@ Item {
                                         anchors.margins: 6
                                         spacing: 3
                                         QGCLabel { text: qsTr("影响分析"); color: root.mainText; font.pointSize: ScreenTools.captionFontPointSize; font.weight: ScreenTools.strongFontWeight }
-                                        QGCLabel { Layout.fillWidth: true; text: qsTr("参数元数据尚未声明依赖关系；不按名称或分组推断影响"); color: root.mutedText; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: !dashboardRoot.selectedFact
+                                                  ? qsTr("选择参数后显示已登记的依赖关系")
+                                                  : dashboardRoot.selectedFact.dependencies.length === 0
+                                                    ? qsTr("该参数未声明依赖关系；不按名称或分组推断影响")
+                                                    : qsTr("显式依赖：%1").arg(
+                                                        dashboardRoot.parameterDependencySummary(dashboardRoot.selectedFact))
+                                            color: root.mutedText
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                            wrapMode: Text.WordWrap
+                                            maximumLineCount: 3
+                                            elide: Text.ElideRight
+                                        }
                                     }
                                 }
                                 Rectangle {
