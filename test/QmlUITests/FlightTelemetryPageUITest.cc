@@ -2202,6 +2202,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 const QFont leftFont = left->property("font").value<QFont>();
                 const QFont rightFont = right->property("font").value<QFont>();
                 return left->property("color").value<QColor>() == right->property("color").value<QColor>() &&
+                       leftFont.family() == rightFont.family() &&
                        qAbs(leftFont.pointSizeF() - rightFont.pointSizeF()) < 0.01 &&
                        leftFont.weight() == rightFont.weight();
             };
