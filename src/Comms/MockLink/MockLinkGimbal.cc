@@ -199,13 +199,38 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
 
     qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW - pitch:" << requestedPitch << "yaw:" << requestedYaw << "flags:" << flags;
 
-    // Check if this is a valid request (NaN means no change requested)
-    const bool updatePitch = !qIsNaN(requestedPitch);
-    const bool updateYaw = !qIsNaN(requestedYaw);
+    // NaN means "leave this axis unchanged"; infinities and malformed target IDs are invalid.
+    const float requestedDeviceId = request.param7;
+    if ((!qIsNaN(requestedPitch) && !qIsFinite(requestedPitch)) ||
+        (!qIsNaN(requestedYaw) && !qIsFinite(requestedYaw)) ||
+        (!qIsNaN(request.param3) && !qIsFinite(request.param3)) ||
+        (!qIsNaN(request.param4) && !qIsFinite(request.param4)) ||
+        !qIsFinite(request.param5) || request.param5 < 0.0f ||
+        request.param5 > 65535.0f || qFloor(request.param5) != request.param5 ||
+        !qIsFinite(requestedDeviceId) || requestedDeviceId < 0.0f ||
+        requestedDeviceId > 255.0f || qFloor(requestedDeviceId) != requestedDeviceId) {
+        return false;
+    }
+    const uint8_t targetDeviceId = static_cast<uint8_t>(requestedDeviceId);
+    if (targetDeviceId != 0 && targetDeviceId != kGimbalCompId) {
+        qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW denied for unknown device" << targetDeviceId;
+        return false;
+    }
 
-    if (!updatePitch && !updateYaw) {
-        qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW - no valid pitch/yaw requested (both NaN)";
-        return false;  // Nothing to do
+    const bool updatePitch = qIsFinite(requestedPitch);
+    const bool updateYaw = qIsFinite(requestedYaw);
+    const bool retractRequested = (flags & GIMBAL_DEVICE_FLAGS_RETRACT) != 0;
+    const bool yawLockRequested = (flags & GIMBAL_DEVICE_FLAGS_YAW_LOCK) != 0;
+    const bool hasSupportedAxis = (updatePitch && _hasPitchAxis) || (updateYaw && _hasYawAxis);
+    const bool retractOnlyCommand = !updatePitch && !updateYaw && _hasRetract;
+    if (!hasSupportedAxis && !retractOnlyCommand) {
+        qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW has no requested supported axis";
+        return false;
+    }
+    if ((retractRequested && !_hasRetract) ||
+        (updateYaw && _hasYawAxis && yawLockRequested && !_hasYawLock) ||
+        (updateYaw && _hasYawAxis && !yawLockRequested && !_hasYawFollow)) {
+        return false;
     }
 
     // Thread-safe access: Main thread setting manual control state that worker reads every 1s.
@@ -232,18 +257,17 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
     }
 
     if (updateYaw && _hasYawAxis) {
-        // Handle yaw lock/follow modes
-        if (flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) {
-            // Yaw lock mode - maintain absolute yaw
-            _yaw = qBound(-180.0f, requestedYaw, 180.0f);
-        } else {
-            // Follow mode - yaw relative to vehicle
-            _yaw = qBound(-180.0f, requestedYaw, 180.0f);
-        }
+        _yaw = qBound(-180.0f, requestedYaw, 180.0f);
+        _yawLock = yawLockRequested;
         _manualControl = true;  // Switch to manual control mode
     }
 
-    qCDebug(MockLinkGimbalLog) << "Gimbal commanded to pitch:" << _pitch << "yaw:" << _yaw << "- switched to manual control";
+    if (_hasRetract) {
+        _retracted = retractRequested;
+    }
+
+    qCDebug(MockLinkGimbalLog) << "Gimbal commanded to pitch:" << _pitch << "yaw:" << _yaw
+                               << "yawLock:" << _yawLock << "retracted:" << _retracted;
     return true;
 }
 
@@ -277,7 +301,9 @@ bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t 
     if (!validIdValue(request.param1) || !validIdValue(request.param2) ||
         !validIdValue(request.param3) || !validIdValue(request.param4) ||
         (primaryReleaseRequested && !releasePrimary) ||
-        (secondaryReleaseRequested && !releaseSecondary)) {
+        (secondaryReleaseRequested && !releaseSecondary) ||
+        ((request.param1 == -2.0f || request.param3 == -2.0f) && sourceSysid == 0) ||
+        ((request.param2 == -2.0f || request.param4 == -2.0f) && sourceCompid == 0)) {
         return false;
     }
     if (releasePrimary && (_gimbalManagerSysidPrimary != sourceSysid ||
@@ -286,6 +312,22 @@ bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t 
     }
     if (releaseSecondary && (_gimbalManagerSysidSecondary != sourceSysid ||
                              _gimbalManagerCompidSecondary != sourceCompid)) {
+        return false;
+    }
+
+    const auto resultingId = [](float value, uint8_t sourceId, uint8_t currentId) {
+        if (value == -1.0f) return currentId;
+        if (value == 0.0f || value == -3.0f) return static_cast<uint8_t>(0);
+        if (value == -2.0f) return sourceId;
+        return static_cast<uint8_t>(value);
+    };
+    const uint8_t nextPrimarySysid = resultingId(request.param1, sourceSysid, _gimbalManagerSysidPrimary);
+    const uint8_t nextPrimaryCompid = resultingId(request.param2, sourceCompid, _gimbalManagerCompidPrimary);
+    const uint8_t nextSecondarySysid = resultingId(request.param3, sourceSysid, _gimbalManagerSysidSecondary);
+    const uint8_t nextSecondaryCompid = resultingId(request.param4, sourceCompid, _gimbalManagerCompidSecondary);
+    if ((nextPrimarySysid == 0) != (nextPrimaryCompid == 0) ||
+        (nextSecondarySysid == 0) != (nextSecondaryCompid == 0)) {
+        qCDebug(MockLinkGimbalLog) << "Gimbal manager rejected incomplete owner pair";
         return false;
     }
 
@@ -369,6 +411,16 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
     q[3] = cr * cp * sy - sr * sp * cy;  // z
 
     mavlink_message_t msg{};
+    uint32_t deviceFlags = GIMBAL_DEVICE_FLAGS_NEUTRAL |
+                           GIMBAL_DEVICE_FLAGS_ROLL_LOCK |
+                           GIMBAL_DEVICE_FLAGS_PITCH_LOCK;
+    if (_yawLock) {
+        deviceFlags |= GIMBAL_DEVICE_FLAGS_YAW_LOCK;
+    }
+    if (_retracted) {
+        deviceFlags |= GIMBAL_DEVICE_FLAGS_RETRACT;
+    }
+
     (void) mavlink_msg_gimbal_device_attitude_status_pack_chan(
         _mockLink->vehicleId(),
         kGimbalCompId,
@@ -376,7 +428,7 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
         &msg,
         0, 0,   // target system, component
         0,      // time_boot_ms
-        GIMBAL_DEVICE_FLAGS_NEUTRAL | GIMBAL_DEVICE_FLAGS_ROLL_LOCK | GIMBAL_DEVICE_FLAGS_PITCH_LOCK,
+        deviceFlags,
         q,
         0.0f, 0.0f, 0.0f,   // angular_velocity_x, y, z
         0,                  // failure flags
