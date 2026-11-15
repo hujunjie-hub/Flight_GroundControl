@@ -449,7 +449,11 @@
         "health_resource_task_cards_render_cpu_and_four_independent_validity_gated_metric_tiles",
         "rc_axis_out_of_range_with_validity_bit_set_hides_matching_stick_and_recovers_with_valid_sample",
         "trend_buffer_clears_when_new_boot_is_first_seen_on_navigation_before_operation_status",
-        "navigation_time_and_event_timestamps_remain_family_gated_after_boot_epoch_switch"
+        "navigation_time_and_event_timestamps_remain_family_gated_after_boot_epoch_switch",
+        "overview_topology_canvas_labels_match_six_domain_nodes",
+        "overview_topology_connections_show_inward_fcu_telemetry_direction",
+        "overview_topology_canvas_labels_fit_at_all_responsive_widths",
+        "overview_topology_canvas_labels_do_not_overlap"
       ]
     },
     {
