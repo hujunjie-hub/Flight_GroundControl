@@ -2259,7 +2259,7 @@ SetupPage {
 
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("六域链路状态实时映射 · 示意不代表飞行器姿态或空间位置")
+                        text: qsTr("六域遥测 → FCU · 箭头表示数据流向，示意不代表飞行器姿态或空间位置")
                         color: "#83AEB8"
                         font.pointSize: ScreenTools.microFontPointSize
                     }
@@ -2269,7 +2269,9 @@ SetupPage {
                         readonly property var familyConnectionStates: root._overviewTopologyFamilies.map(function (family) {
                             return {
                                 family: family.family,
+                                label: family.label,
                                 available: family.available,
+                                direction: "toFcu",
                                 status: root._familyStatus(family.available),
                                 color: root._familyStatusColor(family.available)
                             }
@@ -2296,12 +2298,18 @@ SetupPage {
                             const nodeY = Math.min(height * 0.40, ringRadius + 8)
                             const families = topologyCanvas.familyConnectionStates
                             const nodes = [
-                                { x: cx - nodeX, y: cy - nodeY, state: families[0] },
-                                { x: cx, y: cy - height * 0.40, state: families[1] },
-                                { x: cx + nodeX, y: cy - nodeY, state: families[2] },
-                                { x: cx - nodeX, y: cy + nodeY, state: families[3] },
-                                { x: cx, y: cy + height * 0.40, state: families[4] },
-                                { x: cx + nodeX, y: cy + nodeY, state: families[5] }
+                                { x: cx - nodeX, y: cy - nodeY, state: families[0],
+                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: -13 },
+                                { x: cx, y: cy - height * 0.40, state: families[1],
+                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: 20 },
+                                { x: cx + nodeX, y: cy - nodeY, state: families[2],
+                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: -13 },
+                                { x: cx - nodeX, y: cy + nodeY, state: families[3],
+                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: 15 },
+                                { x: cx, y: cy + height * 0.40, state: families[4],
+                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: -18 },
+                                { x: cx + nodeX, y: cy + nodeY, state: families[5],
+                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: 15 }
                             ]
 
                             const hubGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, ringRadius * 1.28)
@@ -2348,6 +2356,28 @@ SetupPage {
                                 ctx.shadowBlur = isFresh ? 5 : 0
                                 ctx.stroke()
                                 ctx.shadowBlur = 0
+                                ctx.globalAlpha = 1
+
+                                // Arrowheads point inward: each domain reports telemetry to the FCU hub.
+                                const dx = cx - node.x
+                                const dy = cy - node.y
+                                const distance = Math.sqrt(dx * dx + dy * dy)
+                                const ux = dx / distance
+                                const uy = dy / distance
+                                const arrowTipX = node.x + ux * Math.min(28, distance * 0.42)
+                                const arrowTipY = node.y + uy * Math.min(28, distance * 0.42)
+                                const arrowBaseX = arrowTipX - ux * 7
+                                const arrowBaseY = arrowTipY - uy * 7
+                                const perpendicularX = -uy * 3.5
+                                const perpendicularY = ux * 3.5
+                                ctx.beginPath()
+                                ctx.moveTo(arrowTipX, arrowTipY)
+                                ctx.lineTo(arrowBaseX + perpendicularX, arrowBaseY + perpendicularY)
+                                ctx.lineTo(arrowBaseX - perpendicularX, arrowBaseY - perpendicularY)
+                                ctx.closePath()
+                                ctx.fillStyle = nodeColor
+                                ctx.globalAlpha = isFresh ? 0.92 : isStale ? 0.72 : 0.42
+                                ctx.fill()
                                 ctx.globalAlpha = 1
                             }
 
@@ -2417,6 +2447,14 @@ SetupPage {
                                 ctx.arc(node.x, node.y, 3.2, 0, Math.PI * 2)
                                 ctx.fillStyle = nodeColor
                                 ctx.fill()
+
+                                // Short domain labels make each spoke readable without duplicating node-card detail.
+                                ctx.fillStyle = "#B8D4DC"
+                                ctx.font = "bold " + Math.max(7, 8 * scale) + "px sans-serif"
+                                ctx.textAlign = node.labelAlign
+                                ctx.textBaseline = "middle"
+                                ctx.fillText(node.state.label,
+                                             node.x + node.labelOffsetX, node.y + node.labelOffsetY)
                             }
                         }
                     }
@@ -2470,6 +2508,7 @@ SetupPage {
                                             color: parent.parent.parent.stateColor
                                         }
                                         QGCLabel {
+                                            objectName: "flightTelemetry_topologyNodeLabel_" + modelData.family
                                             Layout.fillWidth: true
                                             text: modelData.label
                                             color: "#C7E3E9"
