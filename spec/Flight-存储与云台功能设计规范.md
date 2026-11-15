@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.1
+- 版本：1.2
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -28,6 +28,9 @@
 | `norState` | NOR 状态 |
 | `storageFreeKib` | 剩余空间，单位 KiB |
 | `storageSettingsGeneration` | 存储配置代次 |
+| `storageProfileId` | 当前存储配置 Profile ID |
+| `storageReasonCode` | 飞控上报的原始存储原因码 |
+| `storageTimeBootUs` | 存储状态帧的 FCU 启动单调时间（微秒） |
 | `storageCriticalEventDrops` | 关键事件丢弃计数 |
 | `storageLogDrops` | 日志记录丢弃计数 |
 
@@ -56,7 +59,9 @@
 ### 2.3 展示与限制
 
 - 主视觉：SD、NOR、可用空间三个状态卡。
-- 诊断区：配置代次、关键事件丢弃、日志记录丢弃和地面站接收年龄。
+- 诊断区：配置代次、Profile ID、原始原因码、关键事件丢弃、日志记录丢弃、FCU 运行时间、地面站接收年龄和 validity mask。
+- FCU 运行时间由 `storageTimeBootUs` 换算为天/时/分/秒；地面站接收年龄单独使用 GroundControl 单调接收时钟，两者不得混用。
+- 原因码只显示固件上报的原始数值；没有已批准的 ICD 枚举映射时，不得自行解释原因文本。
 - 剩余空间只显示 FCU 上报的数值；可以换算 KiB/MiB/GiB。
 - 不显示总容量、使用百分比、剩余时间或任何推算值。
 - 当前 Flight 固件尚未接入 MAVLink Onboard Log 列表、日志数据读取与擦除协议。页面必须明确显示日志管理尚未开放，不加载通用下载器，不发送未支持的请求。
@@ -76,8 +81,9 @@
 
 ### 3.2 控制权安全规则
 
-- 初始状态不自动抢占控制权；操作员必须明确点击「获取控制权」。
-- 只有飞控回报本机为 primary controller 后，姿态、回中、偏航模式和收起/展开操作才启用。
+- 初始状态不自动获取控制权；操作员必须明确点击「获取控制权」。所有控制器入口均不得在发送姿态命令时隐式申请或抢占控制权。
+- 只有飞控回报本机为 primary controller，且 primary/secondary owner 的 sysid/compid 均为完整的全零或非零配对后，姿态、回中、偏航模式和收起/展开操作才启用。
+- owner sysid/compid 出现半零配对时，显示「控制权状态无效」，禁止获取、释放和全部姿态控制命令，等待下一帧有效 GIMBAL_MANAGER_STATUS。
 - 当其他控制端持有 primary control 时，显示「其他控制端占用」，禁用获取控制权与全部控制操作；不提供强制接管按钮。
 - 释放控制权调用现有 `GimbalController.releaseGimbalControl()`。
 - VehicleLinkManager 报告通信丢失时，GimbalController 必须清除缓存的本机/其他控制权状态、使管理状态和姿态状态接收时间戳失效并停止周期控制发送；链路恢复后，只有新的 GIMBAL_MANAGER_STATUS 到达才能重新确认所有权，只有新的 GIMBAL_DEVICE_ATTITUDE_STATUS 到达才能重新开放姿态控制。
@@ -90,7 +96,9 @@
 - 偏航目标范围：-180° 至 +180°；跟随模式使用机体坐标系偏航，锁定模式使用地理坐标系偏航。
 - 拖动目标滑块期间，以 5 Hz 发送目标；松开时发送最后一个目标并停止周期发送。
 - 「云台回中」调用现有 `centerGimbal()`。
-- 偏航模式选择仅在设备报告支持 yaw-lock 时启用。
+- 俯仰、偏航滑块分别仅在设备报告 `HAS_PITCH_AXIS`、`HAS_YAW_AXIS` 时启用；不支持的轴必须以 NaN 表示“不更新”，不得发送伪造目标值。
+- 回中操作要求俯仰与偏航轴均可用。
+- 偏航模式选择仅在设备报告支持 yaw-lock 且偏航轴可用时启用。
 - 收起/展开按钮仅在设备报告支持 retract 时显示和启用。
 - 不得根据未知 capability flags 推断设备支持某项功能。
 
@@ -99,8 +107,10 @@
 MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 
 - 每个参数按 MAVLink 定义解释：0 = 无人控制（清空对应字段）；-1 = 保持不变；-2 = 将发送方自己的 system/component ID 写入对应字段；-3 = 仅当发送方拥有完整 owner pair 时释放该 pair；正整数 = 设置显式 ID。
-- -3 必须以完整的 sysid/compid 参数对出现；部分 -3、非整数 ID、越界 ID 和未定义负值均拒绝。
+- -3 必须以完整的 sysid/compid 参数对出现；部分 -3、部分清零导致的半 owner pair、非整数 ID、越界 ID、零源 ID 的 -2 和未定义负值均拒绝，拒绝时不得改变任一 owner slot。
 - 未持有 primary/secondary 控制权的发送方，其 `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 命令必须被拒绝。
+- PITCHYAW 的 param7 只允许 0（全部设备）或本 MockLink 云台设备 ID；未知设备 ID、无穷角度/角速度和非法 flags 必须拒绝。
+- yaw-lock 与 retract 命令必须在后续 GIMBAL_DEVICE_ATTITUDE_STATUS 中反映真实状态变化。
 - 不得因为其他 GCS 发来 -3 就清除当前 owner。
 - 共享状态和 1 Hz 状态发送使用同一互斥锁，避免配置写入与状态读取竞争。
 
@@ -113,7 +123,9 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 无兼容云台时的空态与禁用状态。
 - 云台发现、实时姿态、控制权获取/释放、外部 owner 禁止接管。
 - 管理状态 6500 ms、姿态状态 3500 ms freshness；心跳正常但云台状态流停止时，旧控制权/姿态不得继续显示为实时。
-- MockLink 验证 Configure 的 0/-1/-2/-3 语义、部分/越权释放拒绝，以及无 primary/secondary owner 时禁止姿态命令。
+- MockLink 验证 Configure 的 0/-1/-2/-3 语义、半 owner pair / 部分释放 / 越权释放拒绝，以及无 primary/secondary owner 时禁止姿态命令。
+- 存储诊断验证 Profile ID、原始原因码、FCU 运行时间与地面站接收年龄，并确认通信丢失/超时会隐藏全部缓存元数据。
+- 云台验证半 owner pair 显示无效并 fail-closed、pitch/yaw 轴 capability 门控、未知设备 ID 和非有限目标值拒绝，以及 yaw-lock / retract 的遥测回读。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
 - 链路丢失清除缓存所有权，恢复后等待新状态确认。
 - 拖动期间控制 Timer 运行，松开后停止；MockLink 姿态回读与最终目标角度一致。
