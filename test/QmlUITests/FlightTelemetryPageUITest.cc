@@ -166,6 +166,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
             QQuickItem* heroGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroGrid"), 3000);
             QQuickItem* heroFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
+            QQuickItem* heroFlightMode =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlightMode"), 3000);
+            QQuickItem* heroArmState =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroArmState"), 3000);
+            QQuickItem* heroOperationFreshness =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroOperationFreshness"), 3000);
+            QQuickItem* heroFailsafeBand =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafeBand"), 3000);
+            QQuickItem* heroAuthorityRow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthorityRow"), 3000);
+            QQuickItem* heroAuthority =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthority"), 3000);
+            QQuickItem* primaryHealthGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_primaryHealthGrid"), 3000);
             QQuickItem* heroNavigation =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* heroRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
@@ -288,6 +302,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(dashboardGrid);
             QVERIFY(heroGrid);
             QVERIFY(heroFlight);
+            QVERIFY(heroFlightMode);
+            QVERIFY(heroArmState);
+            QVERIFY(heroOperationFreshness);
+            QVERIFY(heroFailsafeBand);
+            QVERIFY(heroAuthorityRow);
+            QVERIFY(heroAuthority);
+            QVERIFY(primaryHealthGrid);
             QVERIFY(heroFlight->property("statusFamily").toString().isEmpty());
             QVERIFY(heroNavigation);
             QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
@@ -433,6 +454,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto flightPriorityItemsFit = [&]() {
+                for (QQuickItem* item : {heroFlightMode, heroArmState, heroFailsafeBand,
+                                         heroAuthorityRow, heroAuthority, primaryHealthGrid}) {
+                    if (!item || !item->isVisible()) return false;
+                    const QPointF topLeft = item->mapToItem(heroFlight, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + item->width() > heroFlight->width() + 1.0 ||
+                        topLeft.y() + item->height() > heroFlight->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
             const auto topologyNodesFit = [&]() {
                 for (QQuickItem* node : topologyNodeItems) {
                     if (!node) return false;
@@ -547,6 +582,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
@@ -571,6 +607,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
@@ -620,6 +657,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendFooterItemsFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
                                       page->property("_dashboardColumns").toInt(), 3000);
@@ -721,6 +759,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(), waitingFcuText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroOperationFreshness->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFlightMode->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroArmState->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroAuthority->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafeBand->property("stateText").toString(), waitingText, 3000);
+            QCOMPARE(heroFailsafeBand->property("stateColor").value<QColor>(), QColor(QStringLiteral("#8A9A94")));
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), notReportedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), notReportedText, 3000);
@@ -1291,6 +1335,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("解锁中 · 定点"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(),
                                       translatedTelemetryText("正常"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroOperationFreshness->property("text").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFlightMode->property("text").toString(), translatedTelemetryText("定点"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroArmState->property("text").toString(), translatedTelemetryText("解锁中"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroAuthority->property("text").toString(), translatedTelemetryText("飞手"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafe->property("text").toString(), translatedTelemetryText("正常"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafeBand->property("stateText").toString(), translatedTelemetryText("正常"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafeBand->property("stateColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOperation->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthNavigation->property("statusText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -1694,6 +1746,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(failsafeRow->property("valueColor").toString(), QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFailsafe->property("text").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafeBand->property("stateText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroFailsafeBand->property("stateColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroOperationFreshness->property("text").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), staleText, 3000);
