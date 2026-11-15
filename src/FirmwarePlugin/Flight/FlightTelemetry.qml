@@ -34,6 +34,18 @@ SetupPage {
     readonly property int _dashboardColumns: availableWidth >= 1280 ? 12 : availableWidth >= 1000 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1280 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _overviewKpiColumns: availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property real _overviewTopologyDensityScale: Math.max(1.0, ScreenTools.defaultFontPixelHeight / 16.0)
+    readonly property real _overviewTopologyCanvasHeight: Math.max(176, ScreenTools.defaultFontPixelHeight * 11)
+    readonly property real _overviewTopologyNodeGridSpacing: ScreenTools.defaultFontPixelHeight * 0.4375
+    readonly property real _overviewTopologyNodeHorizontalInset: ScreenTools.defaultFontPixelWidth * 0.75
+    readonly property real _overviewTopologyNodeLeadingInset: ScreenTools.defaultFontPixelWidth * 1.25
+    readonly property real _overviewTopologyNodeVerticalInset: ScreenTools.defaultFontPixelHeight * 0.375
+    readonly property real _overviewTopologyNodeContentSpacing: ScreenTools.defaultFontPixelHeight * 0.125
+    readonly property real _overviewTopologyNodeLabelSpacing: ScreenTools.defaultFontPixelWidth * 0.625
+    readonly property real _overviewTopologyNodeIndicatorSize: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.375)
+    readonly property real _overviewTopologyLegendGap: ScreenTools.defaultFontPixelWidth * 1.25
+    readonly property real _overviewTopologyLegendItemGap: ScreenTools.defaultFontPixelWidth * 0.625
+    readonly property real _overviewTopologyLegendDotSize: Math.max(7, ScreenTools.defaultFontPixelHeight * 0.4375)
     readonly property int _overviewPriorityEventLimit: 4
     readonly property int _eventHistoryDisplayLimit: 8
     readonly property var _overviewEventSeverityCounts:
@@ -2379,6 +2391,16 @@ SetupPage {
                         objectName: "flightTelemetry_topologyCanvas"
                         readonly property string labelFontFamily: ScreenTools.normalFontFamily
                         readonly property real labelFontPointSize: ScreenTools.microFontPointSize
+                        readonly property real densityScale: root._overviewTopologyDensityScale
+                        readonly property real geometryScale: Math.max(0.72, Math.min(1, width / 480)) * densityScale
+                        readonly property real preferredCanvasHeight: root._overviewTopologyCanvasHeight
+                        readonly property real ringRadius: Math.min(76 * geometryScale, height * 0.42, width * 0.16)
+                        readonly property real nodeOffsetX: Math.min(width * 0.34, ringRadius + 36 * geometryScale)
+                        readonly property real nodeOffsetY: Math.min(height * 0.40, ringRadius + 8 * geometryScale)
+                        readonly property real sideLabelOffset: 14 * geometryScale
+                        readonly property real diagonalLabelOffset: 9 * geometryScale
+                        readonly property real topLabelOffset: 20 * geometryScale
+                        readonly property real bottomLabelOffset: 18 * geometryScale
                         readonly property var familyConnectionStates: root._overviewTopologyFamilies.map(function (family) {
                             return {
                                 family: family.family,
@@ -2390,9 +2412,11 @@ SetupPage {
                             }
                         })
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 176
+                        Layout.preferredHeight: preferredCanvasHeight
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
+                        onDensityScaleChanged: requestPaint()
+                        onGeometryScaleChanged: requestPaint()
                         onLabelFontFamilyChanged: requestPaint()
                         onLabelFontPointSizeChanged: requestPaint()
                         Component.onCompleted: requestPaint()
@@ -2407,27 +2431,31 @@ SetupPage {
 
                             const cx = width / 2
                             const cy = height / 2
-                            const scale = Math.min(1, Math.max(0.72, width / 480))
-                            const ringRadius = Math.min(76, height * 0.42, width * 0.16)
-                            const nodeX = Math.min(width * 0.34, ringRadius + 36)
-                            const nodeY = Math.min(height * 0.40, ringRadius + 8)
+                            const scale = topologyCanvas.geometryScale
+                            const ringRadius = topologyCanvas.ringRadius
+                            const nodeX = topologyCanvas.nodeOffsetX
+                            const nodeY = topologyCanvas.nodeOffsetY
+                            const sideLabelOffset = topologyCanvas.sideLabelOffset
+                            const diagonalLabelOffset = topologyCanvas.diagonalLabelOffset
+                            const topLabelOffset = topologyCanvas.topLabelOffset
+                            const bottomLabelOffset = topologyCanvas.bottomLabelOffset
                             const families = topologyCanvas.familyConnectionStates
                             const nodes = [
                                 { x: cx - nodeX, y: cy - nodeY, state: families[0],
-                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: -9 },
+                                  labelAlign: "left", labelOffsetX: sideLabelOffset, labelOffsetY: -diagonalLabelOffset },
                                 { x: cx, y: cy - height * 0.40, state: families[1],
-                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: 20 },
+                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: topLabelOffset },
                                 { x: cx + nodeX, y: cy - nodeY, state: families[2],
-                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: -9 },
+                                  labelAlign: "right", labelOffsetX: -sideLabelOffset, labelOffsetY: -diagonalLabelOffset },
                                 { x: cx - nodeX, y: cy + nodeY, state: families[3],
-                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: 9 },
+                                  labelAlign: "left", labelOffsetX: sideLabelOffset, labelOffsetY: diagonalLabelOffset },
                                 { x: cx, y: cy + height * 0.40, state: families[4],
-                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: -18 },
+                                  labelAlign: "center", labelOffsetX: 0, labelOffsetY: -bottomLabelOffset },
                                 { x: cx + nodeX, y: cy + nodeY, state: families[5],
-                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: 9 }
+                                  labelAlign: "right", labelOffsetX: -sideLabelOffset, labelOffsetY: diagonalLabelOffset }
                             ]
 
-                            const hubGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, ringRadius * 1.28)
+                            const hubGlow = ctx.createRadialGradient(cx, cy, 2 * scale, cx, cy, ringRadius * 1.28)
                             hubGlow.addColorStop(0, "rgba(30, 137, 151, 0.18)")
                             hubGlow.addColorStop(1, "rgba(4, 28, 35, 0)")
                             ctx.beginPath()
@@ -2436,17 +2464,17 @@ SetupPage {
                             ctx.fill()
 
                             ctx.strokeStyle = "#174D5B"
-                            ctx.lineWidth = 1
+                            ctx.lineWidth = scale
                             for (let ring = 1; ring <= 3; ++ring) {
                                 ctx.beginPath()
                                 ctx.arc(cx, cy, ringRadius * ring / 3, 0, Math.PI * 2)
                                 ctx.stroke()
                             }
                             ctx.beginPath()
-                            ctx.moveTo(12, cy)
-                            ctx.lineTo(width - 12, cy)
-                            ctx.moveTo(cx, 8)
-                            ctx.lineTo(cx, height - 8)
+                            ctx.moveTo(12 * scale, cy)
+                            ctx.lineTo(width - 12 * scale, cy)
+                            ctx.moveTo(cx, 8 * scale)
+                            ctx.lineTo(cx, height - 8 * scale)
                             ctx.stroke()
 
                             // Each connection uses its own family's freshness color; no aggregate state is inferred.
@@ -2459,16 +2487,16 @@ SetupPage {
                                 ctx.moveTo(cx, cy)
                                 ctx.lineTo(node.x, node.y)
                                 ctx.strokeStyle = "#183E48"
-                                ctx.lineWidth = 3
+                                ctx.lineWidth = 3 * scale
                                 ctx.stroke()
                                 ctx.beginPath()
                                 ctx.moveTo(cx, cy)
                                 ctx.lineTo(node.x, node.y)
                                 ctx.strokeStyle = nodeColor
                                 ctx.globalAlpha = isFresh ? 0.92 : isStale ? 0.72 : 0.42
-                                ctx.lineWidth = isFresh ? 1.8 : 1.25
+                                ctx.lineWidth = (isFresh ? 1.8 : 1.25) * scale
                                 ctx.shadowColor = nodeColor
-                                ctx.shadowBlur = isFresh ? 5 : 0
+                                ctx.shadowBlur = isFresh ? 5 * scale : 0
                                 ctx.stroke()
                                 ctx.shadowBlur = 0
                                 ctx.globalAlpha = 1
@@ -2479,12 +2507,12 @@ SetupPage {
                                 const distance = Math.sqrt(dx * dx + dy * dy)
                                 const ux = dx / distance
                                 const uy = dy / distance
-                                const arrowTipX = node.x + ux * Math.min(28, distance * 0.42)
-                                const arrowTipY = node.y + uy * Math.min(28, distance * 0.42)
-                                const arrowBaseX = arrowTipX - ux * 7
-                                const arrowBaseY = arrowTipY - uy * 7
-                                const perpendicularX = -uy * 3.5
-                                const perpendicularY = ux * 3.5
+                                const arrowTipX = node.x + ux * Math.min(28 * scale, distance * 0.42)
+                                const arrowTipY = node.y + uy * Math.min(28 * scale, distance * 0.42)
+                                const arrowBaseX = arrowTipX - ux * 7 * scale
+                                const arrowBaseY = arrowTipY - uy * 7 * scale
+                                const perpendicularX = -uy * 3.5 * scale
+                                const perpendicularY = ux * 3.5 * scale
                                 ctx.beginPath()
                                 ctx.moveTo(arrowTipX, arrowTipY)
                                 ctx.lineTo(arrowBaseX + perpendicularX, arrowBaseY + perpendicularY)
@@ -2547,20 +2575,20 @@ SetupPage {
                                 const isFresh = node.state.status === qsTr("已接收")
                                 const isStale = node.state.status === qsTr("数据超时")
                                 ctx.beginPath()
-                                ctx.arc(node.x, node.y, 12, 0, Math.PI * 2)
+                                ctx.arc(node.x, node.y, 12 * scale, 0, Math.PI * 2)
                                 ctx.fillStyle = nodeColor
                                 ctx.globalAlpha = isFresh ? 0.14 : isStale ? 0.10 : 0.055
                                 ctx.fill()
                                 ctx.globalAlpha = 1
                                 ctx.beginPath()
-                                ctx.arc(node.x, node.y, 8.2, 0, Math.PI * 2)
+                                ctx.arc(node.x, node.y, 8.2 * scale, 0, Math.PI * 2)
                                 ctx.fillStyle = "#05242D"
                                 ctx.fill()
                                 ctx.strokeStyle = nodeColor
-                                ctx.lineWidth = isFresh ? 2.2 : 1.6
+                                ctx.lineWidth = (isFresh ? 2.2 : 1.6) * scale
                                 ctx.stroke()
                                 ctx.beginPath()
-                                ctx.arc(node.x, node.y, 3.2, 0, Math.PI * 2)
+                                ctx.arc(node.x, node.y, 3.2 * scale, 0, Math.PI * 2)
                                 ctx.fillStyle = nodeColor
                                 ctx.fill()
 
@@ -2581,8 +2609,8 @@ SetupPage {
                         columns: root.availableWidth >= 1280 ? 3
                                  : root.availableWidth >= 1000 ? 2
                                  : root.availableWidth >= 420 ? 3 : 2
-                        columnSpacing: 7
-                        rowSpacing: 7
+                        columnSpacing: root._overviewTopologyNodeGridSpacing
+                        rowSpacing: root._overviewTopologyNodeGridSpacing
                         Repeater {
                             model: root._overviewTopologyFamilies
                             delegate: Rectangle {
@@ -2592,6 +2620,10 @@ SetupPage {
                                 readonly property color stateTint: Qt.rgba(stateColor.r, stateColor.g, stateColor.b,
                                                                           stateText === qsTr("已接收") ? 0.085
                                                                           : stateText === qsTr("数据超时") ? 0.055 : 0.025)
+                                readonly property real contentHorizontalInset: root._overviewTopologyNodeHorizontalInset
+                                readonly property real contentLeadingInset: root._overviewTopologyNodeLeadingInset
+                                readonly property real contentVerticalInset: root._overviewTopologyNodeVerticalInset
+                                readonly property real contentSpacing: root._overviewTopologyNodeContentSpacing
                                 objectName: "flightTelemetry_topologyNode_" + modelData.family
                                 Layout.fillWidth: true
                                 radius: 6
@@ -2611,17 +2643,20 @@ SetupPage {
                                 }
                                 ColumnLayout {
                                     id: topologyNodeContent
+                                    objectName: "flightTelemetry_topologyNodeContent_" + modelData.family
                                     anchors.fill: parent
-                                    anchors.margins: 6
-                                    anchors.leftMargin: 10
-                                    spacing: 2
+                                    anchors.topMargin: parent.contentVerticalInset
+                                    anchors.bottomMargin: parent.contentVerticalInset
+                                    anchors.leftMargin: parent.contentLeadingInset
+                                    anchors.rightMargin: parent.contentHorizontalInset
+                                    spacing: parent.contentSpacing
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        spacing: 5
+                                        spacing: root._overviewTopologyNodeLabelSpacing
                                         Rectangle {
-                                            Layout.preferredWidth: 6
-                                            Layout.preferredHeight: 6
-                                            radius: 3
+                                            Layout.preferredWidth: root._overviewTopologyNodeIndicatorSize
+                                            Layout.preferredHeight: root._overviewTopologyNodeIndicatorSize
+                                            radius: root._overviewTopologyNodeIndicatorSize / 2
                                             color: parent.parent.parent.stateColor
                                         }
                                         QGCLabel {
@@ -2649,7 +2684,7 @@ SetupPage {
                                         elide: Text.ElideRight
                                     }
                                 }
-                                implicitHeight: topologyNodeContent.implicitHeight + 12
+                                implicitHeight: topologyNodeContent.implicitHeight + 2 * contentVerticalInset
                             }
                         }
                     }
@@ -2657,7 +2692,7 @@ SetupPage {
                     RowLayout {
                         objectName: "flightTelemetry_topologyLegend"
                         Layout.fillWidth: true
-                        spacing: 10
+                        spacing: root._overviewTopologyLegendGap
                         QGCLabel {
                             objectName: "flightTelemetry_topologyLegendTitle"
                             text: qsTr("状态统计")
@@ -2674,13 +2709,13 @@ SetupPage {
                                 required property var modelData
                                 objectName: "flightTelemetry_topologyLegend_" + modelData.key
                                 Layout.fillWidth: true
-                                spacing: 5
+                                spacing: root._overviewTopologyLegendItemGap
                                 Rectangle {
                                     objectName: "flightTelemetry_topologyLegendDot_" + modelData.key
-                                    Layout.preferredWidth: 7
-                                    Layout.preferredHeight: 7
+                                    Layout.preferredWidth: root._overviewTopologyLegendDotSize
+                                    Layout.preferredHeight: root._overviewTopologyLegendDotSize
                                     Layout.alignment: Qt.AlignVCenter
-                                    radius: 4
+                                    radius: root._overviewTopologyLegendDotSize / 2
                                     color: modelData.color
                                 }
                                 QGCLabel {
