@@ -2845,6 +2845,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor"), 3000);
             QQuickItem* rcAxisPanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor"), 3000);
+            QQuickItem* rcStickStatusBadge = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor_statusBadge"));
+            QQuickItem* rcAxisStatusBadge = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor_statusBadge"));
             QQuickItem* rcLinkPanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
             QQuickItem* rcFailsafePanel = findVisibleItem(
@@ -2868,6 +2872,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcGrid);
             QVERIFY(rcStickPanel);
             QVERIFY(rcAxisPanel);
+            QVERIFY(rcStickStatusBadge);
+            QVERIFY(rcAxisStatusBadge);
             QVERIFY(rcLinkPanel);
             QVERIFY(rcFailsafePanel);
             QVERIFY(leftStick);
@@ -2876,6 +2882,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcAxesGrid);
             QVERIFY(linkMetricsGrid);
             QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 12, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickStatusBadge->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!rcAxisStatusBadge->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAxisPanel->property("statusFamily").toString(),
+                                      QStringLiteral("rcInputAvailable"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcAxisPanel->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcLinkPanel->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkPanel->y(), rcFailsafePanel->y(), 3000);
