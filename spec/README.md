@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.95
+- 版本 4.96
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -257,3 +257,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 导航时序页辅助网格高 DPI 收口：能力、时间同步、导航/时间域状态子网格间距统一由 ScreenTools 字体像素宽高驱动，MetricReadout 内部间距随 UI Scale 缩放，标签/状态文本支持窄宽度换行；MockLink UI Integration 新增 1280/1279/760/759 px spacing 与换行断言。本轮未运行 CI/Unit/Integration/Windows Release，新增回归 NOT_RUN，待集中验收。
+
+
+- 2026-11-15 总览拓扑矢量几何与节点卡片高 DPI 适配：Canvas 中心、四旋翼线框、六域节点、箭头和标签偏移统一使用 ScreenTools 密度比例；画布高度随字体像素高度增长。六域节点卡片的网格间距、内边距、指示点、内容行距和内容驱动高度统一使用 ScreenTools 字体像素度量；MockLink UI Integration 扩展六断点父子边界和几何缩放断言。按要求未运行 CI，新增回归 NOT_RUN。
