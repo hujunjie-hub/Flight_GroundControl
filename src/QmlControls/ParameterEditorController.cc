@@ -538,6 +538,90 @@ QString ParameterEditorController::_tuningBlockReason() const
     if (!_profileAllowsSelectedParameter()) {
         return tr("所选机型配置未通过 SIL-only 注册检查；实机写入保持锁定。");
     }
+
+    for (const QVariant &dependencyValue : _selectedFact->dependencies()) {
+        if (dependencyValue.metaType().id() != QMetaType::QString) {
+            return tr("参数依赖元数据格式无效，已禁止写入。");
+        }
+        const QString dependencyName = dependencyValue.toString();
+        if (dependencyName.isEmpty() || !_selectedModelParameterNames.contains(dependencyName) ||
+            !_parameterMgr->parameterExists(_selectedFact->componentId(), dependencyName)) {
+            return tr("必需依赖参数 %1 未在当前机型参数列表中就绪。").arg(dependencyName);
+        }
+        Fact *const dependencyFact = _parameterMgr->getParameter(_selectedFact->componentId(), dependencyName);
+        if (!dependencyFact || !_selectedModelParameterDomains.contains(dependencyFact->category())) {
+            return tr("必需依赖参数 %1 未通过当前机型参数域校验。").arg(dependencyName);
+        }
+    }
+    return {};
+}
+
+QString ParameterEditorController::_selectedValueValidationError(double targetValue) const
+{
+    if (!_selectedFact || !std::isfinite(targetValue)) {
+        return tr("参数目标值无效。");
+    }
+
+    for (const QVariant &ruleValue : _selectedFact->validationRules()) {
+        const QVariantMap rule = ruleValue.toMap();
+        const QString type = rule.value(QStringLiteral("type")).toString();
+        bool ruleValueOk = false;
+        const double threshold = rule.value(QStringLiteral("value")).toDouble(&ruleValueOk);
+        if (!ruleValueOk || !std::isfinite(threshold)) {
+            return tr("参数组合校验规则无效，已禁止写入。");
+        }
+
+        if (type == QStringLiteral("GREATER_THAN") && !(targetValue > threshold)) {
+            return tr("目标值必须大于 %1。").arg(threshold, 0, 'g', 12);
+        }
+        if (type == QStringLiteral("GREATER_THAN_OR_EQUAL") && !(targetValue >= threshold)) {
+            return tr("目标值必须大于或等于 %1。").arg(threshold, 0, 'g', 12);
+        }
+        if (type == QStringLiteral("LESS_THAN") && !(targetValue < threshold)) {
+            return tr("目标值必须小于 %1。").arg(threshold, 0, 'g', 12);
+        }
+        if (type == QStringLiteral("LESS_THAN_OR_EQUAL") && !(targetValue <= threshold)) {
+            return tr("目标值必须小于或等于 %1。").arg(threshold, 0, 'g', 12);
+        }
+        if (type == QStringLiteral("MULTIPLE_OF")) {
+            if (threshold <= 0.0) {
+                return tr("参数步长校验规则无效，已禁止写入。");
+            }
+            const double remainder = std::remainder(targetValue, threshold);
+            const double tolerance = 1e-8 * std::max(1.0, std::abs(targetValue));
+            if (std::abs(remainder) > tolerance) {
+                return tr("目标值必须为 %1 的整数倍。").arg(threshold, 0, 'g', 12);
+            }
+        }
+        if (type == QStringLiteral("REQUIRES_PARAMETER_VALUE")) {
+            const QString dependencyName = rule.value(QStringLiteral("parameter")).toString();
+            if (dependencyName.isEmpty() || !_selectedFact || !_parameterMgr ||
+                !_selectedFact->dependencies().contains(dependencyName) ||
+                !_selectedModelParameterNames.contains(dependencyName)) {
+                return tr("参数条件依赖 %1 未声明或未注册。").arg(dependencyName);
+            }
+            Fact *const dependencyFact = _parameterMgr->getParameter(_selectedFact->componentId(), dependencyName);
+            bool dependencyValueOk = false;
+            const double dependencyValue = dependencyFact
+                ? dependencyFact->cookedValue().toDouble(&dependencyValueOk) : 0.0;
+            if (!dependencyFact || !dependencyValueOk || !std::isfinite(dependencyValue)) {
+                return tr("条件依赖参数 %1 当前值不可用。").arg(dependencyName);
+            }
+            const double tolerance = 1e-6 * std::max(1.0, std::max(std::abs(dependencyValue), std::abs(threshold)));
+            if (std::abs(dependencyValue - threshold) > tolerance) {
+                return tr("参数 %1 必须等于 %2 才能修改当前参数。")
+                    .arg(dependencyName, QString::number(threshold, 'g', 12));
+            }
+        }
+        if (type != QStringLiteral("GREATER_THAN") &&
+            type != QStringLiteral("GREATER_THAN_OR_EQUAL") &&
+            type != QStringLiteral("LESS_THAN") &&
+            type != QStringLiteral("LESS_THAN_OR_EQUAL") &&
+            type != QStringLiteral("MULTIPLE_OF") &&
+            type != QStringLiteral("REQUIRES_PARAMETER_VALUE")) {
+            return tr("存在不支持的参数校验规则 %1，已禁止写入。").arg(type);
+        }
+    }
     return {};
 }
 
@@ -617,6 +701,14 @@ bool ParameterEditorController::applySelectedValue(const QVariant &cookedValue)
     if (!targetOk || !std::isfinite(targetValue)) {
         _tuningStatus = tr("参数校验未通过");
         _tuningError = tr("请输入有效的有限数值。");
+        emit tuningStateChanged();
+        return false;
+    }
+
+    const QString metadataValidationError = _selectedValueValidationError(targetValue);
+    if (!metadataValidationError.isEmpty()) {
+        _tuningStatus = tr("参数组合校验未通过");
+        _tuningError = metadataValidationError;
         emit tuningStateChanged();
         return false;
     }
