@@ -476,7 +476,7 @@
         "overview_alarm_severity_distribution_counts_full_event_cache_by_five_buckets",
         "overview_alarm_severity_distribution_keeps_unknown_values_out_of_info_and_critical",
         "overview_alarm_severity_distribution_updates_after_new_fcu_events",
-        "overview_alarm_severity_distribution_reflows_and_fits_at_700_and_400_px",
+        "overview_alarm_severity_distribution_reflows_and_fits_at_1600_1400_1000_900_700_and_400_px",
         "overview_alarm_severity_distribution_hides_without_fresh_nonempty_event_cache"
       ]
     },
