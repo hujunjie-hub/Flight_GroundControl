@@ -167,6 +167,26 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             QTRY_COMPARE_WITH_TIMEOUT(reasonCode->property("text").toString(), QStringLiteral("23"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(fcuUptime->property("text").toString(), QStringLiteral("01:02:05"), 3000);
 
+            // Each validity bit is independent: invalidating one field must not hide
+            // the other two valid fields or reinterpret a raw zero as healthy data.
+            sendStorageStatus(3725100000ULL, 0x06, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("降级"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
+
+            sendStorageStatus(3725200000ULL, 0x05, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("就绪"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
+
+            sendStorageStatus(3725300000ULL, 0x03, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("就绪"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("降级"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
+
+            // Refresh once more, then verify the independent 5.5 s freshness timeout.
+            sendStorageStatus(3725400000ULL, 0x07, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
             // Storage freshness is stricter than the generic telemetry-family cache:
             // cached values disappear after 5.5 s without another storage frame.
             QTRY_COMPARE_WITH_TIMEOUT(connection->property("text").toString(), QStringLiteral("数据超时"), 7000);
