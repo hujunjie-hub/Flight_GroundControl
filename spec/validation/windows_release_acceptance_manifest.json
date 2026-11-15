@@ -368,7 +368,8 @@
         "health_link_detail_metrics_and_state_follow_per_instance_freshness",
         "navigation_overview_time_panel_and_maintenance_boot_id_follow_family_freshness",
         "build_info_snapshot_values_are_labeled_last_known_when_family_stale",
-        "profile_compatibility_requires_fresh_operation_and_same_boot_build_snapshot"
+        "profile_compatibility_requires_fresh_operation_and_same_boot_build_snapshot",
+        "overview_global_communication_loss_overrides_latched_telemetry_received_state_and_recovers"
       ]
     },
     {
@@ -624,7 +625,8 @@
     "health_link_detail_metrics_and_state_follow_per_instance_freshness",
     "navigation_overview_time_panel_and_maintenance_boot_id_follow_family_freshness",
     "build_info_snapshot_values_are_labeled_last_known_when_family_stale",
-    "profile_compatibility_requires_fresh_operation_and_same_boot_build_snapshot"
+    "profile_compatibility_requires_fresh_operation_and_same_boot_build_snapshot",
+    "overview_global_communication_loss_overrides_latched_telemetry_received_state_and_recovers"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
