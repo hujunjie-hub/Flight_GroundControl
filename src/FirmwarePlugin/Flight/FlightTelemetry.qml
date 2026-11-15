@@ -1131,6 +1131,18 @@ SetupPage {
                : qsTr("%1 (%2)").arg(label).arg(value)
     }
 
+    function _eventBootTimeText(timeBootUs) {
+        if (timeBootUs === null || timeBootUs === undefined || timeBootUs === "") {
+            return "FCU · " + qsTr("未上报")
+        }
+        const value = Number(timeBootUs)
+        if (!Number.isFinite(value) || !Number.isInteger(value) ||
+                value < 0 || value > 9007199254740991) {
+            return "FCU · " + qsTr("无效")
+        }
+        return qsTr("FCU +%1 s").arg((value / 1000000).toFixed(3))
+    }
+
     function _eventSeverityLabel(severity) {
         const labels = [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]
         const value = Number(severity)
@@ -1947,6 +1959,14 @@ SetupPage {
                                               .arg(modelData.sequence).arg(modelData.eventId).arg(modelData.sourceId)
                                         color: "#D5E9ED"
                                         font.pointSize: ScreenTools.captionFontPointSize
+                                        elide: Text.ElideRight
+                                    }
+                                    QGCLabel {
+                                        objectName: "flightTelemetry_alarmEventTime_" + modelData.sequence
+                                        Layout.fillWidth: true
+                                        text: root._eventBootTimeText(modelData.timeBootUs)
+                                        color: "#8298A2"
+                                        font.pointSize: ScreenTools.microFontPointSize
                                         elide: Text.ElideRight
                                     }
                                     QGCLabel {
@@ -3144,14 +3164,25 @@ SetupPage {
                         model: root._telemetry ? root._telemetry.recentEvents.slice(0, 8) : []
                         delegate: RowLayout {
                             required property var modelData
+                            objectName: "flightTelemetry_eventHistoryRow_" + modelData.sequence
                             Layout.fillWidth: true
                             spacing: 8
 
                             QGCLabel {
                                 text: qsTr("#%1").arg(modelData.sequence)
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_eventHistoryTime_" + modelData.sequence
+                                Layout.preferredWidth: 94
+                                text: root._eventBootTimeText(modelData.timeBootUs)
+                                color: "#8298A2"
+                                font.pointSize: ScreenTools.microFontPointSize
+                                elide: Text.ElideRight
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 elide: Text.ElideRight
                                 text: qsTr("ID %1 · 来源 %2 · %3")
                                       .arg(modelData.eventId)

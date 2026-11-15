@@ -321,7 +321,8 @@
         "prearm_coverage_and_summary_count_only_fresh_check_items",
         "health_control_detail_facts_are_gated_by_control_family_freshness",
         "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
-        "health_safety_solver_summary_matches_control_family_freshness"
+        "health_safety_solver_summary_matches_control_family_freshness",
+        "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling"
       ]
     },
     {
@@ -508,7 +509,8 @@
     "prearm_coverage_and_summary_count_only_fresh_check_items",
     "health_control_detail_facts_are_gated_by_control_family_freshness",
     "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
-    "health_safety_solver_summary_matches_control_family_freshness"
+    "health_safety_solver_summary_matches_control_family_freshness",
+    "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

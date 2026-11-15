@@ -299,6 +299,23 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(alarmPriorityHint->property("text").toString(),
                      translatedTelemetryText("严重度优先 · 同级按最新序号"));
 
+            QVariant eventBootTimeOutput;
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventBootTimeText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, eventBootTimeOutput),
+                                              Q_ARG(QVariant, QVariant::fromValue<qulonglong>(1700000ULL))));
+            QCOMPARE(eventBootTimeOutput.toString(),
+                     translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("1.700")));
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventBootTimeText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, eventBootTimeOutput),
+                                              Q_ARG(QVariant, QVariant())));
+            QCOMPARE(eventBootTimeOutput.toString(),
+                     QStringLiteral("FCU · ") + translatedTelemetryText("未上报"));
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventBootTimeText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, eventBootTimeOutput),
+                                              Q_ARG(QVariant, QVariant::fromValue<qulonglong>(9007199254740992ULL))));
+            QCOMPARE(eventBootTimeOutput.toString(),
+                     QStringLiteral("FCU · ") + translatedTelemetryText("无效"));
+
             const auto headerItemsFit = [&]() {
                 for (QQuickItem* item : {dashboardTitle, dashboardSubtitle, compactDashboardSubtitle, readOnlyBadge}) {
                     if (!item->isVisible()) continue;
@@ -572,6 +589,26 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendEventStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
+                                       uint32_t eventId, uint8_t severity) {
+                mavlink_fcu_event_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = sessionBootId;
+                payload.profile_id = profileId;
+                payload.event_id = eventId;
+                payload.reason_code = 18;
+                payload.authority_epoch = 7;
+                payload.directive_epoch = 8;
+                payload.permit_epoch = 9;
+                payload.source_id = 25;
+                payload.reason_namespace = 0;
+                payload.severity = severity;
+
+                mavlink_message_t message{};
+                mavlink_msg_fcu_event_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             auto sendControlStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint32_t solveTimeUs) {
                 mavlink_fcu_control_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -689,6 +726,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700);
             sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
             sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
+            sendEventStatus(1700000, bootId, 4321, 3);
             QQuickItem* rcPageTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
@@ -757,6 +795,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QQuickItem* alarmEventTime = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventTime_1"), 3000);
+            QQuickItem* historyEventTime = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistoryTime_1"), 3000);
+            QVERIFY(alarmEventTime);
+            QVERIFY(historyEventTime);
+            const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("1.700"));
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventTime->property("text").toString(), expectedEventBootTime, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),

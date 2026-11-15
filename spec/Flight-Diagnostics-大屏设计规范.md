@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.5
+- 版本：6.6
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；导航时序页已补充 FCU UTC 绝对时间、freshness 门控、无效断点与状态颜色；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；本轮补齐总览优先级告警与事件历史的 FCU 启动相对时间；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -637,7 +637,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本阶段仅调整 GroundControl 接收时间记录与飞行健康页展示；不改变 MAVLink 字段、飞控检查判定、预检恢复条件、安全权限、传感器健康策略或其他三个诊断页面。
 
 
-## Phase 2.7 控制器与执行器详情 freshness 闭环（2026-11-15）
+## 37. Phase 2.7 控制器与执行器详情 freshness 闭环（2026-11-15）
 
 - 控制器详情卡的求解器状态、控制序号、求解耗时、可控/降级 DOF、原因和 FCU 发布时间统一受 controlAvailable family freshness 门控；超时/等待时显示对应状态，不把缓存 Fact 当作当前控制状态。
 - 执行器详情卡的控制序号、输出许可代次、可用/饱和掩码、输出策略、反馈能力、原因和 FCU 发布时间统一受 actuatorAvailable freshness 门控。
@@ -645,3 +645,14 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 新增 _familyFreshValue 展示层 helper，不修改 freshness 窗口、Fact、MAVLink、Flight ICD 或飞控状态判定。
 - 集中验收需覆盖 control/actuator fresh → stale → recovered；本轮 CI 未运行，状态 NOT_RUN。
 - 仅修改飞行健康页展示与 SPEC，不影响其他三个页面。
+
+
+## 38. Phase 2.8 总览告警事件时间定位（2026-11-15）
+
+- 总览优先级告警列表与最近事件历史均展示 FCU_EVENT.time_boot_us 对应的 FCU 启动相对时间，格式为「FCU +x.xxx s」；该字段是 FCU 单调启动时间，不是 UTC 或地面站本地时间。
+- 告警条目保留严重度、地面站本地接收序号、事件 ID、来源 ID 和原因；新增时间只增强定位能力，不改变严重度降序/同级序号降序规则。
+- 事件历史仍按 recentEvents 的原始最新接收顺序显示；时间字段独立列出，不改变事件排序或底层缓存顺序。
+- time_boot_us 缺失或超出 JavaScript 安全整数范围时明确显示未上报/无效，不格式化为伪造时间；事件本身仍保留在列表中。
+- MockLink UI Integration 注入 FCU_EVENT，覆盖有效、未上报、越界时间输入，并验证优先级告警与事件历史显示同一 FCU 启动相对时间。
+- 仅修改地面站 QML 展示、MockLink UI Integration 断言和 SPEC/验收清单；不修改 MAVLink、FlightTelemetryFactGroup、ICD、飞控事件生成、UTC 时间服务或控制行为。
+- 按用户要求本轮不运行、不触发 CI；新增断言状态为 NOT_RUN，待集中验证。
