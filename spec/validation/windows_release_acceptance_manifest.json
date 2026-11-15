@@ -610,7 +610,11 @@
         "mocklink_broadcast_set_message_interval_fans_out_to_all_gimbal_device_components",
         "mocklink_broadcast_interval_acknowledgement_uses_the_manager_component",
         "mocklink_unknown_gimbal_device_availability_toggle_is_rejected_without_side_effects",
-        "mocklink_rejects_nonfinite_fractional_and_out_of_int32_range_message_interval_and_request_message_ids"
+        "mocklink_rejects_nonfinite_fractional_and_out_of_int32_range_message_interval_and_request_message_ids",
+        "mocklink_multi_gimbal_discovers_device_id_3_with_manager_component_1",
+        "mocklink_device_id_3_attitude_status_uses_manager_component_and_embedded_device_id_3",
+        "mocklink_device_id_155_attitude_status_uses_component_155_and_embedded_device_id_zero",
+        "mocklink_set_message_interval_routes_legacy_device_ids_1_through_6_via_manager_component"
       ]
     }
   ],
