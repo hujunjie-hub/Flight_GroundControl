@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.8
+- 版本：1.9
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -121,6 +121,7 @@ MockLink 的多设备模拟必须遵守以下规则：
 - 设备 ID 大于 6 时，`GIMBAL_DEVICE_ATTITUDE_STATUS` 使用设备 ID 作为 MAVLink component ID，消息内 `gimbal_device_id=0`；设备 ID 1-6 使用 manager component ID，并在消息字段中携带真实设备 ID。
 - manager status 消息间隔设置应用于该 manager 下的所有设备；姿态状态间隔按设备 component ID 路由。设备 ID 1-6 的姿态状态间隔由 manager component 路由。
 - `MAV_CMD_SET_MESSAGE_INTERVAL` 的 target component 为 0 时视为广播，manager status / device attitude status 的间隔必须应用于该 manager 下全部在线设备；广播命令的 ACK 必须由 manager component 发出。
+- `MAV_CMD_SET_MESSAGE_INTERVAL` 的 message ID 和 interval 参数必须是有限整数且位于 int32 可表达范围内；`MAV_CMD_REQUEST_MESSAGE` 的 message ID 同样必须是有限非负整数。非法参数不得写入任何设备的 interval 状态。
 - `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 与 `MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE` 的 param7 必须路由到对应设备；兼容值 0 仅指向默认设备 154，不得广播改变所有设备。
 - `GIMBAL_MANAGER_SET_ATTITUDE.gimbal_device_id` 为 0 时兼容指向默认设备 154；显式设备 ID 只改变对应设备。
 - 未知设备 ID 必须拒绝；不同设备的姿态、角速度和 owner pair 不得互相覆盖。
