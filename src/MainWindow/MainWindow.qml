@@ -447,7 +447,7 @@ ApplicationWindow {
                 active: toolDrawer.visible && toolDrawer.flightConfig
                 sourceComponent: FlyViewToolBar {
                     configuring: true
-                    parameterCenter: toolDrawerLoader.source.toString().endsWith("/SetupParameterEditor.qml")
+                    parameterCenter: toolDrawerLoader.item && toolDrawerLoader.item._parameterCenterFullPage
                 }
             }
 

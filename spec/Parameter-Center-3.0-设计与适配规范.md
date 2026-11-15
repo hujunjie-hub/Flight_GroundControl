@@ -231,7 +231,7 @@
 - SO3 姿态增益：3
 - 仿真：1
 
-当前元数据已包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces、rebootRequired。它尚未提供完整的机型适用性、参数域、控制律和在线调参策略。因此 Phase 2 必须补充可验证的适用性元数据，不能仅根据参数名前缀猜测所有机型兼容性。
+当前元数据已包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces、rebootRequired。Phase 2 首轮已增加 domain 分类，但尚未提供完整的机型适用性、控制律和在线调参策略；不能仅根据参数名前缀或 domain 猜测所有机型兼容性。
 
 ### 6.2 元数据扩展目标
 
@@ -239,7 +239,7 @@
 
 | 字段 | 含义 |
 |---|---|
-| domain | FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION |
+| domain | VEHICLE_MODEL / FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION |
 | vehicleFamily | 适用飞行器大类 |
 | modelVariants | 适用的具体构型 |
 | controlLaw | 适用控制算法/控制架构 |
@@ -445,17 +445,38 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 原始 1672 × 941 参考图已审阅，但尚未成功写入 Git 仓库二进制资产路径；Phase 0 参考图归档仍待解决。
 
 当前局限：
-- 参数域点击仅切换 UI 选中态，动态参数域映射待 Phase 2。
+- Phase 1 首轮参数域点击仅切换 UI 选中态；Phase 2 已开始接入真实 domain 映射，详见 Phase 2 实施记录。
 - 顶部工作区入口仅为视觉入口，不代表仿真或参数应用功能已实现。
 - 当前机型信息来自 activeVehicle；独立机型模型注册/兼容性选择待 Phase 2。
 - 本轮未运行 Windows 构建、QML UI 测试或 CI；必须在集中验收阶段验证。
+
+### Phase 2 实施记录（首轮真实参数域映射）
+
+本轮将当前 Flight 固件的真实参数元数据接入参数域导航，未扩大任何参数写入权限：
+
+- FlightParameterFactMetaData.json 的 49 个参数增加显式 domain 字段，原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留。
+- 当前 group → domain 映射为：机体模型 → VEHICLE_MODEL（1 项）；MPC 权重、位置环回退、姿态角速度环、SO3 姿态增益 → CONTROL（47 项）；仿真 → SIMULATION（1 项）。
+- 当前 FMS、INS、PLANT、ACTUATOR 在这 49 项 Flight 参数元数据中没有登记参数；页面显示明确空态，不从其他域借用或伪造参数。
+- FlightParameterMetaData::parseParameterJson 仅接受 VEHICLE_MODEL / FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION 七种受支持 domain，并写入 FactMetaData.category；原始 group 不变，ParameterEditorController 继续按 category / group 组织原生 Fact。
+- ParameterEditor 新增 externalCategoryNavigation、hasCategory、selectCategoryByName：默认 false 时保持原有 PX4 / ArduPilot 等参数页行为；参数中心启用外层参数域选择，原生分组导航只显示当前域的 group，原搜索、全部/已修改/收藏、只读过滤、导入/导出和工具菜单继续保留。
+- 外层参数域导航已联动真实 ParameterEditor category。当前域没有固件参数时显示“当前参数域暂无参数”，不显示其他域参数；在线调参域因没有 tuningPolicy 白名单保持锁定。
+- ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
+- 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
+- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态；由于尚无独立机型注册目录，本轮不显示伪造的模型下拉选项。模型注册、兼容性阻断和真实模型切换仍是 Phase 2 未完成项。
+- 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
+
+当前局限与验收状态：
+- domain 只解决参数归属，不等于机型兼容性。vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 尚未补齐。
+- 当前 49 项统计仅对应 FlightParameterFactMetaData.json，不代表未来所有机型或固件。
+- 在线调参、参数行与目标值面板联动、仿真曲线和应用/回读闭环仍未实现。
+- 本轮未执行 Windows 构建、QML 运行、单元测试或 CI；Phase 2 保持 PARTIAL，必须在集中验收阶段验证。
 
 ## 13. 当前实施状态
 
 - SPEC：已定义，等待分阶段实施。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：NOT_RUN。
+- Phase 2：PARTIAL（Flight 49 项参数首轮 domain 分类、外层导航联动原生 ParameterEditor 分组及空态接入；机型注册/兼容性/在线调参策略未完成，构建与测试 NOT_RUN）。
 - Phase 3：NOT_RUN。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。

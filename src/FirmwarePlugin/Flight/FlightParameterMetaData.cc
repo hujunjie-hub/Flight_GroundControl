@@ -3,6 +3,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
+#include <QtCore/QStringList>
 
 FlightParameterMetaData::FlightParameterMetaData(QObject *parent)
     : ParameterMetaData(parent)
@@ -29,6 +30,19 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         auto *metaData = new FactMetaData(FactMetaData::valueTypeFloat, this);
         metaData->setName(name);
         metaData->setGroup(entry.value(QStringLiteral("group")).toString());
+        const QString domain = entry.value(QStringLiteral("domain")).toString();
+        static const QStringList supportedDomains {
+            QStringLiteral("VEHICLE_MODEL"),
+            QStringLiteral("FMS"),
+            QStringLiteral("CONTROL"),
+            QStringLiteral("INS"),
+            QStringLiteral("PLANT"),
+            QStringLiteral("ACTUATOR"),
+            QStringLiteral("SIMULATION")
+        };
+        if (supportedDomains.contains(domain)) {
+            metaData->setCategory(domain);
+        }
         metaData->setShortDescription(entry.value(QStringLiteral("shortDescription")).toString());
         metaData->setLongDescription(entry.value(QStringLiteral("longDescription")).toString());
         metaData->setRawUnits(entry.value(QStringLiteral("units")).toString());

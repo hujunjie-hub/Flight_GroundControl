@@ -16,8 +16,10 @@ Item {
     readonly property bool _pendingWrites: _activeVehicle && _activeVehicle.parameterManager.pendingWrites
     readonly property string _vehicleName: _activeVehicle ? _activeVehicle.vehicleTypeString : qsTr("未连接飞行器")
     readonly property string _vehicleLayout: !_activeVehicle ? qsTr("等待飞行器连接")
-                                                : (_activeVehicle.xConfigMotors ? qsTr("X 型多旋翼")
-                                                   : _activeVehicle.multiRotor ? qsTr("多旋翼") : _vehicleName)
+                                                : (_activeVehicle.multiRotor
+                                                   ? (_activeVehicle.xConfigMotors ? qsTr("X 型多旋翼") : qsTr("多旋翼"))
+                                                   : _activeVehicle.fixedWing ? qsTr("固定翼")
+                                                   : _activeVehicle.vtol ? qsTr("VTOL") : _vehicleName)
 
     readonly property color bg: "#04151D"
     readonly property color panel: "#082631"
@@ -31,7 +33,14 @@ Item {
     readonly property real gap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.6)
     property int activeDomain: 0
 
+    onActiveDomainChanged: {
+        if (dashboardLoader.item) {
+            dashboardLoader.item.syncParameterDomain()
+        }
+    }
+
     Loader {
+        id: dashboardLoader
         anchors.fill: parent
         sourceComponent: root._isFlight ? dashboardComponent : legacyEditorComponent
     }
@@ -44,7 +53,28 @@ Item {
     Component {
         id: dashboardComponent
         Item {
+            id: dashboardRoot
             anchors.fill: parent
+
+            function domainCategoryName(domainIndex) {
+                switch (domainIndex) {
+                case 0: return "VEHICLE_MODEL"
+                case 1: return "FMS"
+                case 2: return "CONTROL"
+                case 3: return "INS"
+                case 4: return "PLANT"
+                case 5: return "ACTUATOR"
+                case 7: return "SIMULATION"
+                default: return ""
+                }
+            }
+
+            function syncParameterDomain() {
+                if (parameterEditorLoader.item) {
+                    parameterEditorLoader.item.selectCategoryByName(domainCategoryName(root.activeDomain))
+                }
+            }
+
             Rectangle { anchors.fill: parent; color: root.bg }
 
             ColumnLayout {
@@ -114,7 +144,7 @@ Item {
                                     font.pointSize: ScreenTools.bodyFontPointSize
                                     elide: Text.ElideRight
                                 }
-                                QGCLabel { text: "▾"; color: root.cyan; font.pointSize: ScreenTools.subtitleFontPointSize }
+                                QGCLabel { text: qsTr("ACTIVE"); color: root.cyan; font.pointSize: ScreenTools.microFontPointSize }
                             }
                         }
                     }
@@ -597,7 +627,116 @@ Item {
                                 QGCLabel { text: "FACT / PARAMETER MANAGER"; color: root.cyan; font.pointSize: ScreenTools.microFontPointSize }
                             }
                             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#14505B" }
-                            ParameterEditor { Layout.fillWidth: true; Layout.fillHeight: true }
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+
+                                Loader {
+                                    id: parameterEditorLoader
+                                    anchors.fill: parent
+                                    active: root._parametersReady
+                                    sourceComponent: parameterEditorComponent
+                                    onLoaded: dashboardRoot.syncParameterDomain()
+                                }
+
+                                Component {
+                                    id: parameterEditorComponent
+                                    ParameterEditor {
+                                        externalCategoryNavigation: true
+                                        enabled: root._linkHealthy && root._parametersReady
+                                    }
+                                }
+
+                                Connections {
+                                    target: QGroundControl.multiVehicleManager
+                                    function onActiveVehicleChanged(vehicle) {
+                                        // ParameterEditorController captures activeVehicle at construction.
+                                        parameterEditorLoader.sourceComponent = undefined
+                                        parameterEditorLoader.sourceComponent = parameterEditorComponent
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: parameterEditorLoader.status === Loader.Ready &&
+                                             parameterEditorLoader.item &&
+                                             root._parametersReady && root._linkHealthy &&
+                                             (root.activeDomain === 6 ||
+                                              !parameterEditorLoader.item.hasCategory(dashboardRoot.domainCategoryName(root.activeDomain)))
+                                    color: "#E606202A"
+                                    border.width: 1
+                                    border.color: "#14505B"
+                                    ColumnLayout {
+                                        anchors.centerIn: parent
+                                        width: Math.min(parent.width - 24, 360)
+                                        spacing: 7
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: root.activeDomain === 6
+                                                  ? qsTr("在线调参尚未开放")
+                                                  : qsTr("当前参数域暂无参数")
+                                            color: root.mainText
+                                            font.pointSize: ScreenTools.subtitleFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: root.activeDomain === 6
+                                                  ? qsTr("当前固件尚未声明可在线调参的参数策略。Phase 3 完成安全闭环前，不开放写入操作。")
+                                                  : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他参数或示例数据填充。")
+                                            color: root.mutedText
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            wrapMode: Text.WordWrap
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: root._parametersReady && !root._linkHealthy
+                                    color: "#E606202A"
+                                    border.width: 1
+                                    border.color: "#14505B"
+                                    QGCLabel {
+                                        anchors.centerIn: parent
+                                        text: qsTr("通信链路异常：参数编辑已锁定")
+                                        color: root.amber
+                                        font.pointSize: ScreenTools.bodyEmphasisFontPointSize
+                                        font.weight: ScreenTools.strongFontWeight
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: !root._parametersReady
+                                    color: "#E606202A"
+                                    border.width: 1
+                                    border.color: "#14505B"
+                                    ColumnLayout {
+                                        anchors.centerIn: parent
+                                        width: Math.min(parent.width - 24, 360)
+                                        spacing: 7
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: qsTr("等待参数下载完成")
+                                            color: root.mainText
+                                            font.pointSize: ScreenTools.subtitleFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: qsTr("参数列表未完整或尚未就绪，编辑入口保持关闭。")
+                                            color: root.mutedText
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            wrapMode: Text.WordWrap
+                                            horizontalAlignment: Text.AlignHCenter
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 

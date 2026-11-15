@@ -21,6 +21,38 @@ Item {
     property var    _controller:        controller
     property var    _favorites:         controller.favoriteParameterNames
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
+    property bool externalCategoryNavigation: false
+
+    function hasCategory(categoryName) {
+        if (!categoryName) return false
+        const categories = controller.categories
+        for (let i = 0; i < categories.count; i++) {
+            const category = categories.get(i)
+            if (category && category.name === categoryName) {
+                return true
+            }
+        }
+        return false
+    }
+
+    function selectCategoryByName(categoryName) {
+        searchText.text = ""
+        controller.searchText = ""
+        tabBar.currentIndex = 0
+        controller.showModifiedOnly = false
+        controller.showFavoritesOnly = false
+
+        const categories = controller.categories
+        for (let i = 0; i < categories.count; i++) {
+            const category = categories.get(i)
+            if (category && category.name === categoryName) {
+                controller.currentCategory = category
+                return true
+            }
+        }
+        controller.currentCategory = null
+        return false
+    }
 
     readonly property bool _canImport: _activeVehicle && !_activeVehicle.armed &&
                                        !_activeVehicle.vehicleLinkManager.communicationLost &&
@@ -251,6 +283,7 @@ Item {
                         anchors.right:  parent.right
                         text:           object.name
                         checked:        object == controller.currentCategory
+                        visible:        !externalCategoryNavigation
 
                         onCheckedChanged: {
                             if (checked) {
@@ -260,7 +293,7 @@ Item {
                     }
 
                     Repeater {
-                        model: categoryHeader.checked ? object.groups : 0
+                        model: (externalCategoryNavigation ? object == controller.currentCategory : categoryHeader.checked) ? object.groups : 0
 
                         QGCButton {
                             width:          ScreenTools.defaultFontPixelWidth * 25

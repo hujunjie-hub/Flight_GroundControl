@@ -88,14 +88,14 @@ Item {
                             spacing: 1
                             QGCLabel {
                                 objectName: "flightConfig_brandTitle"
-                                text: qsTr("无人机飞行地面控制站")
+                                text: control.parameterCenter ? qsTr("参数中心 3.0") : qsTr("无人机飞行地面控制站")
                                 color: "#E7F4F6"
                                 font.pointSize: ScreenTools.titleFontPointSize
                                 font.weight: ScreenTools.strongFontWeight
                             }
                             QGCLabel {
                                 objectName: "flightConfig_brandSubtitle"
-                                text: "UAV GROUND CONTROL STATION"
+                                text: control.parameterCenter ? "PARAMETER CENTER 3.0" : "UAV GROUND CONTROL STATION"
                                 color: "#83B7C0"
                                 font.pointSize: ScreenTools.microFontPointSize
                             }
