@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：3.0
+- 版本：3.1
 - 日期：2026-11-15
-- 状态：按用户确认参考图完成单页布局迁移；等待新 HEAD CI 与 Windows 本地视觉/运行验收
+- 状态：参考图单页布局与响应式断点已实现；KPI/事件卡片内容自适应加固已提交，等待新 HEAD CI 与 Windows 本地视觉/运行验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -170,7 +170,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 ### 4.3 卡片与排版
 
 - 主卡片圆角 6–8 px，边框 1 px，采用深青蓝面板和低强度青色边界；主视觉卡可使用更明显的青色边界。
-- KPI 带采用连续分隔的横向指标舱；三栏主视觉使用左窄/中宽/右侧告警的稳定比例；趋势卡使用统一高度和绘图区。
+- KPI 带采用连续分隔的横向指标舱，最小高度 76 px，内容换行时自然增高；三栏主视觉使用左窄/中宽/右侧告警的稳定比例；趋势卡使用统一高度和绘图区。
 - 卡片标题采用“英文小类目 + 中文主标题”两级层次；英文类目仅作为辅助定位。
 - 卡片头部右侧显示该 family 的独立接收徽标。
 - 徽标使用小圆点、状态文字和淡色底；不要用大面积高饱和背景。
@@ -224,6 +224,8 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 ### 8.1 页面结构
 
 - 页面标题、只读标识、四段视觉分区条、六项 KPI、三栏主视觉、拓扑 Canvas、告警列表、趋势区、13 类状态矩阵和 14 张明细卡均具有稳定 `objectName`。
+- 六项 KPI 卡片最小高度 76 px，实际高度必须随中文详情换行自然增高；内部内容不得超出卡片边界。
+- 右侧告警事件条目按原因文本自然增高，长原因不得覆盖下一条事件。
 - 四段视觉分区条仅是静态视觉元素，不允许触发路由或加载子页面。
 - 宽屏主视觉必须按 3/5/4 列显示，中心面板宽于左右面板；右栏必须显示真实 recentEvents 和四轴 RC 输入。
 - 拓扑示意不得使用位置/姿态遥测语义；不得出现合成健康分、电池、卫星、HDOP、振动等当前接口未提供的 KPI。
@@ -388,3 +390,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 当前工作提交以 GitHub main 的最新提交为准；本轮修改文件：`FlightTelemetry.qml`、`FlightTelemetryPageUITest.cc`、本规范和 `spec/README.md`。
 - 本地 Windows x64 MSVC Release、Unit、Integration、Installer、clean-install、installed-runtime 尚未在本轮执行；不得将 GitHub 提交成功视为构建或测试通过。
 - 用户本地复测需重点检查：宽屏三栏比例、中文字体清晰度、顶部 KPI 横向密度、右栏事件/RC 输入高度、趋势图断点、下方 14 张明细卡完整性，以及 100%/125%/150% DPI。
+
+
+## 17. Phase 2.4 内容自适应与可读性加固（2026-11-15）
+
+- 六项 KPI 卡片从固定 76 px 高度改为内容驱动高度，76 px 仅作为最小高度；标题、数值和详情文字换行时卡片自然增高。
+- 为六张 KPI 卡片内部内容布局增加稳定选择器，UI Integration 检查 1600 px 与 1400 px 宽屏下内容高度和边界，避免文字被压缩或溢出。
+- 右侧告警事件条目改为根据原因文本的实际布局高度增高，避免多行原因与下一条事件重叠。
+- 不改变遥测来源、family freshness、validity/capability mask、趋势采样、只读边界或现有 14 张详细诊断卡。
+- 本阶段 Windows x64 MSVC Release、Unit、Integration、Installer、clean-install 和 installed-runtime 仍须以新提交的 exact-HEAD 证据判定；CI 未完成前不标记 PASS。

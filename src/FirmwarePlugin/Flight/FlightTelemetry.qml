@@ -1252,12 +1252,13 @@ SetupPage {
                             required property var modelData
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)
                             Layout.fillWidth: true
-                            implicitHeight: 55
+                            implicitHeight: Math.max(55, eventContent.implicitHeight + 14)
                             radius: 5
                             color: "#0B2A33"
                             border.width: 1
                             border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.35)
                             RowLayout {
+                                id: eventContent
                                 anchors.fill: parent
                                 anchors.margins: 7
                                 spacing: 7
@@ -2388,7 +2389,7 @@ SetupPage {
         property color accentColor: "#42CFA8"
 
         implicitWidth: 180
-        implicitHeight: 76
+        implicitHeight: Math.max(76, summaryContent.implicitHeight + 20)
         radius: 10
         color: "#0A222B"
         border.width: 1
@@ -2407,6 +2408,8 @@ SetupPage {
             }
 
             ColumnLayout {
+                id: summaryContent
+                objectName: tile.objectName + "_content"
                 Layout.fillWidth: true
                 spacing: 4
 
