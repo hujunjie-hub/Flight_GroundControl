@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.94
+版本：4.95
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -868,3 +868,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - UTC 时间戳继续占据时间同步面板全宽行；值区宽度至少覆盖父行 90%，高度不得小于 implicitHeight，保留六位微秒和 FCU boot-relative 语义。
 - 150%/200% 场景继续检查时钟纪律/UTC 参考分组重排、域状态列数、徽标/行高缩放和全部父子边界；测试结束恢复原始 UI Scale。
 - 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言 NOT_RUN，集中 exact-HEAD 验收时执行。
+
+
+### G15 导航时序 FCU 单调时间值列内容驱动宽度（2026-11-16）
+
+- 导航状态发布、时间同步发布、最近事件三条时间值列的 preferredWidth/minimumWidth 均不得小于当前文本 implicitWidth；长但有效的 FCU 启动相对时间必须完整显示，不得受固定列宽裁切。
+- 保留 ScreenTools 基准宽度、固定宽度字体、六位微秒和 FCU boot-relative 语义；不改变时间戳有效范围、排序、状态色或 UTC 独立性。
+- 100%/150%/200% UI Scale 回归检查时间值宽度、标签/值不重叠、行序号/rowPitch、标记列和父子边界；本轮新增断言 NOT_RUN，不运行 CI/Build/Unit/Integration/Windows Release。
