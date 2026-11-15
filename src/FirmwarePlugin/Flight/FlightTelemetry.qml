@@ -97,6 +97,11 @@ SetupPage {
     readonly property real _navigationTimelineValueMinimumWidth: Math.max(124, ScreenTools.defaultFontPixelWidth * 15.5)
     readonly property real _navigationTimelineColumnSpacing: Math.max(8, ScreenTools.defaultFontPixelWidth * 0.8)
     readonly property real _navigationTimelineConnectorWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.2)
+    readonly property real _navigationCapabilityGridSpacing: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.8)
+    readonly property real _navigationTimeColumnSpacing: Math.max(8, ScreenTools.defaultFontPixelWidth * 1.4)
+    readonly property real _navigationTimeRowSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.6)
+    readonly property real _navigationDomainGridSpacing: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.8)
+    readonly property real _dashboardMetricReadoutSpacing: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.3)
 
     readonly property int _dashboardPanelRadius: 8
     readonly property color _dashboardPanelBackground: "#06232B"
@@ -3296,8 +3301,8 @@ SetupPage {
                         objectName: "flightTelemetry_navigationCapabilitiesGrid"
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 2 : 1
-                        columnSpacing: 8
-                        rowSpacing: 8
+                        columnSpacing: root._navigationCapabilityGridSpacing
+                        rowSpacing: root._navigationCapabilityGridSpacing
                         MetricReadout {
                             objectName: "flightTelemetry_navigationCapabilityHeading"
                             labelText: qsTr("航向估计")
@@ -3355,8 +3360,8 @@ SetupPage {
                         objectName: "flightTelemetry_navigationTimeMetricsGrid"
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 760 ? 2 : 1
-                        columnSpacing: 14
-                        rowSpacing: 6
+                        columnSpacing: root._navigationTimeColumnSpacing
+                        rowSpacing: root._navigationTimeRowSpacing
                         TelemetryRow {
                             Layout.fillWidth: true
                             objectName: "flightTelemetry_navigationTimeQuality"
@@ -3408,8 +3413,8 @@ SetupPage {
                         objectName: "flightTelemetry_navigationChecksDomains"
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 760 ? 2 : 1
-                        columnSpacing: 8
-                        rowSpacing: 8
+                        columnSpacing: root._navigationDomainGridSpacing
+                        rowSpacing: root._navigationDomainGridSpacing
                         HealthCell {
                             objectName: "flightTelemetry_navigationChecksNavigation"
                             Layout.fillWidth: true
@@ -5176,19 +5181,22 @@ SetupPage {
         property color valueColor: accentColor
         property color statusColor: accentColor
         property bool showStatusText: true
+        readonly property real contentSpacing: root._dashboardMetricReadoutSpacing
 
         Layout.fillWidth: true
-        spacing: 3
+        spacing: metric.contentSpacing
 
         QGCLabel {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             text: metric.labelText
             color: "#91A8B2"
             font.pointSize: ScreenTools.captionFontPointSize
+            wrapMode: Text.WordWrap
         }
         RowLayout {
             Layout.fillWidth: true
-            spacing: 3
+            spacing: metric.contentSpacing
             QGCLabel {
                 Layout.fillWidth: true
                 text: metric.valueText
@@ -5205,10 +5213,12 @@ SetupPage {
         }
         QGCLabel {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             visible: metric.showStatusText && metric.statusText.length > 0
             text: metric.statusText
             color: metric.statusColor
             font.pointSize: ScreenTools.microFontPointSize
+            wrapMode: Text.WordWrap
         }
     }
 
