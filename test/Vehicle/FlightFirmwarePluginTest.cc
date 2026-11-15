@@ -108,6 +108,14 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("validationRules"), QJsonArray{
               QJsonObject{{QStringLiteral("type"), QStringLiteral("GREATER_THAN")},
                           {QStringLiteral("value"), 0.5}},
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("GREATER_THAN_OR_EQUAL")},
+                          {QStringLiteral("value"), 0.5}},
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("LESS_THAN")},
+                          {QStringLiteral("value"), 9.5}},
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("LESS_THAN_OR_EQUAL")},
+                          {QStringLiteral("value"), 10.0}},
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("MULTIPLE_OF")},
+                          {QStringLiteral("value"), 0.5}},
               QJsonObject{{QStringLiteral("type"), QStringLiteral("REQUIRES_PARAMETER_VALUE")},
                           {QStringLiteral("parameter"), QStringLiteral("TEST_DEPENDENCY")},
                           {QStringLiteral("value"), 1.0}}
@@ -250,7 +258,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QCOMPARE(valid->tuningPolicy(), QStringLiteral("GROUND_ADJUSTABLE"));
     QCOMPARE(valid->updatePolicy(), QStringLiteral("REBOOT_REQUIRED"));
     QCOMPARE(valid->dependencies(), QVariantList{QStringLiteral("TEST_DEPENDENCY")});
-    QCOMPARE(valid->validationRules().size(), 2);
+    QCOMPARE(valid->validationRules().size(), 6);
     const QVariantMap thresholdRule = valid->validationRules().at(0).toMap();
     QCOMPARE(thresholdRule.value(QStringLiteral("type")).toString(), QStringLiteral("GREATER_THAN"));
     QCOMPARE(thresholdRule.value(QStringLiteral("value")).toDouble(), 0.5);
