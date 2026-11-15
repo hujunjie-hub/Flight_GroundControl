@@ -260,6 +260,20 @@
 | sourcePath | 配置文件内的精确字段路径（含数组索引） |
 | sourceKind | 标量 / 向量 / 矩阵 / 存储项 |
 
+schema v2 的依赖与规则采用以下严格契约：
+
+- `dependencies` 是参数名数组，表示该参数可调前必须在当前活动组件和已绑定机型白名单中存在且可读取；缺失、跨 profile、重复、自引用或引用歧义参数均拒绝元数据或禁止写入。依赖仅代表可用性，不推断依赖参数必须取何值。
+- `validationRules` 仅接受以下显式规则对象，未知类型、额外字段、非有限数值或不完整字段均 fail-closed：
+  - `{"type":"GREATER_THAN","value":number}`
+  - `{"type":"GREATER_THAN_OR_EQUAL","value":number}`
+  - `{"type":"LESS_THAN","value":number}`
+  - `{"type":"LESS_THAN_OR_EQUAL","value":number}`
+  - `{"type":"MULTIPLE_OF","value":positive_number}`
+  - `{"type":"REQUIRES_PARAMETER_VALUE","parameter":"PARAM_NAME","value":number}`
+- `REQUIRES_PARAMETER_VALUE` 引用必须同时出现在该参数的 `dependencies` 中；运行时使用活动飞行器当前回传值校验，不能使用 UI 乐观值。比较容差为 `1e-6 * max(1, |actual|, |expected|)`。
+- 规则在 C++ 控制器应用目标值前执行；依赖不可用、规则失败或遇到不支持的规则时拒绝写入。Fact min/max 校验仍然独立保留。
+- 当前 49 项参数没有提供经过固件源配置确认的依赖和组合规则，仍保持空数组；上述能力只建立契约和执行机制，不代表已替参数补造规则。
+
 - 未提供适用性信息的参数默认不跨机型推断，不允许因此扩大写入范围。当前 schema v2 对缺失的 vehicleFamily/modelVariants/controlLaw/tuningPolicy/updatePolicy 执行 fail-closed。
 - 机型、控制律或固件能力未知时，相关参数显示为未知/未验证，默认只读。
 - 参数域分类与原始 group 是不同概念；不得为了新界面破坏原始 group 和参数标识。
