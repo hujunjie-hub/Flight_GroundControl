@@ -965,6 +965,17 @@ Item {
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: dashboardRoot.selectedFact
+                                              ? (dashboardRoot.selectedFact.vehicleRebootRequired
+                                                 ? qsTr("生效要求：应用后需要重启飞控")
+                                                 : qsTr("生效要求：无需重启飞控"))
+                                              : qsTr("生效要求：—")
+                                        color: dashboardRoot.selectedFact && dashboardRoot.selectedFact.vehicleRebootRequired
+                                               ? root.amber : root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
                                     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424C" }
                                     RowLayout {
                                         Layout.fillWidth: true
