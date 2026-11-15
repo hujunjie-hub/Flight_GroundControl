@@ -3412,7 +3412,6 @@ SetupPage {
                         labelText: qsTr("FCU 侧 RC 输入年龄")
                         valueText: root._rcAgeDisplayText()
                     }
-                    TelemetryRow { labelText: qsTr("数据链路"); valueText: root._familyStatus("linkAvailable") }
                     TelemetryRow { labelText: qsTr("飞控操作接收年龄"); valueText: root._receiveAgeText("operation") }
                 }
             }
@@ -3865,7 +3864,11 @@ SetupPage {
                     statusFamily: ""
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("通信链路")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_linkDetailMessage"
+                        labelText: qsTr("消息")
+                        valueText: root._familyStatus("linkAvailable")
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_linkDetailFamilyReceiveAge"
                         labelText: qsTr("链路状态消息接收年龄")
