@@ -383,6 +383,11 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(pitchSlider->property("enabled").toBool(), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(!yawSlider->property("enabled").toBool(), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(!center->property("enabled").toBool(), 1000);
+            const QString yawBeforeUnsupportedRate = yawValue->property("text").toString();
+            vehicle->gimbalController()->sendGimbalRate(0.0f, 12.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(yawValue->property("text").toString(), yawBeforeUnsupportedRate);
             activeGimbal->setCapabilityFlags(GIMBAL_MANAGER_CAP_FLAGS_HAS_PITCH_AXIS |
                                               GIMBAL_MANAGER_CAP_FLAGS_HAS_YAW_AXIS);
             QTRY_VERIFY_WITH_TIMEOUT(!yawMode->property("enabled").toBool(), 1000);
@@ -399,6 +404,19 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                 return value.toDouble();
             };
             QTRY_VERIFY_WITH_TIMEOUT(std::abs(std::abs(currentPitch()) - 12.0) < 3.0, 3000);
+            auto currentYaw = [&]() {
+                QString value = yawValue->property("text").toString();
+                value.remove(QChar(0x00B0));
+                return value.toDouble();
+            };
+            const double pitchBeforeRate = currentPitch();
+            const double yawBeforeRate = currentYaw();
+            vehicle->gimbalController()->sendGimbalRate(8.0f, 12.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentPitch() - pitchBeforeRate) > 1.0, 4000);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentYaw() - yawBeforeRate) > 1.0, 4000);
+            vehicle->gimbalController()->sendGimbalRate(0.0f, 0.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
             const QString stablePitch = pitchValue->property("text").toString();
             const QString stableYaw = yawValue->property("text").toString();
             const uint32_t attitudeFlags = GIMBAL_MANAGER_FLAGS_ROLL_LOCK |
