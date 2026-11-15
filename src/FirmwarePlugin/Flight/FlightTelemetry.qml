@@ -2771,34 +2771,46 @@ SetupPage {
                     eyebrow: "TIME SYNCHRONIZATION"
                     titleText: qsTr("时间同步状态")
                     statusFamily: "timeAvailable"
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationTimeQuality"
-                        labelText: qsTr("时间质量")
-                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
-                        valueColor: root._timeQualityColor()
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationTimeDiscipline"
-                        labelText: qsTr("本地时钟纪律")
-                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationUtcValidity"
-                        labelText: qsTr("UTC 有效")
-                        valueText: root._utcValidityText()
-                        valueColor: root._utcValidityColor()
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationUtcTimestamp"
-                        labelText: qsTr("FCU UTC 时间")
-                        valueText: root._utcTimestampText()
-                        valueColor: root._utcValidityColor()
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationUtcUncertainty"
-                        labelText: qsTr("UTC 不确定度")
-                        valueText: root._utcUncertaintyText()
-                        valueColor: root._utcValidityColor()
+                    GridLayout {
+                        objectName: "flightTelemetry_navigationTimeMetricsGrid"
+                        Layout.fillWidth: true
+                        columns: root.availableWidth >= 760 ? 2 : 1
+                        columnSpacing: 14
+                        rowSpacing: 6
+                        TelemetryRow {
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_navigationTimeQuality"
+                            labelText: qsTr("时间质量")
+                            valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                            valueColor: root._timeQualityColor()
+                        }
+                        TelemetryRow {
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_navigationTimeDiscipline"
+                            labelText: qsTr("本地时钟纪律")
+                            valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                        }
+                        TelemetryRow {
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_navigationUtcValidity"
+                            labelText: qsTr("UTC 有效")
+                            valueText: root._utcValidityText()
+                            valueColor: root._utcValidityColor()
+                        }
+                        TelemetryRow {
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_navigationUtcTimestamp"
+                            labelText: qsTr("FCU UTC 时间")
+                            valueText: root._utcTimestampText()
+                            valueColor: root._utcValidityColor()
+                        }
+                        TelemetryRow {
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_navigationUtcUncertainty"
+                            labelText: qsTr("UTC 不确定度")
+                            valueText: root._utcUncertaintyText()
+                            valueColor: root._utcValidityColor()
+                        }
                     }
                 }
                 HeroPanel {

@@ -2172,10 +2172,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationPageGrid"), 3000);
                     QQuickItem* navigationCapabilitiesGrid =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
+                    QQuickItem* navigationTimeMetricsGrid =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
                     QQuickItem* navigationEstimatePosition =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000);
+                    QQuickItem* navigationEstimateVelocity =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity"), 3000);
+                    QQuickItem* navigationEstimateHeading =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading"), 3000);
                     QQuickItem* navigationCapabilityHeading =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading"), 3000);
+                    QQuickItem* navigationCapabilityPosition =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPosition"), 3000);
+                    QQuickItem* navigationCapabilityHorizontalVelocity =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity"), 3000);
+                    QQuickItem* navigationCapabilityVerticalVelocity =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity"), 3000);
                     QQuickItem* navigationCapabilityBadge =
                         findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPanel_statusBadge"));
                     QQuickItem* navigationTimeline =
@@ -2200,8 +2212,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(navigationPageChecks);
                     QVERIFY(navigationPageGrid);
                     QVERIFY(navigationCapabilitiesGrid);
+                    QVERIFY(navigationTimeMetricsGrid);
                     QVERIFY(navigationEstimatePosition);
+                    QVERIFY(navigationEstimateVelocity);
+                    QVERIFY(navigationEstimateHeading);
                     QVERIFY(navigationCapabilityHeading);
+                    QVERIFY(navigationCapabilityPosition);
+                    QVERIFY(navigationCapabilityHorizontalVelocity);
+                    QVERIFY(navigationCapabilityVerticalVelocity);
                     QVERIFY(navigationCapabilityBadge);
                     QVERIFY(navigationTimeline);
                     for (QQuickItem* row : navigationTimelineRows) QVERIFY(row);
@@ -2226,6 +2244,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     page->setWidth(1600);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageGrid->property("columns").toInt(), 12, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGrid->property("columns").toInt(), 4, 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 2, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageCapabilities->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageTime->y(), navigationPageChecks->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationPageTime->y() > navigationPageOverview->y(), 3000);
@@ -2245,11 +2264,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         qAbs(navigationPageTime->height() - navigationPageChecks->height()) < 1.0, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomains->property("columns").toInt(), 2, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationCapabilityBadge->isVisible(), 3000);
-                    QTRY_COMPARE_WITH_TIMEOUT(navigationEstimatePosition->property("valueColor").value<QColor>(),
-                                              QColor(QStringLiteral("#A8BBC3")), 3000);
-                    QTRY_COMPARE_WITH_TIMEOUT(navigationEstimatePosition->property("statusColor").value<QColor>(),
-                                              QColor(QStringLiteral("#8A9A94")), 3000);
-                    QTRY_VERIFY_WITH_TIMEOUT(!navigationCapabilityHeading->property("showStatusText").toBool(), 3000);
+                    QQuickItem* navigationEstimateMetrics[] = {
+                        navigationEstimatePosition, navigationEstimateVelocity, navigationEstimateHeading};
+                    for (QQuickItem* metric : navigationEstimateMetrics) {
+                        QTRY_COMPARE_WITH_TIMEOUT(metric->property("valueColor").value<QColor>(),
+                                                  QColor(QStringLiteral("#A8BBC3")), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(metric->property("statusColor").value<QColor>(),
+                                                  QColor(QStringLiteral("#8A9A94")), 3000);
+                    }
+                    QQuickItem* navigationCapabilityMetrics[] = {
+                        navigationCapabilityHeading, navigationCapabilityPosition,
+                        navigationCapabilityHorizontalVelocity, navigationCapabilityVerticalVelocity};
+                    for (QQuickItem* metric : navigationCapabilityMetrics) {
+                        QTRY_VERIFY_WITH_TIMEOUT(!metric->property("showStatusText").toBool(), 3000);
+                    }
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationStateOriginDetail->isVisible(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationPositionStdDetail->isVisible(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!timeQualityDetail->isVisible(), 3000);
@@ -2732,12 +2760,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000)};
                         QQuickItem* navigationCapabilitiesGridAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
+                        QQuickItem* navigationTimeMetricsGridAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
                         QQuickItem* navigationChecksDomainsAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksDomains"), 3000);
                         for (QQuickItem* panel : navigationPanels) QVERIFY(panel);
                         QVERIFY(navigationCapabilitiesGridAtWidth);
+                        QVERIFY(navigationTimeMetricsGridAtWidth);
                         QVERIFY(navigationChecksDomainsAtWidth);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGridAtWidth->property("columns").toInt(),
+                                                  widthIndex < 2 ? 2 : 1, 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomainsAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);

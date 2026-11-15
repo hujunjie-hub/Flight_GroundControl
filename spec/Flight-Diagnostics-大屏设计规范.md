@@ -991,10 +991,10 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 导航页四张主视觉面板按信息密度采用桌面 12 列网格的 4/8 + 8/4 布局：第一行「导航估计不确定度」4 列、「导航能力状态」8 列；第二行「时间同步状态」8 列、「FCU 单调时序」4 列。760–1279 px 使用 6 列整行堆叠，低于 760 px 使用单列。
 - 「导航估计不确定度」只展示水平位置、速度和航向标准差。标准差数值使用中性前景色，独立状态行使用能力/新鲜度语义色；绿色仅表示对应能力位具备且 family fresh，不代表精度达到某个阈值。
 - 「导航能力状态」以四个独立能力状态为主，不重复显示同一状态两次；能力状态仅表达数据能力可用性，不解释为估计精度。导航状态代次、原点 ID、能力掩码、数据年龄和原因统一移入下方「导航诊断详情」。
-- 「时间同步状态」只展示时间质量、本地时钟纪律、UTC 有效性、FCU UTC 时间和 UTC 不确定度；事件时间不确定度、时间代次、时钟源映射代次与地面站接收年龄统一移入「时间诊断详情」。FCU 单调发布时间只在右侧时间线显示，不在详情卡重复。
+- 「时间同步状态」只展示时间质量、本地时钟纪律、UTC 有效性、FCU UTC 时间和 UTC 不确定度；宽度 ≥760 px 时使用两列主状态网格，窄屏单列。事件时间不确定度、时间代次、时钟源映射代次与地面站接收年龄统一移入「时间诊断详情」。FCU 单调发布时间只在右侧时间线显示，不在详情卡重复。
 - 导航与时间主视觉、详情字段继续按各自 family freshness 门控；能力指标继续按 navigation family freshness → capability mask 顺序门控；UTC 有效性继续独立于 timeQuality 枚举，UTC 无效不影响 FCU 单调启动时间。
 - 导航/时间详情卡取消重复的 family-wide 状态徽标，保留显式消息状态和地面站接收年龄；导航主视觉仅由导航估计面板表达 family 状态，能力位单独表达 capability 状态，时间面板表达 time family 状态，时序面板保留导航/时间两个独立 freshness 单元。
-- MockLink UI Integration 增加 1600 px 下 4/8 + 8/4 面板位置、宽度比例、行高对齐和时间线边界断言；1000/900 px 验证 6 列堆叠与能力/域状态双列；700/400 px 验证单列；验证估计数值中性颜色、能力状态语义色、能力状态不重复显示，以及主视觉与详情卡不重复呈现同一字段。
+- MockLink UI Integration 增加 1600 px 下 4/8 + 8/4 面板位置、宽度比例、行高对齐和时间线边界断言；1000/900 px 验证 6 列堆叠与能力/时间/域状态双列；700/400 px 验证单列；验证估计数值中性颜色、能力状态语义色、四项能力状态不重复显示，以及主视觉与详情卡不重复呈现同一字段。
 - 为兼容既有 UI Integration 选择器，已迁移字段保留不可见的旧选择器；其值仍按原 family freshness 更新，但不参与布局、不产生第二份可见诊断信息。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、spec/README.md 与 Windows Release G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、时间同步服务、VehicleLinkManager 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
