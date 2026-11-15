@@ -426,7 +426,9 @@
         "health_maintenance_prearm_coverage_is_separated_from_safety_outcome_summary",
         "health_maintenance_resource_snapshot_shows_cpu_wcet_stack_and_storage_with_validity_gating",
         "rc_link_page_medium_760_to_1279_uses_two_rows_3_3_then_4_2_column_spans",
-        "rc_receiver_failsafe_color_tracks_triggered_not_triggered_stale_and_recovered_states"
+        "rc_receiver_failsafe_color_tracks_triggered_not_triggered_stale_and_recovered_states",
+        "navigation_time_discipline_state_color_tracks_nominal_acquiring_locked_holdover_degraded_invalid_and_family_freshness",
+        "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color"
       ]
     },
     {
@@ -739,7 +741,9 @@
     "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px",
     "health_page_global_communication_loss_headline_note_and_recovery_follow_vehicle_link_state",
     "health_maintenance_resource_snapshot_grid_keeps_four_metric_cells_inside_parent_at_1600_1000_900_700_400_px",
-    "rc_receiver_failsafe_color_tracks_triggered_not_triggered_stale_and_recovered_states"
+    "rc_receiver_failsafe_color_tracks_triggered_not_triggered_stale_and_recovered_states",
+    "navigation_time_discipline_state_color_tracks_nominal_acquiring_locked_holdover_degraded_invalid_and_family_freshness",
+    "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
