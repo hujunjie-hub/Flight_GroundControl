@@ -3059,13 +3059,11 @@ SetupPage {
                                 valueColor: root._linkInstanceAgeColor(modelData)
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_linkDetailReason_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
-                                text: qsTr("%1 · 地面站接收年龄：%2")
-                                      .arg(root._linkInstanceReasonText(modelData))
-                                      .arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
-                                color: "#8298A2"
-                                font.pointSize: ScreenTools.microFontPointSize
                                 wrapMode: Text.WordWrap
+                                text: root._linkInstanceReasonText(modelData)
+                                color: "#8298A2"
                             }
                             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#104B55" }
                         }
