@@ -284,6 +284,7 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
     };
     const QJsonObject metadata {
         { QStringLiteral("version"), 2 },
+        { QStringLiteral("source"), QStringLiteral("middleware/protocol/mavlink/parameters/ground_parameters.json") },
         { QStringLiteral("sha256"), sourceSha },
         { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
         { QStringLiteral("parameters"), QJsonArray{vehicleMass, rateGain} }
@@ -308,7 +309,10 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
               { QStringLiteral("repository"), QStringLiteral("hujunjie-hub/Flight") },
               { QStringLiteral("parameterCatalog"), QJsonObject{
                     { QStringLiteral("path"), QStringLiteral("middleware/protocol/mavlink/parameters/ground_parameters.json") },
-                    { QStringLiteral("sha256"), sourceSha } } } } },
+                    { QStringLiteral("sha256"), sourceSha } } },
+              { QStringLiteral("vehicleModel"), QStringLiteral("config/vehicle_model.yaml") },
+              { QStringLiteral("controllerTuning"), QStringLiteral("config/controller_tuning.yaml") },
+              { QStringLiteral("estimatorTuning"), QStringLiteral("config/estimator_tuning.yaml") } } },
         { QStringLiteral("profiles"), QJsonArray{profile} }
     };
 
