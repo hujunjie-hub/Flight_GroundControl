@@ -99,6 +99,14 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("default"), 5.0 },
         { QStringLiteral("decimalPlaces"), 2 },
         { QStringLiteral("rebootRequired"), true },
+        { QStringLiteral("vehicleFamily"), QStringLiteral("MULTIROTOR") },
+        { QStringLiteral("modelVariants"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("controlLaw"), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID") },
+        { QStringLiteral("tuningPolicy"), QStringLiteral("GROUND_ADJUSTABLE") },
+        { QStringLiteral("updatePolicy"), QStringLiteral("REBOOT_REQUIRED") },
+        { QStringLiteral("dependencies"), QJsonArray{} },
+        { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
         { QStringLiteral("readOnly"), false },
         { QStringLiteral("writeOnly"), false }
     };
@@ -106,6 +114,26 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject unknownRebootEntry = validEntry;
     unknownRebootEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_REBOOT"));
     unknownRebootEntry.remove(QStringLiteral("rebootRequired"));
+
+    QJsonObject invalidTuningPolicyEntry = validEntry;
+    invalidTuningPolicyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_TUNING_POLICY"));
+    invalidTuningPolicyEntry.insert(QStringLiteral("tuningPolicy"), QStringLiteral("UNRECOGNIZED"));
+
+    QJsonObject invalidUpdatePolicyEntry = validEntry;
+    invalidUpdatePolicyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_UPDATE_POLICY"));
+    invalidUpdatePolicyEntry.insert(QStringLiteral("updatePolicy"), QStringLiteral("APPLY_WHENEVER"));
+
+    QJsonObject invalidApplicabilityEntry = validEntry;
+    invalidApplicabilityEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_APPLICABILITY"));
+    invalidApplicabilityEntry.insert(QStringLiteral("modelVariants"), QJsonArray{QStringLiteral(" ")});
+
+    QJsonObject invalidDependenciesEntry = validEntry;
+    invalidDependenciesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_DEPENDENCIES"));
+    invalidDependenciesEntry.insert(QStringLiteral("dependencies"), QJsonArray{QStringLiteral(""), QStringLiteral("CTL_RATE_KP_X")});
+
+    QJsonObject invalidValidationRulesEntry = validEntry;
+    invalidValidationRulesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_VALIDATION_RULES"));
+    invalidValidationRulesEntry.insert(QStringLiteral("validationRules"), QJsonArray{QJsonObject{}});
 
     QJsonObject unknownDomainEntry = validEntry;
     unknownDomainEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_DOMAIN"));
@@ -131,6 +159,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject readOnlyEntry = validEntry;
     readOnlyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_READ_ONLY"));
     readOnlyEntry.insert(QStringLiteral("readOnly"), true);
+    readOnlyEntry.insert(QStringLiteral("tuningPolicy"), QStringLiteral("READ_ONLY"));
 
     QJsonObject writeOnlyEntry = validEntry;
     writeOnlyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_WRITE_ONLY"));
@@ -144,6 +173,11 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonArray parameters;
     parameters.append(validEntry);
     parameters.append(unknownRebootEntry);
+    parameters.append(invalidTuningPolicyEntry);
+    parameters.append(invalidUpdatePolicyEntry);
+    parameters.append(invalidApplicabilityEntry);
+    parameters.append(invalidDependenciesEntry);
+    parameters.append(invalidValidationRulesEntry);
     parameters.append(unknownDomainEntry);
     parameters.append(invalidRangeEntry);
     parameters.append(unsupportedTypeEntry);
@@ -153,7 +187,11 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     parameters.append(writeOnlyEntry);
     parameters.append(duplicateEntryA);
     parameters.append(duplicateEntryB);
-    metadata.parseParameterJson(QJsonObject{{ QStringLiteral("parameters"), parameters }});
+    metadata.parseParameterJson(QJsonObject{
+        { QStringLiteral("version"), 2 },
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("parameters"), parameters }
+    });
 
     FactMetaData *valid = metadata.getMetaDataForFact(QStringLiteral("TEST_VALID_CONTROL"),
                                                       FactMetaData::valueTypeFloat);
@@ -164,6 +202,13 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QVERIFY(valid->vehicleRebootRequiredKnown());
     QVERIFY(!valid->readOnly());
     QVERIFY(!valid->writeOnly());
+    QCOMPARE(valid->vehicleFamily(), QStringLiteral("MULTIROTOR"));
+    QCOMPARE(valid->modelVariants(), QStringList{QStringLiteral("QUAD_X4")});
+    QCOMPARE(valid->controlLaw(), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID"));
+    QCOMPARE(valid->tuningPolicy(), QStringLiteral("GROUND_ADJUSTABLE"));
+    QCOMPARE(valid->updatePolicy(), QStringLiteral("REBOOT_REQUIRED"));
+    QVERIFY(valid->dependencies().isEmpty());
+    QVERIFY(valid->validationRules().isEmpty());
 
     FactMetaData *unknownReboot = metadata.getMetaDataForFact(QStringLiteral("TEST_UNKNOWN_REBOOT"),
                                                                    FactMetaData::valueTypeFloat);
@@ -189,6 +234,11 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         QStringLiteral("TEST_UNSUPPORTED_TYPE"),
         QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"),
         QStringLiteral("TEST_INVALID_READ_ONLY_FLAG"),
+        QStringLiteral("TEST_INVALID_TUNING_POLICY"),
+        QStringLiteral("TEST_INVALID_UPDATE_POLICY"),
+        QStringLiteral("TEST_INVALID_APPLICABILITY"),
+        QStringLiteral("TEST_INVALID_DEPENDENCIES"),
+        QStringLiteral("TEST_INVALID_VALIDATION_RULES"),
         QStringLiteral("TEST_DUPLICATE")
     };
     for (const QString &name : rejectedNames) {
