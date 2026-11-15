@@ -1956,17 +1956,24 @@ SetupPage {
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 5 : root._dashboardColumns >= 6 ? 2 : 1
                     eyebrow: "SYSTEM TOPOLOGY & NAVIGATION"
                     titleText: qsTr("系统拓扑与导航估计")
-                    statusFamily: "navigationAvailable"
 
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("系统连接示意 · 不代表飞行器姿态或空间位置")
+                        text: qsTr("六域链路状态实时映射 · 示意不代表飞行器姿态或空间位置")
                         color: "#83AEB8"
                         font.pointSize: ScreenTools.microFontPointSize
                     }
                     Canvas {
                         id: topologyCanvas
                         objectName: "flightTelemetry_topologyCanvas"
+                        readonly property var familyConnectionStates: root._overviewTopologyFamilies.map(function (family) {
+                            return {
+                                family: family.family,
+                                available: family.available,
+                                status: root._familyStatus(family.available),
+                                color: root._familyStatusColor(family.available)
+                            }
+                        })
                         Layout.fillWidth: true
                         Layout.preferredHeight: 176
                         onWidthChanged: requestPaint()
@@ -1987,15 +1994,23 @@ SetupPage {
                             const ringRadius = Math.min(76, height * 0.42, width * 0.16)
                             const nodeX = Math.min(width * 0.34, ringRadius + 36)
                             const nodeY = Math.min(height * 0.40, ringRadius + 8)
-                            const families = root._overviewTopologyFamilies
+                            const families = topologyCanvas.familyConnectionStates
                             const nodes = [
-                                { x: cx - nodeX, y: cy - nodeY, available: families[0].available },
-                                { x: cx, y: cy - height * 0.40, available: families[1].available },
-                                { x: cx + nodeX, y: cy - nodeY, available: families[2].available },
-                                { x: cx - nodeX, y: cy + nodeY, available: families[3].available },
-                                { x: cx, y: cy + height * 0.40, available: families[4].available },
-                                { x: cx + nodeX, y: cy + nodeY, available: families[5].available }
+                                { x: cx - nodeX, y: cy - nodeY, state: families[0] },
+                                { x: cx, y: cy - height * 0.40, state: families[1] },
+                                { x: cx + nodeX, y: cy - nodeY, state: families[2] },
+                                { x: cx - nodeX, y: cy + nodeY, state: families[3] },
+                                { x: cx, y: cy + height * 0.40, state: families[4] },
+                                { x: cx + nodeX, y: cy + nodeY, state: families[5] }
                             ]
+
+                            const hubGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, ringRadius * 1.28)
+                            hubGlow.addColorStop(0, "rgba(30, 137, 151, 0.18)")
+                            hubGlow.addColorStop(1, "rgba(4, 28, 35, 0)")
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, ringRadius * 1.28, 0, Math.PI * 2)
+                            ctx.fillStyle = hubGlow
+                            ctx.fill()
 
                             ctx.strokeStyle = "#174D5B"
                             ctx.lineWidth = 1
@@ -2011,17 +2026,38 @@ SetupPage {
                             ctx.lineTo(cx, height - 8)
                             ctx.stroke()
 
-                            // Family links terminate at live status nodes; the vehicle drawing itself is schematic.
-                            ctx.strokeStyle = "#245966"
-                            ctx.globalAlpha = 0.78
-                            ctx.lineWidth = 1.2
+                            // Each connection uses its own family's freshness color; no aggregate state is inferred.
                             for (let index = 0; index < nodes.length; ++index) {
+                                const node = nodes[index]
+                                const nodeColor = node.state.color.toString()
+                                const isFresh = node.state.status === qsTr("已接收")
+                                const isStale = node.state.status === qsTr("数据超时")
                                 ctx.beginPath()
                                 ctx.moveTo(cx, cy)
-                                ctx.lineTo(nodes[index].x, nodes[index].y)
+                                ctx.lineTo(node.x, node.y)
+                                ctx.strokeStyle = "#183E48"
+                                ctx.lineWidth = 3
                                 ctx.stroke()
+                                ctx.beginPath()
+                                ctx.moveTo(cx, cy)
+                                ctx.lineTo(node.x, node.y)
+                                ctx.strokeStyle = nodeColor
+                                ctx.globalAlpha = isFresh ? 0.92 : isStale ? 0.72 : 0.42
+                                ctx.lineWidth = isFresh ? 1.8 : 1.25
+                                ctx.shadowColor = nodeColor
+                                ctx.shadowBlur = isFresh ? 5 : 0
+                                ctx.stroke()
+                                ctx.shadowBlur = 0
+                                ctx.globalAlpha = 1
                             }
-                            ctx.globalAlpha = 1
+
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 23 * scale, 0, Math.PI * 2)
+                            ctx.fillStyle = "rgba(4, 37, 45, 0.94)"
+                            ctx.fill()
+                            ctx.strokeStyle = "#2B8792"
+                            ctx.lineWidth = 1.2 * scale
+                            ctx.stroke()
 
                             const rotorOffsetX = 57 * scale
                             const rotorOffsetY = 43 * scale
@@ -2053,20 +2089,29 @@ SetupPage {
                             ctx.strokeStyle = "#7BEFF0"
                             ctx.lineWidth = 2 * scale
                             ctx.strokeRect(cx - 14 * scale, cy - 22 * scale, 28 * scale, 44 * scale)
-                            ctx.beginPath()
-                            ctx.arc(cx, cy, 4 * scale, 0, Math.PI * 2)
-                            ctx.fillStyle = "#8CFFFF"
-                            ctx.fill()
+                            ctx.fillStyle = "#D7FBFD"
+                            ctx.font = "bold " + Math.max(7, 8 * scale) + "px sans-serif"
+                            ctx.textAlign = "center"
+                            ctx.textBaseline = "middle"
+                            ctx.fillText("FCU", cx, cy)
 
                             for (let index = 0; index < nodes.length; ++index) {
                                 const node = nodes[index]
-                                const nodeColor = root._familyStatusColor(node.available)
+                                const nodeColor = node.state.color.toString()
+                                const isFresh = node.state.status === qsTr("已接收")
+                                const isStale = node.state.status === qsTr("数据超时")
                                 ctx.beginPath()
-                                ctx.arc(node.x, node.y, 8, 0, Math.PI * 2)
+                                ctx.arc(node.x, node.y, 12, 0, Math.PI * 2)
+                                ctx.fillStyle = nodeColor
+                                ctx.globalAlpha = isFresh ? 0.14 : isStale ? 0.10 : 0.055
+                                ctx.fill()
+                                ctx.globalAlpha = 1
+                                ctx.beginPath()
+                                ctx.arc(node.x, node.y, 8.2, 0, Math.PI * 2)
                                 ctx.fillStyle = "#05242D"
                                 ctx.fill()
                                 ctx.strokeStyle = nodeColor
-                                ctx.lineWidth = 1.6
+                                ctx.lineWidth = isFresh ? 2.2 : 1.6
                                 ctx.stroke()
                                 ctx.beginPath()
                                 ctx.arc(node.x, node.y, 3.2, 0, Math.PI * 2)
@@ -2087,17 +2132,33 @@ SetupPage {
                             model: root._overviewTopologyFamilies
                             delegate: Rectangle {
                                 required property var modelData
+                                readonly property string stateText: root._familyStatus(modelData.available)
                                 readonly property color stateColor: root._familyStatusColor(modelData.available)
+                                readonly property color stateTint: Qt.rgba(stateColor.r, stateColor.g, stateColor.b,
+                                                                          stateText === qsTr("已接收") ? 0.085
+                                                                          : stateText === qsTr("数据超时") ? 0.055 : 0.025)
                                 objectName: "flightTelemetry_topologyNode_" + modelData.family
                                 Layout.fillWidth: true
                                 radius: 6
-                                color: "#082E36"
+                                color: stateTint
                                 border.width: 1
-                                border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.42)
+                                border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b,
+                                                      stateText === qsTr("等待遥测") ? 0.30 : 0.56)
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    anchors.margins: 1
+                                    width: 2
+                                    radius: 1
+                                    color: parent.stateColor
+                                    opacity: parent.stateText === qsTr("等待遥测") ? 0.55 : 0.95
+                                }
                                 ColumnLayout {
                                     id: topologyNodeContent
                                     anchors.fill: parent
                                     anchors.margins: 6
+                                    anchors.leftMargin: 10
                                     spacing: 2
                                     RowLayout {
                                         Layout.fillWidth: true
@@ -2116,9 +2177,11 @@ SetupPage {
                                             elide: Text.ElideRight
                                         }
                                         QGCLabel {
-                                            text: root._familyStatus(modelData.available)
+                                            objectName: "flightTelemetry_topologyNodeStatus_" + modelData.family
+                                            text: parent.parent.parent.stateText
                                             color: parent.parent.parent.stateColor
                                             font.pointSize: ScreenTools.microFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
                                         }
                                     }
                                     QGCLabel {
