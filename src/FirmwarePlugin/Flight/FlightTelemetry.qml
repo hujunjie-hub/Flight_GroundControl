@@ -2766,7 +2766,7 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_rcStickMonitor"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 3 : 1
                     eyebrow: "RC INPUT MONITOR"
                     titleText: qsTr("遥控输入监视")
                     statusFamily: "rcInputAvailable"
@@ -2790,10 +2790,11 @@ SetupPage {
                         }
                     }
                     GridLayout {
+                        objectName: "flightTelemetry_rcSticksGrid"
                         Layout.fillWidth: true
                         columns: 2
-                        columnSpacing: 7
-                        rowSpacing: 7
+                        columnSpacing: 10
+                        rowSpacing: 10
                         StickVisualizer { objectName: "flightTelemetry_rcLeftStick"; Layout.fillWidth: true; titleText: qsTr("左摇杆"); horizontalChannel: root._stickChannels[0]; verticalChannel: root._stickChannels[1] }
                         StickVisualizer { objectName: "flightTelemetry_rcRightStick"; Layout.fillWidth: true; titleText: qsTr("右摇杆"); horizontalChannel: root._stickChannels[2]; verticalChannel: root._stickChannels[3] }
                     }
@@ -2802,20 +2803,27 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_rcChannelMonitor"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 3 : 1
                     eyebrow: "RC LOGICAL AXES / REAL-TIME"
                     titleText: qsTr("逻辑轴输入（实时）")
                     statusFamily: "rcInputAvailable"
-                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_roll"; axisName: qsTr("横滚"); rawValue: root._fact("rcRollNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 0; centered: true }
-                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_pitch"; axisName: qsTr("俯仰"); rawValue: root._fact("rcPitchNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 1; centered: true }
-                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_yaw"; axisName: qsTr("偏航"); rawValue: root._fact("rcYawNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 2; centered: true }
-                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_throttle"; axisName: qsTr("油门"); rawValue: root._fact("rcThrottleNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 3; centered: false }
+                    GridLayout {
+                        objectName: "flightTelemetry_rcAxesGrid"
+                        Layout.fillWidth: true
+                        columns: root.availableWidth >= 760 ? 2 : 1
+                        columnSpacing: 14
+                        rowSpacing: 12
+                        AxisGauge { objectName: "flightTelemetry_rcPageAxis_roll"; axisName: qsTr("横滚"); rawValue: root._fact("rcRollNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 0; centered: true }
+                        AxisGauge { objectName: "flightTelemetry_rcPageAxis_pitch"; axisName: qsTr("俯仰"); rawValue: root._fact("rcPitchNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 1; centered: true }
+                        AxisGauge { objectName: "flightTelemetry_rcPageAxis_yaw"; axisName: qsTr("偏航"); rawValue: root._fact("rcYawNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 2; centered: true }
+                        AxisGauge { objectName: "flightTelemetry_rcPageAxis_throttle"; axisName: qsTr("油门"); rawValue: root._fact("rcThrottleNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 3; centered: false }
+                    }
                     QGCLabel { Layout.fillWidth: true; text: qsTr("当前 FlightTelemetry 协议发布四个逻辑轴，不伪造 CH5–CH8 原始 PWM"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_rcLinkQuality"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 8 : root.availableWidth >= 760 ? 4 : 1
                     eyebrow: "DATA LINK QUALITY"
                     titleText: qsTr("链路质量")
                     statusFamily: "linkAvailable"
@@ -2849,7 +2857,7 @@ SetupPage {
                             GridLayout {
                                 objectName: "flightTelemetry_linkMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
-                                columns: root.availableWidth >= 760 ? 3 : root.availableWidth >= 420 ? 2 : 1
+                                columns: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 420 ? 2 : 1
                                 columnSpacing: 6
                                 rowSpacing: 4
                                 Rectangle {
@@ -2940,7 +2948,7 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_rcFailsafe"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 2 : 1
                     eyebrow: "FAILSAFE & CONTROL"
                     titleText: qsTr("失控保护")
                     TelemetryRow {
@@ -4069,7 +4077,7 @@ SetupPage {
         readonly property real verticalValue: root._rcAxisStickValueForChannel(verticalChannel)
         Layout.fillWidth: true
         implicitWidth: 140
-        implicitHeight: 174
+        implicitHeight: Math.max(174, Math.min(238, width * 0.45 + 64))
         radius: 8
         color: "#082E36"
         border.width: 1
@@ -4081,9 +4089,10 @@ SetupPage {
             QGCLabel { Layout.fillWidth: true; text: stick.titleText; color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight; horizontalAlignment: Text.AlignHCenter }
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 112
+                Layout.preferredHeight: Math.min(176, Math.max(112, parent.width * 0.45))
                 Rectangle {
                     id: stickStage
+                    objectName: stick.objectName + "_stage"
                     width: Math.min(parent.width, parent.height)
                     height: width
                     anchors.centerIn: parent
