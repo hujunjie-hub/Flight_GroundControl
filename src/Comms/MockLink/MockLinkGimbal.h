@@ -51,6 +51,9 @@ public:
         bool hasRetract,
         bool hasNeutral);
 
+    /// Test hook for simulating one device disconnecting and rediscovering.
+    bool setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool online);
+
     /// Send periodic gimbal status messages (call from 1Hz tasks)
     void run1HzTasks();
 
@@ -106,6 +109,7 @@ private:
     float     _pitch = 0.0f;
     float     _yaw = 0.0f;
     bool      _manualControl = false;  // true when under external control command
+    bool      _deviceOnline = true;
     bool      _yawLock = false;
     bool      _retracted = false;
     bool      _rateControl = false;
