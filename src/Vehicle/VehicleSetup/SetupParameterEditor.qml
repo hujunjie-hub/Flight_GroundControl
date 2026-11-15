@@ -1336,14 +1336,55 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: !dashboardRoot.selectedFact
+                                              ? qsTr("调参策略：—")
+                                              : dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
+                                                ? qsTr("调参策略：只读")
+                                                : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                                  ? qsTr("调参策略：地面可调 · 仅解除锁定后")
+                                                  : dashboardRoot.selectedFact.tuningPolicy === "ONLINE_ADJUSTABLE"
+                                                    ? qsTr("调参策略：在线可调 · 需固件授权")
+                                                    : dashboardRoot.selectedFact.tuningPolicy === "FLIGHT_RESTRICTED"
+                                                      ? qsTr("调参策略：飞行中受限")
+                                                      : qsTr("调参策略：未声明")
+                                        color: dashboardRoot.selectedFact &&
+                                               dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                               ? root.green : root.amber
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
+                                              ? qsTr("更新策略：—")
+                                              : dashboardRoot.selectedFact.updatePolicy === "IMMEDIATE"
+                                                ? qsTr("更新策略：即时生效")
+                                                : dashboardRoot.selectedFact.updatePolicy === "FIRMWARE_CONFIRMATION"
+                                                  ? qsTr("更新策略：等待飞控确认")
+                                                  : dashboardRoot.selectedFact.updatePolicy === "REBOOT_REQUIRED"
+                                                    ? qsTr("更新策略：飞控确认后需重启")
+                                                    : dashboardRoot.selectedFact.updatePolicy === "OFFLINE_ONLY"
+                                                      ? qsTr("更新策略：仅离线修改")
+                                                      : qsTr("更新策略：未声明")
+                                        color: dashboardRoot.selectedFact &&
+                                               dashboardRoot.selectedFact.updatePolicy !== "FIRMWARE_CONFIRMATION"
+                                               ? root.amber : root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
                                               ? qsTr("参数权限：—")
-                                              : dashboardRoot.selectedFact.readOnly
+                                              : dashboardRoot.selectedFact.readOnly ||
+                                                dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
                                                 ? qsTr("参数权限：只读 · 允许查看和回读")
                                                 : dashboardRoot.selectedFact.writeOnly
                                                   ? qsTr("参数权限：只写 · 禁止在线调参")
-                                                  : qsTr("参数权限：允许调参")
+                                                  : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                                    ? qsTr("参数权限：地面调参 · SIL 专用")
+                                                    : qsTr("参数权限：受限策略 · 禁止在线写入")
                                         color: !dashboardRoot.selectedFact ? root.mutedText
-                                               : dashboardRoot.selectedFact.readOnly || dashboardRoot.selectedFact.writeOnly
+                                               : dashboardRoot.selectedFact.readOnly ||
+                                                 dashboardRoot.selectedFact.writeOnly ||
+                                                 dashboardRoot.selectedFact.tuningPolicy !== "GROUND_ADJUSTABLE"
                                                  ? root.amber : root.green
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
