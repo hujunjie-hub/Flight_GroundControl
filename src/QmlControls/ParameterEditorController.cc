@@ -480,7 +480,8 @@ bool ParameterEditorController::canReadbackSelectedValue() const
            MultiVehicleManager::instance()->activeVehicle() == _vehicle &&
            _vehicle->vehicleLinkManager() && !_vehicle->vehicleLinkManager()->communicationLost() &&
            _parameterMgr && _parameterMgr->parametersReady() && !_parameterMgr->missingParameters() &&
-           !_parameterMgr->pendingWrites() && _profileAllowsSelectedParameter();
+           !_parameterMgr->parameterDownloadSkipped() && !_parameterMgr->pendingWrites() &&
+           _profileAllowsSelectedParameter();
 }
 
 bool ParameterEditorController::canRestorePreviousValue() const
