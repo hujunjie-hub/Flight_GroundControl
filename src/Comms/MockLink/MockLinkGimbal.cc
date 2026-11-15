@@ -302,8 +302,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     const mavlink_gimbal_manager_set_attitude_t &request, uint8_t sourceSysid, uint8_t sourceCompid)
 {
-    if (!_deviceOnline ||
-        (request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+    if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
         (request.target_component != 0 && request.target_component != _managerCompId) ||
         (request.gimbal_device_id != 0 && request.gimbal_device_id != _gimbalDeviceId) ||
         (request.flags & ~0x7Cu) != 0) {
@@ -334,6 +333,9 @@ bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
     }
 
     QMutexLocker locker(&_stateMutex);
+    if (!_deviceOnline) {
+        return false;
+    }
     const bool validSource = sourceSysid != 0 && sourceCompid != 0;
     const bool isPrimaryController = validSource &&
                                      _gimbalManagerSysidPrimary == sourceSysid &&
@@ -404,6 +406,9 @@ bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &req
     // Thread-safe access: Main thread writing interval while worker thread reads every 1s.
     // Serialize to avoid worker using stale interval for message transmission logic.
     QMutexLocker locker(&_stateMutex);
+    if (!_deviceOnline) {
+        return false;
+    }
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS) {
         _managerStatusIntervalUs = effectiveInterval;
         qCDebug(MockLinkGimbalLog) << msgName << "interval set to" << effectiveInterval << "us";
@@ -424,11 +429,21 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
 
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {
         qCDebug(MockLinkGimbalLog) << "REQUEST_MESSAGE -" << QString("%1(%2)").arg(msgName).arg(msgId);
-        if (_deviceOnline) {
+        bool managerOnline = false;
+        {
+            QMutexLocker locker(&_stateMutex);
+            managerOnline = _deviceOnline;
+        }
+        if (managerOnline) {
             _sendGimbalManagerInformation();
         }
         for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
-            if (device->_deviceOnline) {
+            bool deviceOnline = false;
+            {
+                QMutexLocker locker(&device->_stateMutex);
+                deviceOnline = device->_deviceOnline;
+            }
+            if (deviceOnline) {
                 device->_sendGimbalManagerInformation();
             }
         }
@@ -441,10 +456,6 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
 bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &request,
                                                     uint8_t sourceSysid, uint8_t sourceCompid)
 {
-    if (!_deviceOnline) {
-        return false;
-    }
-
     // param1: pitch angle (degrees, positive: down, negative: up)
     // param2: yaw angle (degrees, positive: to the right, negative: to the left)
     // param3: pitch rate (deg/s)
@@ -501,6 +512,9 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
     // Without lock: Worker could read _manualControl=false and auto-update pitch/yaw after main
     // sets them to manual values, overwriting the manual control with auto-movement.
     QMutexLocker locker(&_stateMutex);
+    if (!_deviceOnline) {
+        return false;
+    }
     const bool validSource = sourceSysid != 0 && sourceCompid != 0;
     const bool isPrimaryController = validSource &&
                                      _gimbalManagerSysidPrimary == sourceSysid &&
@@ -543,10 +557,6 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
 bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t &request,
                                                    uint8_t sourceSysid, uint8_t sourceCompid)
 {
-    if (!_deviceOnline) {
-        return false;
-    }
-
     // MAVLink Gimbal Manager Configure semantics (per parameter):
     //   0: no one in control; -1: leave unchanged; -2: set this sender in control;
     //   -3: release only if this sender currently owns the complete pair.
@@ -559,6 +569,9 @@ bool MockLinkGimbal::_handleGimbalManagerConfigure(const mavlink_command_long_t 
         return false;
     }
     QMutexLocker locker(&_stateMutex);
+    if (!_deviceOnline) {
+        return false;
+    }
 
     const auto isRelease = [](float value) { return qIsFinite(value) && value == -3.0f; };
     const auto validIdValue = [](float value) {
