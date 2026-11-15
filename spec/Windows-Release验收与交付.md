@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.24  
+版本：4.25  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -99,7 +99,7 @@ CI 排除 Flaky/Network 是固定规则，不代表这些场景自动获得覆�
 
 正式视觉、信息架构和响应式规则见 [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)。
 
-- 顶部展示 FCU 遥测接收、飞行状态、失效保护等级和导航估计四张摘要卡；摘要字段必须受对应 family availability 保护。
+- 顶部展示 FCU 通信状态、飞行状态、失效保护等级和导航估计四张摘要卡；摘要字段必须受对应 family availability 保护。
 - 主诊断区使用 12/6/1 列响应式网格，断点为 1450 px 和 760 px；卡片跨度按设计规范执行。
 - 每张诊断卡显示本 family 的接收状态徽标；不能把单一 family 的接收状态扩展成全局健康结论。
 - 颜色必须与状态文字同时呈现；UNKNOWN/未上报为灰色、STALE 为黄色、明确的故障/无效为红色。
@@ -471,7 +471,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 ### G15 总览总控页全链路通信丢失状态（2026-11-15）
 
-- 总览「FCU 遥测接收」KPI 与只读监控徽标必须以 VehicleLinkManager.communicationLost 作为当前链路状态依据；不得仅凭 telemetryAvailable（曾收到过遥测）显示当前通信正常。
+- 总览「FCU 通信状态」KPI 与只读监控徽标必须以 VehicleLinkManager.communicationLost 作为当前链路状态依据；不得仅凭 telemetryAvailable（曾收到过遥测）显示当前通信正常。
 - 全链路通信丢失时，两处均显示红色「通信丢失」；恢复心跳后恢复为「已收到 FCU 遥测」及绿色。
 - 通信丢失说明必须指出 family freshness 仍独立判定；不得将六域拓扑节点或 13 域健康矩阵强制改成统一状态。
 - FlightTelemetryPageUITest 使用 MockLink::setCommLost(true/false) 验证 VehicleLinkManager 心跳丢失/恢复、KPI 文案、页头状态和颜色。本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN，集中验收时执行。
