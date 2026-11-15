@@ -14,6 +14,7 @@
 #include "MockLink.h"
 #include "GimbalController.h"
 #include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
@@ -677,12 +678,31 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // A broadcast SET_MESSAGE_INTERVAL must fan out to both device
             // components, and its acknowledgement must come from the manager.
             QVERIFY(!mockLink->setGimbalDeviceOnlineForTesting(200, false));
-            vehicle->sendMavCommand(0, MAV_CMD_SET_MESSAGE_INTERVAL, false,
-                                    MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
+            auto sendBroadcastAttitudeInterval = [vehicle](float intervalUs) {
+                auto sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
+                if (!sharedLink) {
+                    QFAIL("Primary link disappeared while testing broadcast interval routing");
+                    return;
+                }
+                mavlink_message_t command{};
+                mavlink_msg_command_long_pack_chan(
+                    MAVLinkProtocol::instance()->getSystemId(),
+                    MAVLinkProtocol::getComponentId(),
+                    sharedLink->mavlinkChannel(),
+                    &command,
+                    static_cast<uint8_t>(vehicle->id()),
+                    0, // Broadcast to all components.
+                    MAV_CMD_SET_MESSAGE_INTERVAL,
+                    0, // confirmation
+                    MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS,
+                    intervalUs,
+                    NAN, NAN, NAN, NAN, NAN);
+                QVERIFY(vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), command));
+            };
+            sendBroadcastAttitudeInterval(-1);
             QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->attitudeStatusFresh(), 4500);
             QTRY_VERIFY_WITH_TIMEOUT(!secondGimbal->attitudeStatusFresh(), 4500);
-            vehicle->sendMavCommand(0, MAV_CMD_SET_MESSAGE_INTERVAL, false,
-                                    MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000);
+            sendBroadcastAttitudeInterval(1000000);
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
 
