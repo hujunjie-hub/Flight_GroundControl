@@ -5,6 +5,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
+#include <limits>
 #include <QtMath>
 #include <utility>
 
@@ -194,10 +195,17 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 
     mavlink_command_long_t request{};
     mavlink_msg_command_long_decode(&msg, &request);
+    const uint8_t ackComponent = request.target_component == 0
+        ? _managerCompId : request.target_component;
 
     switch (request.command) {
     case MAV_CMD_SET_MESSAGE_INTERVAL: {
         if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId())) {
+            return false;
+        }
+        if (!qIsFinite(request.param1) || request.param1 < 0.0f ||
+            static_cast<double>(request.param1) > static_cast<double>(std::numeric_limits<int>::max()) ||
+            qFloor(request.param1) != request.param1) {
             return false;
         }
         const int messageId = static_cast<int>(request.param1);
@@ -213,7 +221,11 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
             }
         } else if (messageId == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
             if (request.target_component == 0) {
+                // A broadcast interval applies to every device component managed here.
                 handled = _handleSetMessageInterval(request);
+                for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+                    handled = device->_handleSetMessageInterval(request) || handled;
+                }
             } else if (request.target_component == _managerCompId) {
                 // Device IDs 1-6 publish attitude status through the manager component.
                 for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
@@ -243,7 +255,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         if (!handled) {
             return false;
         }
-        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, ackComponent);
         return true;
     }
 
@@ -271,7 +283,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         const bool accepted = device &&
             device->_handleGimbalManagerPitchYaw(request, msg.sysid, msg.compid);
         _sendCommandAck(request.command, accepted ? MAV_RESULT_ACCEPTED : MAV_RESULT_DENIED,
-                        request.target_component);
+                        ackComponent);
         return true;
     }
 
@@ -384,6 +396,15 @@ void MockLinkGimbal::_sendCommandAck(uint16_t command, uint8_t result, uint8_t s
 
 bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &request)
 {
+    if (!qIsFinite(request.param1) || request.param1 < 0.0f ||
+        static_cast<double>(request.param1) > static_cast<double>(std::numeric_limits<int>::max()) ||
+        qFloor(request.param1) != request.param1 ||
+        !qIsFinite(request.param2) ||
+        static_cast<double>(request.param2) < static_cast<double>(std::numeric_limits<int>::min()) ||
+        static_cast<double>(request.param2) > static_cast<double>(std::numeric_limits<int>::max()) ||
+        qFloor(request.param2) != request.param2) {
+        return false;
+    }
     const int msgId = static_cast<int>(request.param1);
     const int intervalUs = static_cast<int>(request.param2);
     const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(msgId));
@@ -423,6 +444,11 @@ bool MockLinkGimbal::_handleSetMessageInterval(const mavlink_command_long_t &req
 
 bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request)
 {
+    if (!qIsFinite(request.param1) || request.param1 < 0.0f ||
+        static_cast<double>(request.param1) > static_cast<double>(std::numeric_limits<int>::max()) ||
+        qFloor(request.param1) != request.param1) {
+        return false;
+    }
     const int msgId = static_cast<int>(request.param1);
     const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<uint32_t>(msgId));
     QString msgName = info ? info->name : QString::number(msgId);
