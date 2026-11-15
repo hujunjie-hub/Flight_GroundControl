@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.6
+- 版本：6.7
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；本轮补齐总览优先级告警与事件历史的 FCU 启动相对时间；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；总览告警与历史已补齐 FCU 启动相对时间、严重度颜色和原因换行；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -656,3 +656,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 注入 FCU_EVENT，覆盖有效、未上报、越界时间输入，并验证优先级告警与事件历史显示同一 FCU 启动相对时间。
 - 仅修改地面站 QML 展示、MockLink UI Integration 断言和 SPEC/验收清单；不修改 MAVLink、FlightTelemetryFactGroup、ICD、飞控事件生成、UTC 时间服务或控制行为。
 - 按用户要求本轮不运行、不触发 CI；新增断言状态为 NOT_RUN，待集中验证。
+
+
+## 39. Phase 2.8 事件历史严重度与原因可读性（2026-11-15）
+
+- 最近事件历史采用两层信息结构：首行显示本地序号、FCU 启动相对时间和严重度；次行完整显示事件 ID、来源 ID 与原因。
+- 历史事件严重度复用优先级告警相同的颜色语义：信息青色、警告琥珀、错误橙色、严重红色、未知中性灰；不以颜色替代严重度文字。
+- 原因改为自然换行，不再因单行省略而丢失故障定位上下文；窄屏下允许条目增高，避免横向裁切。
+- UI Integration 通过 MockLink FCU_EVENT 验证严重度文案/颜色、原因文本和启动相对时间；测试状态 NOT_RUN，等待集中验证。
+- 仅调整地面站事件历史展示和对应回归断言，不改变 recentEvents 原始顺序、严重度排序、事件缓存、协议或飞控行为。

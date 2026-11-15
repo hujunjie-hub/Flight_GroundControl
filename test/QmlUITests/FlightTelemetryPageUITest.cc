@@ -799,11 +799,23 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventTime_1"), 3000);
             QQuickItem* historyEventTime = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_eventHistoryTime_1"), 3000);
+            QQuickItem* historyEventSeverity = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistorySeverity_1"), 3000);
+            QQuickItem* historyEventDetails = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistoryDetails_1"), 3000);
             QVERIFY(alarmEventTime);
             QVERIFY(historyEventTime);
+            QVERIFY(historyEventSeverity);
+            QVERIFY(historyEventDetails);
             const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("1.700"));
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventTime->property("text").toString(), expectedEventBootTime, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventSeverity->property("text").toString(),
+                                      translatedTelemetryText("严重"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(historyEventSeverity->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(historyEventDetails->property("text").toString().contains(
+                                         translatedTelemetryText("硬件故障")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),

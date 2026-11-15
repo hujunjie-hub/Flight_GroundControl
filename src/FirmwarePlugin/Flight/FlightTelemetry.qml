@@ -3162,35 +3162,55 @@ SetupPage {
                     }
                     Repeater {
                         model: root._telemetry ? root._telemetry.recentEvents.slice(0, 8) : []
-                        delegate: RowLayout {
+                        delegate: ColumnLayout {
                             required property var modelData
                             objectName: "flightTelemetry_eventHistoryRow_" + modelData.sequence
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: 3
 
-                            QGCLabel {
-                                text: qsTr("#%1").arg(modelData.sequence)
-                                font.pointSize: ScreenTools.microFontPointSize
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                QGCLabel {
+                                    Layout.preferredWidth: 38
+                                    text: qsTr("#%1").arg(modelData.sequence)
+                                    color: "#C7E3E9"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_eventHistoryTime_" + modelData.sequence
+                                    Layout.preferredWidth: 94
+                                    text: root._eventBootTimeText(modelData.timeBootUs)
+                                    color: "#8298A2"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    elide: Text.ElideRight
+                                }
+                                Item { Layout.fillWidth: true }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_eventHistorySeverity_" + modelData.sequence
+                                    text: root._eventSeverityLabel(modelData.severity)
+                                    color: root._eventSeverityColor(modelData.severity)
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                }
                             }
                             QGCLabel {
-                                objectName: "flightTelemetry_eventHistoryTime_" + modelData.sequence
-                                Layout.preferredWidth: 94
-                                text: root._eventBootTimeText(modelData.timeBootUs)
-                                color: "#8298A2"
-                                font.pointSize: ScreenTools.microFontPointSize
-                                elide: Text.ElideRight
-                            }
-                            QGCLabel {
+                                objectName: "flightTelemetry_eventHistoryDetails_" + modelData.sequence
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                elide: Text.ElideRight
                                 text: qsTr("ID %1 · 来源 %2 · %3")
                                       .arg(modelData.eventId)
                                       .arg(modelData.sourceId)
                                       .arg(root._reasonText(modelData.reasonNamespace, modelData.reasonCode))
+                                color: "#8FB1BB"
+                                font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
                             }
-                            QGCLabel {
-                                text: root._eventSeverityLabel(modelData.severity)
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 1
+                                color: "#0D5560"
+                                opacity: 0.45
                             }
                         }
                     }
