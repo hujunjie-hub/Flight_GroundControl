@@ -124,10 +124,22 @@ SetupPage {
         }
         return null
     }
-    function _resourceInstanceFresh(item) {
-        if (!item || _familyStatus("resourceAvailable") !== qsTr("已接收")) return false
+    function _resourceInstanceStatus(item) {
+        const familyStatus = _familyStatus("resourceAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        if (!item) return qsTr("未上报")
         const age = Number(item.receiveAgeMs)
-        return Number.isFinite(age) && age >= 0 && age <= _familyFreshnessLimitMs("resource")
+        if (!Number.isFinite(age) || age < 0) return qsTr("等待遥测")
+        return age > _familyFreshnessLimitMs("resource") ? qsTr("数据超时") : qsTr("已接收")
+    }
+    function _resourceInstanceFresh(item) {
+        return _resourceInstanceStatus(item) === qsTr("已接收")
+    }
+    function _resourceInstanceStatusColor(item) {
+        const status = _resourceInstanceStatus(item)
+        if (status === qsTr("已接收")) return "#45D39A"
+        if (status === qsTr("数据超时")) return "#F0B94B"
+        return "#8A9A94"
     }
     function _resourceMetricText(fieldName, bit, decimals, suffix) {
         if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return _familyStatus("resourceAvailable")
@@ -1802,7 +1814,13 @@ SetupPage {
                                    ? root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])
                                    : root._familyStatus("controlAvailable")
                     }
-                    TelemetryRow { labelText: qsTr("执行器可用掩码"); valueText: root._mask("actuatorAvailableMask") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_healthSafetyActuatorMask"
+                        labelText: qsTr("执行器可用掩码")
+                        valueText: root._familyStatus("actuatorAvailable") === qsTr("已接收")
+                                   ? root._mask("actuatorAvailableMask")
+                                   : root._familyStatus("actuatorAvailable")
+                    }
                 }
             }
             Rectangle {
@@ -2582,18 +2600,26 @@ SetupPage {
                                       : qsTr("任务 %1").arg(modelData.taskId)
                             }
                                 QGCLabel {
+                                    objectName: "flightTelemetry_resourceCpu_" + modelData.taskId
                                     Layout.fillWidth: true
-                                    text: qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
+                                    text: root._resourceInstanceFresh(modelData)
+                                          ? qsTr("CPU %1").arg(root._rawValidPermillePercent(modelData.cpuLoadPermille, modelData.validityMask, 2))
+                                          : qsTr("CPU %1").arg(root._resourceInstanceStatus(modelData))
+                                    color: root._resourceInstanceStatusColor(modelData)
                                 }
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_resourceMetrics_" + modelData.taskId
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("WCET %1 · 栈 %2 · 截止期错过 %3 · AXI %4")
-                                      .arg(root._rawValidValue(modelData.wcetUs, modelData.validityMask, 0, 0, " μs"))
-                                      .arg(root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B"))
-                                      .arg(modelData.deadlineMissCount)
-                                      .arg(root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B"))
+                                text: root._resourceInstanceFresh(modelData)
+                                      ? qsTr("WCET %1 · 栈 %2 · 截止期错过 %3 · AXI %4")
+                                            .arg(root._rawValidValue(modelData.wcetUs, modelData.validityMask, 0, 0, " μs"))
+                                            .arg(root._rawValidValue(modelData.stackFreeBytes, modelData.validityMask, 1, 0, " B"))
+                                            .arg(modelData.deadlineMissCount)
+                                            .arg(root._rawValidValue(modelData.axiFreeBytes, modelData.validityMask, 3, 0, " B"))
+                                      : qsTr("WCET / 栈 / 截止期 / AXI：%1").arg(root._resourceInstanceStatus(modelData))
+                                color: root._resourceInstanceStatusColor(modelData)
                             }
                             QGCLabel {
                                 Layout.fillWidth: true

@@ -296,7 +296,9 @@
         "health_detail_grid_uses_12_6_1_columns_at_1280_760_breakpoints_independent_of_other_pages",
         "health_page_is_verified_at_1600_1000_900_700_400_widths",
         "prearm_check_recovery_reason_wraps_without_elision",
-        "health_overview_headline_uses_neutral_summary_color_not_operation_family_color"
+        "health_overview_headline_uses_neutral_summary_color_not_operation_family_color",
+        "health_resource_detail_values_are_gated_by_family_and_per_instance_freshness",
+        "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness"
       ]
     },
     {
@@ -458,7 +460,9 @@
     "health_detail_grid_uses_12_6_1_columns_at_1280_760_breakpoints_independent_of_other_pages",
     "health_page_is_verified_at_1600_1000_900_700_400_widths",
     "prearm_check_recovery_reason_wraps_without_elision",
-    "health_overview_headline_uses_neutral_summary_color_not_operation_family_color"
+    "health_overview_headline_uses_neutral_summary_color_not_operation_family_color",
+    "health_resource_detail_values_are_gated_by_family_and_per_instance_freshness",
+    "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

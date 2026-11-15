@@ -1021,6 +1021,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* healthMatrixPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix"), 3000);
             QQuickItem* healthSafety = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000);
             QQuickItem* healthHeadline = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthHeadline"), 3000);
+            QQuickItem* actuatorPrimary = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthPrimary_actuator"), 3000);
+            QQuickItem* safetyActuatorMask = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthSafetyActuatorMask"), 3000);
             QQuickItem* healthOverviewBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview_statusBadge"));
             QQuickItem* healthMatrixBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix_statusBadge"));
             QQuickItem* healthSafetyBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety_statusBadge"));
@@ -1040,6 +1044,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(healthMatrixPanel);
             QVERIFY(healthSafety);
             QVERIFY(healthHeadline);
+            QVERIFY(actuatorPrimary);
+            QVERIFY(safetyActuatorMask);
             QVERIFY(healthOverviewBadge);
             QVERIFY(healthMatrixBadge);
             QVERIFY(healthSafetyBadge);
@@ -1074,6 +1080,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(!healthOverviewBadge->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!healthMatrixBadge->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!healthSafetyBadge->isVisible(), 3000);
+            const QString actuatorFamilyStatus = actuatorPrimary->property("statusText").toString();
+            if (actuatorFamilyStatus != translatedTelemetryText("已接收")) {
+                QTRY_COMPARE_WITH_TIMEOUT(safetyActuatorMask->property("valueText").toString(),
+                                          actuatorFamilyStatus, 3000);
+            }
             QTRY_COMPARE_WITH_TIMEOUT(receivedLegendLabel->property("text").toString(),
                                       translatedTelemetryText("已接收"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(staleLegendLabel->property("text").toString(),
