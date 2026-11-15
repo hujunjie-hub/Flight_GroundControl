@@ -559,6 +559,27 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendLinkStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint8_t linkKind,
+                                      int16_t rssiDbm, uint16_t linkQualityPermille, uint32_t packetLossPpm,
+                                      uint32_t validityMask) {
+                mavlink_fcu_link_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = sessionBootId;
+                payload.profile_id = profileId;
+                payload.link_instance_id = linkKind;
+                payload.link_kind = linkKind;
+                payload.link_state = 2;
+                payload.validity_mask = validityMask;
+                payload.packet_loss_ppm = packetLossPpm;
+                payload.age_us = 2500;
+                payload.reason_code = 0;
+                payload.rssi_dbm = rssiDbm;
+                payload.link_quality_permille = linkQualityPermille;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_link_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             auto sendInvalidStorageStatus = [&](uint64_t timeBootUs) {
                 mavlink_fcu_storage_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -577,6 +598,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendNavigationStatus(1100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
             sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F);
+            sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700);
+            sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
+            sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
             QQuickItem* rcPageTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
@@ -587,10 +611,52 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rightStickMarker);
             QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcRssiValue->property("text").toString(), QStringLiteral("-42 dBm"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherRssiValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherQualityValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLossValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), QStringLiteral("-68 dBm"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
+                                         QStringLiteral("GCS 地面站")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcFailsafePanel->property("statusFamily").toString().isEmpty(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString().isEmpty(), 3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
+            QQuickItem* rightStickReadout = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcRightStick_readout"), 3000);
+            QQuickItem* gcsRssiValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_rssi_2"), 3000);
+            QQuickItem* gcsQualityValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_quality_2"), 3000);
+            QQuickItem* gcsLossValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_loss_2"), 3000);
+            QQuickItem* rcRssiValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_rssi_1"), 3000);
+            QQuickItem* invalidOtherRssiValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_rssi_4"), 3000);
+            QQuickItem* invalidOtherQualityValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_quality_4"), 3000);
+            QQuickItem* invalidOtherLossValue = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_loss_4"), 3000);
+            QQuickItem* rcFailsafePanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
+            QQuickItem* rcLinkPanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
+            QVERIFY(rightStickReadout);
+            QVERIFY(gcsRssiValue);
+            QVERIFY(gcsQualityValue);
+            QVERIFY(gcsLossValue);
+            QVERIFY(rcRssiValue);
+            QVERIFY(invalidOtherRssiValue);
+            QVERIFY(invalidOtherQualityValue);
+            QVERIFY(invalidOtherLossValue);
+            QVERIFY(rcFailsafePanel);
+            QVERIFY(rcLinkPanel);
             QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
             QVERIFY(mode2Button);
             QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
@@ -669,6 +735,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(controlScale.value(QStringLiteral("upper")).toDouble() <= 2500.0);
             QVERIFY(controlScale.value(QStringLiteral("lower")).toDouble() <
                     controlScale.value(QStringLiteral("upper")).toDouble());
+
+            // Refresh RC only after the non-RC link instances age out. The trend must remain
+            // on the stale GCS instance rather than disguise RC quality as data-link quality.
+            sendLinkStatus(lastOperationTime + 300, bootId, 1, -40, 950, 5000, 0x700);
+            QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), staleText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
+                                         QStringLiteral("GCS 地面站")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), staleText, 3000);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
             // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
             // the capability mask gates each value independently.
@@ -780,6 +858,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!rightStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->property("text").toString().contains(invalidText), 3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
@@ -1279,12 +1358,57 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcTab);
             QVERIFY(_clickItemAt(rcTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QQuickItem* rcGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLinkPageGrid"), 3000);
+            QQuickItem* rcStickPanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor"), 3000);
+            QQuickItem* rcAxisPanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor"), 3000);
+            QQuickItem* rcLinkPanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
+            QQuickItem* rcFailsafePanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
             QQuickItem* leftStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
             QQuickItem* rightStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
             QQuickItem* leftMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
             QQuickItem* rightMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
+            QVERIFY(rcGrid);
+            QVERIFY(rcStickPanel);
+            QVERIFY(rcAxisPanel);
+            QVERIFY(rcLinkPanel);
+            QVERIFY(rcFailsafePanel);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
+            QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcAxisPanel->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcLinkPanel->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcFailsafePanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcAxisPanel->width()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcLinkPanel->width()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcFailsafePanel->width()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcAxisPanel->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcLinkPanel->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcFailsafePanel->height()) < 1.0, 3000);
+            page->setWidth(1000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 6, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcAxisPanel->y() &&
+                                         rcAxisPanel->y() < rcLinkPanel->y() &&
+                                         rcLinkPanel->y() < rcFailsafePanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcAxisPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcLinkPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcFailsafePanel->width() >= rcGrid->width() * 0.90, 3000);
+            page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcAxisPanel->y() &&
+                                         rcAxisPanel->y() < rcLinkPanel->y() &&
+                                         rcLinkPanel->y() < rcFailsafePanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcAxisPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcLinkPanel->width() >= rcGrid->width() * 0.90 &&
+                                         rcFailsafePanel->width() >= rcGrid->width() * 0.90, 3000);
+            page->setWidth(1600);
+            QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(leftStick->property("radius").toInt(), 8, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rightStick->property("radius").toInt(), 8, 3000);
             QVERIFY(leftMarker);

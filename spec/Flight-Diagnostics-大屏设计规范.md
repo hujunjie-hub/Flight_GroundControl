@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：5.7
+- 版本：5.8
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；飞行健康页中屏布局与资源实例 freshness 门控已补齐；本轮继续适配总览总控页；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；导航时序与飞行健康页适配已补齐；本轮完成遥控与链路页四面板均衡、逐实例链路指标和数据链路优先级；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -156,11 +156,13 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 ### 2.10 遥控与链路页面
 
 - 主体按左侧双摇杆、逻辑轴实时输入、链路质量、失控保护四块组织。
-- 双摇杆手型直接读取 FlightRadio 的持久化 Mode 1/2/3 设置，按其 channel-to-axis 映射绑定横滚/俯仰/偏航/油门；marker 仅在对应两个轴均新鲜且 validity bit 有效时显示。
+- 双摇杆手型直接读取 FlightRadio 的持久化 Mode 1/2/3 设置，按其 channel-to-axis 映射绑定横滚/俯仰/偏航/油门；marker 仅在对应两个轴均新鲜且 validity bit 有效时显示。轴读数分别保留等待、超时、未上报和无效语义，不把无效输入折算为 0。
 - 当前协议只提供四个归一化逻辑轴，不提供 CH1–CH8 原始 PWM；页面明确显示四个逻辑轴，不虚构额外通道。
-- 链路质量逐实例显示 linkKind、linkState、RSSI、质量、丢包、原因和接收年龄；指标必须同时满足 link family 新鲜、实例 receiveAgeMs 未超时、validityMask 对应位有效。
-- 失控保护显示 failsafeLevel、rcReceiverFailsafe、rcLinkState、RC 接收年龄和 operation/link family 状态。
-- 底部四张趋势图按页切换为 RSSI、链路质量、丢包率和 RC 接收年龄；无效/过期样本形成断点。
+- 链路质量逐实例显示 linkKind、linkState、RSSI、质量、丢包、原因和接收年龄；RSSI、质量、丢包分别成格，并分别满足 link family 新鲜、实例 receiveAgeMs 未超时、validityMask 对应位有效。
+- 链路趋势优先使用新鲜 GCS（kind 2）、伴随计算机（kind 3）或其他数据链路（kind 4）；存在非 RC 实例但均超时时保留超时/断点，不以健康 RC 接收机冒充数据链路；仅无非 RC 实例时回退 RC（kind 1）。趋势标题标明当前选中链路类型。
+- 失控保护与多实例链路质量面板不使用单一 operation/link family 徽标代表整张面板；各域和各实例状态独立表达。
+- 桌面四个主面板采用 3/3/3/3 等宽同排等高；760–1279 px 时每张面板占 6 列全宽换行；低于 760 px 单列堆叠。
+- 底部四张趋势图按页切换为优先数据链路 RSSI、链路质量、丢包率和 RC 接收年龄；无效/过期样本形成断点。
 
 
 ## 3. 响应式布局规范
@@ -175,7 +177,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | 420–759 px | 1 列 | 1 列 | 2 列 | 2 列 |
 | <420 px | 1 列 | 1 列 | 1 列 | 2 列 |
 
-- 总览主视觉宽屏使用左 3 / 中 5 / 右 4 列；健康页使用左 3 / 中 6 / 右 3 列；导航时序页四块主面板各占 3 列，RC 页按四块面板分配 12 列。
+- 总览主视觉宽屏使用左 3 / 中 5 / 右 4 列；健康页使用左 3 / 中 6 / 右 3 列；导航时序与遥控链路页均采用四块主面板各占 3 列的 3/3/3/3 布局。
 - 1000–1279 px 时总览/明细主网格使用 6 列；导航/RC 主面板各占 6 列并全宽纵向排列。760–999 px 时总览/明细使用单列，健康/导航/RC 网格使用 6 列且各主面板全宽换行；低于 760 px 时所有主网格单列。
 - 13 类健康矩阵只在「飞行健康」页面显示，宽屏 4 列、中屏 2 列、窄屏 1 列；总览页不重复显示矩阵。
 - 健康页维护信息横条宽屏 3 列、中屏 2 列、窄屏 1 列，文字换行时自然增高。
@@ -592,3 +594,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - FlightTelemetryPageUITest 增加告警优先级/同级序号排序断言、六个拓扑域状态/接收年龄节点断言、三栏宽度顺序与边界、拓扑节点高度和 3/2/3/2 响应式断言。
 - 遥测模型、Fact、MAVLink/Flight ICD、family freshness、validity/capability mask、boot/profile 隔离和只读安全边界均不变。
 - 按用户要求，本阶段不运行、不触发 CI；新增回归断言保留，集中 CI 与 Windows 1672×941 / 100%/125%/150% DPI 视觉验收后置。当前测试状态为 NOT_RUN，不宣称 PASS 或像素级验收完成。
+
+
+## 31. Phase 2.6 遥控与链路页均衡与语义收尾（2026-11-15）
+
+- 遥控输入、逻辑轴、链路质量、失控保护四个主视觉面板在桌面宽屏采用 3/3/3/3 等宽布局，并显式启用 HeroPanel.fillRowHeight；UI Integration 验证同排、等宽、等高。
+- 760–1279 px 时四个面板各占 6 列逐行排列；低于 760 px 单列排列；不得产生横向裁切。
+- RC 摇杆读数保留 RC family freshness 与逐轴 validity mask 的语义：等待、超时、未上报、无效均明确显示；无效轴不绘制 marker。
+- 链路质量面板不使用 family 单状态徽标概括多个链路实例；失控保护面板不使用 operation 单域状态冒充 RC/链路综合状态。
+- 每个链路实例以三个独立指标格显示 RSSI、链路质量和丢包率；每格独立服从实例接收年龄和字段 validity mask。
+- 链路趋势选择顺序为新鲜 GCS、伴随计算机、其他；若已有非 RC 链路实例但全部超时，保留超时/断点；只有没有非 RC 实例时才回退 RC。趋势标题同步标明实际链路类型。
+- MockLink Integration 覆盖 RC/GCS/其他三类实例、有效与无效指标、GCS 优先于 RC 的趋势选择、非 RC 链路过期时不回退 RC、四面板桌面均衡和中窄屏重排。仅更新 GroundControl 展示层，不修改 MAVLink、FlightTelemetryFactGroup、ICD、飞控控制或校准行为。
+- 本轮不执行 CI；Windows Release、Unit、Integration、Installer 和 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前均不得标记 PASS。

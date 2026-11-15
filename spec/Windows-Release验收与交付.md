@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：3.4  
+版本：3.5  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -323,3 +323,13 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 六项 KPI 必须位于单一连续边框带中，桌面 6 等分；在 1600/1000/700/400 px 检查 6/3/2/1 列、内容边界和窄屏说明。
 - 运行截图需分别保存四页，按相同分辨率进行 50% 叠加/差异检查；100/125/150% DPI 另行检查字体、卡片高度和裁切。
 - 只有 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 通过且本地视觉签收完成，FGC-0044 才可关闭。
+
+
+### G15 遥控与链路页专项补充（2026-11-15）
+
+- 桌面宽屏四个主视觉面板采用 3/3/3/3 等宽同排布局并等高；1000 px 中屏按 6 列逐行排列，700/400 px 单列堆叠。
+- 失控保护和多实例链路质量面板不得用 operation/link 单域徽标冒充整张面板的综合状态；各数据行/链路实例分别显示真实状态。
+- 左右摇杆的轴读数保留 RC family freshness 和逐轴 validity 语义；清除某个逻辑轴 validity bit 后对应 marker 隐藏，读数显示“无效”，不能显示成零。
+- 每个链路实例的 RSSI、质量、丢包率分别显示，字段值分别服从 validity mask 与实例 receiveAgeMs；无效字段不得显示原始数值。
+- 当 RC 与 GCS 链路同时有效时，链路趋势必须选用 GCS 实例；优先顺序为新鲜 GCS、伴随计算机、其他，存在非 RC 实例但均超时时保留超时/断点；只有无非 RC 实例时才回退 RC。
+- 本轮新增的 MockLink Integration 断言覆盖逐实例三个指标、GCS 优先于 RC、非 RC 链路超时后不回退 RC、四面板均衡和中窄屏重排；本轮未运行 CI，未形成 PASS 证据。后续集中执行 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地参考图/DPI 验收。

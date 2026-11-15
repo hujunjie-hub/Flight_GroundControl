@@ -301,7 +301,16 @@
         "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness",
         "overview_topology_nodes_bind_six_real_family_freshness_states_and_receive_ages",
         "overview_alarm_events_sort_by_severity_descending_then_event_sequence_descending",
-        "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds"
+        "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds",
+        "rc_link_page_uses_four_equal_width_three_column_hero_panels_on_desktop",
+        "rc_link_page_hero_panels_align_to_a_shared_desktop_row_height",
+        "rc_link_page_hero_panels_reflow_to_full_width_rows_at_medium_and_single_column_on_narrow_layouts",
+        "failsafe_and_multi_instance_link_panels_do_not_show_single_family_aggregate_badges",
+        "stick_readouts_show_invalid_axis_state_instead_of_zero_when_validity_bit_clears",
+        "each_link_instance_renders_rssi_quality_and_packet_loss_as_separate_validity_gated_metrics",
+        "link_trends_prefer_fresh_gcs_data_link_over_rc_when_both_are_available",
+        "stale_non_rc_data_link_does_not_fall_back_to_fresh_rc_link",
+        "link_trend_title_identifies_the_selected_link_kind"
       ]
     },
     {
@@ -468,7 +477,16 @@
     "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness",
     "overview_topology_nodes_bind_six_real_family_freshness_states_and_receive_ages",
     "overview_alarm_events_sort_by_severity_descending_then_event_sequence_descending",
-    "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds"
+    "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds",
+    "rc_link_page_uses_four_equal_width_three_column_hero_panels_on_desktop",
+    "rc_link_page_hero_panels_align_to_a_shared_desktop_row_height",
+    "rc_link_page_hero_panels_reflow_to_full_width_rows_at_medium_and_single_column_on_narrow_layouts",
+    "failsafe_and_multi_instance_link_panels_do_not_show_single_family_aggregate_badges",
+    "stick_readouts_show_invalid_axis_state_instead_of_zero_when_validity_bit_clears",
+    "each_link_instance_renders_rssi_quality_and_packet_loss_as_separate_validity_gated_metrics",
+    "link_trends_prefer_fresh_gcs_data_link_over_rc_when_both_are_available",
+    "stale_non_rc_data_link_does_not_fall_back_to_fresh_rc_link",
+    "link_trend_title_identifies_the_selected_link_kind"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

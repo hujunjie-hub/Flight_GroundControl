@@ -337,10 +337,41 @@ SetupPage {
                 _rcLinkStateColor(_fact("rcLinkState")), _familyStatusColor("linkAvailable"),
                 _familyStatusColor("linkAvailable"), _familyStatusColor("rcInputAvailable")][index]
     }
-    function _primaryLinkStatus() {
+    function _linkKindText(linkKind) {
+        switch (Number(linkKind)) {
+        case 1: return qsTr("RC 遥控")
+        case 2: return qsTr("GCS 地面站")
+        case 3: return qsTr("伴随计算机")
+        case 4: return qsTr("其他链路")
+        default: return qsTr("未知链路")
+        }
+    }
+    function _primaryDataLinkStatus() {
+        // Prefer a fresh non-RC data link. Never disguise a stale GCS link with
+        // a healthy RC receiver and present it as current data-link quality.
+        const preferredKinds = [2, 3, 4]
+        for (let kindIndex = 0; kindIndex < preferredKinds.length; ++kindIndex) {
+            const kind = preferredKinds[kindIndex]
+            for (let index = 0; index < _linkStatuses.length; ++index) {
+                const link = _linkStatuses[index]
+                if (Number(link.linkKind) === kind && _linkInstanceFresh(link.receiveAgeMs)) return link
+            }
+        }
+        for (let kindIndex = 0; kindIndex < preferredKinds.length; ++kindIndex) {
+            const kind = preferredKinds[kindIndex]
+            for (let index = 0; index < _linkStatuses.length; ++index) {
+                const link = _linkStatuses[index]
+                if (Number(link.linkKind) === kind) return link
+            }
+        }
         for (let index = 0; index < _linkStatuses.length; ++index)
             if (Number(_linkStatuses[index].linkKind) === 1) return _linkStatuses[index]
-        return _linkStatuses.length > 0 ? _linkStatuses[0] : null
+        return null
+    }
+    function _primaryDataLinkTrendTitle(metricName) {
+        const link = _primaryDataLinkStatus()
+        return link ? qsTr("%1 · %2").arg(_linkKindText(link.linkKind)).arg(metricName)
+                    : qsTr("数据链路 · %1").arg(metricName)
     }
     function _linkInstanceFresh(receiveAgeMs) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return false
@@ -349,7 +380,7 @@ SetupPage {
     }
     function _linkMetricText(fieldName, bit, decimals, suffix) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return _familyStatus("linkAvailable")
-        const link = _primaryLinkStatus()
+        const link = _primaryDataLinkStatus()
         if (!link) return qsTr("未上报")
         if (!_linkInstanceFresh(link.receiveAgeMs)) return qsTr("数据超时")
         if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
@@ -363,11 +394,24 @@ SetupPage {
     }
     function _linkTrendSampleValue(fieldName, bit, divisor, allowNegative) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return null
-        const link = _primaryLinkStatus()
+        const link = _primaryDataLinkStatus()
         if (!link || !_linkInstanceFresh(link.receiveAgeMs) || _rawMaskState(link.validityMask, bit) !== 1) return null
         const value = Number(link[fieldName])
         if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
         return value / divisor
+    }
+    function _linkInstanceMetricText(link, fieldName, bit, decimals, suffix) {
+        if (!link) return qsTr("未上报")
+        if (!_linkInstanceFresh(link.receiveAgeMs)) return qsTr("数据超时")
+        if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
+        if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
+        return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
+    }
+    function _linkInstanceMetricColor(link, bit) {
+        if (!link) return "#8A9A94"
+        if (!_linkInstanceFresh(link.receiveAgeMs)) return "#F0B94B"
+        const state = _rawMaskState(link.validityMask, bit)
+        return state === 1 ? "#E6F0F4" : state === 0 ? "#F0B94B" : "#8A9A94"
     }
     function _rcAgeDisplayText() {
         if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return _familyStatus("rcInputAvailable")
@@ -407,15 +451,30 @@ SetupPage {
         }
     }
     function _rcAxisValueForChannel(channel) { return Number(_fact(_rcAxisFactNameForChannel(channel))) }
-    function _rcAxisValidForChannel(channel) {
+    function _rcAxisStatusTextForChannel(channel) {
+        const familyStatus = _familyStatus("rcInputAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const bit = _rcAxisValidityBitForChannel(channel)
+        if (bit < 0) return qsTr("未上报")
+        const maskState = _rawMaskState(_fact("rcValidAxesMask"), bit)
+        if (maskState < 0) return qsTr("未上报")
+        if (maskState === 0) return qsTr("无效")
         const raw = _fact(_rcAxisFactNameForChannel(channel))
         const value = Number(raw)
-        const bit = _rcAxisValidityBitForChannel(channel)
         const centered = Number(channel) !== 2
-        return bit >= 0 && _familyStatus("rcInputAvailable") === qsTr("已接收") &&
-               _rawMaskState(_fact("rcValidAxesMask"), bit) === 1 &&
-               raw !== null && raw !== undefined && Number.isFinite(value) &&
-               (centered ? value >= -1 && value <= 1 : value >= 0 && value <= 1)
+        if (raw === null || raw === undefined || !Number.isFinite(value) ||
+                (centered ? value < -1 || value > 1 : value < 0 || value > 1)) return qsTr("无效")
+        return qsTr("已接收")
+    }
+    function _rcAxisDisplayTextForChannel(channel) {
+        const status = _rcAxisStatusTextForChannel(channel)
+        const axisName = _rcAxisNameForChannel(channel)
+        return status === qsTr("已接收")
+               ? qsTr("%1 %2").arg(axisName).arg(_rcAxisValueForChannel(channel).toFixed(2))
+               : qsTr("%1 %2").arg(axisName).arg(status)
+    }
+    function _rcAxisValidForChannel(channel) {
+        return _rcAxisStatusTextForChannel(channel) === qsTr("已接收")
     }
     function _rcAxisStickValueForChannel(channel) {
         const value = _rcAxisValueForChannel(channel)
@@ -2075,6 +2134,7 @@ SetupPage {
                 rowSpacing: 10
                 HeroPanel {
                     objectName: "flightTelemetry_rcStickMonitor"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "RC INPUT MONITOR"
                     titleText: qsTr("遥控输入监视")
@@ -2110,7 +2170,8 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_rcChannelMonitor"
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
+                    fillRowHeight: true
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "RC LOGICAL AXES / REAL-TIME"
                     titleText: qsTr("逻辑通道输入（实时）")
                     statusFamily: "rcInputAvailable"
@@ -2122,10 +2183,10 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_rcLinkQuality"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "DATA LINK QUALITY"
                     titleText: qsTr("链路质量")
-                    statusFamily: "linkAvailable"
                     QGCLabel {
                         Layout.fillWidth: true
                         visible: root._linkStatuses.length === 0
@@ -2136,23 +2197,100 @@ SetupPage {
                         model: root._linkStatuses
                         delegate: ColumnLayout {
                             required property var modelData
+                            objectName: "flightTelemetry_linkInstance_" + modelData.linkInstanceId
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: 5
                             RowLayout {
                                 Layout.fillWidth: true
-                                QGCLabel { Layout.fillWidth: true; text: root._enumValue(modelData.linkKind, [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")]); color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight }
-                                QGCLabel { text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]); color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs) }
+                                QGCLabel {
+                                    Layout.fillWidth: true
+                                    text: qsTr("%1 · 实例 %2").arg(root._linkKindText(modelData.linkKind)).arg(modelData.linkInstanceId)
+                                    color: "#DCE8ED"
+                                    font.weight: ScreenTools.strongFontWeight
+                                }
+                                QGCLabel {
+                                    text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+                                    color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs)
+                                }
                             }
-                            QGCLabel {
+                            GridLayout {
+                                objectName: "flightTelemetry_linkMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
-                                wrapMode: Text.WordWrap
-                                text: root._linkInstanceFresh(modelData.receiveAgeMs)
-                                      ? qsTr("RSSI %1 · 质量 %2 · 丢包 %3")
-                                            .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
-                                            .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
-                                            .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
-                                      : qsTr("链路实例数据超时")
-                                color: "#A8BBC3"
+                                columns: 3
+                                columnSpacing: 6
+                                rowSpacing: 4
+                                Rectangle {
+                                    objectName: "flightTelemetry_linkMetric_rssi_" + modelData.linkInstanceId
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    implicitHeight: 52
+                                    radius: 5
+                                    color: "#082B33"
+                                    border.color: "#0B6873"
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 6
+                                        spacing: 2
+                                        QGCLabel { text: qsTr("RSSI"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        QGCLabel {
+                                            objectName: "flightTelemetry_linkMetricValue_rssi_" + modelData.linkInstanceId
+                                            Layout.fillWidth: true
+                                            text: root._linkInstanceMetricText(modelData, "rssiDbm", 8, 0, " dBm")
+                                            color: root._linkInstanceMetricColor(modelData, 8)
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
+                                Rectangle {
+                                    objectName: "flightTelemetry_linkMetric_quality_" + modelData.linkInstanceId
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    implicitHeight: 52
+                                    radius: 5
+                                    color: "#082B33"
+                                    border.color: "#0B6873"
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 6
+                                        spacing: 2
+                                        QGCLabel { text: qsTr("链路质量"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        QGCLabel {
+                                            objectName: "flightTelemetry_linkMetricValue_quality_" + modelData.linkInstanceId
+                                            Layout.fillWidth: true
+                                            text: root._linkInstanceMetricText(modelData, "linkQualityPermille", 9, 1, " %")
+                                            color: root._linkInstanceMetricColor(modelData, 9)
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
+                                Rectangle {
+                                    objectName: "flightTelemetry_linkMetric_loss_" + modelData.linkInstanceId
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    implicitHeight: 52
+                                    radius: 5
+                                    color: "#082B33"
+                                    border.color: "#0B6873"
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 6
+                                        spacing: 2
+                                        QGCLabel { text: qsTr("丢包率"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        QGCLabel {
+                                            objectName: "flightTelemetry_linkMetricValue_loss_" + modelData.linkInstanceId
+                                            Layout.fillWidth: true
+                                            text: root._linkInstanceMetricText(modelData, "packetLossPpm", 10, 2, " %")
+                                            color: root._linkInstanceMetricColor(modelData, 10)
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
@@ -2166,10 +2304,10 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_rcFailsafe"
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 2 : root.availableWidth >= 760 ? 6 : 1
+                    fillRowHeight: true
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "FAILSAFE & CONTROL"
                     titleText: qsTr("失控保护")
-                    statusFamily: "operationAvailable"
                     TelemetryRow {
                         labelText: qsTr("失效保护")
                         valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
@@ -2207,7 +2345,7 @@ SetupPage {
                     TrendCard {
                         objectName: "flightTelemetry_trend_position"
                         titleText: root._activeDashboardPage === 1 ? qsTr("系统 CPU 负载")
-                                   : root._activeDashboardPage === 3 ? qsTr("接收信号强度 RSSI")
+                                   : root._activeDashboardPage === 3 ? root._primaryDataLinkTrendTitle(qsTr("RSSI"))
                                    : qsTr("水平位置标准差")
                         valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("cpuLoadPermille", 2, 1, " %")
                                    : root._activeDashboardPage === 3 ? root._linkMetricText("rssiDbm", 8, 0, " dBm")
@@ -2221,7 +2359,7 @@ SetupPage {
                     TrendCard {
                         objectName: "flightTelemetry_trend_velocity"
                         titleText: root._activeDashboardPage === 1 ? qsTr("任务 WCET")
-                                   : root._activeDashboardPage === 3 ? qsTr("链路质量")
+                                   : root._activeDashboardPage === 3 ? root._primaryDataLinkTrendTitle(qsTr("链路质量"))
                                    : qsTr("速度标准差")
                         valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("wcetUs", 0, 0, " μs")
                                    : root._activeDashboardPage === 3 ? root._linkMetricText("linkQualityPermille", 9, 1, " %")
@@ -2235,7 +2373,7 @@ SetupPage {
                     TrendCard {
                         objectName: "flightTelemetry_trend_heading"
                         titleText: root._activeDashboardPage === 1 ? qsTr("系统栈剩余")
-                                   : root._activeDashboardPage === 3 ? qsTr("丢包率")
+                                   : root._activeDashboardPage === 3 ? root._primaryDataLinkTrendTitle(qsTr("丢包率"))
                                    : qsTr("航向标准差")
                         valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("stackFreeBytes", 1, 0, " B")
                                    : root._activeDashboardPage === 3 ? root._linkMetricText("packetLossPpm", 10, 2, " %")
@@ -3134,16 +3272,21 @@ SetupPage {
                         color: "#45E7B1"
                         border.width: 2
                         border.color: "#D5FFFF"
+                        Behavior on x {
+                            NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on y {
+                            NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
+                        }
                     }
                 }
             }
             QGCLabel {
+                objectName: stick.objectName + "_readout"
                 Layout.fillWidth: true
-                text: qsTr("%1 %2 · %3 %4")
-                      .arg(root._rcAxisNameForChannel(stick.horizontalChannel))
-                      .arg(stick.horizontalValid ? root._rcAxisValueForChannel(stick.horizontalChannel).toFixed(2) : qsTr("无效"))
-                      .arg(root._rcAxisNameForChannel(stick.verticalChannel))
-                      .arg(stick.verticalValid ? root._rcAxisValueForChannel(stick.verticalChannel).toFixed(2) : qsTr("无效"))
+                text: qsTr("%1 · %2")
+                      .arg(root._rcAxisDisplayTextForChannel(stick.horizontalChannel))
+                      .arg(root._rcAxisDisplayTextForChannel(stick.verticalChannel))
                 color: stick.horizontalValid && stick.verticalValid ? "#9DD9D0" : "#F0B94B"
                 font.pointSize: ScreenTools.microFontPointSize
                 horizontalAlignment: Text.AlignHCenter
