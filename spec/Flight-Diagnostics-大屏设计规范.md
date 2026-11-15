@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.33
+- 版本：6.34
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；操作/导航/时间详情 freshness 已收口；本轮补齐导航页重复摘要面板与健康维护启动 ID freshness；本轮补齐构建快照最近已知标识及 Profile 匹配双域 freshness 门控；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；本轮完成遥控链路页主视觉分区与响应式比例调整；保留并继续维护当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -892,3 +892,17 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - Profile 匹配是 operation 与 buildInfo 两个 family 的交叉结论；只有两者均 fresh 才能显示当前匹配/不匹配，任一等待或超时均显示「无法确认」并分别标出两侧状态。
 - MockLink UI Integration 增加四种 BUILD_INFO digest chunk，验证 fresh 时 schema/profile 匹配；等待/超时后验证构建快照显示最近已知、Profile 匹配无法确认；operation 恢复但 buildInfo 仍 stale 时不得恢复为当前匹配。
 - 仅修改 GroundControl QML、MockLink UI Integration 与 SPEC/G15；不修改 BUILD_INFO 协议、构建快照缓存、Profile ID 定义或飞控控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
+
+
+## 60. Phase 2.16 遥控与链路页大屏主视觉布局适配（2026-11-15）
+
+- 本阶段适配对象是 Flight Diagnostics 第四页「遥控与链路」（FlightTelemetry.qml 的 flightTelemetry_rcLinkPageGrid），不是独立遥控校准页 FlightRadio.qml；后者保留既有校准、CRSF 绑定、微调量复制和原始 RC PWM 通道职责。
+- 16:9 桌面大屏（availableWidth ≥ 1280）采用两行主视觉布局：第一行「遥控输入监视」与「逻辑轴输入（实时）」各占 6/12；第二行「链路质量」占 8/12、「失控保护」占 4/12。优先给双摇杆和链路实例指标足够宽度，避免四张卡片等宽横排造成信息拥挤。
+- 中等宽度（760 ≤ availableWidth < 1280）使用 6 列网格：双摇杆与逻辑轴各占 3/6；链路质量占 4/6、失控保护占 2/6。窄屏（availableWidth < 760）恢复单列纵向顺序，确保无横向挤压。
+- 双摇杆卡保留两种手型映射实时驱动、真实值回中、无效轴不绘制 marker 的既有语义；摇杆圆形轨迹随可用宽度增大，最大直径 176 px，窄宽度保持至少 112 px。
+- 四个逻辑轴使用响应式仪表网格：中宽及以上两列两行，窄屏单列；不将四个归一化逻辑轴伪装成原始 PWM 通道。
+- 链路实例指标在大屏三列、中/窄屏两列、极窄屏单列显示；RSSI、链路质量、丢包率仍严格服从 per-instance freshness 与 validityMask。链路质量面板宽度优先级高于失控保护摘要。
+- 顶部 KPI、关键趋势、底部遥控与通信详情卡继续复用诊断大屏共享外壳、字体 token、状态色和卡片组件；不引入独立视觉体系，不重复构造顶部导航或连接状态。
+- MockLink UI Integration 新增/更新 1600、1000、900、700、400 px 布局断点断言：验证宽屏 6/6 + 8/4、中屏 3/3 + 4/2、窄屏单列；验证逻辑轴仪表 2/1 列、链路指标 3/2/1 列、双摇杆不越界与宽屏轨迹放大。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 和本 SPEC；不修改 FlightRadio.qml、MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、遥控手型映射算法、飞控判定或控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增布局回归状态为 NOT_RUN，待后续集中验收。
