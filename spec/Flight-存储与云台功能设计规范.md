@@ -112,7 +112,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 无兼容云台时的空态与禁用状态。
 - 云台发现、实时姿态、控制权获取/释放、外部 owner 禁止接管。
 - 链路丢失清除缓存所有权，恢复后等待新状态确认。
-- 拖动期间控制 Timer 运行，松开后停止。
+- 拖动期间控制 Timer 运行，松开后停止；MockLink 姿态回读与最终目标角度一致。
 - yaw-lock / retract 按设备能力门控。
 - 两个页面在 Armed / Flying 时保持可访问。
 

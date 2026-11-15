@@ -4,6 +4,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QPoint>
 #include <QtCore/QPointF>
+#include <cmath>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -155,6 +156,9 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("数据超时"), 1000);
             QVERIFY(!findItem(_rootItem, QStringLiteral("flightStorage_downloadLogs")));
             QVERIFY(!findItem(_rootItem, QStringLiteral("flightStorage_eraseLogs")));
+            QVERIFY(!findItem(_rootItem, QStringLiteral("flightStorage_logList")));
+            QVERIFY(!findItem(_rootItem, QStringLiteral("flightStorage_totalCapacity")));
+            QVERIFY(!findItem(_rootItem, QStringLiteral("flightStorage_usagePercent")));
         });
 }
 
@@ -235,14 +239,23 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QQuickItem *acquire = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_acquireControl"), 3000);
             QQuickItem *release = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_releaseControl"), 3000);
             QQuickItem *pitchSlider = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_pitchSlider"), 3000);
+            QQuickItem *rollValue = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_rollValue"), 3000);
+            QQuickItem *pitchValue = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_pitchValue"), 3000);
+            QQuickItem *yawValue = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_yawValue"), 3000);
             QQuickItem *yawMode = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_yawMode"), 3000);
             QQuickItem *retract = findItem(_rootItem, QStringLiteral("flightGimbal_retract"));
             QVERIFY(ownership);
             QVERIFY(acquire);
             QVERIFY(release);
             QVERIFY(pitchSlider);
+            QVERIFY(rollValue);
+            QVERIFY(pitchValue);
+            QVERIFY(yawValue);
             QVERIFY(yawMode);
             QVERIFY(retract);
+            QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() != QStringLiteral("—"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(pitchValue->property("text").toString() != QStringLiteral("—"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(yawValue->property("text").toString() != QStringLiteral("—"), 3000);
 
             QTRY_VERIFY_WITH_TIMEOUT(acquire->property("enabled").toBool(), 3000);
             QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
@@ -277,14 +290,22 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(!retract->isVisible(), 1000);
 
             // The page's 5 Hz target sender is active only while a slider is dragged.
+            const double pitchTargetBefore = pitchSlider->property("value").toDouble();
             const QPoint start = pitchSlider->mapToScene(
                 QPointF(pitchSlider->width() * 0.5, pitchSlider->height() * 0.5)).toPoint();
             const QPoint moved = start + QPoint(18, 0);
             QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
             QTest::mouseMove(_window, moved, 50);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("controlTimerRunning").toBool(), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                std::abs(pitchSlider->property("value").toDouble() - pitchTargetBefore) > 0.5, 1000);
+            const double pitchTargetAfter = pitchSlider->property("value").toDouble();
             QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, moved);
             QTRY_VERIFY_WITH_TIMEOUT(!page->property("controlTimerRunning").toBool(), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                std::abs(pitchValue->property("text").toString().remove(QChar(0x00B0)).toDouble() - pitchTargetAfter) < 3.0 ||
+                std::abs(pitchValue->property("text").toString().remove(QChar(0x00B0)).toDouble() + pitchTargetAfter) < 3.0,
+                3000);
 
             QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),

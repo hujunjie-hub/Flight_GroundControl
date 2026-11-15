@@ -480,7 +480,8 @@
         "gimbal_optional_controls_follow_advertised_yaw_lock_and_retract_capabilities",
         "gimbal_control_timer_starts_on_drag_and_stops_on_release",
         "storage_and_gimbal_setup_pages_remain_accessible_when_armed_and_declare_flying_access",
-        "mocklink_gimbal_releases_primary_owner_for_configure_minus_three_sentinel"
+        "mocklink_gimbal_releases_primary_owner_for_configure_minus_three_sentinel",
+        "gimbal_slider_target_is_reflected_by_mocklink_attitude_feedback"
       ]
     }
   ],
