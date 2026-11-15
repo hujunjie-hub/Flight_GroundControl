@@ -370,6 +370,8 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
 
             Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
             QVERIFY(activeGimbal);
+            QCOMPARE(activeGimbal->deviceId()->rawValue().toUInt(),
+                     static_cast<uint32_t>(MAV_COMP_ID_GIMBAL));
 
             // Device 155 is emitted by MockLink as a second independent
             // device behind the same Gimbal Manager component.
