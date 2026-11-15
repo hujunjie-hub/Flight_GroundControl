@@ -5532,9 +5532,23 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     dashboardReadOnlyBadge, 0, 0);
                 const QPointF dotTopLeft = dashboardReadOnlyDot->mapToItem(
                     dashboardReadOnlyContent, 0, 0);
+                const QPointF headerTextTopLeft = dashboardHeaderText->mapToItem(
+                    dashboardHeaderRow, 0, 0);
+                const QPointF badgeTopLeft = dashboardReadOnlyBadge->mapToItem(
+                    dashboardHeaderRow, 0, 0);
+                const bool headerTextAndBadgeSeparated =
+                    headerTextTopLeft.x() + dashboardHeaderText->width() <= badgeTopLeft.x() + 1.0 ||
+                    badgeTopLeft.x() + dashboardReadOnlyBadge->width() <= headerTextTopLeft.x() + 1.0 ||
+                    headerTextTopLeft.y() + dashboardHeaderText->height() <= badgeTopLeft.y() + 1.0 ||
+                    badgeTopLeft.y() + dashboardReadOnlyBadge->height() <= headerTextTopLeft.y() + 1.0;
                 return itemFitsInParent(dashboardHeaderAccent, dashboardHeaderRow) &&
                        itemFitsInParent(dashboardHeaderText, dashboardHeaderRow) &&
                        itemFitsInParent(dashboardReadOnlyBadge, dashboardHeaderRow) &&
+                       headerTextAndBadgeSeparated &&
+                       qAbs(dashboardHeaderRow->x() -
+                            page->property("_dashboardHeaderInset").toReal()) < 1.0 &&
+                       qAbs(dashboardHeaderRow->y() -
+                            page->property("_dashboardHeaderInset").toReal()) < 1.0 &&
                        contentTopLeft.x() >= horizontalInset - 1.0 &&
                        contentTopLeft.y() >= verticalInset - 1.0 &&
                        contentTopLeft.x() + dashboardReadOnlyContent->width() <=
@@ -5549,6 +5563,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        itemFitsInParent(dashboardOverviewTabIcon, dashboardOverviewTab) &&
                        itemFitsInParent(dashboardOverviewTabIndicator, dashboardOverviewTab) &&
                        itemFitsInParent(overviewHeroAccent, overviewHeroPanel) &&
+                       qAbs(dashboardOverviewTab->height() -
+                            page->property("_dashboardTabHeight").toReal()) < 1.0 &&
+                       qAbs(dashboardReadOnlyDot->width() -
+                            page->property("_dashboardReadOnlyDotSize").toReal()) < 1.0 &&
+                       qAbs(dashboardReadOnlyDot->height() -
+                            page->property("_dashboardReadOnlyDotSize").toReal()) < 1.0 &&
                        qAbs(dashboardHeaderAccent->width() -
                             page->property("_dashboardHeaderAccentWidth").toReal()) < 1.0 &&
                        qAbs(dashboardOverviewTabIcon->width() -
