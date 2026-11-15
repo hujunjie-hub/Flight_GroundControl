@@ -3298,6 +3298,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(resourceMetrics->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#49C7E7")), 3000);
             sendResourceStatus(2250, 0, 0x05);
+            resourceCpu = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceCpu_0"), 3000);
+            resourceMetrics = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetrics_0"), 3000);
+            resourceStackFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceStackFree_0"), 3000);
+            resourceDeadlineMiss = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceDeadlineMiss_0"), 3000);
+            resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
+            resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
+            resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            QVERIFY(resourceCpu);
+            QVERIFY(resourceMetrics);
+            QVERIFY(resourceStackFree);
+            QVERIFY(resourceDeadlineMiss);
+            QVERIFY(resourceAxiFree);
+            QVERIFY(resourceTaskCard);
+            QVERIFY(resourceMetricGrid);
             QTRY_COMPARE_WITH_TIMEOUT(resourceMetrics->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#49C7E7")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceStackFree->property("color").value<QColor>(),
@@ -3311,6 +3325,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(resourceAxiFree->property("text").toString(),
                                       translatedTelemetryText("无效"), 3000);
             sendResourceStatus(2260, 0, 0x0F);
+            resourceCpu = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceCpu_0"), 3000);
+            resourceMetrics = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetrics_0"), 3000);
+            resourceStackFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceStackFree_0"), 3000);
+            resourceDeadlineMiss = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceDeadlineMiss_0"), 3000);
+            resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
+            resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
+            resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            QVERIFY(resourceCpu);
+            QVERIFY(resourceMetrics);
+            QVERIFY(resourceStackFree);
+            QVERIFY(resourceDeadlineMiss);
+            QVERIFY(resourceAxiFree);
+            QVERIFY(resourceTaskCard);
+            QVERIFY(resourceMetricGrid);
             QTRY_COMPARE_WITH_TIMEOUT(resourceStackFree->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#49C7E7")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceAxiFree->property("color").value<QColor>(),
@@ -3405,6 +3433,44 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QVERIFY2(healthCells[index], qPrintable(objectName));
                 QTRY_COMPARE_WITH_TIMEOUT(healthCells[index]->property("radius").toInt(), 6, 3000);
             }
+            sensorCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_sensors"), 3000);
+            sensorInstanceCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
+            sensorState = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceState_1"), 3000);
+            sensorDetails = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceDetails_1"), 3000);
+            prearmDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
+            prearmMetadataGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmMetadataGrid"), 3000);
+            prearmCheckCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmCheckCard_1"), 3000);
+            prearmRow = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmCheckRow_1"), 3000);
+            prearmId = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmCheckId_1"), 3000);
+            prearmState = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmCheckState_1"), 3000);
+            prearmDetails = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_prearmCheckDetails_1"), 3000);
+            resourcesDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
+            resourceCpu = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceCpu_0"), 3000);
+            resourceMetrics = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetrics_0"), 3000);
+            resourceStackFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceStackFree_0"), 3000);
+            resourceDeadlineMiss = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceDeadlineMiss_0"), 3000);
+            resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
+            resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
+            resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            QVERIFY(resourceCpu);
+            QVERIFY(resourceMetrics);
+            QVERIFY(resourceStackFree);
+            QVERIFY(resourceDeadlineMiss);
+            QVERIFY(resourceAxiFree);
+            QVERIFY(resourceTaskCard);
+            QVERIFY(resourceMetricGrid);
+            QVERIFY(sensorCard);
+            QVERIFY(sensorInstanceCard);
+            QVERIFY(sensorState);
+            QVERIFY(sensorDetails);
+            QVERIFY(prearmDetail);
+            QVERIFY(prearmMetadataGrid);
+            QVERIFY(prearmCheckCard);
+            QVERIFY(prearmRow);
+            QVERIFY(prearmId);
+            QVERIFY(prearmState);
+            QVERIFY(prearmDetails);
+            QVERIFY(resourcesDetail);
             const auto healthMatrixCellsFit = [&]() {
                 for (QQuickItem* cell : healthCells) {
                     if (!cell) return false;
