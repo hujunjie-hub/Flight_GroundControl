@@ -3938,7 +3938,7 @@ SetupPage {
         Layout.fillWidth: true
         Layout.fillHeight: true
         implicitWidth: 180
-        implicitHeight: root.availableWidth < 760 ? 82 : 66
+        implicitHeight: Math.max(root.availableWidth < 760 ? 82 : 66, summaryContent.implicitHeight + 20)
         radius: 0
         color: "transparent"
         border.width: 0
@@ -3984,11 +3984,14 @@ SetupPage {
                 }
 
                 QGCLabel {
+                    objectName: tile.objectName + "_detail"
                     Layout.fillWidth: true
                     visible: root.availableWidth < 760 && tile.detailText !== ""
                     text: tile.detailText
                     color: "#8BAEB7"
                     font.pointSize: ScreenTools.microFontPointSize
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
                     elide: Text.ElideRight
                 }
             }

@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.7  
+版本：4.8  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -371,3 +371,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 运行 `ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss`：Generic MockLink fresh 时提示隐藏；通信丢失后提示可见且明确说明通信丢失；收到新 SYS_STATUS 并恢复 fresh 后提示再次隐藏。
 - 通信恢复信号本身不得恢复缓存传感器状态；必须由新 SYS_STATUS 驱动恢复。
 - 本轮按用户要求不运行 CI/Unit/Integration；以上状态均为 NOT_RUN，FGC-0049 保持 FIXED_WAITING_RETEST。
+
+
+### G15 顶部 KPI 窄屏辅助说明换行补充（2026-11-15）
+
+- 内容宽度低于 760 px 时，六项 KPI 辅助说明使用 WordWrap，最多显示两行；仅超过两行才尾部省略。
+- Tile 高度按实际内容 implicitHeight 增长，不能固定在 82 px 后裁切辅助说明。
+- 集中验收需覆盖页面宽度 700 px 双列和 400 px 单列，确认辅助说明可见、最多两行、Tile 与内容区域不越界。
+- 新增 MockLink UI Integration 断言，本轮未运行 CI；此项为待执行验收，不构成 PASS。

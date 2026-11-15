@@ -107,6 +107,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
             QQuickItem* summaryLink =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+            QQuickItem* summaryLinkDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink_detail"));
             QQuickItem* summaryTime =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTime"), 3000);
             QQuickItem* dashboardTitle =
@@ -210,6 +212,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
             QVERIFY(summaryLink);
+            QVERIFY(summaryLinkDetail);
             QVERIFY(summaryTime);
             QVERIFY(dashboardTitle);
             QVERIFY(dashboardSubtitle);
@@ -470,6 +473,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->property("wrapMode").isValid(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->height() > 0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
@@ -479,6 +486,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(

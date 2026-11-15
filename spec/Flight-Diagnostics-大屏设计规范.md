@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.15
+- 版本：6.16
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness 与时间质量/UTC 颜色语义已收敛；总览与遥控页链路 KPI 均按逐实例 fresh/total 数量和状态颜色呈现；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 与链路实例覆盖率已闭环；时间质量/UTC 颜色语义已拆分；本轮补齐顶部 KPI 窄屏辅助说明换行和内容自适应高度；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -725,3 +725,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 遥控与链路页的链路实例 KPI 复用同一聚合颜色规则，避免同一组链路在总览与专页呈现不同的健康色。
 - MockLink Integration 覆盖三实例全部新鲜、GCS/其他实例超时而 RC 仍新鲜的 3/3 → 1/3 数量变化与颜色降级。
 - 仅修改 GroundControl QML、UI Integration 与 SPEC/G15；不修改 MAVLink、FactGroup、链路状态生成或飞控控制逻辑。本轮不运行 CI，待集中验收。
+
+
+## 45. Phase 2.9 顶部 KPI 窄屏辅助说明自适应（2026-11-15）
+
+- 六项顶部 KPI 在内容宽度低于 760 px 时显示辅助说明；辅助说明使用 WordWrap，最多显示两行，超出两行才允许尾部省略。
+- KPI Tile 高度由标题、主值、辅助说明的实际 implicitHeight 加内边距决定，不再仅使用固定 82 px 高度；桌面仍保持不低于 66 px 的基准高度。
+- 400 px 单列布局和 700 px 双列布局必须保证文字区域位于 Tile 边界内，不能因固定高度裁掉第二行。
+- 为辅助说明增加稳定 objectName 后缀 _detail，用于回归测试，不改变既有 selector。
+- MockLink UI Integration 在 700/400 px 两个断点检查辅助说明可见、最大两行、wrapMode 生效，以及全部六个 KPI tile/content 不溢出。
+- 仅修改 QML 布局、UI Integration 与验收文档；不改变遥测数据、健康判定、MAVLink 协议或控制行为。本轮不运行 CI，回归待集中验收。
