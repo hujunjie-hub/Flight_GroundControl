@@ -244,7 +244,15 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
     }
 
     QVariantMap selectedProfile;
+    QStringList parameterNames;
+    QStringList parameterDomains;
+
     if (!profileId.isEmpty()) {
+        if (!_parameterMgr || !_parameterMgr->parametersReady() ||
+            _parameterMgr->missingParameters() || _parameterMgr->parameterDownloadSkipped()) {
+            return false;
+        }
+
         for (const QVariant &value : _vehicle->vehicleModelProfiles()) {
             const QVariantMap candidate = value.toMap();
             if (candidate.value(QStringLiteral("id")).toString() != profileId) {
@@ -261,22 +269,74 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
         if (selectedProfile.isEmpty()) {
             return false;
         }
-    }
 
-    QStringList parameterNames;
-    QStringList parameterDomains;
-    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterNames")).toList()) {
-        if (!value.toString().isEmpty()) {
-            parameterNames.append(value.toString());
+        static const QSet<QString> supportedDomains {
+            QStringLiteral("VEHICLE_MODEL"),
+            QStringLiteral("FMS"),
+            QStringLiteral("CONTROL"),
+            QStringLiteral("INS"),
+            QStringLiteral("PLANT"),
+            QStringLiteral("ACTUATOR"),
+            QStringLiteral("SIMULATION")
+        };
+
+        QSet<QString> uniqueParameterNames;
+        for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterNames")).toList()) {
+            const QString name = value.toString().trimmed();
+            if (name.isEmpty() || uniqueParameterNames.contains(name)) {
+                qCWarning(ParameterEditorControllerLog)
+                    << "Rejecting Flight model profile with an empty or duplicate parameter name:"
+                    << profileId << name;
+                return false;
+            }
+            uniqueParameterNames.insert(name);
+            parameterNames.append(name);
         }
-    }
-    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterDomains")).toList()) {
-        if (!value.toString().isEmpty()) {
-            parameterDomains.append(value.toString());
+
+        QSet<QString> uniqueParameterDomains;
+        for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterDomains")).toList()) {
+            const QString domain = value.toString().trimmed();
+            if (domain.isEmpty() || !supportedDomains.contains(domain) ||
+                uniqueParameterDomains.contains(domain)) {
+                qCWarning(ParameterEditorControllerLog)
+                    << "Rejecting Flight model profile with an empty, duplicate or unsupported domain:"
+                    << profileId << domain;
+                return false;
+            }
+            uniqueParameterDomains.insert(domain);
+            parameterDomains.append(domain);
         }
-    }
-    if (!profileId.isEmpty() && (parameterNames.isEmpty() || parameterDomains.isEmpty())) {
-        return false;
+
+        if (parameterNames.isEmpty() || parameterDomains.isEmpty()) {
+            return false;
+        }
+
+        // A profile is valid only when every registered parameter is present in the
+        // downloaded active-vehicle list and its live Fact metadata belongs to one
+        // of the profile's declared domains. This catches stale or mismatched catalogs.
+        QSet<QString> resolvedParameterNames;
+        for (const int componentId : _parameterMgr->componentIds()) {
+            for (const QString &liveName : _parameterMgr->parameterNames(componentId)) {
+                if (!uniqueParameterNames.contains(liveName)) {
+                    continue;
+                }
+                Fact *const liveFact = _parameterMgr->getParameter(componentId, liveName);
+                if (!liveFact || !uniqueParameterDomains.contains(liveFact->category())) {
+                    qCWarning(ParameterEditorControllerLog)
+                        << "Rejecting Flight model profile because a live parameter has an undeclared domain:"
+                        << profileId << liveName << (liveFact ? liveFact->category() : QString());
+                    return false;
+                }
+                resolvedParameterNames.insert(liveName);
+            }
+        }
+
+        if (resolvedParameterNames != uniqueParameterNames) {
+            qCWarning(ParameterEditorControllerLog)
+                << "Rejecting Flight model profile because one or more registered parameters are missing:"
+                << profileId << (uniqueParameterNames - resolvedParameterNames).values();
+            return false;
+        }
     }
 
     if (_selectedModelProfileId == profileId &&
