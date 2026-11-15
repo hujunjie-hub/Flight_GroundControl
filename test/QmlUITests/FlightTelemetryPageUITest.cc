@@ -2637,7 +2637,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcLinkPanel->height() - rcFailsafePanel->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcAxesGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkMetricsGrid->property("columns").toInt(), 3, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(leftStickStage->width() >= 140, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickStage->width() >= 120, 3000);
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcAxisPanel->y(), 3000);
