@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.6
+- 版本：1.7
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -80,6 +80,8 @@
 
 显示设备数量、设备 ID、管理组件 ID，以及横滚、俯仰和偏航角。设备列表为空时显示明确空态，不显示可操作的控制项。
 
+同一个 Gimbal Manager 可以管理多个设备。GroundControl 必须以 `(manager component ID, gimbal_device_id)` 作为设备唯一键；不得只按 manager component ID 合并设备。
+
 ### 3.2 控制权安全规则
 
 - 初始状态不自动获取控制权；操作员必须明确点击「获取控制权」。所有控制器入口均不得在发送姿态命令时隐式申请或抢占控制权。
@@ -110,12 +112,24 @@
 
 ## 4. MockLink 合约
 
+MockLink 的多设备模拟必须遵守以下规则：
+
+- 默认保持单设备行为：设备 ID 154，管理组件 ID 1。
+- 测试选项 `OptionEnableMultipleGimbals` 启用第二台独立设备 ID 155；两台设备共用 manager component ID 1，但分别维护姿态、角速度、yaw-lock、retract、能力标志、消息间隔和 primary/secondary owner pair。
+- 管理器收到 `MAV_CMD_REQUEST_MESSAGE(GIMBAL_MANAGER_INFORMATION)` 时，必须分别为每台设备发送一帧信息；`GIMBAL_MANAGER_STATUS` 必须按设备分别发送，且每帧携带对应 `gimbal_device_id`。
+- 设备 ID 大于 6 时，`GIMBAL_DEVICE_ATTITUDE_STATUS` 使用设备 ID 作为 MAVLink component ID，消息内 `gimbal_device_id=0`；设备 ID 1-6 使用 manager component ID，并在消息字段中携带真实设备 ID。
+- manager status 消息间隔设置应用于该 manager 下的所有设备；姿态状态间隔按设备 component ID 路由。设备 ID 1-6 的姿态状态间隔由 manager component 路由。
+- `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 与 `MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE` 的 param7 必须路由到对应设备；兼容值 0 仅指向默认设备 154，不得广播改变所有设备。
+- `GIMBAL_MANAGER_SET_ATTITUDE.gimbal_device_id` 为 0 时兼容指向默认设备 154；显式设备 ID 只改变对应设备。
+- 未知设备 ID 必须拒绝；不同设备的姿态、角速度和 owner pair 不得互相覆盖。
+- 多设备模拟必须通过真实 MockLink 消息输出完成发现与状态回读；测试不得再以手工注入第二台设备状态帧替代模拟器实现。
+
 MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 
 - 每个参数按 MAVLink 定义解释：0 = 无人控制（清空对应字段）；-1 = 保持不变；-2 = 将发送方自己的 system/component ID 写入对应字段；-3 = 仅当发送方拥有完整 owner pair 时释放该 pair；正整数 = 设置显式 ID。
 - -3 必须以完整的 sysid/compid 参数对出现；部分 -3、部分清零导致的半 owner pair、非整数 ID、越界 ID、零源 ID 的 -2 和未定义负值均拒绝，拒绝时不得改变任一 owner slot。
 - 未持有 primary/secondary 控制权的发送方，其 `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 命令必须被拒绝。
-- PITCHYAW 的 param7 只允许 0（全部设备）或本 MockLink 云台设备 ID；未知设备 ID、无穷角度/角速度和未知 flags 位必须拒绝。
+- PITCHYAW 的 param7 只允许 0（兼容指向默认设备 154）或已模拟设备 ID；未知设备 ID、无穷角度/角速度和未知 flags 位必须拒绝。
 - `GIMBAL_MANAGER_SET_ATTITUDE` 仅接受当前 MockLink 约定的 rate-only NaN quaternion 形式；目标设备、目标组件、控制权、轴能力、角速度有限性和 flags 位均须校验。
 - yaw-lock 与 retract 命令必须在后续 GIMBAL_DEVICE_ATTITUDE_STATUS 中反映真实状态变化。
 - 不得因为其他 GCS 发来 -3 就清除当前 owner。
@@ -136,6 +150,8 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 云台验证半 owner pair 显示无效并 fail-closed、pitch/yaw 轴 capability 门控、未知设备 ID 和非有限目标值拒绝、`GIMBAL_MANAGER_SET_ATTITUDE` 角速度控制与停止回读，以及 yaw-lock / retract 的遥测回读。
 - 云台在角速度周期发送期间释放控制权时，验证零速帧先于 owner release 命令发送，且释放后姿态不再继续漂移。
 - 活动设备切换验证：拒绝未发现/未完成的 Gimbal 实例；本机仍持有有效控制权时拒绝切换；释放后允许选择列表中的完整设备。
+- MockLink 多设备验证：不手工注入第二设备 MAVLink 帧；由模拟器真实发现设备 154/155，并验证共享 manager ID、独立 device ID、独立 capability、独立 owner pair、独立姿态回读。
+- 第二设备 155 获取控制权并执行姿态命令时，第一设备 154 的姿态和 owner pair 必须保持不变；设备 155 不支持 yaw-lock / retract 时对应控制入口必须禁用或隐藏。
 - 设备选择器的禁用条件必须基于新鲜且有效的本机 primary owner 状态；manager status 超时后不得因缓存的 `gimbalHaveControl` 位而永久锁定设备选择。
 - QML 的管理状态/姿态状态年龄必须由可见页面的周期刷新依赖驱动；不得假设 `QElapsedTimer::elapsed()` 会自行触发属性通知。停止状态流后，界面仍须分别跨过 6500 ms / 3500 ms 超时门限。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
