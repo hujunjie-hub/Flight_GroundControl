@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.31
+- 版本：6.32
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC/链路详情 freshness 持续收口；本轮补齐 RC 有效轴计数、手型标签与 FCU/地面站接收年龄语义；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；操作/导航/时间详情 freshness 已收口；本轮补齐导航页重复摘要面板与健康维护启动 ID freshness；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -861,3 +861,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 轴输入面板命名为「逻辑轴输入（实时）」，准确反映 FlightTelemetry 当前发布的是横滚、俯仰、偏航、油门四个归一化逻辑轴，而非原始 PWM 通道。
 - MockLink UI Integration 覆盖正常轴 4/4、掩码置位但横滚数值越界时 3/4、恢复后 4/4；同时检查 KPI 年龄语义、FCU 侧年龄标签、逻辑轴标题及三种中文手型标签。
 - 仅修改 GroundControl QML、对应 UI Integration 与本 SPEC；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、FlightRadio 手型映射算法、飞控判定或控制行为。本轮不运行、不触发 CI，新增回归状态为 NOT_RUN。
+
+
+## 59. Phase 2.14 导航/时间重复摘要面板与维护启动 ID freshness（2026-11-15）
+
+- 导航页能力面板中的状态代次、原点 ID、能力掩码、FCU 数据年龄和原因服从 navigation family freshness，避免导航页主 KPI 已超时但同页摘要仍显示旧值。
+- 导航页时间面板中的时间质量、本地时钟纪律、事件不确定度、时间代次和时钟源映射代次服从 time family freshness；时间质量颜色与时间质量卡一致，UTC 时间仍由 utc_valid 额外门控。
+- 健康维护区的启动 ID 服从 operation family freshness；等待/超时明确显示对应状态，不把旧启动 ID 作为当前运行上下文。
+- RC 链路摘要继续使用 _rcLinkStateText/_rcLinkStateColor，已按 rcInput family freshness 显示状态和颜色；本轮不重复修改。
+- MockLink UI Integration 覆盖导航/时间摘要面板和启动 ID 的等待、接收、超时与恢复；本轮不运行 CI，新增断言为 NOT_RUN。
+- 仅修改 GroundControl QML、UI Integration 与 SPEC/G15，不改变 MAVLink、FactGroup freshness 阈值或飞控控制行为。
