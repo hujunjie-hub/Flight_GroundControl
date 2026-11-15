@@ -2452,16 +2452,38 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
                         QQuickItem* rightStickAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
+                        QQuickItem* axesGridAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxesGrid"), 3000);
+                        QQuickItem* linkMetricsAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
                         for (QQuickItem* panel : rcPanels) QVERIFY(panel);
                         QVERIFY(leftStickAtWidth);
                         QVERIFY(rightStickAtWidth);
-                        for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
-                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[panelIndex - 1]->y() < rcPanels[panelIndex]->y(), 3000);
-                            QTRY_VERIFY_WITH_TIMEOUT(
-                                qAbs(rcPanels[panelIndex - 1]->x() - rcPanels[panelIndex]->x()) < 1.0, 3000);
-                            QTRY_VERIFY_WITH_TIMEOUT(
-                                qAbs(rcPanels[panelIndex - 1]->width() - rcPanels[panelIndex]->width()) < 1.0, 3000);
+                        QVERIFY(axesGridAtWidth);
+                        QVERIFY(linkMetricsAtWidth);
+                        if (widthIndex < 2) {
+                            QTRY_COMPARE_WITH_TIMEOUT(rcPanels[0]->y(), rcPanels[1]->y(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->x() < rcPanels[1]->x(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->width() >= grid->width() * 0.45 &&
+                                                         rcPanels[1]->width() >= grid->width() * 0.45, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->y() < rcPanels[2]->y(), 3000);
+                            QTRY_COMPARE_WITH_TIMEOUT(rcPanels[2]->y(), rcPanels[3]->y(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[2]->x() < rcPanels[3]->x(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[2]->width() >= grid->width() * 0.60 &&
+                                                         rcPanels[3]->width() >= grid->width() * 0.25, 3000);
+                            QTRY_COMPARE_WITH_TIMEOUT(axesGridAtWidth->property("columns").toInt(), 2, 3000);
+                        } else {
+                            for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
+                                QTRY_VERIFY_WITH_TIMEOUT(rcPanels[panelIndex - 1]->y() < rcPanels[panelIndex]->y(), 3000);
+                                QTRY_VERIFY_WITH_TIMEOUT(
+                                    qAbs(rcPanels[panelIndex - 1]->x() - rcPanels[panelIndex]->x()) < 1.0, 3000);
+                                QTRY_VERIFY_WITH_TIMEOUT(
+                                    qAbs(rcPanels[panelIndex - 1]->width() - rcPanels[panelIndex]->width()) < 1.0, 3000);
+                            }
+                            QTRY_COMPARE_WITH_TIMEOUT(axesGridAtWidth->property("columns").toInt(), 1, 3000);
                         }
+                        QTRY_COMPARE_WITH_TIMEOUT(linkMetricsAtWidth->property("columns").toInt(),
+                                                  widthIndex == 3 ? 1 : 2, 3000);
                         const auto itemFitsInPanel = [](QQuickItem* item, QQuickItem* panel) {
                             const auto topLeft = item->mapToItem(panel, 0, 0);
                             return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
@@ -2524,6 +2546,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
             QQuickItem* leftStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
             QQuickItem* rightStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
+            QQuickItem* leftStickStage = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLeftStick_stage"), 3000);
+            QQuickItem* rcAxesGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcAxesGrid"), 3000);
+            QQuickItem* linkMetricsGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
             QQuickItem* leftMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
             QQuickItem* rightMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
             QVERIFY(rcGrid);
@@ -2533,25 +2561,34 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcFailsafePanel);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
+            QVERIFY(leftStickStage);
+            QVERIFY(rcAxesGrid);
+            QVERIFY(linkMetricsGrid);
             QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcAxisPanel->y(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcLinkPanel->y(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcFailsafePanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcLinkPanel->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkPanel->y(), rcFailsafePanel->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcAxisPanel->width()) < 1.0, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcLinkPanel->width()) < 1.0, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->width() - rcFailsafePanel->width()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->width() >= rcGrid->width() * 0.45 &&
+                                         rcAxisPanel->width() >= rcGrid->width() * 0.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() >= rcGrid->width() * 0.60 &&
+                                         rcFailsafePanel->width() >= rcGrid->width() * 0.25, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcAxisPanel->height()) < 1.0, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcLinkPanel->height()) < 1.0, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcFailsafePanel->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcLinkPanel->height() - rcFailsafePanel->height()) < 1.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAxesGrid->property("columns").toInt(), 2, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkMetricsGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickStage->width() >= 140, 3000);
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 6, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcAxisPanel->y() &&
-                                         rcAxisPanel->y() < rcLinkPanel->y() &&
-                                         rcLinkPanel->y() < rcFailsafePanel->y(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->width() >= rcGrid->width() * 0.90 &&
-                                         rcAxisPanel->width() >= rcGrid->width() * 0.90 &&
-                                         rcLinkPanel->width() >= rcGrid->width() * 0.90 &&
-                                         rcFailsafePanel->width() >= rcGrid->width() * 0.90, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcStickPanel->y(), rcAxisPanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcLinkPanel->y(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkPanel->y(), rcFailsafePanel->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->width() >= rcGrid->width() * 0.45 &&
+                                         rcAxisPanel->width() >= rcGrid->width() * 0.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() >= rcGrid->width() * 0.60 &&
+                                         rcFailsafePanel->width() >= rcGrid->width() * 0.25, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAxesGrid->property("columns").toInt(), 2, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkMetricsGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(rcGrid->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcStickPanel->y() < rcAxisPanel->y() &&
