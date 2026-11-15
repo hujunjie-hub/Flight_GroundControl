@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.17
+- 版本 5.18
 - 日期 2026-11-16
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -293,3 +293,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-16 飞行健康页 Phase 2.73：维护与可靠性下半区拆分为启动身份、最近异常、预检/资源三张独立卡片；卡片内边距/间距按 ScreenTools 缩放，保留事件颜色、接收年龄、预检覆盖和资源值。新增卡片边界与 1280/760 px 响应式回归，未运行 CI，新增验收 NOT_RUN。
+
+
+- 2026-11-16 飞行健康页 Phase 2.74：维护资源快照中的 CPU/WCET/系统栈/存储四项数值改为统一 ScreenTools 缩放指标 tile；原文案、单位、精度、对象名、freshness 和状态色保持不变。新增四项 tile 的父子边界/implicitHeight/多视口回归，未运行 CI，新增验收 NOT_RUN。
