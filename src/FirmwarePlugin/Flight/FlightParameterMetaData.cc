@@ -9,6 +9,7 @@
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
 
+#include <algorithm>
 #include <cmath>
 
 QGC_LOGGING_CATEGORY(FlightParameterMetaDataLog, "FirmwarePlugin.FlightParameterMetaData")
