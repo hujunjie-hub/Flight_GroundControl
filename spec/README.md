@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.50
+- 版本 4.51
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -213,3 +213,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 趋势卡状态表达增量：每张趋势卡新增独立「断点 N」计数，历史断点不因最新样本恢复而清除；WAIT/NOW/GAP 单独表达最新样本状态。新增 MockLink 过期→恢复与 1600/400 px footer 边界断言。本轮未运行 CI，新增断言 NOT_RUN。
 
 - 2026-11-15 总览整机状态优先级调整：飞行模式作为主视觉，解锁状态独立显示，失效保护升级为全宽分级安全状态条，控制权下沉为次级行；freshness 与业务状态分开表达。新增 MockLink WAIT/fresh/stale 与 1600/1000/400 px 内容边界断言。本轮未运行 CI，新增回归 NOT_RUN。
+
+- 2026-11-15 总览告警区层级优化：最高严重度事件提升为主告警卡，原因成为主标题，严重度/本地序号/FCU ID/来源/FCU 启动时间分组显示；补充事件总数、明确空态与未知严重度标识。新增 MockLink 首要事件和 700/400 px 边界断言。本轮未运行 CI，新增回归 NOT_RUN。
