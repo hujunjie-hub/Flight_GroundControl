@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.4
+- 版本：6.5
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；导航时序页已补充 FCU UTC 绝对时间、freshness 门控、无效断点与状态颜色；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -635,3 +635,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 解锁前检查每项独立执行 prearm freshness 门控；过期结果显示「数据超时 · 最近结果：通过/失败/警告」，原因与恢复条件明确标注为最近上报；摘要与覆盖率只统计当前新鲜项，分别报告超时和未收到项。
 - MockLink Integration 注入真实 FCU_SENSOR_HEALTH 与 FCU_PREARM_STATUS 帧，验证 per-instance/per-check receiveAgeMs、fresh/stale 文案、健康/通过结果、原因与恢复条件、1/4 传感器覆盖率和 1/15 预检覆盖率。
 - 本阶段仅调整 GroundControl 接收时间记录与飞行健康页展示；不改变 MAVLink 字段、飞控检查判定、预检恢复条件、安全权限、传感器健康策略或其他三个诊断页面。
+
+
+## Phase 2.7 控制器与执行器详情 freshness 闭环（2026-11-15）
+
+- 控制器详情卡的求解器状态、控制序号、求解耗时、可控/降级 DOF、原因和 FCU 发布时间统一受 controlAvailable family freshness 门控；超时/等待时显示对应状态，不把缓存 Fact 当作当前控制状态。
+- 执行器详情卡的控制序号、输出许可代次、可用/饱和掩码、输出策略、反馈能力、原因和 FCU 发布时间统一受 actuatorAvailable freshness 门控。
+- 安全监测面板中的控制求解器摘要与控制器详情使用相同 freshness 语义。
+- 新增 _familyFreshValue 展示层 helper，不修改 freshness 窗口、Fact、MAVLink、Flight ICD 或飞控状态判定。
+- 集中验收需覆盖 control/actuator fresh → stale → recovered；本轮 CI 未运行，状态 NOT_RUN。
+- 仅修改飞行健康页展示与 SPEC，不影响其他三个页面。

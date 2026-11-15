@@ -647,6 +647,11 @@ SetupPage {
         return ageMs > _familyFreshnessLimitMs(family) ? qsTr("数据超时") : qsTr("已接收")
     }
 
+    function _familyFreshValue(availableFact, valueText) {
+        const status = _familyStatus(availableFact)
+        return status === qsTr("已接收") ? valueText : status
+    }
+
     function _familyStatusColor(name) {
         const status = _familyStatus(name)
         if (status === qsTr("已接收")) {
@@ -2106,9 +2111,7 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("解锁前检查"); valueText: root._prearmSummaryText() }
                     TelemetryRow {
                         labelText: qsTr("控制求解器")
-                        valueText: root._familyStatus("controlAvailable") === qsTr("已接收")
-                                   ? root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])
-                                   : root._familyStatus("controlAvailable")
+                        valueText: root._familyFreshValue("controlAvailable", root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")]))
                     }
                     TelemetryRow {
                         objectName: "flightTelemetry_healthSafetyActuatorMask"
@@ -2807,13 +2810,13 @@ SetupPage {
                     title: qsTr("控制器状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("controlAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("control") }
-                    TelemetryRow { labelText: qsTr("求解器"); valueText: root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")]) }
-                    TelemetryRow { labelText: qsTr("控制序号"); valueText: root._integer("controlSequence") }
-                    TelemetryRow { labelText: qsTr("求解耗时"); valueText: root._number("controlSolveTimeUs", 0, " μs") }
-                    TelemetryRow { labelText: qsTr("可控 DOF"); valueText: root._mask("controllableDofMask") }
-                    TelemetryRow { labelText: qsTr("降级 DOF"); valueText: root._mask("degradedDofMask") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(2, root._fact("controlReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("controlTimeBootUs") }
+                    TelemetryRow { labelText: qsTr("求解器"); valueText: root._familyFreshValue("controlAvailable", root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])) }
+                    TelemetryRow { labelText: qsTr("控制序号"); valueText: root._familyFreshValue("controlAvailable", root._integer("controlSequence")) }
+                    TelemetryRow { labelText: qsTr("求解耗时"); valueText: root._familyFreshValue("controlAvailable", root._number("controlSolveTimeUs", 0, " μs")) }
+                    TelemetryRow { labelText: qsTr("可控 DOF"); valueText: root._familyFreshValue("controlAvailable", root._mask("controllableDofMask")) }
+                    TelemetryRow { labelText: qsTr("降级 DOF"); valueText: root._familyFreshValue("controlAvailable", root._mask("degradedDofMask")) }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._familyFreshValue("controlAvailable", root._reasonText(2, root._fact("controlReasonCode"))) }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._familyFreshValue("controlAvailable", root._timestamp("controlTimeBootUs")) }
                 }
 
                 StatusCard {
@@ -2825,14 +2828,14 @@ SetupPage {
                     title: qsTr("执行器状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("actuatorAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("actuator") }
-                    TelemetryRow { labelText: qsTr("控制序号"); valueText: root._integer("actuatorControlSequence") }
-                    TelemetryRow { labelText: qsTr("输出许可代次"); valueText: root._integer("actuatorPermitEpoch") }
-                    TelemetryRow { labelText: qsTr("可用执行器"); valueText: root._mask("actuatorAvailableMask") }
-                    TelemetryRow { labelText: qsTr("饱和执行器"); valueText: root._mask("actuatorSaturatedMask") }
-                    TelemetryRow { labelText: qsTr("输出策略"); valueText: root._integer("actuatorOutputPolicyId") }
-                    TelemetryRow { labelText: qsTr("反馈能力"); valueText: root._integer("actuatorFeedbackCapability") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("actuatorReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("actuatorTimeBootUs") }
+                    TelemetryRow { labelText: qsTr("控制序号"); valueText: root._familyFreshValue("actuatorAvailable", root._integer("actuatorControlSequence")) }
+                    TelemetryRow { labelText: qsTr("输出许可代次"); valueText: root._familyFreshValue("actuatorAvailable", root._integer("actuatorPermitEpoch")) }
+                    TelemetryRow { labelText: qsTr("可用执行器"); valueText: root._familyFreshValue("actuatorAvailable", root._mask("actuatorAvailableMask")) }
+                    TelemetryRow { labelText: qsTr("饱和执行器"); valueText: root._familyFreshValue("actuatorAvailable", root._mask("actuatorSaturatedMask")) }
+                    TelemetryRow { labelText: qsTr("输出策略"); valueText: root._familyFreshValue("actuatorAvailable", root._integer("actuatorOutputPolicyId")) }
+                    TelemetryRow { labelText: qsTr("反馈能力"); valueText: root._familyFreshValue("actuatorAvailable", root._integer("actuatorFeedbackCapability")) }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._familyFreshValue("actuatorAvailable", root._reasonText(0, root._fact("actuatorReasonCode"))) }
+                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._familyFreshValue("actuatorAvailable", root._timestamp("actuatorTimeBootUs")) }
                 }
 
                 StatusCard {

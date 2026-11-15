@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：3.8  
+版本：3.9  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -334,3 +334,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 每个链路实例的 RSSI、质量、丢包率分别显示，字段值分别服从 validity mask 与实例 receiveAgeMs；无效字段不得显示原始数值。
 - 当 RC 与 GCS 链路同时有效时，链路趋势必须选用 GCS 实例；优先顺序为新鲜 GCS、伴随计算机、其他，存在非 RC 实例但均超时时保留超时/断点；只有无非 RC 实例时才回退 RC。
 - 本轮新增的 MockLink Integration 断言覆盖逐实例三个指标、GCS 优先于 RC、非 RC 链路超时后不回退 RC、四面板均衡和中窄屏重排；本轮未运行 CI，未形成 PASS 证据。后续集中执行 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地参考图/DPI 验收。
+
+- 健康页控制器/执行器 freshness 验收：分别注入 controlAvailable、actuatorAvailable fresh → stale → recovered；求解器、序号、求解耗时、DOF、执行器掩码、许可代次、输出策略、原因和 FCU 时间戳必须同步显示状态/恢复值，不得保留旧值冒充当前值。

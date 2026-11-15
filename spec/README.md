@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.10
+- 版本 4.11
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -152,3 +152,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 本轮增量：遥控与链路页四张主视觉面板调整为桌面 3/3/3/3 等宽等高；RC 轴读数保留 freshness/validity 状态；链路 RSSI、质量、丢包改为逐实例独立指标格，趋势优先 GCS/伴随计算机/其他数据链路并仅在无非 RC 实例时回退 RC；非 RC 链路超时后不以 RC 值伪装数据链路；MockLink Integration 增加 RC/GCS/其他实例与无效字段覆盖。本轮按用户要求跳过 CI，后续集中验收。
 
 - 2026-11-15 飞行健康页逐实例新鲜度：传感器实例过期时明确显示最近状态/原因/动作；FCU_PREARM_STATUS 每个 checkId 增加本地 receiveAgeMs，QML 500 ms tick 刷新，过期结果不再显示为当前通过/失败；覆盖率只统计新鲜实例/检查项。
+
+- 2026-11-15 飞行健康页继续收口：控制器与执行器详情缓存 Fact 全部受各自 family freshness 门控；安全监测控制求解器摘要与详情一致。

@@ -318,7 +318,10 @@
         "sensor_health_coverage_counts_only_fresh_instances_and_reports_stale_and_missing",
         "prearm_checks_expose_per_check_receive_age_and_refresh_on_existing_age_tick",
         "stale_prearm_results_are_labeled_as_last_known_not_current_pass_fail_or_warning",
-        "prearm_coverage_and_summary_count_only_fresh_check_items"
+        "prearm_coverage_and_summary_count_only_fresh_check_items",
+        "health_control_detail_facts_are_gated_by_control_family_freshness",
+        "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
+        "health_safety_solver_summary_matches_control_family_freshness"
       ]
     },
     {
@@ -502,7 +505,10 @@
     "sensor_health_coverage_counts_only_fresh_instances_and_reports_stale_and_missing",
     "prearm_checks_expose_per_check_receive_age_and_refresh_on_existing_age_tick",
     "stale_prearm_results_are_labeled_as_last_known_not_current_pass_fail_or_warning",
-    "prearm_coverage_and_summary_count_only_fresh_check_items"
+    "prearm_coverage_and_summary_count_only_fresh_check_items",
+    "health_control_detail_facts_are_gated_by_control_family_freshness",
+    "health_actuator_detail_facts_are_gated_by_actuator_family_freshness",
+    "health_safety_solver_summary_matches_control_family_freshness"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
