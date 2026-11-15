@@ -169,17 +169,17 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
 
             // Each validity bit is independent: invalidating one field must not hide
             // the other two valid fields or reinterpret a raw zero as healthy data.
-            sendStorageStatus(3725100000ULL, 0x06, 1, 2, 1048576);
+            sendStorageStatus(3725100000ULL, 0x06, 0, 2, 1048576);
             QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("降级"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
 
-            sendStorageStatus(3725200000ULL, 0x05, 1, 2, 1048576);
+            sendStorageStatus(3725200000ULL, 0x05, 1, 0, 1048576);
             QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("就绪"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
 
-            sendStorageStatus(3725300000ULL, 0x03, 1, 2, 1048576);
+            sendStorageStatus(3725300000ULL, 0x03, 1, 2, 0);
             QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("就绪"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(norState->property("text").toString(), QStringLiteral("降级"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("无效 / 未上报"), 3000);
