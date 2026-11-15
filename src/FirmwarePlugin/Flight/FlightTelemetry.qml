@@ -141,16 +141,29 @@ SetupPage {
     readonly property real _healthMaintenanceCardInset: Math.max(6, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.34 : 0.42))
     readonly property real _healthMaintenanceSectionSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28))
     readonly property real _healthMaintenanceCardGap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.65)
-    readonly property real _dashboardOuterSpacing: _compactDashboardVertical ? 8 : 12
-    readonly property real _dashboardHeaderInset: _compactDashboardVertical ? 3 : 5
-    readonly property real _dashboardHeaderExtraHeight: _compactDashboardVertical ? 6 : 10
-    readonly property real _dashboardHeaderColumnSpacing: _compactDashboardVertical ? 10 : 12
-    readonly property real _dashboardHeaderRowSpacing: _compactDashboardVertical ? 4 : 6
-    readonly property real _dashboardTabHeight: _compactDashboardVertical ? 42 : 46
-    readonly property real _dashboardTabColumnSpacing: _compactDashboardVertical ? 6 : 8
-    readonly property real _dashboardTabRowSpacing: _compactDashboardVertical ? 5 : 7
-    readonly property real _dashboardTabInset: _compactDashboardVertical ? 8 : 10
-    readonly property real _dashboardTabItemSpacing: _compactDashboardVertical ? 7 : 8
+    readonly property real _dashboardOuterSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.8 : 1.2)
+    readonly property real _dashboardHeaderInset: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.3 : 0.5)
+    readonly property real _dashboardHeaderExtraHeight: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.6 : 1.0)
+    readonly property real _dashboardHeaderColumnSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 1.0 : 1.2)
+    readonly property real _dashboardHeaderRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.4 : 0.6)
+    readonly property real _dashboardHeaderAccentWidth: ScreenTools.defaultFontPixelWidth * 0.5
+    readonly property real _dashboardHeaderAccentRadius: ScreenTools.defaultFontPixelHeight * 0.2
+    readonly property real _dashboardHeaderTitleSpacing: ScreenTools.defaultFontPixelHeight * 0.2
+    readonly property real _dashboardReadOnlyBadgeHorizontalInset: ScreenTools.defaultFontPixelWidth
+    readonly property real _dashboardReadOnlyBadgeVerticalInset: ScreenTools.defaultFontPixelHeight * 0.6
+    readonly property real _dashboardReadOnlyBadgeRadius: ScreenTools.defaultFontPixelHeight * 0.7
+    readonly property real _dashboardReadOnlyContentSpacing: ScreenTools.defaultFontPixelWidth * 0.7
+    readonly property real _dashboardReadOnlyDotSize: ScreenTools.defaultFontPixelHeight * 0.7
+    readonly property real _dashboardReadOnlyTextSpacing: ScreenTools.defaultFontPixelHeight * 0.1
+    readonly property real _dashboardTabHeight: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 4.2 : 4.6)
+    readonly property real _dashboardTabColumnSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.6 : 0.8)
+    readonly property real _dashboardTabRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.5 : 0.7)
+    readonly property real _dashboardTabInset: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.8 : 1.0)
+    readonly property real _dashboardTabItemSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.7 : 0.8)
+    readonly property real _dashboardTabIconSize: ScreenTools.defaultFontPixelHeight * 2.0
+    readonly property real _dashboardTabActiveIndicatorHeight: ScreenTools.defaultFontPixelHeight * 0.3
+    readonly property real _dashboardTabRadius: ScreenTools.defaultFontPixelHeight * 0.8
+    readonly property real _dashboardTabIndicatorRadius: ScreenTools.defaultFontPixelHeight * 0.2
     readonly property real _dashboardSummaryInset: _compactDashboardVertical ? 8 : 10
     readonly property real _dashboardSummarySpacing: _compactDashboardVertical ? 8 : 10
     readonly property real _dashboardSummaryIconSize: _compactDashboardVertical ? 24 : 26
@@ -203,7 +216,12 @@ SetupPage {
     readonly property real _rcAxisGaugeCenterLineWidth: Math.max(1, ScreenTools.defaultFontPixelWidth * 0.1)
     readonly property real _rcAxisGaugeCenterLineOverscan: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
 
-    readonly property int _dashboardPanelRadius: 8
+    readonly property real _dashboardPanelRadius: ScreenTools.defaultFontPixelHeight * 0.8
+    readonly property real _dashboardPanelAccentStripeWidth: ScreenTools.defaultFontPixelWidth * 0.3
+    readonly property real _dashboardPanelAccentStripeInset: ScreenTools.defaultFontPixelHeight * 0.1
+    readonly property real _dashboardPanelAccentStripeRadius: ScreenTools.defaultFontPixelHeight * 0.2
+    readonly property real _dashboardPanelHeaderTitleSpacing: ScreenTools.defaultFontPixelHeight * 0.2
+    readonly property real _dashboardPanelDividerHeight: Math.max(1, ScreenTools.defaultFontPixelHeight * 0.1)
     readonly property color _dashboardPanelBackground: "#06232B"
     readonly property color _dashboardPanelBorder: "#0B6873"
     readonly property color _dashboardPanelEyebrow: "#45D6E5"
@@ -2073,22 +2091,24 @@ SetupPage {
                 }
                 GridLayout {
                     id: headerRow
+                    objectName: "flightTelemetry_dashboardHeaderRow"
                     anchors.fill: parent
                     anchors.margins: root._dashboardHeaderInset
                     columns: root.availableWidth < 760 ? 2 : 3
                     columnSpacing: root._dashboardHeaderColumnSpacing
                     rowSpacing: root._dashboardHeaderRowSpacing
                     Rectangle {
+                        objectName: "flightTelemetry_dashboardHeaderAccent"
                         Layout.rowSpan: headerRow.columns === 2 ? 2 : 1
-                        Layout.preferredWidth: 5
+                        Layout.preferredWidth: root._dashboardHeaderAccentWidth
                         Layout.fillHeight: true
-                        radius: 2
+                        radius: root._dashboardHeaderAccentRadius
                         color: "#16BCC3"
                     }
                     ColumnLayout {
                         objectName: "flightTelemetry_dashboardHeaderText"
                         Layout.fillWidth: true
-                        spacing: 2
+                        spacing: root._dashboardHeaderTitleSpacing
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: root._dashboardHeaderColumnSpacing
@@ -2122,24 +2142,28 @@ SetupPage {
                     }
                     Rectangle {
                         objectName: "flightTelemetry_readOnlyBadge"
+                        readonly property real horizontalInset: root._dashboardReadOnlyBadgeHorizontalInset
+                        readonly property real verticalInset: root._dashboardReadOnlyBadgeVerticalInset
                         Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                        radius: 7
+                        radius: root._dashboardReadOnlyBadgeRadius
                         color: root._communicationLost ? "#32151B" : "#092B32"
                         border.color: root._communicationLost ? "#8C3843" : "#176B73"
-                        implicitWidth: readOnlyContent.implicitWidth + 20
-                        implicitHeight: readOnlyContent.implicitHeight + 12
+                        implicitWidth: readOnlyContent.implicitWidth + 2 * horizontalInset
+                        implicitHeight: readOnlyContent.implicitHeight + 2 * verticalInset
                         RowLayout {
                             id: readOnlyContent
+                            objectName: "flightTelemetry_readOnlyContent"
                             anchors.centerIn: parent
-                            spacing: 7
+                            spacing: root._dashboardReadOnlyContentSpacing
                             Rectangle {
-                                Layout.preferredWidth: 7
-                                Layout.preferredHeight: 7
-                                radius: 4
+                                objectName: "flightTelemetry_readOnlyDot"
+                                Layout.preferredWidth: root._dashboardReadOnlyDotSize
+                                Layout.preferredHeight: root._dashboardReadOnlyDotSize
+                                radius: root._dashboardReadOnlyDotSize / 2
                                 color: root._telemetryHeadlineColor
                             }
                             ColumnLayout {
-                                spacing: 1
+                                spacing: root._dashboardReadOnlyTextSpacing
                                 QGCLabel { text: qsTr("只读监控"); color: "#BDE8D9"; font.weight: ScreenTools.strongFontWeight }
                                 QGCLabel {
                                     objectName: "flightTelemetry_connectionStatus"
@@ -2176,7 +2200,7 @@ SetupPage {
                         property bool hovered: false
                         Layout.fillWidth: true
                         implicitHeight: root._dashboardTabHeight
-                        radius: 8
+                        radius: root._dashboardTabRadius
                         color: root._activeDashboardPage === index ? "#07545E"
                                : hovered ? "#10323C" : "#0B252E"
                         border.width: 1
@@ -2191,8 +2215,8 @@ SetupPage {
                             spacing: root._dashboardTabItemSpacing
                             QGCColoredImage {
                                 objectName: "flightTelemetry_visualTabIcon_" + index
-                                Layout.preferredWidth: 20
-                                Layout.preferredHeight: 20
+                                Layout.preferredWidth: root._dashboardTabIconSize
+                                Layout.preferredHeight: root._dashboardTabIconSize
                                 Layout.alignment: Qt.AlignVCenter
                                 source: root._dashboardTabIcons[index]
                                 color: root._activeDashboardPage === index ? "#9BFFFF" : "#82B4C0"
@@ -2208,12 +2232,13 @@ SetupPage {
                             }
                         }
                         Rectangle {
+                            objectName: "flightTelemetry_visualTabActiveIndicator_" + index
                             visible: root._activeDashboardPage === index
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
-                            height: 3
-                            radius: 2
+                            height: root._dashboardTabActiveIndicatorHeight
+                            radius: root._dashboardTabIndicatorRadius
                             color: "#18E5E0"
                         }
                         MouseArea {
@@ -5480,12 +5505,13 @@ SetupPage {
         border.color: root._dashboardPanelBorder
 
         Rectangle {
-            width: 3
+            objectName: hero.objectName + "_accentStripe"
+            width: root._dashboardPanelAccentStripeWidth
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.margins: 1
-            radius: 2
+            anchors.margins: root._dashboardPanelAccentStripeInset
+            radius: root._dashboardPanelAccentStripeRadius
             color: hero.currentStatusColor
         }
 
@@ -5500,7 +5526,7 @@ SetupPage {
                 spacing: root._dashboardPanelHeaderSpacing
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: root._dashboardPanelHeaderTitleSpacing
                     QGCLabel {
                         Layout.fillWidth: true
                         objectName: hero.objectName + "_eyebrow"
@@ -5529,7 +5555,7 @@ SetupPage {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 1
+                Layout.preferredHeight: root._dashboardPanelDividerHeight
                 color: root._dashboardPanelDivider
             }
 
@@ -6339,12 +6365,13 @@ SetupPage {
         border.color: root._dashboardPanelBorder
 
         Rectangle {
-            width: 3
+            objectName: card.objectName + "_accentStripe"
+            width: root._dashboardPanelAccentStripeWidth
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.margins: 1
-            radius: 2
+            anchors.margins: root._dashboardPanelAccentStripeInset
+            radius: root._dashboardPanelAccentStripeRadius
             color: card.currentStatusColor
         }
 
@@ -6360,7 +6387,7 @@ SetupPage {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: root._dashboardPanelHeaderTitleSpacing
 
                     QGCLabel {
                         Layout.fillWidth: true
@@ -6392,7 +6419,7 @@ SetupPage {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 1
+                Layout.preferredHeight: root._dashboardPanelDividerHeight
                 color: root._dashboardPanelDivider
             }
 
