@@ -132,6 +132,14 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
             "FlightTelemetry must use semantic ScreenTools tokens instead of inline font-size multipliers",
         )
         require('typographyRole: "hero"' in content, "FlightTelemetry hero values must use the shared hero role")
+        require('readonly property string labelFontFamily: ScreenTools.normalFontFamily' in content,
+                "FlightTelemetry Canvas labels must use the application font family")
+        require('readonly property real labelFontPointSize: ScreenTools.microFontPointSize' in content,
+                "FlightTelemetry Canvas labels must use the semantic micro point-size token")
+        require('ctx.font = "bold " + topologyCanvas.labelFontPointSize + "pt' in content,
+                "FlightTelemetry Canvas text must use a semantic point size")
+        require('"sans-serif"' not in content,
+                "FlightTelemetry must not hard-code the Canvas fallback font family")
 
     elif name == "FlightRadio.qml":
         require('typographyRole: "title"' in content, "FlightRadio page title must use the shared title role")
