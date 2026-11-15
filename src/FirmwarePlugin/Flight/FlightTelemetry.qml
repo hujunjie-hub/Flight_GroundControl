@@ -188,7 +188,7 @@ SetupPage {
     readonly property real _navigationTimelineConnectorWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.2)
     readonly property real _navigationCapabilityGridSpacing: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.8)
     readonly property real _navigationTimeColumnSpacing: Math.max(8, ScreenTools.defaultFontPixelWidth * 1.4)
-    readonly property real _navigationTimeTwoColumnMinimumWidth: Math.max(840, ScreenTools.defaultFontPixelWidth * 64)
+    readonly property real _navigationTimeTwoColumnMinimumWidth: Math.max(840, ScreenTools.defaultFontPixelWidth * 72)
     readonly property real _navigationTimeRowSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.6)
     readonly property real _navigationDomainGridSpacing: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.8)
     readonly property real _dashboardMetricReadoutSpacing: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.3)
@@ -6168,7 +6168,7 @@ SetupPage {
         required property string titleText
         property color accentColor: "#49C7E7"
         readonly property real contentInset: Math.max(7, ScreenTools.defaultFontPixelHeight * 0.65)
-        readonly property real minimumGroupWidth: Math.max(180, ScreenTools.defaultFontPixelWidth * 14)
+        readonly property real minimumGroupWidth: Math.max(180, ScreenTools.defaultFontPixelWidth * 18)
         default property alias contentData: groupContent.data
 
         Layout.fillWidth: true
