@@ -224,6 +224,7 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         const QString tuningPolicy = parameter.value(QStringLiteral("tuningPolicy")).toString();
         const QString updatePolicy = parameter.value(QStringLiteral("updatePolicy")).toString();
         const QJsonValue readOnly = parameter.value(QStringLiteral("readOnly"));
+        const QJsonValue writeOnly = parameter.value(QStringLiteral("writeOnly"));
         QSet<QString> parameterVariants;
         QSet<QString> parameterProfiles;
         QSet<QString> parameterDependencies;
@@ -237,6 +238,7 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
             !isSupportedUpdatePolicy(updatePolicy) ||
             !readOnly.isBool() ||
             readOnly.toBool() != (tuningPolicy == QStringLiteral("READ_ONLY")) ||
+            (parameter.contains(QStringLiteral("writeOnly")) && !writeOnly.isBool()) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("modelVariants")), parameterVariants) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("modelProfiles")), parameterProfiles) ||
             !readUniqueStringSet(parameter.value(QStringLiteral("dependencies")), parameterDependencies, true) ||
