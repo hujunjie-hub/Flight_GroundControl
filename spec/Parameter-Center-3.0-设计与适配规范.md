@@ -534,6 +534,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 写入资格必须同时满足：当前 activeVehicle 由 FirmwarePlugin 识别为 Flight SIL；用户当前单选 profile 为 SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名/domain/family/variant/controlLaw 与注册表匹配；tuningPolicy 为 GROUND_ADJUSTABLE，updatePolicy 为受支持的在线确认策略；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数不是只读/只写项。
 - 目标值先经 Fact 元数据范围/类型校验，再通过 Fact::setCookedValue 进入原有 ParameterManager PARAM_SET 流程；只有收到匹配参数的 PARAM_VALUE 确认才标记应用成功。
 - confirmedValue 只从 Fact 的 vehicleUpdated（飞控回传）更新，不把 UI 乐观目标值冒充当前确认值；失败后要求回读确认实际值，失败后的下一次写入必须先完成回读。
+- ParameterEditorController 额外保存本次请求目标值；收到匹配参数的 PARAM_VALUE 写入成功信号后，再将飞控当前 Fact 值与请求目标值按相对容差 `1e-6 * max(1, |actual|, |target|)` 比较。ACK 值无效或不匹配时不记录上一次成功值、不发出 `parameterWriteConfirmed`，并锁定后续写入，要求显式回读；机型 profile 切换、写入失败和确认完成时清理待确认目标值。
 - “回读验证”使用 ParameterManager 的单参数 refresh 路径；“恢复上一次”只恢复当前会话内该参数上一次已确认的值，并重新经过相同资格检查、范围校验、写入确认。
 - 实时在线为当前唯一开放模式；试探调参和批量调参保持禁用。所有实机 profile、未知固件、非活动 Vehicle、失联、参数未就绪、armed/flying 状态均 fail-closed。C++ 层同时禁止 Flight 参数页的批量导入写入和批量重置，避免仅依赖 QML 禁用态。
 
@@ -545,7 +546,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
 - Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、依赖与规则空态、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、真实 dependencies/validationRules、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
-- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、PARAM_VALUE 确认值与请求目标值二次核对、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：PARTIAL（已接入 1280/900 px 响应式断点、紧凑屏参数域选择器、上/下层卡片重排、纵向滚动、状态栏重排，以及 safe mode 参数表工具栏/列宽适配；截图叠加、DPI、Windows 构建、QML/单元测试与 CI 仍 NOT_RUN）。
 
