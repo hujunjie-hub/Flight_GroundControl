@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.72
+版本：4.73
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -698,3 +698,9 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 预检检查项名称/结果/说明采用一致的 ScreenTools 字体层级和缩放间距。
 - MockLink UI Integration 验证 1600/1000/900/760/759/700/400 px 传感器头部重排、四项指标卡片与值标签的父子边界；新增断言未运行。
 - 按用户要求不运行 CI/Unit/Integration/Windows Release；新增回归保持 NOT_RUN，待集中验收。
+
+### G15 1672×941 主视觉三栏平衡验收（2026-11-15）
+
+- 在 1672×941 紧凑垂直模式下，左侧整机状态、中间系统拓扑、右侧遥控输入三张 HeroPanel 应同排、同高、无重叠且完全位于 heroGrid 内。
+- 保持左/中/右宽度顺序 3/4/5，12 列桌面结构不因纵向密度模式改变；同时验证 1672×1100 标准垂直模式恢复。
+- 该断言与 1672×941 垂直密度、页签、趋势绘图区和详情标题保留断言共同执行；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
