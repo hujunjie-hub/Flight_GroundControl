@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.12
+- 版本：6.13
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 已闭环；本轮补齐 timeQuality 枚举状态与 UTC 有效性的独立颜色门控；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 已闭环；时间质量/UTC 颜色语义已拆分；本轮补齐总览链路 KPI 的逐实例 fresh/total 数量和状态颜色；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -714,3 +714,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 总览页与导航时序页的时间质量 KPI 使用同一颜色映射；UTC 不确定度 KPI 使用独立 UTC validity 颜色映射。
 - MockLink Integration 增加 FCU_TIME_STATUS.time_quality=locked/invalid 且 utc_valid=true 的组合断言，并验证 time family stale 时两项 KPI 均转为琥珀色。
 - 仅修改地面站 QML、MockLink UI Integration 与 SPEC；不改变 FCU_TIME_STATUS、FactGroup、时间同步服务、飞控时间纪律算法或控制行为。本轮不运行 CI，新增回归留待集中验收。
+
+
+## 43. Phase 2.9 总览链路 KPI 实例覆盖率与状态颜色（2026-11-15）
+
+- 总览「数据链路」KPI 主值显示新鲜实例数/已知实例总数，不再把缓存实例总数直接表达为当前在线链路数量。
+- 辅助说明并列显示新鲜、超时、等待实例数和链路 family 接收年龄，保留故障定位上下文。
+- KPI 颜色按实例状态聚合：任一新鲜实例为 lost 时红色；存在超时/降级/恢复中时琥珀色；全实例健康且新鲜时绿色；等待/未知为中性灰。family stale/等待优先于实例缓存状态。
+- 遥控与链路页的链路实例 KPI 复用同一聚合颜色规则，避免同一组链路在总览与专页呈现不同的健康色。
+- MockLink Integration 覆盖三实例全部新鲜、GCS/其他实例超时而 RC 仍新鲜的 3/3 → 1/3 数量变化与颜色降级。
+- 仅修改 GroundControl QML、UI Integration 与 SPEC/G15；不修改 MAVLink、FactGroup、链路状态生成或飞控控制逻辑。本轮不运行 CI，待集中验收。

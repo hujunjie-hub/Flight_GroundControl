@@ -323,8 +323,7 @@ SetupPage {
             case 3: return _fact("navigationAvailable")
                         ? _navigationMetricText("positionStdM", _navCapabilityHorizontalPosition, 3, " m")
                         : qsTr("未上报")
-            case 4: return _familyStatus("linkAvailable") === qsTr("已接收")
-                        ? qsTr("%1 条链路").arg(_linkStatuses.length) : _familyStatus("linkAvailable")
+            case 4: return _linkInstanceSummaryValue()
             default: return _familyStatus("timeAvailable") === qsTr("已接收")
                         ? _enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")])
                         : _familyStatus("timeAvailable")
@@ -381,7 +380,7 @@ SetupPage {
                         ? qsTr("速度 %1 · 航向 %2").arg(_navigationMetricText("velocityStdMps", _navCapabilityVelocity, 3, " m/s"))
                                                   .arg(_navigationMetricText("headingStdRad", _navCapabilityHeading, 3, " rad"))
                         : _familyStatus("navigationAvailable")
-            case 4: return qsTr("地面站接收 %1").arg(_receiveAgeText("link"))
+            case 4: return qsTr("%1 · 地面站接收 %2").arg(_linkInstanceCoverageText()).arg(_receiveAgeText("link"))
             default: return _utcUncertaintyText()
             }
         }
@@ -423,7 +422,7 @@ SetupPage {
             case 1: return _familyStatusColor("operationAvailable")
             case 2: return _failsafeColor()
             case 3: return _navigationMetricColor(_navCapabilityHorizontalPosition)
-            case 4: return _familyStatusColor("linkAvailable")
+            case 4: return _linkInstanceCoverageColor()
             default: return _timeQualityColor()
             }
         }
@@ -437,7 +436,7 @@ SetupPage {
                     _timeQualityColor(), _utcValidityColor()][index]
         return [_familyStatusColor("rcInputAvailable"), _familyStatusColor("rcInputAvailable"),
                 _rcLinkStateColor(_fact("rcLinkState")), _familyStatusColor("linkAvailable"),
-                _familyStatusColor("linkAvailable"), _familyStatusColor("rcInputAvailable")][index]
+                _linkInstanceCoverageColor(), _familyStatusColor("rcInputAvailable")][index]
     }
     function _linkKindText(linkKind) {
         switch (Number(linkKind)) {
@@ -828,6 +827,33 @@ SetupPage {
             else ++stale
         }
         return qsTr("%1 新鲜 · %2 超时 · %3 等待").arg(fresh).arg(stale).arg(waiting)
+    }
+
+    function _linkInstanceSummaryValue() {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const statuses = _linkStatuses
+        if (statuses.length === 0) return qsTr("未上报")
+        let fresh = 0
+        for (let index = 0; index < statuses.length; ++index)
+            if (_linkInstanceFresh(statuses[index].receiveAgeMs)) ++fresh
+        return qsTr("%1 / %2 新鲜").arg(fresh).arg(statuses.length)
+    }
+    function _linkInstanceCoverageColor() {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("linkAvailable")
+        if (_linkStatuses.length === 0) return "#8A9A94"
+        let degraded = false
+        let unknown = false
+        for (let index = 0; index < _linkStatuses.length; ++index) {
+            const color = _linkStateColor(_linkStatuses[index].linkState, _linkStatuses[index].receiveAgeMs)
+            if (color === "#F06464") return "#F06464"
+            if (color === "#F0B94B") degraded = true
+            else if (color === "#8A9A94") unknown = true
+        }
+        if (degraded) return "#F0B94B"
+        if (unknown) return "#8A9A94"
+        return "#45D39A"
     }
 
     function _linkStateColor(state, receiveAgeMs) {

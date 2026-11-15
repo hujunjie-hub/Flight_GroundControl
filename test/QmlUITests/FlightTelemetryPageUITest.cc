@@ -821,6 +821,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QQuickItem* alarmEventTime = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventTime_1"), 3000);
             QQuickItem* historyEventTime = findVisibleItem(
@@ -1031,6 +1035,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(1).arg(3), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryLink->property("detailText").toString().contains(
+                                         translatedTelemetryText("2 超时")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
 
             // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
             // the capability mask gates each value independently.

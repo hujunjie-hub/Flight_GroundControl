@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.4  
+版本：4.5  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -354,3 +354,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - time family 等待/超时优先于缓存 timeQuality 枚举，必须使用 family 对应的灰/琥珀状态。
 - UTC 不确定度 KPI 独立使用 utcValid 颜色，不得与 timeQuality 颜色混用；UTC 无效红、time 超时琥珀。
 - 新增 MockLink locked/invalid 与 UTC valid 组合断言，以及 family stale 两项 KPI 同时转琥珀的断言；本轮 CI 未运行，留待集中验收。
+
+
+### G15 总览链路 KPI 覆盖率补充（2026-11-15）
+
+- 总览链路 KPI 主值必须显示新鲜实例数/已知实例总数；辅助说明分别报告新鲜、超时和等待实例及 family 接收年龄。
+- 全部实例健康且新鲜时绿色；存在 stale/degraded/recovering 时琥珀色；任一新鲜实例明确 lost 时红色；未知/等待为中性灰。
+- 总览与遥控链路专页对同一组实例必须使用一致的聚合颜色；验证三实例全新鲜与 RC 新鲜但 GCS/其他过期两种场景。
+- 本轮新增 MockLink UI Integration 断言，CI 未运行，集中验收时执行。
