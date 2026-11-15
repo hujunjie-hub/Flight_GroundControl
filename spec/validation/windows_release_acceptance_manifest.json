@@ -907,7 +907,8 @@
     "navigation_time_quality_discipline_and_utc_validity_use_matching_state_badges",
     "valid_utc_uncertainty_and_timestamp_use_neutral_value_colors",
     "navigation_time_groups_reflow_at_840px_and_utc_timestamp_spans_the_full_width",
-    "navigation_and_time_family_statuses_remain_independent_in_the_monotonic_timeline"
+    "navigation_and_time_family_statuses_remain_independent_in_the_monotonic_timeline",
+    "navigation_monotonic_timeline_marker_order_and_value_colors_match_for_navigation_time_and_event_rows"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
