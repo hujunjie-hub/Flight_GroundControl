@@ -10,6 +10,7 @@ private slots:
     void _missionClearIsNotAdvertised();
     void _coordinateHomeActionIsNotAdvertised();
     void _takeoffIsNotAFlightMode();
+    void _flightParameterMetadataRejectsInvalidEntries();
     void _flightOperationTelemetryIsDecodedPerVehicle();
     void _flightTelemetryFactGroupIsRegisteredOnVehicle();
     void _flightTelemetryDecodesAllFcuMessages();
