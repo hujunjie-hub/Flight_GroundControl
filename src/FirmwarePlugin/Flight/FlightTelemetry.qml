@@ -135,7 +135,8 @@ SetupPage {
         const mask = _fact("rcValidAxesMask")
         if (mask === null || mask === undefined) return qsTr("未上报")
         let count = 0
-        for (let bit = 0; bit < 4; ++bit) if ((Number(mask) & (1 << bit)) !== 0) ++count
+        for (let channel = 0; channel < 4; ++channel)
+            if (_rcAxisStatusTextForChannel(channel) === qsTr("已接收")) ++count
         return qsTr("%1 / 4").arg(count)
     }
     function _rcLinkStateText() {
@@ -370,7 +371,7 @@ SetupPage {
             [qsTr("FCU 遥测接收"), qsTr("飞行状态"), qsTr("失效保护等级"), qsTr("导航估计"), qsTr("数据链路"), qsTr("时间同步")],
             [qsTr("飞控操作"), qsTr("传感器健康"), qsTr("控制器状态"), qsTr("执行器状态"), qsTr("系统资源"), qsTr("事件记录")],
             [qsTr("导航状态"), qsTr("水平位置 σ"), qsTr("速度 σ"), qsTr("航向 σ"), qsTr("时间质量"), qsTr("UTC 不确定度")],
-            [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("数据链路"), qsTr("链路实例"), qsTr("遥控接收年龄")]
+            [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("数据链路"), qsTr("链路实例"), qsTr("RC 遥测接收年龄")]
         ]
         return titles[_activeDashboardPage][index]
     }
@@ -470,8 +471,8 @@ SetupPage {
             }
         }
         switch (index) {
-        case 0: return qsTr("RC 接收年龄：%1").arg(_receiveAgeText("rcInput"))
-        case 1: return qsTr("有效轴由 rcValidAxesMask 决定")
+        case 0: return qsTr("地面站接收 RC 状态：%1").arg(_receiveAgeText("rcInput"))
+        case 1: return qsTr("有效轴由 rcValidAxesMask 与归一化数值范围共同决定")
         case 2: return _rcReceiverFailsafeSummaryText()
         case 3: return qsTr("链路接收年龄：%1").arg(_receiveAgeText("link"))
         case 4: return _linkInstanceCoverageText()
@@ -2531,7 +2532,7 @@ SetupPage {
                         Layout.fillWidth: true
                         spacing: 4
                         Repeater {
-                            model: [qsTr("Mode 1"), qsTr("Mode 2"), qsTr("Mode 3")]
+                            model: [qsTr("1 日本手"), qsTr("2 美国手"), qsTr("3 中国手")]
                             delegate: Rectangle {
                                 required property int index
                                 required property string modelData
@@ -2541,7 +2542,7 @@ SetupPage {
                                 radius: 4
                                 color: stickSettings.mode === index + 1 ? "#07545E" : "#0A2831"
                                 border.color: stickSettings.mode === index + 1 ? "#18DAD4" : "#0D5964"
-                                QGCLabel { anchors.centerIn: parent; text: modelData; color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
+                                QGCLabel { objectName: "flightTelemetry_rcModeLabel_" + (index + 1); anchors.centerIn: parent; text: modelData; color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: stickSettings.mode = index + 1 }
                             }
                         }
@@ -2561,7 +2562,7 @@ SetupPage {
                     fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "RC LOGICAL AXES / REAL-TIME"
-                    titleText: qsTr("逻辑通道输入（实时）")
+                    titleText: qsTr("逻辑轴输入（实时）")
                     statusFamily: "rcInputAvailable"
                     AxisGauge { objectName: "flightTelemetry_rcPageAxis_roll"; axisName: qsTr("横滚"); rawValue: root._fact("rcRollNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 0; centered: true }
                     AxisGauge { objectName: "flightTelemetry_rcPageAxis_pitch"; axisName: qsTr("俯仰"); rawValue: root._fact("rcPitchNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 1; centered: true }
@@ -2717,7 +2718,7 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
                     TelemetryRow {
                         objectName: "flightTelemetry_rcFailsafeRcAge"
-                        labelText: qsTr("RC 接收年龄")
+                        labelText: qsTr("FCU 侧 RC 输入年龄")
                         valueText: root._rcAgeDisplayText()
                     }
                     TelemetryRow { labelText: qsTr("数据链路"); valueText: root._familyStatus("linkAvailable") }
