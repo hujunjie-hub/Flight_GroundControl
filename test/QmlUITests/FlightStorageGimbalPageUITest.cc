@@ -325,6 +325,12 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
             QVERIFY(activeGimbal);
 
+            // Only a fully discovered device may become active. A stray or
+            // partially constructed Gimbal instance must not replace the live one.
+            Gimbal unregisteredGimbal(nullptr);
+            vehicle->gimbalController()->setActiveGimbal(&unregisteredGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
+
             // Optional yaw-lock and retract state must round-trip through MockLink telemetry.
             vehicle->gimbalController()->setGimbalYawLock(true);
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->yawLock(), 3000);
