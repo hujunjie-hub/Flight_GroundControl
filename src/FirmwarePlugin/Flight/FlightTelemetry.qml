@@ -40,6 +40,12 @@ SetupPage {
         { title: qsTr("导航时序"), subtitle: "NAVIGATION & TIMING", tab: qsTr("导航时序") },
         { title: qsTr("遥控与链路"), subtitle: "RC INPUT & DATA LINK", tab: qsTr("遥控与链路") }
     ]
+    readonly property var _dashboardTabIcons: [
+        "/InstrumentValueIcons/dashboard.svg",
+        "/InstrumentValueIcons/heart.svg",
+        "/InstrumentValueIcons/location-current.svg",
+        "/InstrumentValueIcons/radio.svg"
+    ]
     readonly property int _healthPageColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
     Settings {
         id: stickSettings
@@ -1178,10 +1184,15 @@ SetupPage {
                             anchors.leftMargin: 10
                             anchors.rightMargin: 10
                             spacing: 8
-                            QGCLabel {
-                                text: ["◈", "♡", "◷", "⌁"][index]
+                            QGCColoredImage {
+                                objectName: "flightTelemetry_visualTabIcon_" + index
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                                Layout.alignment: Qt.AlignVCenter
+                                source: root._dashboardTabIcons[index]
                                 color: root._activeDashboardPage === index ? "#9BFFFF" : "#82B4C0"
-                                font.pointSize: ScreenTools.titleFontPointSize
+                                sourceSize.height: height
+                                fillMode: Image.PreserveAspectFit
                             }
                             QGCLabel {
                                 Layout.fillWidth: true

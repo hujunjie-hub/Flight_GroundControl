@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：4.5
+- 版本：4.6
 - 日期：2026-11-15
-- 状态：四页主体已实现；本轮完成顶部工具栏/左侧导航视觉对齐和连续 KPI 带；像素级截图与 Windows DPI 视觉验收仍待完成
+- 状态：四页主体、应用外壳和连续 KPI 带已实现；本轮统一页签 SVG 图标；像素级截图与 Windows DPI 视觉验收仍待完成
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -50,6 +50,9 @@
 ### 2.2 四个交互页面入口
 
 标题下方使用四个真实页面入口：「总览总控」「飞行健康」「导航时序」「遥控与链路」。
+
+- 四个页签图标统一使用 `resources/InstrumentValueIcons/` 中的 SVG 资源（dashboard、heart、location-current、radio），由 `QGCColoredImage` 渲染；禁止使用依赖系统字体回退的 Unicode 图形字符，避免不同 DPI/平台出现字形粗细、基线和占位不一致。
+- 图标使用固定 20×20 布局盒并随选中态切换强调色；图标不得挤压页签标题，也不得改变页面切换行为。
 
 - 四个页签均可点击，选中态使用青色描边/底部强调线；未选中态保持深青蓝面板。
 - 点击后只切换 FlightTelemetry.qml 内的页面内容，不创建新 Setup 路由，不改变遥测协议或数据模型。
@@ -471,3 +474,11 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 不改变四页的 3/5/4、3/6/3、3/4/3/2 等桌面列宽分配、真实数据来源、状态语义或 RC 手型映射。
 - FlightTelemetryPageUITest 在 1600 px 桌面视口新增内容根间距、KPI 带圆角和首个主面板圆角断言；既有四页切换、13 类健康域、响应式边界和双摇杆测试继续保留。
 - 该增量属于视觉几何收敛，不等同于像素级验收。必须继续使用 Windows 实际运行截图，在 1672×941 下与四张参考图叠加比较，并分别验收 100%/125%/150% DPI；没有截图证据不得关闭 FGC-0044。
+
+
+## 21. Phase 2.4 页签图标资源统一（2026-11-15）
+
+- 四个交互页签由 Unicode 字符图标改为项目资源内 SVG：总览使用 dashboard、飞行健康使用 heart、导航时序使用 location-current、遥控与链路使用 radio。
+- 统一通过 `QGCColoredImage` 以 20×20 布局盒渲染，选中/未选中颜色沿用页签强调色；图标不再依赖系统字体 glyph fallback，减少 Windows/Linux、不同 DPI 下的字形差异。
+- `FlightTelemetryPageUITest` 为每个页签验证 SVG 资源路径与图标尺寸，同时保留四页切换、真实 MockLink 数据、状态语义、只读边界和原有响应式断点。
+- 该修改是图标一致性收敛，不代表四张参考图已完成 1:1 像素验收；1672×941 截图叠加和 100%/125%/150% DPI 实机验收仍为必需项。

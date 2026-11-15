@@ -798,9 +798,21 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 translatedTelemetryText("导航时序"),
                 translatedTelemetryText("遥控与链路")
             };
+            const QString tabIconNames[] = {
+                QStringLiteral("dashboard.svg"),
+                QStringLiteral("heart.svg"),
+                QStringLiteral("location-current.svg"),
+                QStringLiteral("radio.svg")
+            };
             for (int index = 0; index < 4; ++index) {
                 QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(index), 3000);
                 QVERIFY2(tab, qPrintable(QStringLiteral("Missing dashboard tab %1").arg(index)));
+                QQuickItem* tabIcon = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_visualTabIcon_%1").arg(index), 3000);
+                QVERIFY2(tabIcon, qPrintable(QStringLiteral("Missing dashboard SVG icon %1").arg(index)));
+                QTRY_VERIFY_WITH_TIMEOUT(
+                    tabIcon->property("source").toString().contains(tabIconNames[index]), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(tabIcon->width() >= 18 && tabIcon->height() >= 18, 3000);
                 QVERIFY(_clickItemAt(tab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_%1").arg(index)));
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), index, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(title->property("text").toString(), titles[index], 3000);
