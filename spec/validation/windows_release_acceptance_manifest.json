@@ -650,7 +650,9 @@
         "manager_2_device_id_3_position_control_does_not_mutate_any_manager_1_gimbal",
         "mocklink_broadcast_manager_and_attitude_intervals_fan_out_across_all_managers_with_one_primary_ack",
         "mocklink_manager_scoped_offline_for_duplicate_device_id_3_only_stales_manager_2_pair",
-        "mocklink_manager_scoped_recovery_rediscovers_manager_2_device_id_3_without_restoring_old_owner"
+        "mocklink_manager_scoped_recovery_rediscovers_manager_2_device_id_3_without_restoring_old_owner",
+        "mocklink_gimbal_manager_set_attitude_rate_commands_route_to_manager_2_device_id_3",
+        "manager_2_device_id_3_zero_rate_stops_only_its_own_attitude_motion"
       ]
     }
   ],
