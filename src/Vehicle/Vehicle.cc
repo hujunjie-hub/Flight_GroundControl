@@ -269,6 +269,8 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::coordinateChanged, _terrainQueryCoordinator, &TerrainQueryCoordinator::updateAltAboveTerrain);
 
     _vehicleLinkManager = new VehicleLinkManager(this);
+    connect(_vehicleLinkManager, &VehicleLinkManager::communicationLostChanged,
+            _sysStatusSensorInfo.get(), &SysStatusSensorInfo::setCommunicationLost);
     if (link) {
         _vehicleLinkManager->_addLink(link);
     }

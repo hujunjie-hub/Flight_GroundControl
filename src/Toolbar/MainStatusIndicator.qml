@@ -294,6 +294,18 @@ RowLayout {
                 heading:            qsTr("Sensor Status")
                 visible:            parametersReady && !_healthAndArmingChecksSupported
 
+                QGCLabel {
+                    Layout.fillWidth: true
+                    visible: _activeVehicle && (_communicationLost || !_activeVehicle.sysStatusSensorInfo.statusFresh)
+                    text: _communicationLost
+                          ? qsTr("Communication lost. Sensor status is no longer current.")
+                          : _activeVehicle && _activeVehicle.sysStatusSensorInfo.sensorNames.length > 0
+                            ? qsTr("Sensor status is stale. Waiting for a new SYS_STATUS message.")
+                            : qsTr("Waiting for sensor status from the flight controller.")
+                    color: qgcPal.colorOrange
+                    wrapMode: Text.WordWrap
+                }
+
                 GridLayout {
                     rowSpacing:     _spacing
                     columnSpacing:  _spacing

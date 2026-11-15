@@ -8,6 +8,7 @@
 #include "LinkManager.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
+#include "SysStatusSensorInfo.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -80,6 +81,9 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
     QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
     QVERIFY_TRUE_WAIT(spyVehicleInitialConnectComplete.count() > 0 || vehicle->isInitialConnectComplete(),
                       TestTimeout::mediumMs());
+    auto* const sensorInfo = qobject_cast<SysStatusSensorInfo*>(vehicle->sysStatusSensorInfo());
+    QVERIFY(sensorInfo);
+    QVERIFY_TRUE_WAIT(sensorInfo->statusFresh(), TestTimeout::mediumMs());
 
     QSignalSpy spyCommLostChanged(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged);
 
@@ -87,12 +91,14 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
     QVERIFY_SIGNAL_WAIT(spyCommLostChanged, VehicleLinkManager::kTestCommLostDetectionTimeoutMs);
     QCOMPARE(spyCommLostChanged.count(), 1);
     QCOMPARE(spyCommLostChanged[0][0].toBool(), true);
+    QVERIFY(!sensorInfo->statusFresh());
     spyCommLostChanged.clear();
 
     pMockLink->setCommLost(false);
     QVERIFY_SIGNAL_WAIT(spyCommLostChanged, VehicleLinkManager::kTestCommLostDetectionTimeoutMs);
     QCOMPARE(spyCommLostChanged.count(), 1);
     QCOMPARE(spyCommLostChanged[0][0].toBool(), false);
+    QVERIFY_TRUE_WAIT(sensorInfo->statusFresh(), TestTimeout::mediumMs());
     spyCommLostChanged.clear();
 
     vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);

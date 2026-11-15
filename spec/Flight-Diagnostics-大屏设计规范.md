@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.8
+- 版本：6.9
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；总览告警与历史已补齐 FCU 启动相对时间、严重度颜色、原因换行和本地序号语义；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；总览事件历史可读性已收尾；旧版 SYS_STATUS 兼容传感器状态新增 freshness 门控；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -674,3 +674,20 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 最新事件详情卡继续使用「本地接收序号」字段名，三处文案保持一致；事件 ID、来源 ID、FCU 启动相对时间与原因保持独立展示。
 - MockLink UI Integration 验证告警列表和历史列表均显示本地序号，并保留原严重度排序结果。
 - 仅调整 GroundControl 展示文案与 UI 回归断言，不修改 FCU_EVENT 协议、FactGroup 的序号生成或事件缓存顺序。
+
+
+## 41. 旧版 SYS_STATUS 传感器状态 freshness 与通信状态联动（FGC-0049）
+
+主状态指示器中的 Sensor Status 是不支持 Health and Arming Checks 飞控的兼容回退显示，数据来自 MAVLink SYS_STATUS。它必须遵循诊断大屏相同的“过期/缺失数据不得显示为健康”原则：
+
+- SYS_STATUS 独立维护接收新鲜度，默认超时 5500 ms；该阈值与诊断大屏 sensor-health family freshness limit 对齐。
+- VehicleLinkManager.communicationLost 变为 true 时，立即将缓存的传感器状态标记为过期并停止旧计时器。
+- 通信恢复本身不能恢复传感器健康显示；必须收到新的 SYS_STATUS 后才允许重新显示 Normal、Error 或 Disabled。
+- 数据过期时保留传感器名称，所有传感器状态统一显示 Stale；状态抽屉顶部明确说明通信丢失、数据过期或等待首次 SYS_STATUS。
+- 即使 HEARTBEAT 仍在到达，只要 SYS_STATUS 超过 5500 ms 超时阈值，也必须显示过期状态。
+- 该兼容回退显示仅用于地面站诊断，不授予 ARM、Permit、FMS 或执行器权限。
+
+回归覆盖：
+- SysStatusSensorInfoTest 使用短注入超时验证正常 → Stale，并验证通信丢失立即失效、通信恢复后等待新 SYS_STATUS 才恢复。
+- VehicleLinkManagerTest::_simpleCommLossTest 通过真实 MockLink/VehicleLinkManager 信号路径验证断链时立即 stale，重连后由新 SYS_STATUS 恢复 fresh。
+- 本轮未运行 Unit、Integration、Windows Release 或 CI；相关回归状态均为 NOT_RUN，待集中验收。

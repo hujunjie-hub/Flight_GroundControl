@@ -17,6 +17,7 @@ static mavlink_sys_status_t _makeSysStatus(uint32_t present, uint32_t enabled, u
 void SysStatusSensorInfoTest::_initialState_test()
 {
     SysStatusSensorInfo info;
+    QVERIFY(!info.statusFresh());
     QVERIFY(info.sensorNames().isEmpty());
     QVERIFY(info.sensorStatus().isEmpty());
 }
@@ -29,9 +30,54 @@ void SysStatusSensorInfoTest::_updateSingleSensorHealthy_test()
     const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
     info.update(_makeSysStatus(gyro, gyro, gyro));
 
+    QVERIFY(info.statusFresh());
     QCOMPARE(info.sensorNames().count(), 1);
     QCOMPARE(info.sensorStatus().count(), 1);
     QCOMPARE(info.sensorStatus().at(0), QStringLiteral("Normal"));
+}
+
+void SysStatusSensorInfoTest::_statusFreshnessExpires_test()
+{
+    // Use a short injected timeout so the test exercises the timer without a multi-second delay.
+    SysStatusSensorInfo info(nullptr, 25);
+    const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
+    info.update(_makeSysStatus(gyro, gyro, gyro));
+
+    QVERIFY(info.statusFresh());
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Normal")}));
+
+    QSignalSpy sensorInfoSpy(&info, &SysStatusSensorInfo::sensorInfoChanged);
+    QVERIFY(sensorInfoSpy.isValid());
+    QVERIFY(UnitTest::waitForCondition([&info]() { return !info.statusFresh(); },
+                                       TestTimeout::shortMs(),
+                                       QStringLiteral("sensor status freshness timeout")));
+
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+    QCOMPARE(sensorInfoSpy.count(), 1);
+}
+
+void SysStatusSensorInfoTest::_communicationLostInvalidatesStatusUntilNewSysStatus_test()
+{
+    SysStatusSensorInfo info;
+    const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
+    const auto healthyStatus = _makeSysStatus(gyro, gyro, gyro);
+
+    info.update(healthyStatus);
+    QVERIFY(info.statusFresh());
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Normal")}));
+
+    info.setCommunicationLost(true);
+    QVERIFY(!info.statusFresh());
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+
+    // Regaining the link alone must not make cached SYS_STATUS healthy again.
+    info.setCommunicationLost(false);
+    QVERIFY(!info.statusFresh());
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+
+    info.update(healthyStatus);
+    QVERIFY(info.statusFresh());
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Normal")}));
 }
 
 void SysStatusSensorInfoTest::_updateSingleSensorUnhealthy_test()

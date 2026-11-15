@@ -4,9 +4,18 @@
 
 QGC_LOGGING_CATEGORY(SysStatusSensorInfoLog, "MAVLink.SysStatusSensorInfo")
 
-SysStatusSensorInfo::SysStatusSensorInfo(QObject *parent)
+SysStatusSensorInfo::SysStatusSensorInfo(QObject *parent, int statusTimeoutMs)
     : QObject(parent)
 {
+    _statusTimeoutTimer.setSingleShot(true);
+    _statusTimeoutTimer.setInterval(statusTimeoutMs > 0 ? statusTimeoutMs : kDefaultStatusTimeoutMs);
+    connect(&_statusTimeoutTimer, &QTimer::timeout, this, [this]() {
+        if (_statusFresh) {
+            _statusFresh = false;
+            emit statusFreshChanged();
+            emit sensorInfoChanged();
+        }
+    });
     // qCDebug(SysStatusSensorInfoLog) << Q_FUNC_INFO << this;
 }
 
@@ -18,6 +27,9 @@ SysStatusSensorInfo::~SysStatusSensorInfo()
 void SysStatusSensorInfo::update(const mavlink_sys_status_t &sysStatus)
 {
     bool dirty = false;
+    const bool wasFresh = _statusFresh;
+    _statusFresh = true;
+    _statusTimeoutTimer.start();
 
     // Walk the bits
     for (int bitPosition = 0; bitPosition < 32; bitPosition++) {
@@ -48,7 +60,24 @@ void SysStatusSensorInfo::update(const mavlink_sys_status_t &sysStatus)
         }
     }
 
-    if (dirty) {
+    if (wasFresh != _statusFresh) {
+        emit statusFreshChanged();
+    }
+    if (dirty || wasFresh != _statusFresh) {
+        emit sensorInfoChanged();
+    }
+}
+
+void SysStatusSensorInfo::setCommunicationLost(bool communicationLost)
+{
+    if (!communicationLost) {
+        return;
+    }
+
+    _statusTimeoutTimer.stop();
+    if (_statusFresh) {
+        _statusFresh = false;
+        emit statusFreshChanged();
         emit sensorInfoChanged();
     }
 }
@@ -82,6 +111,13 @@ QStringList SysStatusSensorInfo::sensorNames() const
 QStringList SysStatusSensorInfo::sensorStatus() const
 {
     QStringList rgStatus;
+
+    if (!_statusFresh) {
+        for (qsizetype i = 0; i < _sensorInfoMap.size(); ++i) {
+            rgStatus.append(tr("Stale"));
+        }
+        return rgStatus;
+    }
 
     // List ordering is unhealthy, healthy, disabled
     for (const SensorInfo &sensorInfo : _sensorInfoMap.values()) {
