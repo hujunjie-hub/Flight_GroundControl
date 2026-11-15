@@ -732,7 +732,10 @@ SetupPage {
     function _linkInstanceQualityPermille(link) {
         if (!link || !_linkInstanceFresh(link.receiveAgeMs) ||
                 _rawMaskState(link.validityMask, 9) !== 1) return null
-        const value = Number(link.linkQualityPermille)
+        const raw = link.linkQualityPermille
+        if (raw === null || raw === undefined ||
+                (typeof raw === "string" && raw.trim().length === 0)) return null
+        const value = Number(raw)
         return Number.isFinite(value) && value >= 0 && value <= 1000 ? value : null
     }
     function _linkInstanceQualityFraction(link) {
@@ -750,7 +753,10 @@ SetupPage {
             const maskState = _rawMaskState(link.validityMask, bit)
             if (maskState < 0) return qsTr("未上报")
             if (maskState === 0) return qsTr("无效")
-            const value = Number(link[fieldName])
+            const raw = link[fieldName]
+            if (raw === null || raw === undefined ||
+                    (typeof raw === "string" && raw.trim().length === 0)) return qsTr("无效")
+            const value = Number(raw)
             return Number.isFinite(value) && value >= 0 && value <= 1000
                    ? (value / 10).toFixed(decimals) + suffix : qsTr("无效")
         }

@@ -1548,6 +1548,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendRcInputStatus(1800, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F, 0);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("%1 / 4").arg(4), 3000);
+            const QVariantMap nullQualitySample{
+                {QStringLiteral("receiveAgeMs"), 0}, {QStringLiteral("validityMask"), 0x200},
+                {QStringLiteral("linkQualityPermille"), QVariant()}};
+            QVariant nullQualityMetricText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceMetricText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, nullQualityMetricText),
+                                              Q_ARG(QVariant, QVariant::fromValue(nullQualitySample)),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral("linkQualityPermille"))),
+                                              Q_ARG(QVariant, QVariant(9)),
+                                              Q_ARG(QVariant, QVariant(1)),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral(" %")))));
+            QCOMPARE(nullQualityMetricText.toString(), translatedTelemetryText("无效"));
+
             const QVariantMap staleLinkSample{
                 {QStringLiteral("linkState"), 2}, {QStringLiteral("receiveAgeMs"), 6000},
                 {QStringLiteral("reasonCode"), 0}, {QStringLiteral("validityMask"), 0x700},

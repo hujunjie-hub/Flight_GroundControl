@@ -1327,6 +1327,6 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 双摇杆卡在名称下方显示当前手型的横向/纵向通道映射，例如「横向 CH4 · 纵向 CH3」；映射直接读取共享的 `FlightRadio.mode` 与 `_stickChannels`，Mode 1/2/3 切换后同步更新，不另设一套通道定义。
 - 通道映射标签使用 ScreenTools micro 字号和字体度量；摇杆卡片隐式高度随新增映射行自适应，圆形轨迹保持正圆，400 px 双摇杆并排及父卡片边界约束继续有效。
 - 链路质量指标增加 0–100% 细条，仅当 link family 与该实例均 fresh、validity bit 9 置位且 `linkQualityPermille` 为有限的 0–1000 值时显示；填充比例严格为 permille / 1000，不按 RSSI 或链路状态推算。
-- validity bit 缺失/清零、family/实例等待或超时、非有限值和超出 0–1000 的质量值均不绘制质量条；超范围值明确显示「无效」并使用琥珀色，恢复有效值后同步恢复数字、颜色和填充比例。
+- validity bit 缺失/清零、family/实例等待或超时、null/空值、非有限值和超出 0–1000 的质量值均不绘制质量条；超范围或缺失值明确显示「无效」并使用琥珀色，恢复有效值后同步恢复数字、颜色和填充比例。
 - MockLink `FlightTelemetryPageUITest` 主动切换 Mode 1/2/3，验证左右摇杆通道标签；以 700/1000 验证 70% 填充，以 1200/1000 验证无效值隐藏质量条并转为琥珀色，再恢复 70% 验证回归。
 - 不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、RC 输入值/validity mask、链路 freshness 阈值、趋势数据源、飞控控制行为或只读安全边界。按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中验收。

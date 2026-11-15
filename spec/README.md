@@ -241,4 +241,4 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 飞行健康页详情卡片内容高度收口：传感器实例、逐项预检、任务资源卡片均按 ScreenTools 缩放内边距 + 内容 implicitHeight 计算外层高度；MockLink UI Integration 增加内容容器实际高度/上下内边距断言，覆盖 1600/1000/900/760/759/700/400 px。未运行 CI，新增回归 NOT_RUN。
 
 
-- 2026-11-15 遥控与链路页继续适配：双摇杆卡新增实时横向/纵向 CH 映射标签，随 FlightRadio Mode 1/2/3 同步；摇杆卡高度按新增行自适应。链路质量指标新增严格 freshness/validity/0–1000 permille 门控的比例条，70% 实值显示 70% 填充，超范围值显示无效/琥珀且隐藏填充，恢复有效值后同步恢复。MockLink UI Integration 增加三种手型标签、质量条比例/无效/恢复断言。本轮未运行 CI，新增回归 NOT_RUN。
+- 2026-11-15 遥控与链路页继续适配：双摇杆卡新增实时横向/纵向 CH 映射标签，随 FlightRadio Mode 1/2/3 同步；摇杆卡高度按新增行自适应。链路质量指标新增严格 freshness/validity/0–1000 permille 门控的比例条，70% 实值显示 70% 填充，超范围/null/空值显示无效/琥珀且隐藏填充，恢复有效值后同步恢复。MockLink UI Integration 增加三种手型标签、质量条比例/无效/恢复断言。本轮未运行 CI，新增回归 NOT_RUN。
