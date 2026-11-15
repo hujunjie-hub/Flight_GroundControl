@@ -705,6 +705,12 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                          QStringLiteral("数据超时"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(!pitchSlider->property("enabled").toBool(), 1000);
 
+            // Restore device 154 attitude telemetry so its live attitude can
+            // be observed while device 155 is independently controlled.
+            vehicle->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_SET_MESSAGE_INTERVAL,
+                                    false, MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000);
+            QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
+
             // The second device has its own owner pair, capability flags and
             // attitude state. Acquiring and moving it must not affect device 154.
             QVERIFY(secondGimbal->supportsPitchAxis());
