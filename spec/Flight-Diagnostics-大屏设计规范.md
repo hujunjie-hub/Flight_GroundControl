@@ -1451,3 +1451,16 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - SettingsButton 的 Flight 风格 padding 按字体像素宽度缩放；非 Flight 配置布局维持原有尺寸与行为。参数中心全屏布局、常规 VehicleConfigView、飞行视图工具栏高度不受此 Flight 配置分支修改影响。
 - MockLink FlightTelemetryPageUITest 使用真实 `uiScalePercent` Fact 在 100%/150%/200% 下检查顶栏高度、FlyViewToolBar 内容高度、左侧导航宽度和参数中心按钮 padding，并在结束时恢复原始 UI Scale 与视口。
 - 不改变顶栏状态数据、导航项目/权限、页面切换、参数/固件/云台功能、遥测数据或飞控控制行为；按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release，新增回归保持 NOT_RUN，等待后续集中 exact-HEAD 验收。
+
+
+## 114. Phase 2.68 总览右侧告警事件高 DPI 与内容自适应（2026-11-16）
+
+- 右侧告警主视觉的事件计数行、优先级提示、严重度五分类统计、无事件空态、首要/后续事件卡片和最近事件历史统一使用 `ScreenTools.defaultFontPixelWidth/Height` 派生的行距、列距、最小高度、内边距、徽标尺寸、色条宽度与圆角；不再依赖固定 25/58/70/50/52/27/44/22 px 布局常量。
+- 五类严重度 chip 的内容容器按缩放内边距与实际 implicitHeight 自适应；完整缓存统计、未知值归类、freshness 门控和 5/3/5 列既有响应式策略不变。
+- 空态卡片和首要/后续告警卡片以内容 implicitHeight + 双侧缩放内边距决定实际高度；严重度徽标与状态色条按字体像素缩放。首要告警仍突出最高已知严重度，未知严重度继续标注「严重度未知」，原因、事件 ID、来源 ID、地面站本地接收序号和 FCU 启动相对时间全部保留。
+- 告警优先级排序、前四项摘要、最近八项历史、完整缓存五分类计数、同级按本地接收序号排序、FCU 单调时间语义、unknown 处理与只读边界不变；不把 FCU 启动时间标作 UTC。
+- 最近事件历史行距、元信息网格行/列间距改用 ScreenTools 字体像素度量；序号/FCU 时间继续不省略，原因与 ID/来源信息继续完整换行。
+- MockLink UI Integration 验证空态内容高度/内边距、严重度 chip 内部边界、首要事件卡内容高度/徽标/色条、事件历史网格与文本父子边界；覆盖 1600/1400/1000/900/700/400 px 六档宽度，并保持 1000 px 中屏三列、桌面/窄屏五列严重度布局。
+- 静态字体检查新增告警密度 token 与内容驱动高度契约；Windows Release G15 新增告警 chip/空态与告警卡/历史行 ScreenTools 自适应验收条件。
+- 仅调整 FlightTelemetry.qml 展示层、FlightTelemetryPageUITest、静态字体检查及对应 SPEC/G15；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、事件数据、排序、freshness、时间语义、状态色含义或飞控控制行为。
+- 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中 exact-HEAD 验收。
