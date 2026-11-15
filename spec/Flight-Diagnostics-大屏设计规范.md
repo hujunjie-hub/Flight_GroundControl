@@ -1065,6 +1065,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 新增 dashboard panel 语义令牌，统一四页 HeroPanel 与 StatusCard 的圆角、背景、边框、眉题颜色、标题颜色、分隔线颜色、内边距、标题区间距和内容区间距；SummaryTile 外围摘要带、TrendCard、StickVisualizer 与 HealthCell 复用对应边框/圆角令牌；内边距与间距由 ScreenTools.defaultFontPixelHeight/Width 度量并随 UI Scale 缩放。
 - HeroPanel 与 StatusCard 统一使用同一 FamilyStatusBadge：24 px 基准高度并按字体实际高度扩展、12 px 基准圆角、状态点/间距按 ScreenTools 度量缩放、caption 字号和强字重；状态文字、前景色、底色和边框色仍绑定各自真实 telemetry family freshness，不跨 family 聚合。
 - 主视觉与详情卡片统一使用同一标题/眉题语义字号、字重与颜色；趋势图仍保留独立绘图区和背景层级，健康矩阵单元仍使用 6 px 圆角，KPI 连续摘要带不改为独立卡片。
+- 总览、健康、导航时序、遥控链路四个页面网格及下方详情网格统一使用同一 ScreenTools.defaultFontPixelHeight 缩放间距令牌（基准约 12 px）；内层能力格、趋势图和健康矩阵保留各自信息密度所需的专用间距。
 - FlightTelemetryPageUITest 增加总览主视觉与详情卡片跨组件断言，检查标题/眉题/徽标字体属性（point size、weight、color）、徽标尺寸/圆角、状态文本/颜色、卡片背景/圆角和内边距/区块间距一致。
 - 本阶段仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、SPEC 入口、Windows Release G15 与机器可读 manifest；不修改 MAVLink、FactGroup、Flight ICD、freshness 阈值、VehicleLinkManager、飞控控制行为或其他页面导航。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增跨组件视觉回归断言为 NOT_RUN，待后续集中验收。
