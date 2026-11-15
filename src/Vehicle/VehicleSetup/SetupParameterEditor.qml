@@ -96,6 +96,10 @@ Item {
             property var responseSamples: []
             property var parameterChangeMarkers: []
             property var pendingParameterChangeMarkers: []
+            // Audit records survive telemetry/profile resets while this page remains open.
+            // Only PARAM_VALUE-confirmed writes are recorded; this is not a persistent log.
+            property var parameterAuditHistory: []
+            property int parameterAuditSequence: 0
             property string parameterChangeSummary: ""
             property string lastControlTimestamp: ""
             property string lastControlBootId: ""
@@ -256,7 +260,50 @@ Item {
                        : qsTr("未声明")
             }
 
+            function updateParameterAuditRecord(auditId, correlationStatus, controlTimestampUs, controlSolveTimeUs) {
+                const history = parameterAuditHistory.slice()
+                for (let i = 0; i < history.length; i++) {
+                    const existing = history[i]
+                    if (existing.id !== auditId) {
+                        continue
+                    }
+                    history[i] = {
+                        id: existing.id,
+                        timestamp: existing.timestamp,
+                        vehicleSystemId: existing.vehicleSystemId,
+                        profileId: existing.profileId,
+                        profileDisplayName: existing.profileDisplayName,
+                        vehicleFamily: existing.vehicleFamily,
+                        modelVariants: existing.modelVariants,
+                        controlLaw: existing.controlLaw,
+                        componentId: existing.componentId,
+                        parameterName: existing.parameterName,
+                        previousValue: existing.previousValue,
+                        confirmedValue: existing.confirmedValue,
+                        bootId: existing.bootId,
+                        telemetryProfileId: existing.telemetryProfileId,
+                        telemetryTimestampUs: existing.telemetryTimestampUs,
+                        correlationStatus: correlationStatus,
+                        correlatedControlTimestampUs: controlTimestampUs === undefined
+                                                     ? existing.correlatedControlTimestampUs : controlTimestampUs,
+                        correlatedSolveTimeUs: controlSolveTimeUs === undefined
+                                                ? existing.correlatedSolveTimeUs : controlSolveTimeUs
+                    }
+                    parameterAuditHistory = history
+                    return
+                }
+            }
+
+            function markPendingParameterAuditsUncorrelated(statusText) {
+                const pending = pendingParameterChangeMarkers.slice()
+                for (let i = 0; i < pending.length; i++) {
+                    updateParameterAuditRecord(pending[i].auditId, statusText)
+                }
+                pendingParameterChangeMarkers = []
+            }
+
             function resetResponseHistory(reason) {
+                markPendingParameterAuditsUncorrelated(qsTr("未关联 · 遥测上下文已重置"))
                 responseSamples = []
                 parameterChangeMarkers = []
                 pendingParameterChangeMarkers = []
@@ -269,15 +316,44 @@ Item {
 
             function recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
                 parameterApplyConfirmed = true
-                if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
+                const profile = root._selectedModelProfile
+                const now = Date.now()
+                parameterAuditSequence += 1
+                const auditId = String(now) + "-" + String(parameterAuditSequence)
+                const auditRecord = {
+                    id: auditId,
+                    timestamp: now,
+                    vehicleSystemId: root._activeVehicle ? root._activeVehicle.id : -1,
+                    profileId: root._selectedModelProfileId,
+                    profileDisplayName: profile && profile.displayName ? profile.displayName : root._selectedModelProfileId,
+                    vehicleFamily: profile && profile.vehicleFamily ? profile.vehicleFamily : qsTr("未登记"),
+                    modelVariants: profile && profile.modelVariants ? profile.modelVariants.join(", ") : qsTr("未登记"),
+                    controlLaw: profile && profile.controlLaw ? profile.controlLaw : qsTr("未登记"),
+                    componentId: componentId,
+                    parameterName: parameterName,
+                    previousValue: String(previousValue),
+                    confirmedValue: String(confirmedValue),
+                    bootId: lastControlBootId,
+                    telemetryProfileId: lastControlProfileId,
+                    telemetryTimestampUs: lastControlTimestamp,
+                    correlationStatus: qsTr("等待首帧控制遥测"),
+                    correlatedControlTimestampUs: 0,
+                    correlatedSolveTimeUs: 0
+                }
+                parameterAuditHistory = [auditRecord].concat(parameterAuditHistory).slice(0, 40)
+
+                if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "" ||
+                    !Number.isFinite(Number(lastControlTimestamp))) {
+                    updateParameterAuditRecord(auditId, qsTr("未关联 · 缺少遥测基线"))
                     parameterChangeSummary =
-                        qsTr("参数 %1：%2 → %3 已收到 PARAM_VALUE 确认；当前没有同一启动会话与控制配置的遥测基线，未标记曲线")
+                        qsTr("参数 %1：%2 → %3 已收到 PARAM_VALUE 确认；缺少同一启动会话的遥测基线，未标记曲线")
                             .arg(parameterName).arg(String(previousValue)).arg(String(confirmedValue))
                     return
                 }
 
                 const pending = pendingParameterChangeMarkers.slice()
                 pending.push({
+                    auditId: auditId,
                     componentId: componentId,
                     name: parameterName,
                     previousValue: String(previousValue),
@@ -287,7 +363,8 @@ Item {
                     afterTimestamp: Number(lastControlTimestamp)
                 })
                 if (pending.length > 16) {
-                    pending.shift()
+                    const dropped = pending.shift()
+                    updateParameterAuditRecord(dropped.auditId, qsTr("未关联 · 遥测等待队列已满"))
                 }
                 pendingParameterChangeMarkers = pending
                 parameterChangeSummary = qsTr("参数 %1：%2 → %3 已收到飞控确认，等待同一启动会话与控制配置的下一帧控制遥测")
@@ -329,6 +406,8 @@ Item {
                 if (sessionChanged) {
                     const hadParameterMarkers = dashboardRoot.parameterChangeMarkers.length > 0 ||
                                                  dashboardRoot.pendingParameterChangeMarkers.length > 0
+                    dashboardRoot.markPendingParameterAuditsUncorrelated(
+                        qsTr("未关联 · 飞控启动/控制配置/时间轴变化"))
                     dashboardRoot.responseSamples = []
                     dashboardRoot.parameterChangeMarkers = []
                     dashboardRoot.pendingParameterChangeMarkers = []
@@ -363,11 +442,13 @@ Item {
                     }
                     if (timestamp > marker.afterTimestamp) {
                         correlated.push({
+                            auditId: marker.auditId,
                             time: timestamp,
                             name: marker.name,
                             previousValue: marker.previousValue,
                             value: marker.value,
-                            componentId: marker.componentId
+                            componentId: marker.componentId,
+                            solveTimeUs: solveTimeUs
                         })
                     } else {
                         waiting.push(marker)
@@ -377,6 +458,13 @@ Item {
                 if (correlated.length > 0) {
                     const markers = dashboardRoot.parameterChangeMarkers.concat(correlated)
                     dashboardRoot.parameterChangeMarkers = markers.slice(-16)
+                    for (let i = 0; i < correlated.length; i++) {
+                        dashboardRoot.updateParameterAuditRecord(
+                            correlated[i].auditId,
+                            qsTr("已关联 · 确认后的首帧控制遥测"),
+                            correlated[i].time,
+                            correlated[i].solveTimeUs)
+                    }
                     const latestMarker = correlated[correlated.length - 1]
                     dashboardRoot.parameterChangeSummary =
                         qsTr("参数 %1：%2 → %3 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
@@ -1680,9 +1768,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.29
-                        Layout.preferredHeight: root._narrowLayout ? 430
-                                                : root._mediumLayout ? 390
-                                                : Math.max(320, workArea.height * 0.64)
+                        Layout.preferredHeight: root._narrowLayout ? 590
+                                                : root._mediumLayout ? 550
+                                                : Math.max(480, workArea.height * 0.72)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -1846,6 +1934,109 @@ Item {
                                               : qsTr("已收到 1 个样本，至少需要 2 个有效样本绘制趋势")
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                objectName: "parameterCenterAuditHistory"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 150
+                                radius: 5
+                                color: "#06202A"
+                                border.color: "#14515D"
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 7
+                                    spacing: 3
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        QGCLabel {
+                                            text: qsTr("参数变更审计")
+                                            color: root.mainText
+                                            font.pointSize: ScreenTools.captionFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                        QGCLabel {
+                                            text: qsTr("本次会话 · %1 条").arg(dashboardRoot.parameterAuditHistory.length)
+                                            color: root.cyan
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                        }
+                                    }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        spacing: 3
+                                        Repeater {
+                                            model: dashboardRoot.parameterAuditHistory.slice(0, 3)
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 34
+                                                radius: 3
+                                                color: "#082B33"
+                                                ColumnLayout {
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 5
+                                                    anchors.rightMargin: 5
+                                                    anchors.topMargin: 2
+                                                    anchors.bottomMargin: 2
+                                                    spacing: 0
+                                                    RowLayout {
+                                                        Layout.fillWidth: true
+                                                        spacing: 5
+                                                        QGCLabel {
+                                                            Layout.preferredWidth: 66
+                                                            text: new Date(modelData.timestamp).toLocaleTimeString()
+                                                            color: root.mutedText
+                                                            font.pointSize: ScreenTools.microFontPointSize
+                                                        }
+                                                        QGCLabel {
+                                                            Layout.fillWidth: true
+                                                            text: modelData.parameterName
+                                                            color: root.mainText
+                                                            font.pointSize: ScreenTools.captionFontPointSize
+                                                            elide: Text.ElideRight
+                                                        }
+                                                        QGCLabel {
+                                                            text: modelData.previousValue + " → " + modelData.confirmedValue
+                                                            color: root.cyan
+                                                            font.pointSize: ScreenTools.captionFontPointSize
+                                                        }
+                                                    }
+                                                    RowLayout {
+                                                        Layout.fillWidth: true
+                                                        spacing: 5
+                                                        QGCLabel {
+                                                            Layout.fillWidth: true
+                                                            text: qsTr("SYS %1 · %2 · %3 · %4")
+                                                                  .arg(modelData.vehicleSystemId)
+                                                                  .arg(modelData.profileDisplayName)
+                                                                  .arg(modelData.modelVariants)
+                                                                  .arg(modelData.controlLaw)
+                                                            color: root.mutedText
+                                                            font.pointSize: ScreenTools.microFontPointSize
+                                                            elide: Text.ElideRight
+                                                        }
+                                                        QGCLabel {
+                                                            text: modelData.correlationStatus
+                                                            color: modelData.correlationStatus.indexOf(qsTr("已关联")) === 0
+                                                                   ? root.green : root.amber
+                                                            font.pointSize: ScreenTools.microFontPointSize
+                                                            elide: Text.ElideRight
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            visible: dashboardRoot.parameterAuditHistory.length === 0
+                                            text: qsTr("尚无飞控确认的参数变更；未确认或失败的写入不会进入审计记录")
+                                            color: root.mutedText
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                            wrapMode: Text.WordWrap
+                                        }
                                     }
                                 }
                             }

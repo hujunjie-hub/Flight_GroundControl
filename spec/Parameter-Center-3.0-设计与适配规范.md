@@ -561,7 +561,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
 - Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、参数详情面板展示、依赖与规则空态、依赖引用完整性校验、六类 validationRules 严格 schema 校验、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、经固件源确认的实际 dependencies/validationRules 声明、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
-- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、参数依赖可用性门控、GREATER_THAN / GREATER_THAN_OR_EQUAL / LESS_THAN / LESS_THAN_OR_EQUAL / MULTIPLE_OF / REQUIRES_PARAMETER_VALUE 六类元数据规则运行时校验、PARAM_VALUE ACK 与目标值核对、ACK 后自动独立回读及一致性确认、回读失败锁定、上下文变化时操作失效与迟到回调抑制、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；当前参数源未声明实际依赖/组合规则，实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、参数依赖可用性门控、GREATER_THAN / GREATER_THAN_OR_EQUAL / LESS_THAN / LESS_THAN_OR_EQUAL / MULTIPLE_OF / REQUIRES_PARAMETER_VALUE 六类元数据规则运行时校验、PARAM_VALUE ACK 与目标值核对、ACK 后自动独立回读及一致性确认、回读失败锁定、上下文变化时操作失效与迟到回调抑制、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；当前参数源未声明实际依赖/组合规则，实机/试探/批量调参未开放；本次页面会话内的确认后参数审计与遥测时间关联已接入，审计持久化/导出未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：PARTIAL（已接入 1280/900 px 响应式断点、紧凑屏参数域选择器、上/下层卡片重排、纵向滚动、状态栏重排，以及 safe mode 参数表工具栏/列宽适配；截图叠加、DPI、Windows 构建、QML/单元测试与 CI 仍 NOT_RUN）。
 
@@ -593,5 +593,15 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 影响分析卡片跟随当前选中参数展示显式依赖；无依赖元数据时保留未知/未声明状态。
 - 数据类型按 Fact 当前暴露的布尔/字符串/数值属性显示，不将 QML 的 number 类型误报为固件原始 float/int 类型；规则仅展示元数据声明的 type，不擅自解释未知规则。
 - 本轮未运行 QML 构建、UI/单元测试或 CI；详情滚动、不同 DPI、窄屏高度、参数切换与写入操作可见性保持 NOT_RUN。
+
+### Phase 5 实施记录（第四轮参数变更审计）
+
+- 新增本次页面会话内的参数变更审计列表；仅在 ParameterEditorController 发出 parameterWriteConfirmed（收到匹配 PARAM_VALUE 且确认值与目标值一致）后记录，不记录请求中、失败或未确认的写入。
+- 每条记录保存本机时间、Vehicle system ID、机型 profile ID/显示名、vehicle family、model variant、control law、MAVLink component ID、参数名、修改前值和飞控确认值。
+- 审计历史最多保留最近 40 条；切换飞行器或机型/控制上下文时保留既有审计条目，遥测曲线和待关联标记仍按原安全规则重置。
+- 参数确认事件若有同一 boot ID 与 controlProfileId 的遥测基线，则等待其后的第一帧控制遥测；关联成功后记录 FCU 时间戳与该帧控制求解耗时，并继续在曲线上标记。缺少基线、上下文变化或等待队列溢出时，明确记录“未关联”原因。
+- 关联仅表示时间先后关系，不证明参数修改导致控制求解耗时变化；不生成性能改善或因果结论。
+- 当前审计记录仅保存在页面会话内，最多 40 条；页面卸载/应用重启后不保证保留，尚未接入持久化存储或 CSV/JSON 导出。
+- 本轮未运行 QML 构建、UI/单元测试或 CI；不同 DPI、窄屏布局、事件关联边界与页面生命周期验证保持 NOT_RUN。
 
 本规范是参数中心 3.0 后续设计、实现和验收的唯一基线。若用户确认新的视觉变化，必须先更新本规范和参考图，再修改实现。
