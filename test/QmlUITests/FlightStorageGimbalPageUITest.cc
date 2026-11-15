@@ -396,7 +396,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                     activeGimbalIndex = index;
                 }
                 if (candidate->managerCompid()->rawValue().toUInt() == 2 &&
-                    candidate->deviceId()->rawValue().toUInt() == 156) {
+                    candidate->deviceId()->rawValue().toUInt() == 3) {
                     secondManagerGimbal = candidate;
                     secondManagerGimbalIndex = index;
                 } else if (candidate->deviceId()->rawValue().toUInt() == secondDeviceId) {
@@ -431,7 +431,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->managerStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
             QCOMPARE(secondManagerGimbal->managerCompid()->rawValue().toUInt(), static_cast<uint32_t>(2));
-            QCOMPARE(secondManagerGimbal->deviceId()->rawValue().toUInt(), static_cast<uint32_t>(156));
+            QCOMPARE(secondManagerGimbal->deviceId()->rawValue().toUInt(), static_cast<uint32_t>(3));
             QTRY_VERIFY_WITH_TIMEOUT(secondManagerGimbal->managerStatusFresh(), 5000);
             QTRY_VERIFY_WITH_TIMEOUT(secondManagerGimbal->attitudeStatusFresh(), 5000);
             QVERIFY(secondManagerGimbal->supportsPitchAxis());
