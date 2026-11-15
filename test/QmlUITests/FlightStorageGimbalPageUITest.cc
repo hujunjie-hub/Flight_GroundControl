@@ -767,5 +767,20 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 6000);
             QVERIFY(!secondGimbal->gimbalHaveControl());
+
+            // Switch back to the rediscovered first device and verify that its
+            // owner state is fresh, empty, and can be explicitly acquired again.
+            vehicle->gimbalController()->setActiveGimbal(activeGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 0, 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 3000);
+            QVERIFY(acquire->property("enabled").toBool());
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("本机控制中"), 6000);
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 6000);
         });
 }
