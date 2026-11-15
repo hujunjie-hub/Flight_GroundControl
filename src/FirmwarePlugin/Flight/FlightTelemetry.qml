@@ -59,6 +59,14 @@ SetupPage {
     readonly property int _navCapabilityHorizontalVelocity: 0x20
     readonly property int _navCapabilityVerticalVelocity: 0x40
     readonly property int _navCapabilityVelocity: 0x60
+    readonly property var _overviewTopologyFamilies: [
+        { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
+        { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
+        { label: qsTr("数据链路"), family: "link", available: "linkAvailable" },
+        { label: qsTr("飞控系统"), family: "control", available: "controlAvailable" },
+        { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
+        { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
+    ]
     readonly property var _healthDomains: [
         { label: qsTr("飞行操作"), family: "operation", available: "operationAvailable" },
         { label: qsTr("导航估计"), family: "navigation", available: "navigationAvailable" },
@@ -97,6 +105,27 @@ SetupPage {
     function _eventCountText() {
         if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
         return _telemetry ? String(_telemetry.recentEvents.length) : qsTr("未上报")
+    }
+    function _priorityEventsFor(events) {
+        const records = events && typeof events.slice === "function" ? events.slice() : []
+        records.sort((left, right) => {
+            const leftSeverityValue = Number(left.severity)
+            const rightSeverityValue = Number(right.severity)
+            const leftSeverity = Number.isInteger(leftSeverityValue) && leftSeverityValue >= 0 && leftSeverityValue <= 3
+                                 ? leftSeverityValue : -1
+            const rightSeverity = Number.isInteger(rightSeverityValue) && rightSeverityValue >= 0 && rightSeverityValue <= 3
+                                  ? rightSeverityValue : -1
+            if (leftSeverity !== rightSeverity) return rightSeverity - leftSeverity
+            const leftSequenceValue = Number(left.sequence)
+            const rightSequenceValue = Number(right.sequence)
+            const leftSequence = Number.isFinite(leftSequenceValue) ? leftSequenceValue : 0
+            const rightSequence = Number.isFinite(rightSequenceValue) ? rightSequenceValue : 0
+            return rightSequence - leftSequence
+        })
+        return records.slice(0, 4)
+    }
+    function _priorityEvents() {
+        return _priorityEventsFor(_telemetry ? _telemetry.recentEvents : [])
     }
     function _validRcAxisCountText() {
         const state = _familyStatus("rcInputAvailable")
@@ -1436,21 +1465,40 @@ SetupPage {
                         id: topologyCanvas
                         objectName: "flightTelemetry_topologyCanvas"
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 158
+                        Layout.preferredHeight: 176
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
                         Component.onCompleted: requestPaint()
+                        Connections {
+                            target: root
+                            function on_AgeRefreshTickChanged() { topologyCanvas.requestPaint() }
+                        }
                         onPaint: {
                             const ctx = getContext("2d")
                             if (!ctx) return
                             ctx.clearRect(0, 0, width, height)
+
                             const cx = width / 2
                             const cy = height / 2
+                            const scale = Math.min(1, Math.max(0.72, width / 480))
+                            const ringRadius = Math.min(76, height * 0.42, width * 0.16)
+                            const nodeX = Math.min(width * 0.34, ringRadius + 36)
+                            const nodeY = Math.min(height * 0.40, ringRadius + 8)
+                            const families = root._overviewTopologyFamilies
+                            const nodes = [
+                                { x: cx - nodeX, y: cy - nodeY, available: families[0].available },
+                                { x: cx, y: cy - height * 0.40, available: families[1].available },
+                                { x: cx + nodeX, y: cy - nodeY, available: families[2].available },
+                                { x: cx - nodeX, y: cy + nodeY, available: families[3].available },
+                                { x: cx, y: cy + height * 0.40, available: families[4].available },
+                                { x: cx + nodeX, y: cy + nodeY, available: families[5].available }
+                            ]
+
                             ctx.strokeStyle = "#174D5B"
                             ctx.lineWidth = 1
-                            for (let radius = 24; radius <= 76; radius += 26) {
+                            for (let ring = 1; ring <= 3; ++ring) {
                                 ctx.beginPath()
-                                ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+                                ctx.arc(cx, cy, ringRadius * ring / 3, 0, Math.PI * 2)
                                 ctx.stroke()
                             }
                             ctx.beginPath()
@@ -1459,94 +1507,136 @@ SetupPage {
                             ctx.moveTo(cx, 8)
                             ctx.lineTo(cx, height - 8)
                             ctx.stroke()
+
+                            // Family links terminate at live status nodes; the vehicle drawing itself is schematic.
+                            ctx.strokeStyle = "#245966"
+                            ctx.globalAlpha = 0.78
+                            ctx.lineWidth = 1.2
+                            for (let index = 0; index < nodes.length; ++index) {
+                                ctx.beginPath()
+                                ctx.moveTo(cx, cy)
+                                ctx.lineTo(nodes[index].x, nodes[index].y)
+                                ctx.stroke()
+                            }
+                            ctx.globalAlpha = 1
+
+                            const rotorOffsetX = 57 * scale
+                            const rotorOffsetY = 43 * scale
+                            const rotorRadius = 15 * scale
                             const rotors = [
-                                [cx - 57, cy - 43], [cx + 57, cy - 43],
-                                [cx - 57, cy + 43], [cx + 57, cy + 43]
+                                [cx - rotorOffsetX, cy - rotorOffsetY], [cx + rotorOffsetX, cy - rotorOffsetY],
+                                [cx - rotorOffsetX, cy + rotorOffsetY], [cx + rotorOffsetX, cy + rotorOffsetY]
                             ]
                             ctx.strokeStyle = "#38D5E4"
-                            ctx.lineWidth = 4
+                            ctx.lineWidth = 4 * scale
                             ctx.beginPath()
                             ctx.moveTo(cx, cy)
-                            for (let i = 0; i < rotors.length; i++) {
-                                ctx.lineTo(rotors[i][0], rotors[i][1])
+                            for (let index = 0; index < rotors.length; ++index) {
+                                ctx.lineTo(rotors[index][0], rotors[index][1])
                                 ctx.moveTo(cx, cy)
                             }
                             ctx.stroke()
-                            for (let i = 0; i < rotors.length; i++) {
+                            for (let index = 0; index < rotors.length; ++index) {
                                 ctx.beginPath()
-                                ctx.arc(rotors[i][0], rotors[i][1], 15, 0, Math.PI * 2)
+                                ctx.arc(rotors[index][0], rotors[index][1], rotorRadius, 0, Math.PI * 2)
                                 ctx.fillStyle = "rgba(20, 155, 174, 0.12)"
                                 ctx.fill()
                                 ctx.strokeStyle = "#52E5EC"
-                                ctx.lineWidth = 2
+                                ctx.lineWidth = 2 * scale
                                 ctx.stroke()
                             }
                             ctx.fillStyle = "#0D4652"
-                            ctx.fillRect(cx - 14, cy - 22, 28, 44)
+                            ctx.fillRect(cx - 14 * scale, cy - 22 * scale, 28 * scale, 44 * scale)
                             ctx.strokeStyle = "#7BEFF0"
-                            ctx.lineWidth = 2
-                            ctx.strokeRect(cx - 14, cy - 22, 28, 44)
+                            ctx.lineWidth = 2 * scale
+                            ctx.strokeRect(cx - 14 * scale, cy - 22 * scale, 28 * scale, 44 * scale)
                             ctx.beginPath()
-                            ctx.arc(cx, cy, 4, 0, Math.PI * 2)
+                            ctx.arc(cx, cy, 4 * scale, 0, Math.PI * 2)
                             ctx.fillStyle = "#8CFFFF"
                             ctx.fill()
+
+                            for (let index = 0; index < nodes.length; ++index) {
+                                const node = nodes[index]
+                                const nodeColor = root._familyStatusColor(node.available)
+                                ctx.beginPath()
+                                ctx.arc(node.x, node.y, 8, 0, Math.PI * 2)
+                                ctx.fillStyle = "#05242D"
+                                ctx.fill()
+                                ctx.strokeStyle = nodeColor
+                                ctx.lineWidth = 1.6
+                                ctx.stroke()
+                                ctx.beginPath()
+                                ctx.arc(node.x, node.y, 3.2, 0, Math.PI * 2)
+                                ctx.fillStyle = nodeColor
+                                ctx.fill()
+                            }
                         }
                     }
                     GridLayout {
                         objectName: "flightTelemetry_topologyNodesGrid"
                         Layout.fillWidth: true
-                        columns: 3
+                        columns: root.availableWidth >= 1280 ? 3
+                                 : root.availableWidth >= 1000 ? 2
+                                 : root.availableWidth >= 420 ? 3 : 2
                         columnSpacing: 7
                         rowSpacing: 7
                         Repeater {
-                            model: [
-                                { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
-                                { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
-                                { label: qsTr("数据链路"), family: "link", available: "linkAvailable" },
-                                { label: qsTr("飞控系统"), family: "control", available: "controlAvailable" },
-                                { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
-                                { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
-                            ]
+                            model: root._overviewTopologyFamilies
                             delegate: Rectangle {
                                 required property var modelData
                                 readonly property color stateColor: root._familyStatusColor(modelData.available)
+                                objectName: "flightTelemetry_topologyNode_" + modelData.family
                                 Layout.fillWidth: true
-                                implicitHeight: 34
-                                radius: 5
+                                radius: 6
                                 color: "#082E36"
                                 border.width: 1
                                 border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.42)
-                                RowLayout {
+                                ColumnLayout {
+                                    id: topologyNodeContent
                                     anchors.fill: parent
-                                    anchors.leftMargin: 7
-                                    anchors.rightMargin: 7
-                                    spacing: 5
-                                    Rectangle {
-                                        Layout.preferredWidth: 6
-                                        Layout.preferredHeight: 6
-                                        radius: 3
-                                        color: parent.parent.stateColor
+                                    anchors.margins: 6
+                                    spacing: 2
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 5
+                                        Rectangle {
+                                            Layout.preferredWidth: 6
+                                            Layout.preferredHeight: 6
+                                            radius: 3
+                                            color: parent.parent.parent.stateColor
+                                        }
+                                        QGCLabel {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            color: "#C7E3E9"
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                            elide: Text.ElideRight
+                                        }
+                                        QGCLabel {
+                                            text: root._familyStatus(modelData.available)
+                                            color: parent.parent.parent.stateColor
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                        }
                                     }
                                     QGCLabel {
+                                        objectName: "flightTelemetry_topologyNodeAge_" + modelData.family
                                         Layout.fillWidth: true
-                                        text: modelData.label
-                                        color: "#C7E3E9"
+                                        text: qsTr("接收 %1").arg(root._receiveAgeText(modelData.family))
+                                        color: "#8298A2"
                                         font.pointSize: ScreenTools.microFontPointSize
                                         elide: Text.ElideRight
                                     }
-                                    QGCLabel {
-                                        text: root._familyStatus(modelData.available)
-                                        color: parent.parent.stateColor
-                                        font.pointSize: ScreenTools.microFontPointSize
-                                    }
                                 }
+                                implicitHeight: topologyNodeContent.implicitHeight + 12
                             }
                         }
                     }
 
                     GridLayout {
                         Layout.fillWidth: true
-                        columns: root.availableWidth >= 1280 ? 3 : 1
+                        columns: root.availableWidth >= 1280 ? 3
+                                 : root.availableWidth >= 1000 ? 1
+                                 : root.availableWidth >= 760 ? 3 : 1
                         columnSpacing: 8
                         MetricReadout {
                             objectName: "flightTelemetry_metricPosition"
@@ -1597,6 +1687,13 @@ SetupPage {
                         font.pointSize: ScreenTools.captionFontPointSize
                     }
                     QGCLabel {
+                        objectName: "flightTelemetry_alarmPriorityHint"
+                        Layout.fillWidth: true
+                        text: qsTr("严重度优先 · 同级按最新序号")
+                        color: "#6F9DA7"
+                        font.pointSize: ScreenTools.microFontPointSize
+                    }
+                    QGCLabel {
                         Layout.fillWidth: true
                         visible: !root._telemetry || root._telemetry.recentEvents.length === 0
                         text: root._familyStatus("eventAvailable") === qsTr("已接收")
@@ -1607,7 +1704,7 @@ SetupPage {
                     }
                     Repeater {
                         objectName: "flightTelemetry_alarmList"
-                        model: root._telemetry ? root._telemetry.recentEvents.slice(0, 4) : []
+                        model: root._priorityEvents()
                         delegate: Rectangle {
                             required property var modelData
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)

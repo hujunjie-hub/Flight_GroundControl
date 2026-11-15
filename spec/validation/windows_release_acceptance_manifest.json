@@ -298,7 +298,10 @@
         "prearm_check_recovery_reason_wraps_without_elision",
         "health_overview_headline_uses_neutral_summary_color_not_operation_family_color",
         "health_resource_detail_values_are_gated_by_family_and_per_instance_freshness",
-        "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness"
+        "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness",
+        "overview_topology_nodes_bind_six_real_family_freshness_states_and_receive_ages",
+        "overview_alarm_events_sort_by_severity_descending_then_event_sequence_descending",
+        "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds"
       ]
     },
     {
@@ -462,7 +465,10 @@
     "prearm_check_recovery_reason_wraps_without_elision",
     "health_overview_headline_uses_neutral_summary_color_not_operation_family_color",
     "health_resource_detail_values_are_gated_by_family_and_per_instance_freshness",
-    "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness"
+    "health_safety_actuator_available_mask_is_gated_by_actuator_family_freshness",
+    "overview_topology_nodes_bind_six_real_family_freshness_states_and_receive_ages",
+    "overview_alarm_events_sort_by_severity_descending_then_event_sequence_descending",
+    "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

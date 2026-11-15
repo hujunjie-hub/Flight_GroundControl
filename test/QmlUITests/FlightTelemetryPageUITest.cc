@@ -1,6 +1,7 @@
 #include "FlightTelemetryPageUITest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QMetaObject>
 #include <QtCore/QPointF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QVariant>
@@ -96,6 +97,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
             QQuickItem* topologyCanvas =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyCanvas"), 3000);
+            QQuickItem* topologyNodesGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyNodesGrid"), 3000);
+            QQuickItem* alarmPriorityHint =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmPriorityHint"), 3000);
             QQuickItem* alarmList =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmList"), 3000);
             QQuickItem* diagnosticDetailsTitle =
@@ -192,6 +197,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryGrid);
             QVERIFY(summaryBand);
             QVERIFY(topologyCanvas);
+            QVERIFY(topologyNodesGrid);
+            QVERIFY(alarmPriorityHint);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
             QVERIFY(summaryLink);
@@ -240,12 +247,63 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(buildInfoCard);
             QVERIFY(failsafeRow);
 
+            const char* topologyFamilies[] = {
+                "sensorHealth", "navigation", "link", "control", "actuator", "time"};
+            QQuickItem* topologyNodeItems[6]{};
+            for (int index = 0; index < 6; ++index) {
+                const QString nodeName = QStringLiteral("flightTelemetry_topologyNode_")
+                                         + QString::fromLatin1(topologyFamilies[index]);
+                topologyNodeItems[index] = findVisibleItem(_rootItem, nodeName, 3000);
+                QVERIFY2(topologyNodeItems[index], qPrintable(nodeName));
+                QVERIFY(topologyNodeItems[index]->property("stateColor").canConvert<QColor>());
+                const QString ageName = QStringLiteral("flightTelemetry_topologyNodeAge_")
+                                         + QString::fromLatin1(topologyFamilies[index]);
+                QQuickItem* ageItem = findVisibleItem(_rootItem, ageName, 3000);
+                QVERIFY2(ageItem, qPrintable(ageName));
+                const QString receiveAgePrefix =
+                    translatedTelemetryText("接收 %1").section(QStringLiteral("%1"), 0, 0);
+                QVERIFY(ageItem->property("text").toString().startsWith(receiveAgePrefix));
+            }
+
+            const QVariantList priorityEventInput{
+                QVariantMap{{QStringLiteral("severity"), 1}, {QStringLiteral("sequence"), 8}},
+                QVariantMap{{QStringLiteral("severity"), 3}, {QStringLiteral("sequence"), 9}},
+                QVariantMap{{QStringLiteral("severity"), 2}, {QStringLiteral("sequence"), 11}},
+                QVariantMap{{QStringLiteral("severity"), 3}, {QStringLiteral("sequence"), 10}},
+                QVariantMap{{QStringLiteral("severity"), 1}, {QStringLiteral("sequence"), 12}},
+                QVariantMap{{QStringLiteral("severity"), -1}, {QStringLiteral("sequence"), 13}}};
+            QVariant priorityEventOutput;
+            QVERIFY(QMetaObject::invokeMethod(page, "_priorityEventsFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, priorityEventOutput),
+                                              Q_ARG(QVariant, QVariant::fromValue(priorityEventInput))));
+            const QVariantList sortedPriorityEvents = priorityEventOutput.toList();
+            QCOMPARE(sortedPriorityEvents.size(), 4);
+            QCOMPARE(sortedPriorityEvents.at(0).toMap().value(QStringLiteral("severity")).toInt(), 3);
+            QCOMPARE(sortedPriorityEvents.at(0).toMap().value(QStringLiteral("sequence")).toInt(), 10);
+            QCOMPARE(sortedPriorityEvents.at(1).toMap().value(QStringLiteral("sequence")).toInt(), 9);
+            QCOMPARE(sortedPriorityEvents.at(2).toMap().value(QStringLiteral("severity")).toInt(), 2);
+            QCOMPARE(sortedPriorityEvents.at(3).toMap().value(QStringLiteral("sequence")).toInt(), 12);
+            QCOMPARE(alarmPriorityHint->property("text").toString(),
+                     translatedTelemetryText("严重度优先 · 同级按最新序号"));
+
             const auto headerItemsFit = [&]() {
                 for (QQuickItem* item : {dashboardTitle, dashboardSubtitle, compactDashboardSubtitle, readOnlyBadge}) {
                     if (!item->isVisible()) continue;
                     const QPointF topLeft = item->mapToItem(dashboardHeader, 0, 0);
                     if (topLeft.x() < 0 || topLeft.y() < 0 || topLeft.x() + item->width() > dashboardHeader->width() ||
                         topLeft.y() + item->height() > dashboardHeader->height()) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+            const auto overviewHeroPanelsFit = [&]() {
+                for (QQuickItem* panel : {heroFlight, heroNavigation, heroRcInput}) {
+                    const QPointF topLeft = panel->mapToItem(heroGrid, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + panel->width() > heroGrid->width() + 1.0 ||
+                        topLeft.y() + panel->height() > heroGrid->height() + 1.0) {
                         return false;
                     }
                 }
@@ -320,7 +378,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroRcInput->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->x() < heroNavigation->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->x() < heroRcInput->x(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationCard->y(), latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(operationCard->x() < latestEventCard->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(eventHistoryCard->y() > latestEventCard->y(), 3000);
@@ -332,7 +394,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             page->setWidth(1000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(compactDashboardSubtitle->isVisible(), 3000);
@@ -342,6 +406,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
@@ -349,6 +414,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
@@ -361,6 +427,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
@@ -372,6 +439,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
