@@ -382,7 +382,8 @@
         "invalid_link_metric_validity_summary_uses_warning_amber_color",
         "trend_cards_display_explicit_gap_counts_independent_of_latest_sample_state",
         "trend_gap_count_and_color_follow_invalid_samples_without_masking_latest_state",
-        "trend_footer_labels_fit_responsive_card_bounds_at_1600_and_400_px"
+        "trend_footer_labels_fit_responsive_card_bounds_at_1600_and_400_px",
+        "rc_link_and_failsafe_panel_width_ratio_is_two_to_one_on_desktop_and_medium"
       ]
     },
     {
