@@ -320,7 +320,13 @@ RowLayout {
 
                     Repeater {
                         model: _activeVehicle.sysStatusSensorInfo.sensorStatus
-                        QGCLabel { text: modelData }
+                        QGCLabel {
+                            objectName: "mainStatusSensorStatusValue_" + index
+                            text: modelData
+                            color: !_activeVehicle.sysStatusSensorInfo.statusFresh ? qgcPal.colorOrange
+                                   : modelData === qsTr("Error") ? qgcPal.colorRed
+                                   : modelData === qsTr("Normal") ? qgcPal.colorGreen : qgcPal.text
+                        }
                     }
                 }
             }

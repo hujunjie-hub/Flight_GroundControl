@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.8  
+版本：4.9  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -379,3 +379,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - Tile 高度按实际内容 implicitHeight 增长，不能固定在 82 px 后裁切辅助说明。
 - 集中验收需覆盖页面宽度 700 px 双列和 400 px 单列，确认辅助说明可见、最多两行、Tile 与内容区域不越界。
 - 新增 MockLink UI Integration 断言，本轮未运行 CI；此项为待执行验收，不构成 PASS。
+
+
+### G18 SYS_STATUS stale history context 补充（2026-11-15）
+
+- stale sensor row 显示「Stale · Last: Normal/Error/Disabled」，保留历史上下文但不得作为当前健康；名称与状态顺序保持一致。
+- stale row 与顶部 freshness notice 使用同一琥珀色；ToolbarIndicatorUITest 验证文本和颜色一致。
+- 新增多传感器 stale 排序单元测试；本轮不运行 CI，集中 Windows Release / Unit / Integration 验收时执行。

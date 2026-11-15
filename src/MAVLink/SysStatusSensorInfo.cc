@@ -113,8 +113,27 @@ QStringList SysStatusSensorInfo::sensorStatus() const
     QStringList rgStatus;
 
     if (!_statusFresh) {
-        for (qsizetype i = 0; i < _sensorInfoMap.size(); ++i) {
-            rgStatus.append(tr("Stale"));
+        const appendStaleStatus = [this, &rgStatus](const SensorInfo &sensorInfo) {
+            const QString lastStatus = !sensorInfo.enabled ? tr("Disabled")
+                                     : sensorInfo.healthy ? tr("Normal") : tr("Error");
+            rgStatus.append(tr("Stale · Last: %1").arg(lastStatus));
+        };
+
+        // Preserve the same unhealthy → healthy → disabled order as sensorNames().
+        for (const SensorInfo &sensorInfo : _sensorInfoMap.values()) {
+            if (sensorInfo.enabled && !sensorInfo.healthy) {
+                appendStaleStatus(sensorInfo);
+            }
+        }
+        for (const SensorInfo &sensorInfo : _sensorInfoMap.values()) {
+            if (sensorInfo.enabled && sensorInfo.healthy) {
+                appendStaleStatus(sensorInfo);
+            }
+        }
+        for (const SensorInfo &sensorInfo : _sensorInfoMap.values()) {
+            if (!sensorInfo.enabled) {
+                appendStaleStatus(sensorInfo);
+            }
         }
         return rgStatus;
     }

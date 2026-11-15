@@ -11,6 +11,7 @@ private slots:
     void _updateSingleSensorHealthy_test();
     void _statusFreshnessExpires_test();
     void _communicationLostInvalidatesStatusUntilNewSysStatus_test();
+    void _staleSensorStatusPreservesLastKnownOrdering_test();
     void _updateSingleSensorUnhealthy_test();
     void _updateSingleSensorDisabled_test();
     void _sensorOrdering_test();

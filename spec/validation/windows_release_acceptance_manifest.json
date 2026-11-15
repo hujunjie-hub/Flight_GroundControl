@@ -392,7 +392,9 @@
         "communication_recovery_without_new_SYS_STATUS_keeps_sensor_status_stale",
         "new_SYS_STATUS_restores_sensor_status_freshness",
         "legacy_main_status_drawer_notice_is_hidden_when_fresh_visible_on_comm_loss_and_hidden_after_fresh_recovery",
-        "legacy_sensor_status_remains_diagnostic_only_without_flight_control_authority"
+        "legacy_sensor_status_remains_diagnostic_only_without_flight_control_authority",
+        "stale_sensor_rows_retain_last_known_status_as_historical_context",
+        "stale_sensor_rows_use_warning_color_and_preserve_sensor_name_order"
       ]
     }
   ],
@@ -453,7 +455,8 @@
     "indicator_expand_button_appears_after_page_expand_capability_is_loaded",
     "Generic_MockLink_legacy_sensor_status_notice_hidden_when_SYS_STATUS_fresh",
     "Generic_MockLink_legacy_sensor_status_notice_visible_on_total_communication_loss",
-    "Generic_MockLink_legacy_sensor_status_notice_hidden_only_after_new_SYS_STATUS"
+    "Generic_MockLink_legacy_sensor_status_notice_hidden_only_after_new_SYS_STATUS",
+    "Generic_MockLink_stale_sensor_rows_retain_last_known_state_and_warning_color"
   ],
   "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13. Flight radio transmitter visualization acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio dual-gimbal live-monitor acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio acceptance explicitly exercises Mode 1, Mode 2 and Mode 3 with two distinct RC_CHANNELS frames, centre return and per-stick invalid-channel handling. The invalid-axis UI test respects Vehicle::_handleRCChannels contiguous-channel publication: Mode 1 publishes only CH1-CH3 so left CH4 is unavailable while right CH1/CH3 remain valid. The 2026-11-15 visual shell/KPI increment requires the Flight toolbar/sidebar skin and continuous KPI band to pass G15 before FGC-0044 can be closed.",
   "flight_telemetry_dashboard_ui_matrix": [

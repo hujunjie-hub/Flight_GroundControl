@@ -52,7 +52,7 @@ void SysStatusSensorInfoTest::_statusFreshnessExpires_test()
                                        TestTimeout::shortMs(),
                                        QStringLiteral("sensor status freshness timeout")));
 
-    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale · Last: Normal")}));
     QCOMPARE(sensorInfoSpy.count(), 1);
 }
 
@@ -68,16 +68,45 @@ void SysStatusSensorInfoTest::_communicationLostInvalidatesStatusUntilNewSysStat
 
     info.setCommunicationLost(true);
     QVERIFY(!info.statusFresh());
-    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale · Last: Normal")}));
 
     // Regaining the link alone must not make cached SYS_STATUS healthy again.
     info.setCommunicationLost(false);
     QVERIFY(!info.statusFresh());
-    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale")}));
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Stale · Last: Normal")}));
 
     info.update(healthyStatus);
     QVERIFY(info.statusFresh());
     QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Normal")}));
+}
+
+void SysStatusSensorInfoTest::_staleSensorStatusPreservesLastKnownOrdering_test()
+{
+    SysStatusSensorInfo info;
+
+    const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
+    const uint32_t accel = MAV_SYS_STATUS_SENSOR_3D_ACCEL;
+    const uint32_t mag = MAV_SYS_STATUS_SENSOR_3D_MAG;
+    const uint32_t present = gyro | accel | mag;
+    const uint32_t enabled = gyro | accel;
+    const uint32_t health = gyro;
+
+    info.update(_makeSysStatus(present, enabled, health));
+    const QStringList expectedNames = {
+        QGCMAVLink::mavSysStatusSensorToString(static_cast<MAV_SYS_STATUS_SENSOR>(accel)),
+        QGCMAVLink::mavSysStatusSensorToString(static_cast<MAV_SYS_STATUS_SENSOR>(gyro)),
+        QGCMAVLink::mavSysStatusSensorToString(static_cast<MAV_SYS_STATUS_SENSOR>(mag)),
+    };
+    QCOMPARE(info.sensorNames(), expectedNames);
+
+    info.setCommunicationLost(true);
+    QVERIFY(!info.statusFresh());
+    QCOMPARE(info.sensorNames(), expectedNames);
+    QCOMPARE(info.sensorStatus(), QStringList({
+        QStringLiteral("Stale · Last: Error"),
+        QStringLiteral("Stale · Last: Normal"),
+        QStringLiteral("Stale · Last: Disabled"),
+    }));
 }
 
 void SysStatusSensorInfoTest::_updateSingleSensorUnhealthy_test()

@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.16
+- 版本：6.17
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 与链路实例覆盖率已闭环；时间质量/UTC 颜色语义已拆分；本轮补齐顶部 KPI 窄屏辅助说明换行和内容自适应高度；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路覆盖率和窄屏换行已收敛；旧版 SYS_STATUS stale 行保留历史上下文且明确使用警告色；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -735,3 +735,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 为辅助说明增加稳定 objectName 后缀 _detail，用于回归测试，不改变既有 selector。
 - MockLink UI Integration 在 700/400 px 两个断点检查辅助说明可见、最大两行、wrapMode 生效，以及全部六个 KPI tile/content 不溢出。
 - 仅修改 QML 布局、UI Integration 与验收文档；不改变遥测数据、健康判定、MAVLink 协议或控制行为。本轮不运行 CI，回归待集中验收。
+
+
+## 46. SYS_STATUS 过期行保留最近状态上下文（FGC-0049）（2026-11-15）
+
+- 通信丢失或 5500 ms freshness timeout 后，传感器行显示「Stale · Last: Normal/Error/Disabled」，保留最近一次状态作为历史上下文。
+- 最近状态不得解释为当前健康；所有 stale 行统一使用琥珀色，顶部 freshness notice 明确说明数据已过期。
+- 过期状态行顺序必须与传感器名称顺序一致：unhealthy → healthy → disabled。
+- 新增 SysStatusSensorInfoTest 验证 stale 后保留 sensor names、last-known state 与顺序；ToolbarIndicatorUITest 验证主状态抽屉 stale notice 和状态行警告色。
+- 不改变 SYS_STATUS 协议、VehicleLinkManager 丢包判定、ARM/Permit/FMS/执行器权限；本轮不运行 Unit、Integration、Windows Release 或 CI，新增回归为 NOT_RUN。

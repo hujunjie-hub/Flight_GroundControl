@@ -2,6 +2,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QObject>
+#include <QtGui/QColor>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -218,6 +219,7 @@ void ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss()
             auto* const sensorInfo = qobject_cast<SysStatusSensorInfo*>(vehicle->sysStatusSensorInfo());
             QVERIFY(sensorInfo);
             QVERIFY_TRUE_WAIT(sensorInfo->statusFresh(), TestTimeout::mediumMs());
+            QVERIFY(!sensorInfo->sensorNames().isEmpty());
 
             QQuickItem* const mainStatus = findVisibleItem(
                 _rootItem, QStringLiteral("toolbar_mainStatusIndicator"), 3000);
@@ -248,6 +250,12 @@ void ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss()
             staleNotice = findVisibleItem(_rootItem, QStringLiteral("mainStatusSensorStaleNotice"), 2000);
             QVERIFY(staleNotice);
             QVERIFY(staleNotice->property("text").toString().contains(QStringLiteral("Communication lost")));
+            QQuickItem* staleSensorStatus = findVisibleItem(
+                _rootItem, QStringLiteral("mainStatusSensorStatusValue_0"), 2000);
+            QVERIFY(staleSensorStatus);
+            QVERIFY(staleSensorStatus->property("text").toString().startsWith(QStringLiteral("Stale · Last:")));
+            QCOMPARE(staleSensorStatus->property("color").value<QColor>(),
+                     staleNotice->property("color").value<QColor>());
 
             QTest::keyClick(_window, Qt::Key_Escape);
             QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() == nullptr, 2000);
