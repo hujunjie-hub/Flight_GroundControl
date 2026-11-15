@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.77
+- 版本 4.78
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -232,4 +232,4 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 2026-11-15 飞行健康页视觉层级收口：传感器实例卡片化、预检元信息双列分组与逐项检查卡片化、任务资源 CPU/WCET/栈/截止期/AXI 分格；新增 validity 与响应式边界回归，未运行 CI，新增回归 NOT_RUN。
 
-- 2026-11-15 导航/趋势会话边界补强：新 FCU boot epoch 首包允许来自导航等非操作域；operationAvailable/opBootIdHex 被 FactGroup 清空后，趋势采样器立即清除旧会话样本并保持 GAP，直至新操作状态建立会话 ID。新增 MockLink NAV-first 回归和导航/时间/事件旧时间戳门控断言；本轮不运行 CI/Unit/Integration，新增回归 NOT_RUN。
+- 2026-11-15 导航/趋势会话边界补强：新 FCU boot epoch 首包允许来自导航等非操作域；operationAvailable/opBootIdHex 被 FactGroup 清空后，趋势采样器在下一次 1 Hz 采样时清除旧会话样本并保持 GAP，直至新操作状态建立会话 ID。新增 MockLink NAV-first 回归和导航/时间/事件旧时间戳门控断言；本轮不运行 CI/Unit/Integration，新增回归 NOT_RUN。
