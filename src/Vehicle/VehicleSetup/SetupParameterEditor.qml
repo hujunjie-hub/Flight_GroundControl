@@ -1358,7 +1358,10 @@ Item {
                                               : qsTr("配置来源：%1 · %2 · %3")
                                                 .arg(dashboardRoot.selectedFact.sourceFile)
                                                 .arg(dashboardRoot.selectedFact.sourcePath)
-                                                .arg(dashboardRoot.selectedFact.sourceKind)
+                                                .arg(dashboardRoot.selectedFact.sourceKind === "scalar" ? qsTr("标量")
+                                                     : dashboardRoot.selectedFact.sourceKind === "vector" ? qsTr("向量")
+                                                       : dashboardRoot.selectedFact.sourceKind === "matrix" ? qsTr("矩阵")
+                                                         : qsTr("存储项"))
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
