@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.35
+- 版本：6.36
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；本轮完成遥控链路页主视觉分区与响应式比例调整；保留并继续维护当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -889,8 +889,8 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 
 - 固件构建信息是本启动周期的快照；构建消息 family 超时后，产品版本、接口版本、Schema、哈希、源码提交和发布时间继续保留，但统一标注「最近已知」，不得冒充当前新鲜上报。
 - ICD/Schema 兼容性结果在 buildInfo family stale 时标注为最近已知；未收到构建快照时保持「未收到版本」。
-- Profile 匹配是 operation 与 buildInfo 两个 family 的交叉结论；只有两者均 fresh 才能显示当前匹配/不匹配，任一等待或超时均显示「无法确认」并分别标出两侧状态。
-- MockLink UI Integration 增加四种 BUILD_INFO digest chunk，验证 fresh 时 schema/profile 匹配；等待/超时后验证构建快照显示最近已知、Profile 匹配无法确认；operation 恢复但 buildInfo 仍 stale 时不得恢复为当前匹配。
+- Profile 匹配是当前运行状态与本启动周期构建快照的交叉结论：operation family 必须 fresh；BUILD_INFO 快照只要已收到且属于当前启动周期即可参与比对，family age 超时后标注「最近已知构建快照」。operation 等待/超时则显示「无法确认」；FactGroup 在新 boot epoch 会清空旧构建快照，未重新收到时保持「未验证」。
+- MockLink UI Integration 增加四种 BUILD_INFO digest chunk，验证 fresh 时 schema/profile 匹配；buildInfo age stale 但 operation fresh 时仍可用同启动快照并标注最近已知；operation stale 时不得显示当前匹配；operation 恢复后恢复为「最近已知构建快照」匹配；新 boot epoch 清空旧快照并回到未验证。
 - 仅修改 GroundControl QML、MockLink UI Integration 与 SPEC/G15；不修改 BUILD_INFO 协议、构建快照缓存、Profile ID 定义或飞控控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
 
 

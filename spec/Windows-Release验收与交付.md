@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.22  
+版本：4.23  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -466,5 +466,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 ### G15 固件构建快照与 Profile 匹配 freshness 补充（2026-11-15）
 
 - 构建信息为启动周期快照；family stale 时保留值并标注「最近已知」，不将其显示为当前新鲜数据。
-- Profile 匹配依赖 operation 与 buildInfo 两个 family；两者必须同时 fresh 才显示当前匹配，任一 stale/等待均显示「无法确认」和两侧状态。
-- MockLink Integration 使用四个 BUILD_INFO digest chunk 验证 fresh、stale、operation 恢复但 buildInfo 仍 stale 的状态；本轮不运行 CI，集中验收时执行，不构成 PASS。
+- Profile 匹配要求 operation family fresh，并使用当前启动周期已接收的 BUILD_INFO 静态快照；buildInfo age stale 时标注最近已知构建快照，operation stale/等待时显示无法确认；新 boot epoch 清空旧快照。
+- MockLink Integration 使用四个 BUILD_INFO digest chunk 验证 fresh、buildInfo stale + operation fresh、operation stale、operation 恢复以及新 boot epoch 清空快照；本轮不运行 CI，集中验收时执行，不构成 PASS。

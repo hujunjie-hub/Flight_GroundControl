@@ -1421,21 +1421,25 @@ SetupPage {
             return qsTr("未验证")
         }
         const operationFreshness = _familyStatus("operationAvailable")
-        const buildInfoFreshness = _familyStatus("buildInfoAvailable")
-        if (operationFreshness !== qsTr("已接收") || buildInfoFreshness !== qsTr("已接收")) {
-            return qsTr("无法确认：操作 %1 · 构建信息 %2")
-                    .arg(operationFreshness).arg(buildInfoFreshness)
+        if (operationFreshness !== qsTr("已接收")) {
+            return qsTr("无法确认：操作 %1").arg(operationFreshness)
         }
+        // BUILD_INFO is a boot-scoped immutable snapshot. The FactGroup clears it on
+        // a new boot epoch, so its age alone does not invalidate the profile identity.
         const operationProfile = _fact("opProfileId")
         const buildProfile = _fact("buildProfileId")
         if (operationProfile === null || buildProfile === null) {
             return qsTr("未验证")
         }
+        let result
         if (Number(operationProfile) !== Number(buildProfile)) {
-            return qsTr("运行状态与构建信息不一致")
+            result = qsTr("运行状态与构建信息不一致")
+        } else {
+            result = Number(buildProfile) === 65537
+                     ? qsTr("匹配 QUAD_X4") : qsTr("未知 Profile：%1").arg(buildProfile)
         }
-        return Number(buildProfile) === 65537
-               ? qsTr("匹配 QUAD_X4") : qsTr("未知 Profile：%1").arg(buildProfile)
+        return _familyStatus("buildInfoAvailable") === qsTr("已接收")
+               ? result : qsTr("最近已知构建快照：%1").arg(result)
     }
 
     function _sourceCommitDisplay() {

@@ -1223,6 +1223,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 sendTimeStatus(lastOperationTime + 300, bootId,
                                1700000000123456ULL + static_cast<uint64_t>(sample) * 1000000ULL, 1);
             }
+            QTRY_COMPARE_WITH_TIMEOUT(buildInfoMessageStatus->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("最近已知构建快照：匹配 QUAD_X4"), 3000);
             QQuickItem* navigationTabForUtc =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
             QVERIFY(navigationTabForUtc);
@@ -1582,10 +1585,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(),
                                       translatedTelemetryText("解锁中"), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
-                                         translatedTelemetryText("操作 已接收")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
-                                         translatedTelemetryText("构建信息 数据超时")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("最近已知构建快照：匹配 QUAD_X4"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(),
                                       QStringLiteral("8 / 12"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(),
@@ -1611,6 +1612,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount,
                                      3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("未验证"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildSchemaCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("未收到版本"), 3000);
 
             // Repopulate the current Vehicle's buffer, then reconnect a new Vehicle.
             // The next Vehicle must not inherit any sample from the previous one.
