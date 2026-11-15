@@ -233,8 +233,8 @@ Item {
                                         anchors.fill: parent
                                         anchors.leftMargin: 8
                                         anchors.rightMargin: 26
-                                        text: root._selectedModelProfile ? modelProfileSelector.currentText : (root._modelProfiles.length > 0 ? qsTr("请选择机型配置") : qsTr("未登记可调机型"))
-                                        color: root._selectedModelProfile ? root.cyan : root.mutedText
+                                        text: root._selectedModelProfile ? (parameterEditorLoader.status !== Loader.Ready ? modelProfileSelector.currentText : (dashboardRoot.modelProfileBound ? modelProfileSelector.currentText : qsTr("机型配置校验失败"))) : (root._modelProfiles.length > 0 ? qsTr("请选择机型配置") : qsTr("未登记可调机型"))
+                                        color: root._selectedModelProfile && (parameterEditorLoader.status !== Loader.Ready || dashboardRoot.modelProfileBound) ? root.cyan : (root._selectedModelProfile ? root.red : root.mutedText)
                                         font.pointSize: ScreenTools.captionFontPointSize
                                         verticalAlignment: Text.AlignVCenter
                                         elide: Text.ElideRight
@@ -243,7 +243,7 @@ Item {
                                         radius: 5
                                         color: "#06202A"
                                         border.width: 1
-                                        border.color: root._selectedModelProfile ? root.cyan : "#16424C"
+                                        border.color: root._selectedModelProfile && (parameterEditorLoader.status !== Loader.Ready || dashboardRoot.modelProfileBound) ? root.cyan : (root._selectedModelProfile ? root.red : "#16424C")
                                     }
                                 }
                             }
