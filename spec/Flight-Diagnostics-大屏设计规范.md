@@ -1392,3 +1392,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 读取 Canvas 实际 density/geometry scale、画布目标高度和标签字体度量；在 1600/1400/1000/900/700/400 px 验证六个标签不越界、不重叠、六张节点卡片父子边界正确、节点网格间距与 ScreenTools token 一致。
 - 不改变六域 family freshness、连线颜色/箭头语义、状态统计、拓扑节点数量、遥测字段、KPI、三栏 3/5/4 布局或只读安全边界。
 - 按用户要求不运行/触发 CI、Unit、Integration 或 Windows Release；新增静态检查与 UI Integration 断言保持 NOT_RUN，等待集中 exact-HEAD 验收。
+
+
+## 111. Phase 2.65 导航估计指标与能力状态分级徽标（2026-11-15）
+
+- 导航估计不确定度卡片的水平位置、速度、航向标准差继续以中性高对比数值作为主视觉，单位与数值同行；对应的 family freshness/能力状态从普通 micro 文本改为独立 FamilyStatusBadge，使用原有状态文案与状态色，不把标准差数值本身误染成健康结论。
+- 导航能力卡片的航向估计、水平位置、水平速度、垂直速度状态不再以大号 metric 数字显示；统一使用紧凑 FamilyStatusBadge，标签仍为 caption 字号，已接收/未具备/未知/等待/超时文案和颜色完全复用 `_navigationMetricStatus()` / `_navigationMetricColor()`。
+- MetricReadout 新增可选 `valueAsStatusBadge` 与 `statusAsBadge` 呈现模式，默认关闭，不改变总览 KPI 等其他使用点；新增 value/unit/status badge objectName 便于自动化验收。数值字段仍由原 capability mask、family freshness 与字段有效性门控决定，不新增合成状态。
+- MockLink UI Integration 验证三项估计值保持可见、状态徽标与原 statusText/statusColor 一致、旧状态文本隐藏；四项能力状态以徽标呈现、原大号状态文本隐藏，且在 1280/1279/760/759 px 断点与 1600/1672×941 视口下所有徽标均完整位于所属指标容器内。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 验收指南和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、导航 capability bit 定义、freshness 阈值、标准差字段精度或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归状态为 NOT_RUN，等待后续集中 exact-HEAD 验收。
