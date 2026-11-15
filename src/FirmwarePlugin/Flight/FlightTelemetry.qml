@@ -146,6 +146,29 @@ SetupPage {
         if (_fact("utcValid") === null) return qsTr("未上报")
         return _fact("utcValid") ? _number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
     }
+    function _utcTimestampText() {
+        const familyStatus = _familyStatus("timeAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const utcValid = _fact("utcValid")
+        if (utcValid === null || utcValid === undefined) return qsTr("未上报")
+        if (utcValid !== true && Number(utcValid) !== 1) return qsTr("无效")
+
+        const raw = _fact("timeStatusUnixTimeUs")
+        if (raw === null || raw === undefined || raw === "") return qsTr("未上报")
+        const unixTimeUs = Number(raw)
+        // Unix microseconds for current-era timestamps are within JS's exact integer range.
+        if (!Number.isFinite(unixTimeUs) || !Number.isInteger(unixTimeUs) ||
+                unixTimeUs < 0 || unixTimeUs > 9007199254740991) {
+            return qsTr("无效")
+        }
+        const date = new Date(Math.floor(unixTimeUs / 1000))
+        if (!Number.isFinite(date.getTime())) return qsTr("无效")
+        const microsecondRemainder = unixTimeUs % 1000
+        const fractionText = microsecondRemainder < 10 ? "00" + microsecondRemainder
+                             : microsecondRemainder < 100 ? "0" + microsecondRemainder
+                             : String(microsecondRemainder)
+        return date.toISOString().replace("T", " ").replace("Z", "") + fractionText + " UTC"
+    }
     function _resourceTaskZero() {
         for (let index = 0; index < _resourceStatuses.length; ++index) {
             const item = _resourceStatuses[index]
@@ -2073,6 +2096,11 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : root._fact("utcValid") ? qsTr("是") : qsTr("否") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationUtcTimestamp"
+                        labelText: qsTr("FCU UTC 时间")
+                        valueText: root._utcTimestampText()
+                    }
                     TelemetryRow { labelText: qsTr("UTC 不确定度"); valueText: root._utcUncertaintyText() }
                     TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
@@ -2906,6 +2934,11 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : (root._fact("utcValid") ? qsTr("是") : qsTr("否")) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeUtcTimestamp"
+                        labelText: qsTr("FCU UTC 时间")
+                        valueText: root._utcTimestampText()
+                    }
                     TelemetryRow {
                         labelText: qsTr("UTC 不确定度")
                         valueText: root._fact("utcValid") === null ? qsTr("未上报")

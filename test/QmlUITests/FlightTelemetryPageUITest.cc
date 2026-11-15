@@ -186,6 +186,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"));
             QQuickItem* storageCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"));
             QQuickItem* timeCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_time"));
+            QQuickItem* navigationUtcTimestamp =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"));
+            QQuickItem* timeUtcTimestamp =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_timeUtcTimestamp"));
             QQuickItem* rcCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_rcInput"));
             QQuickItem* eventHistoryCard =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_card_eventHistory"));
@@ -242,6 +246,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(resourcesCard);
             QVERIFY(storageCard);
             QVERIFY(timeCard);
+            QVERIFY(navigationUtcTimestamp);
+            QVERIFY(timeUtcTimestamp);
             QVERIFY(rcCard);
             QVERIFY(eventHistoryCard);
             QVERIFY(buildInfoCard);
@@ -539,6 +545,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mavlink_msg_fcu_nav_status_encode(systemId, componentId, &message, &payload);
                 mockLink->respondWithMavlinkMessage(message);
             };
+            auto sendTimeStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint64_t unixTimeUs,
+                                      uint8_t utcValid) {
+                mavlink_fcu_time_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = sessionBootId;
+                payload.profile_id = profileId;
+                payload.time_epoch = 17;
+                payload.source_mapping_epoch = 23;
+                payload.time_quality = 2;
+                payload.discipline_state = 2;
+                payload.event_uncertainty_us = 42;
+                payload.utc_uncertainty_us = 125;
+                payload.utc_valid = utcValid;
+                payload.unix_time_us = unixTimeUs;
+
+                mavlink_message_t message{};
+                mavlink_msg_fcu_time_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
 
             auto sendControlStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint32_t solveTimeUs) {
                 mavlink_fcu_control_status_t payload{};
@@ -736,7 +761,41 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 sendOperationStatus(lastOperationTime, bootId);
                 sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
                 sendControlStatus(lastOperationTime + 200, bootId, static_cast<uint32_t>(1800 + sample * 100));
+                sendTimeStatus(lastOperationTime + 300, bootId,
+                               1700000000123456ULL + static_cast<uint64_t>(sample) * 1000000ULL, 1)
             }
+            QQuickItem* navigationTabForUtc =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
+            QVERIFY(navigationTabForUtc);
+            QVERIFY(_clickItemAt(navigationTabForUtc, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
+            const QString expectedUtcTimestamp = QStringLiteral("2023-11-14 22:13:27.123456 UTC");
+            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcTimestamp->property("valueText").toString(),
+                                      expectedUtcTimestamp, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
+                                      expectedUtcTimestamp, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendControl->property("valueKey").toString(), QStringLiteral("time"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("validSampleCount").toInt() >= 2, 3000);
+
+            const int previousTimeTrendSamples = trendControl->property("sampleCount").toInt();
+            sendTimeStatus(lastOperationTime + 400, bootId, 1700000008123456ULL, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcTimestamp->property("valueText").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(), invalidText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > previousTimeTrendSamples, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!trendControl->property("lastSampleValid").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("gapCount").toInt() >= 1, 3000);
+
+            const int invalidTimeTrendSamples = trendControl->property("sampleCount").toInt();
+            sendTimeStatus(lastOperationTime + 500, bootId, 1700000009123456ULL, 1);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcTimestamp->property("valueText").toString(),
+                                      QStringLiteral("2023-11-14 22:13:29.123456 UTC"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
+                                      QStringLiteral("2023-11-14 22:13:29.123456 UTC"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > invalidTimeTrendSamples, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("lastSampleValid").toBool(), 3000);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
             QTRY_VERIFY_WITH_TIMEOUT(trendVelocity->property("validSampleCount").toInt() >= 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendHeading->property("validSampleCount").toInt() >= 2, 3000);

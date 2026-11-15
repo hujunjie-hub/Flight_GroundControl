@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：5.9
+- 版本：6.0
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；总览总控、飞行健康、导航时序、遥控与链路四页适配已完成；本轮补强总览拓扑节点边界与 freshness 动态回归；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；导航时序页补充 FCU UTC 绝对时间与有效性断点诊断；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -149,7 +149,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 主体按导航估计总览、导航能力与定位精度、时间同步、状态校验四块组织；桌面宽屏采用 12 列网格，四块主面板各占 3 列并同排等高，避免状态校验被压缩成窄侧栏。
 - 导航数值只展示 positionStdM、velocityStdMps、headingStdRad 和协议能力掩码；状态校验区同时显示水平位置、水平速度、垂直速度、航向能力，缺少能力位时显示不可用。
 - 状态校验横跨 navigation 与 time 两个数据域，必须分别显示两域的消息状态和接收年龄，不得使用 navigation 单域徽标代表导航与时间同步整体正常。
-- 时间面板显示 timeQuality、timeDisciplineState、utcValid、utcUncertaintyUs、eventUncertaintyUs、timeEpoch、sourceMappingEpoch 和接收年龄；时间同步明细卡同时保留 FCU 发布时间。
+- 时间面板显示 timeQuality、timeDisciplineState、utcValid、FCU unix_time_us 转换的 UTC 绝对时间、utcUncertaintyUs、eventUncertaintyUs、timeEpoch、sourceMappingEpoch 和接收年龄；UTC 绝对时间仅在 time family 新鲜且 utcValid=true 时显示，UTC 无效、未上报或超时不得显示旧时间；时间同步明细卡同时保留 FCU 发布时间。
 - 趋势图使用水平位置、速度、航向和 UTC 时间不确定度；UTC 无效/超时产生断点。
 - 当前 FlightTelemetry 未提供卫星数、HDOP、每颗卫星方位/仰角，禁止绘制虚构卫星天图或填入示例值。
 
@@ -606,3 +606,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 链路趋势选择顺序为新鲜 GCS、伴随计算机、其他；若已有非 RC 链路实例但全部超时，保留超时/断点；只有没有非 RC 实例时才回退 RC。趋势标题同步标明实际链路类型。
 - MockLink Integration 覆盖 RC/GCS/其他三类实例、有效与无效指标、GCS 优先于 RC 的趋势选择、非 RC 链路过期时不回退 RC、四面板桌面均衡和中窄屏重排。仅更新 GroundControl 展示层，不修改 MAVLink、FlightTelemetryFactGroup、ICD、飞控控制或校准行为。
 - 本轮不执行 CI；Windows Release、Unit、Integration、Installer 和 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前均不得标记 PASS。
+
+
+## 32. Phase 2.6 导航时序 UTC 绝对时间与趋势有效性闭环（2026-11-15）
+
+- 导航时序主面板和时间同步明细卡增加 FCU UTC 绝对时间，来源仅为 FCU_TIME_STATUS.unix_time_us；按 UTC ISO-8601 形式展示，并保留微秒精度。
+- UTC 时间展示同时受 time family freshness 与 utc_valid 门控：域未接收/超时显示对应状态，utc_valid=false 显示无效，缺少字段显示未上报；不得沿用旧 UTC 时间作为当前值。
+- UTC 不确定度继续只在 time family 新鲜且 utc_valid=true 时显示；时间趋势与 UTC 绝对时间共用有效性条件，无效样本产生断点，不插值、不跨段连接。
+- UI Integration 使用 MockLink 发送 FCU_TIME_STATUS，验证 UTC 时间格式、微秒保留、无效时隐藏时间、恢复有效后重新显示，以及时间趋势有效/断点/恢复闭环。
+- 仅修改地面站 QML 展示、UI Integration 回归断言与 SPEC；不修改 FCU_TIME_STATUS 协议、FactGroup 解码、时间服务、飞控时间纪律算法或控制权限。
+- 按用户要求本轮不运行、不触发 CI；新增回归断言保留到集中 CI 执行，未执行前状态为 NOT_RUN。
