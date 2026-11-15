@@ -6,6 +6,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtMath>
+#include <utility>
 
 QGC_LOGGING_CATEGORY(MockLinkGimbalLog, "Comms.MockLink.MockLinkGimbal")
 
@@ -118,8 +119,9 @@ void MockLinkGimbal::run1HzTasks()
             } else if (!_manualControl) {
                 // Simulate simple gimbal movement (slow sine wave).
                 const qint64 secondsSinceEpoch = nowMs / 1000;
-                _pitch = 10.0f * qSin(secondsSinceEpoch * 0.1);
-                _yaw = 15.0f * qCos(secondsSinceEpoch * 0.15);
+                const float devicePhase = (_gimbalDeviceId - kDefaultGimbalDeviceId) * 0.5f;
+                _pitch = 10.0f * qSin(secondsSinceEpoch * 0.1 + devicePhase);
+                _yaw = 15.0f * qCos(secondsSinceEpoch * 0.15 + devicePhase);
             }
 
             _sendGimbalDeviceAttitudeStatus();
