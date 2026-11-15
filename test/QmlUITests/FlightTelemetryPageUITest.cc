@@ -108,6 +108,24 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyLegendTitle"), 3000);
             QQuickItem* alarmPriorityHint =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmPriorityHint"), 3000);
+            QQuickItem* alarmSeverityGrid =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_alarmSeverityGrid"));
+            const char* alarmSeverityKeys[] = {"critical", "error", "warning", "info", "unknown"};
+            QQuickItem* alarmSeverityChips[5]{};
+            QQuickItem* alarmSeverityLabels[5]{};
+            QQuickItem* alarmSeverityCounts[5]{};
+            for (int index = 0; index < 5; ++index) {
+                const QString key = QString::fromLatin1(alarmSeverityKeys[index]);
+                alarmSeverityChips[index] = findItem(
+                    _rootItem, QStringLiteral("flightTelemetry_alarmSeverityChip_") + key);
+                alarmSeverityLabels[index] = findItem(
+                    _rootItem, QStringLiteral("flightTelemetry_alarmSeverityLabel_") + key);
+                alarmSeverityCounts[index] = findItem(
+                    _rootItem, QStringLiteral("flightTelemetry_alarmSeverityCount_") + key);
+                QVERIFY(alarmSeverityChips[index]);
+                QVERIFY(alarmSeverityLabels[index]);
+                QVERIFY(alarmSeverityCounts[index]);
+            }
             QQuickItem* alarmScopeNote =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_alarmScopeNote"));
             QQuickItem* alarmEmptyState =
@@ -504,6 +522,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(sortedPriorityEvents.at(1).toMap().value(QStringLiteral("sequence")).toInt(), 9);
             QCOMPARE(sortedPriorityEvents.at(2).toMap().value(QStringLiteral("severity")).toInt(), 2);
             QCOMPARE(sortedPriorityEvents.at(3).toMap().value(QStringLiteral("sequence")).toInt(), 12);
+            QVariant severityCountOutput;
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventSeverityCountsFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, severityCountOutput),
+                                              Q_ARG(QVariant, QVariant::fromValue(priorityEventInput))));
+            const QVariantMap severityCounts = severityCountOutput.toMap();
+            QCOMPARE(severityCounts.value(QStringLiteral("critical")).toInt(), 2);
+            QCOMPARE(severityCounts.value(QStringLiteral("error")).toInt(), 1);
+            QCOMPARE(severityCounts.value(QStringLiteral("warning")).toInt(), 2);
+            QCOMPARE(severityCounts.value(QStringLiteral("info")).toInt(), 0);
+            QCOMPARE(severityCounts.value(QStringLiteral("unknown")).toInt(), 1);
             QCOMPARE(alarmPriorityHint->property("text").toString(),
                      translatedTelemetryText("最高严重度置顶 · 同级按本地接收序号"));
 
@@ -665,6 +693,26 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return legendTopLeft.x() >= -1.0 && legendTopLeft.y() >= -1.0 &&
                        legendTopLeft.x() + topologyLegend->width() <= heroNavigation->width() + 1.0 &&
                        legendTopLeft.y() + topologyLegend->height() <= heroNavigation->height() + 1.0;
+            };
+
+            const auto alarmSeverityItemsFit = [&]() {
+                if (!alarmSeverityGrid || !alarmSeverityGrid->isVisible()) return false;
+                for (int index = 0; index < 5; ++index) {
+                    QQuickItem* items[] = {alarmSeverityChips[index],
+                                           alarmSeverityLabels[index], alarmSeverityCounts[index]};
+                    for (QQuickItem* item : items) {
+                        if (!item || !item->isVisible()) return false;
+                        QQuickItem* container = item == alarmSeverityChips[index]
+                                                    ? alarmSeverityGrid : alarmSeverityChips[index];
+                        const QPointF topLeft = item->mapToItem(container, 0, 0);
+                        if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                            topLeft.x() + item->width() > container->width() + 1.0 ||
+                            topLeft.y() + item->height() > container->height() + 1.0) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
             };
 
             const auto trendFooterItemsFit = [&]() {
@@ -1560,6 +1608,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(alarmEventPrimaryTag);
             QVERIFY(alarmEventCount);
             QVERIFY(historyEventSequence);
+            QVERIFY(alarmSeverityGrid);
+            QVERIFY(!alarmSeverityGrid->isVisible());
+            QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityGrid->isVisible(), 3000);
+            const int firstEventSeverityCounts[] = {1, 0, 0, 0, 0};
+            for (int index = 0; index < 5; ++index) {
+                QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityCounts[index]->property("text").toString(),
+                                          QString::number(firstEventSeverityCounts[index]), 3000);
+            }
+            QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmEventCard->property("isPrimary").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard->property("severityColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
@@ -1590,6 +1647,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("硬件故障")), 3000);
             const qreal originalEventHistoryPageWidth = page->width();
             page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventTime->y() - historyEventSeverity->y()) < 1.0, 3000);
@@ -1628,6 +1687,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 historyEventTime->width() >= historyEventTime->implicitWidth() - 1.0, 3000);
             page->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(historyEventSequence->y() - historyEventTime->y()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(historyEventSeverity->y() > historyEventTime->y(), 3000);
@@ -1976,6 +2037,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(historyEventRow5);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
                                       translatedTelemetryText("%1 条").arg(5), 3000);
+            const int fiveEventSeverityCounts[] = {2, 1, 1, 1, 0};
+            for (int index = 0; index < 5; ++index) {
+                QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityCounts[index]->property("text").toString(),
+                                          QString::number(fiveEventSeverityCounts[index]), 3000);
+            }
+            QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmScopeNote->property("text").toString(),
                                       translatedTelemetryText("优先摘要 %1 / %2 条 · 历史最近 %3 条")
                                           .arg(4).arg(5).arg(5), 3000);
