@@ -951,6 +951,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailState_2"));
             QQuickItem* linkDetailMetrics = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
+            QQuickItem* invalidOtherLinkDetailMetrics = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_4"));
+            QQuickItem* gcsFcuAge = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetricAge_2"), 3000);
             QQuickItem* gcsLinkMetricsGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
             QQuickItem* gcsRssiMetricCell = findVisibleItem(
@@ -974,6 +978,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(linkDetailCoverage);
             QVERIFY(linkDetailState);
             QVERIFY(linkDetailMetrics);
+            QVERIFY(invalidOtherLinkDetailMetrics);
+            QVERIFY(gcsFcuAge);
             QVERIFY(gcsLinkMetricsGrid);
             QVERIFY(gcsRssiMetricCell);
             QVERIFY(gcsQualityMetricCell);
@@ -991,10 +997,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("健康"), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
-                                         QStringLiteral("RSSI -68 dBm")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
-                                         QStringLiteral("70.0 %")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("labelText").toString(),
+                                      translatedTelemetryText("FCU 数据年龄"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("valueText").toString(),
+                                      QStringLiteral("2500 μs"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("text").toString(),
+                                      translatedTelemetryText("指标有效性：%1 / 3").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLinkDetailMetrics->property("text").toString(),
+                                      translatedTelemetryText("指标有效性：%1 / 3 · 无效：RSSI / 链路质量 / 丢包率")
+                                          .arg(0), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
                                           .arg(3).arg(0).arg(0), 3000);
@@ -1424,8 +1435,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("%1 · 最近状态：%2")
                                           .arg(staleText).arg(translatedTelemetryText("健康")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
-                                         translatedTelemetryText("RSSI %1").arg(staleText)), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("text").toString(),
+                                      translatedTelemetryText("指标 freshness：%1").arg(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(), staleText, 3000);
