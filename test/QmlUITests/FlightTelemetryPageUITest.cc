@@ -294,7 +294,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(topologyLegend);
             QVERIFY(topologyLegendTitle);
             QCOMPARE(topologyLegendTitle->property("text").toString(),
-                     translatedTelemetryText("状态图例"));
+                     translatedTelemetryText("状态统计"));
             QVERIFY(alarmPriorityHint);
             QVERIFY(alarmScopeNote);
             QVERIFY(alarmEmptyState);
@@ -395,6 +395,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QColor(QStringLiteral("#45D39A")),
                 QColor(QStringLiteral("#F0B94B")),
                 QColor(QStringLiteral("#8A9A94"))};
+            const int initialTopologyCounts[] = {0, 0, 6};
             QQuickItem* topologyLegendRows[3]{};
             QQuickItem* topologyLegendLabels[3]{};
             QQuickItem* topologyLegendDots[3]{};
@@ -410,7 +411,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QVERIFY(topologyLegendLabels[index]);
                 QVERIFY(topologyLegendDots[index]);
                 QCOMPARE(topologyLegendLabels[index]->property("text").toString(),
-                         translatedTelemetryText(topologyLegendTexts[index]));
+                         QStringLiteral("%1 %2")
+                             .arg(translatedTelemetryText(topologyLegendTexts[index]))
+                             .arg(initialTopologyCounts[index]));
                 QCOMPARE(topologyLegendLabels[index]->property("color").value<QColor>(),
                          topologyLegendColors[index]);
                 QCOMPARE(topologyLegendDots[index]->property("color").value<QColor>(),
@@ -450,6 +453,25 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QVERIFY(!connection.value(QStringLiteral("status")).toString().isEmpty());
                 QVERIFY(connection.value(QStringLiteral("color")).canConvert<QColor>());
             }
+            const auto topologySummaryMatchesConnections = [&]() {
+                int counts[3] = {0, 0, 0};
+                const QVariantList connections = topologyCanvas->property("familyConnectionStates").toList();
+                if (connections.size() != 6) return false;
+                for (const QVariant& value : connections) {
+                    const QString status = value.toMap().value(QStringLiteral("status")).toString();
+                    if (status == translatedTelemetryText("已接收")) ++counts[0];
+                    else if (status == translatedTelemetryText("数据超时")) ++counts[1];
+                    else ++counts[2];
+                }
+                for (int index = 0; index < 3; ++index) {
+                    const QString expected = QStringLiteral("%1 %2")
+                                                  .arg(translatedTelemetryText(topologyLegendTexts[index]))
+                                                  .arg(counts[index]);
+                    if (topologyLegendLabels[index]->property("text").toString() != expected) return false;
+                }
+                return true;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(topologySummaryMatchesConnections(), 3000);
 
             const QVariantList priorityEventInput{
                 QVariantMap{{QStringLiteral("severity"), 1}, {QStringLiteral("sequence"), 8}},
@@ -1594,6 +1616,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(
                 topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
                     .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologySummaryMatchesConnections(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyLegendLabels[0]->property("text").toString(),
+                                      translatedTelemetryText("已接收 3"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyLegendLabels[1]->property("text").toString(),
+                                      translatedTelemetryText("数据超时 0"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(topologyLegendLabels[2]->property("text").toString(),
+                                      translatedTelemetryText("等待遥测 3"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("statusText").toString(), receivedText, 3000);
@@ -2171,6 +2200,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(
                 topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
                     .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologySummaryMatchesConnections(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyLegendLabels[1]->property("text").toString()
+                                         .startsWith(translatedTelemetryText("数据超时 ")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendPosition->property("lastSampleValid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("gapCount").toInt() >= 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("text").toString(),
@@ -2224,6 +2256,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(
                 topologyCanvas->property("familyConnectionStates").toList().value(1).toMap()
                     .value(QStringLiteral("color")).value<QColor>(), QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologySummaryMatchesConnections(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendPositionSampleState->property("text").toString(), QStringLiteral("NOW"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("gapCount").toInt() >= 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("text").toString(),
