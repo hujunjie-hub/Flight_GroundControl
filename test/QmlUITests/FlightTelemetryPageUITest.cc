@@ -1344,6 +1344,25 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendEventStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
+                                        uint32_t eventId, uint8_t severity) {
+                mavlink_fcu_event_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = sessionBootId;
+                payload.profile_id = profileId;
+                payload.event_id = eventId;
+                payload.reason_code = 18;
+                payload.authority_epoch = 7;
+                payload.directive_epoch = 8;
+                payload.permit_epoch = 9;
+                payload.source_id = 25;
+                payload.reason_namespace = 0;
+                payload.severity = severity;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_event_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             const QString componentButtonName = flightTelemetryComponentButtonName(vehicle);
             QVERIFY2(!componentButtonName.isEmpty(), "FlightTelemetry setup component was not registered");
             navigateToConfigureView();
@@ -1580,6 +1599,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
             QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            sendSensorHealthStatus(1850, 1, 2, 0);
+            sendPrearmStatus(1850, 1, 1, 1, 0);
             QQuickItem* healthGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageGrid"), 3000);
             QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrixGrid"), 3000);
             QQuickItem* healthOverview = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview"), 3000);
@@ -1777,6 +1798,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                      translatedTelemetryText("%1 / 4 有效 · %2 超时 · %3 等待").arg(1).arg(0).arg(3));
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+            sendEventStatus(1950, bootId, 4321, 3);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceEvent->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             sendPrearmStatus(2000, 1, 3, 2, 0);
