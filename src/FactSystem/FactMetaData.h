@@ -157,6 +157,9 @@ public:
     QString updatePolicy() const { return _updatePolicy; }
     QVariantList dependencies() const { return _dependencies; }
     QVariantList validationRules() const { return _validationRules; }
+    QString sourceFile() const { return _sourceFile; }
+    QString sourcePath() const { return _sourcePath; }
+    QString sourceKind() const { return _sourceKind; }
     bool qgcRebootRequired() const { return _qgcRebootRequired; }
     bool hasControl() const { return _hasControl; }
     bool readOnly() const { return _readOnly; }
@@ -212,6 +215,9 @@ public:
     void setUpdatePolicy(const QString &value) { _updatePolicy = value; }
     void setDependencies(const QVariantList &value) { _dependencies = value; }
     void setValidationRules(const QVariantList &value) { _validationRules = value; }
+    void setSourceFile(const QString &value) { _sourceFile = value; }
+    void setSourcePath(const QString &value) { _sourcePath = value; }
+    void setSourceKind(const QString &value) { _sourceKind = value; }
     void setQGCRebootRequired(bool rebootRequired) { _qgcRebootRequired = rebootRequired; }
     void setRawIncrement(double increment) { _rawIncrement = increment; }
     void setHasControl(bool bValue) { _hasControl = bValue; }
@@ -387,6 +393,9 @@ private:
     QString _updatePolicy;
     QVariantList _dependencies;
     QVariantList _validationRules;
+    QString _sourceFile;
+    QString _sourcePath;
+    QString _sourceKind;
     bool _qgcRebootRequired = false;
     double _rawIncrement = std::numeric_limits<double>::quiet_NaN();
     bool _hasControl = true;
