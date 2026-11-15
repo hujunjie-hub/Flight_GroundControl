@@ -7,7 +7,7 @@ import QGroundControl.Controls
 
 Button {
     id:             control
-    padding:        flightStyle ? 10 : ScreenTools.defaultFontPixelWidth * 0.75
+    padding:        flightStyle ? Math.max(10, ScreenTools.defaultFontPixelWidth) : ScreenTools.defaultFontPixelWidth * 0.75
     hoverEnabled:   !ScreenTools.isMobile
     autoExclusive:  true
     icon.color:     textColor
