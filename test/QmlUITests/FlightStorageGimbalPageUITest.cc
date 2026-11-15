@@ -280,6 +280,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(page->property("deviceCount").toInt() > 0, 15000);
 
             QQuickItem *ownership = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_ownershipState"), 3000);
+            QQuickItem *deviceSelector = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_deviceSelector"), 3000);
             QQuickItem *acquire = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_acquireControl"), 3000);
             QQuickItem *release = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_releaseControl"), 3000);
             QQuickItem *pitchSlider = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_pitchSlider"), 3000);
@@ -291,6 +292,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QQuickItem *yawMode = findVisibleItem(_rootItem, QStringLiteral("flightGimbal_yawMode"), 3000);
             QQuickItem *retract = findItem(_rootItem, QStringLiteral("flightGimbal_retract"));
             QVERIFY(ownership);
+            QVERIFY(deviceSelector);
             QVERIFY(acquire);
             QVERIFY(release);
             QVERIFY(pitchSlider);
@@ -325,6 +327,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(yawSlider->property("enabled").toBool());
             QVERIFY(center->property("enabled").toBool());
             QVERIFY(page->property("_ownershipStatusValid").toBool());
+            QVERIFY(!deviceSelector->property("enabled").toBool());
 
             Gimbal *activeGimbal = vehicle->gimbalController()->activeGimbal();
             QVERIFY(activeGimbal);
@@ -665,12 +668,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                       QStringLiteral("数据超时"), 1000);
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!acquire->property("enabled").toBool());
+            // Manager ownership is stale even though the last owner bit may be cached.
+            // Device selection must recover instead of remaining permanently locked.
+            QVERIFY(deviceSelector->property("enabled").toBool());
 
             // Once the first device is no longer locally controlled, the
             // operator may select the other fully discovered and fresh device.
             sendSecondGimbalTelemetry();
             vehicle->gimbalController()->setActiveGimbal(secondGimbal);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 1, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() !=
