@@ -337,6 +337,21 @@
 
 验收门槛：参考图已入库；现有参数能力、页面入口和安全边界有可追溯清单。
 
+### Phase 0 当前源码盘点（main@4b45ab7）
+
+本次基于 main 分支源码完成只读盘点，未修改产品代码：
+
+- VehicleConfigView.qml 将 QGroundControl.multiVehicleManager.activeVehicle 作为当前配置对象，并检查 parameterReadyVehicleAvailable、missingParameters 和 parameterDownloadSkipped；参数面板在参数可用后加载 SetupParameterEditor.qml。
+- SetupParameterEditor.qml 当前只是对通用 ParameterEditor 的薄封装，尚无参数中心 3.0 的独立工作台布局。
+- ParameterEditor.qml 使用 ParameterEditorController，现有 UI 包含搜索、全部/已修改/收藏筛选、隐藏只读、导入、工具菜单、刷新、默认值恢复、导出和参数差异预览等能力。
+- ParameterEditorController 按 Fact 的 category / group 构建分类和分组，暴露 searchText、currentCategory、currentGroup、showModifiedOnly、showFavoritesOnly、hideReadOnly、favoriteParameterNames 等属性；参数文件差异发送最终通过 Fact::setRawValue 进入现有参数写入路径。
+- ParameterManager 已提供 parametersReady、missingParameters、pendingWrites、loadProgress、parameterDownloadSkipped 等状态，以及参数刷新、批量刷新、读取、默认值恢复和现有 MAVLink 参数管理路径。当前参数写入确认等待常量为 1000 ms；新 UI 必须沿用现有 ParameterManager 行为，不能另建写入通道。
+- FlightParameterMetaData::parseParameterJson 当前将参数统一构造成 valueTypeFloat，解析 group、描述、单位、min/max/default 和 decimalPlaces，并设置 readOnly=false；当前解析器没有读取 JSON 的 type、rebootRequired 或本规范规划的 domain、vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules。
+- FlightParameterFactMetaData.json 当前包含 49 个 Flight 参数，源文件标识为 middleware/protocol/mavlink/parameters/ground_parameters.json；group 分布为机体模型 1、MPC 权重 21、位置环回退 6、姿态角速度环 17、SO3 姿态增益 3、仿真 1。
+- 当前唯一机型上下文应优先复用 activeVehicle 与对应 FirmwarePlugin / 参数元数据；页面下拉框不得创建第二套 Vehicle 选择/管理机制，也不得把切换 UI 模型误当作改变飞控硬件类型。
+
+Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档进仓库 spec/assets/Parameter-Center-3.0-Reference.png。完成该原图归档后，Phase 0 才可标记 PASS；当前状态为 PARTIAL。
+
 ### Phase 1：静态 UI 像素级还原
 
 - 完成应用栏、唯一机型下拉区、五步流程条和左侧参数域导航。
@@ -420,7 +435,7 @@
 ## 13. 当前实施状态
 
 - SPEC：已定义，等待分阶段实施。
-- Phase 0：NOT_RUN。
+- Phase 0：PARTIAL（源码盘点已完成；原始参考图归档待完成）。
 - Phase 1：NOT_RUN。
 - Phase 2：NOT_RUN。
 - Phase 3：NOT_RUN。
