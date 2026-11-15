@@ -141,6 +141,7 @@ SetupPage {
     readonly property real _healthMaintenanceCardInset: Math.max(6, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.34 : 0.42))
     readonly property real _healthMaintenanceSectionSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28))
     readonly property real _healthMaintenanceCardGap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.65)
+    readonly property real _healthMaintenanceMetricInset: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.24)
     readonly property real _dashboardOuterSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.8 : 1.2)
     readonly property real _dashboardHeaderInset: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.3 : 0.5)
     readonly property real _dashboardHeaderExtraHeight: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.6 : 1.0)
@@ -3532,41 +3533,29 @@ SetupPage {
                                 columns: 2
                                 columnSpacing: root._dashboardMetricTileGap
                                 rowSpacing: root._dashboardMetricTileGap
-                                QGCLabel {
-                                    objectName: "flightTelemetry_healthMaintenanceCpuLoad"
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: qsTr("CPU：%1").arg(root._resourceCpuLoadText())
-                                    color: root._resourceMetricColor("cpuLoadPermille", 2)
-                                    font.pointSize: ScreenTools.captionFontPointSize
-                                    wrapMode: Text.WordWrap
+                                HealthMaintenanceMetricTile {
+                                    objectName: "flightTelemetry_healthMaintenanceCpuTile"
+                                    valueObjectName: "flightTelemetry_healthMaintenanceCpuLoad"
+                                    valueText: qsTr("CPU：%1").arg(root._resourceCpuLoadText())
+                                    valueColor: root._resourceMetricColor("cpuLoadPermille", 2)
                                 }
-                                QGCLabel {
-                                    objectName: "flightTelemetry_healthMaintenanceWcet"
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: qsTr("任务 WCET：%1").arg(root._resourceMetricText("wcetUs", 0, 0, " μs"))
-                                    color: root._resourceMetricColor("wcetUs", 0)
-                                    font.pointSize: ScreenTools.captionFontPointSize
-                                    wrapMode: Text.WordWrap
+                                HealthMaintenanceMetricTile {
+                                    objectName: "flightTelemetry_healthMaintenanceWcetTile"
+                                    valueObjectName: "flightTelemetry_healthMaintenanceWcet"
+                                    valueText: qsTr("任务 WCET：%1").arg(root._resourceMetricText("wcetUs", 0, 0, " μs"))
+                                    valueColor: root._resourceMetricColor("wcetUs", 0)
                                 }
-                                QGCLabel {
-                                    objectName: "flightTelemetry_healthMaintenanceStackFree"
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: qsTr("系统栈剩余：%1").arg(root._resourceMetricText("stackFreeBytes", 1, 0, " B"))
-                                    color: root._resourceMetricColor("stackFreeBytes", 1)
-                                    font.pointSize: ScreenTools.captionFontPointSize
-                                    wrapMode: Text.WordWrap
+                                HealthMaintenanceMetricTile {
+                                    objectName: "flightTelemetry_healthMaintenanceStackFreeTile"
+                                    valueObjectName: "flightTelemetry_healthMaintenanceStackFree"
+                                    valueText: qsTr("系统栈剩余：%1").arg(root._resourceMetricText("stackFreeBytes", 1, 0, " B"))
+                                    valueColor: root._resourceMetricColor("stackFreeBytes", 1)
                                 }
-                                QGCLabel {
-                                    objectName: "flightTelemetry_healthMaintenanceStorageFree"
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: qsTr("存储剩余：%1").arg(root._storageFreeText())
-                                    color: root._storageFreeColor()
-                                    font.pointSize: ScreenTools.captionFontPointSize
-                                    wrapMode: Text.WordWrap
+                                HealthMaintenanceMetricTile {
+                                    objectName: "flightTelemetry_healthMaintenanceStorageFreeTile"
+                                    valueObjectName: "flightTelemetry_healthMaintenanceStorageFree"
+                                    valueText: qsTr("存储剩余：%1").arg(root._storageFreeText())
+                                    valueColor: root._storageFreeColor()
                                 }
                             }
                         }
@@ -6161,6 +6150,34 @@ SetupPage {
     component TelemetryRow: VehicleSummaryRow {
         id: telemetryRow
         valueColor: root._diagnosticValueColor(valueText)
+    }
+
+    component HealthMaintenanceMetricTile: Rectangle {
+        id: healthMaintenanceMetricTile
+        required property string valueObjectName
+        required property string valueText
+        required property color valueColor
+        readonly property real contentInset: root._healthMaintenanceMetricInset
+
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        implicitHeight: metricValue.implicitHeight + contentInset * 2
+        radius: 4
+        color: "#06232B"
+        border.width: 1
+        border.color: "#14515D"
+
+        QGCLabel {
+            id: metricValue
+            objectName: healthMaintenanceMetricTile.valueObjectName
+            anchors.fill: parent
+            anchors.margins: healthMaintenanceMetricTile.contentInset
+            text: healthMaintenanceMetricTile.valueText
+            color: healthMaintenanceMetricTile.valueColor
+            font.pointSize: ScreenTools.captionFontPointSize
+            font.weight: ScreenTools.strongFontWeight
+            wrapMode: Text.WordWrap
+        }
     }
 
     component TelemetryGroup: Rectangle {
