@@ -103,6 +103,10 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("writeOnly"), false }
     };
 
+    QJsonObject unknownRebootEntry = validEntry;
+    unknownRebootEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_REBOOT"));
+    unknownRebootEntry.remove(QStringLiteral("rebootRequired"));
+
     QJsonObject unknownDomainEntry = validEntry;
     unknownDomainEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_DOMAIN"));
     unknownDomainEntry.insert(QStringLiteral("domain"), QStringLiteral("CONTROL_EXPERIMENTAL"));
@@ -139,6 +143,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
 
     QJsonArray parameters;
     parameters.append(validEntry);
+    parameters.append(unknownRebootEntry);
     parameters.append(unknownDomainEntry);
     parameters.append(invalidRangeEntry);
     parameters.append(unsupportedTypeEntry);
@@ -156,8 +161,15 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QCOMPARE(valid->category(), QStringLiteral("CONTROL"));
     QCOMPARE(valid->shortDescription(), QStringLiteral("Valid test parameter"));
     QVERIFY(valid->vehicleRebootRequired());
+    QVERIFY(valid->vehicleRebootRequiredKnown());
     QVERIFY(!valid->readOnly());
     QVERIFY(!valid->writeOnly());
+
+    FactMetaData *unknownReboot = metadata.getMetaDataForFact(QStringLiteral("TEST_UNKNOWN_REBOOT"),
+                                                                   FactMetaData::valueTypeFloat);
+    QVERIFY(unknownReboot);
+    QVERIFY(!unknownReboot->vehicleRebootRequiredKnown());
+    QVERIFY(!unknownReboot->vehicleRebootRequired());
 
     FactMetaData *readOnly = metadata.getMetaDataForFact(QStringLiteral("TEST_READ_ONLY"),
                                                          FactMetaData::valueTypeFloat);
