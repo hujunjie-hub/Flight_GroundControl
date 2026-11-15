@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.15
+- 版本 5.16
 - 日期 2026-11-16
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -287,3 +287,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-16 飞行健康页 Phase 2.70：13 域矩阵和六个重点域状态单元改用独立 ScreenTools 缩放密度 token，收紧非必要内边距/间距；保留全部文字与接收年龄，验证单元内容边界和桌面 3:6:3 主视觉比例。本轮未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
+
+
+- 2026-11-16 Phase 2.72 FCU 单调时序颜色一致性：导航、时间、事件三行的时间点标记、序号、时间值统一由同一状态颜色驱动；新增 MockLink QColor 一致性回归，既有排序/精度/UTC 独立性与多视口检查保持不变。按要求未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
