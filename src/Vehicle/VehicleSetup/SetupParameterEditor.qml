@@ -1222,18 +1222,30 @@ Item {
                                         ctx.strokeStyle = "#18DDE2"
                                         ctx.fillStyle = "#18DDE2"
                                         ctx.lineWidth = 2
+                                        // FlightTelemetryFactGroup marks a control family stale after
+                                        // 3 seconds. Break the trace across gaps of that duration instead
+                                        // of drawing a misleading continuous line through missing telemetry.
+                                        const maxContinuousGapUs = 3000000
                                         ctx.beginPath()
                                         for (let i = 0; i < samples.length; i++) {
                                             const x = (width - 1) * i / (samples.length - 1)
                                             const y = (height - 1) -
                                                       ((samples[i].value - minValue) / valueRange) * (height - 1)
-                                            if (i === 0) {
+                                            if (i === 0 || samples[i].time - samples[i - 1].time > maxContinuousGapUs) {
                                                 ctx.moveTo(x, y)
                                             } else {
                                                 ctx.lineTo(x, y)
                                             }
                                         }
                                         ctx.stroke()
+                                        for (let i = 0; i < samples.length; i++) {
+                                            const x = (width - 1) * i / (samples.length - 1)
+                                            const y = (height - 1) -
+                                                      ((samples[i].value - minValue) / valueRange) * (height - 1)
+                                            ctx.beginPath()
+                                            ctx.arc(x, y, 2, 0, Math.PI * 2)
+                                            ctx.fill()
+                                        }
                                     }
                                     onWidthChanged: requestPaint()
                                     onHeightChanged: requestPaint()
