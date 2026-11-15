@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.9  
+版本：4.10  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -386,3 +386,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - stale sensor row 显示「Stale · Last: Normal/Error/Disabled」，保留历史上下文但不得作为当前健康；名称与状态顺序保持一致。
 - stale row 与顶部 freshness notice 使用同一琥珀色；ToolbarIndicatorUITest 验证文本和颜色一致。
 - 新增多传感器 stale 排序单元测试；本轮不运行 CI，集中 Windows Release / Unit / Integration 验收时执行。
+
+
+### G15 遥控链路指标格响应式重排（2026-11-15）
+
+- 每个链路实例的 RSSI、链路质量、丢包率指标格按 760/420 px 内容宽度断点使用 3/2/1 列。
+- 两列时丢包率指标跨两列占满第二行；窄屏单列时三个指标分别整行显示。
+- 集中验收需验证 700 px 双列和 400 px 单列，检查三个指标格完整、数值不被挤压，恢复桌面后回到三列。
+- 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。

@@ -343,7 +343,10 @@
         "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out",
         "rc_link_kpi_shows_fresh_instance_count_over_known_total",
         "summary_tile_detail_text_wraps_to_two_lines_and_tile_height_tracks_implicit_content",
-        "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths"
+        "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths",
+        "rc_link_metric_grid_reflows_three_two_one_at_responsive_breakpoints",
+        "rc_link_metric_loss_cell_spans_full_row_in_two_column_layout",
+        "rc_link_metric_cells_fill_available_width_at_700_and_400_px"
       ]
     },
     {
@@ -571,7 +574,10 @@
     "overview_link_kpi_changes_from_three_of_three_fresh_to_one_of_three_when_non_rc_links_age_out",
     "rc_link_kpi_shows_fresh_instance_count_over_known_total",
     "summary_tile_detail_text_wraps_to_two_lines_and_tile_height_tracks_implicit_content",
-    "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths"
+    "summary_tile_detail_visibility_wrapping_and_bounds_are_verified_at_700_and_400_widths",
+    "rc_link_metric_grid_reflows_three_two_one_at_responsive_breakpoints",
+    "rc_link_metric_loss_cell_spans_full_row_in_two_column_layout",
+    "rc_link_metric_cells_fill_available_width_at_700_and_400_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

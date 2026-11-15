@@ -792,6 +792,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
             QQuickItem* rcLinkPanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
+            QQuickItem* gcsLinkMetricsGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
+            QQuickItem* gcsRssiMetricCell = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetric_rssi_2"), 3000);
+            QQuickItem* gcsQualityMetricCell = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetric_quality_2"), 3000);
+            QQuickItem* gcsLossMetricCell = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkMetric_loss_2"), 3000);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
             QVERIFY(rightStickReadout);
@@ -804,6 +812,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(invalidOtherLossValue);
             QVERIFY(rcFailsafePanel);
             QVERIFY(rcLinkPanel);
+            QVERIFY(gcsLinkMetricsGrid);
+            QVERIFY(gcsRssiMetricCell);
+            QVERIFY(gcsQualityMetricCell);
+            QVERIFY(gcsLossMetricCell);
             QQuickItem* leftStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
             QQuickItem* rightStickMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
             QVERIFY(leftStickMarker);
@@ -813,6 +825,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
+            const qreal originalLinkMetricsPageWidth = page->width();
+            page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsLinkMetricsGrid->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsRssiMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsLossMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.90, 3000);
+            page->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsLinkMetricsGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsRssiMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.90, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.90, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsLossMetricCell->width() >= gcsLinkMetricsGrid->width() * 0.90, 3000);
+            page->setWidth(originalLinkMetricsPageWidth);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsLinkMetricsGrid->property("columns").toInt() >= 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcRssiValue->property("text").toString(), QStringLiteral("-42 dBm"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(invalidOtherRssiValue->property("text").toString(), invalidText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(invalidOtherQualityValue->property("text").toString(), invalidText, 3000);

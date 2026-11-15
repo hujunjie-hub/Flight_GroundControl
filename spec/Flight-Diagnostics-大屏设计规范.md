@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.17
+- 版本：6.18
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路覆盖率和窄屏换行已收敛；旧版 SYS_STATUS stale 行保留历史上下文且明确使用警告色；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率和窄屏辅助说明已闭环；本轮补齐遥控链路 RSSI/质量/丢包三项指标的 3/2/1 列自适应及中等宽度丢包格整行布局；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -744,3 +744,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 过期状态行顺序必须与传感器名称顺序一致：unhealthy → healthy → disabled。
 - 新增 SysStatusSensorInfoTest 验证 stale 后保留 sensor names、last-known state 与顺序；ToolbarIndicatorUITest 验证主状态抽屉 stale notice 和状态行警告色。
 - 不改变 SYS_STATUS 协议、VehicleLinkManager 丢包判定、ARM/Permit/FMS/执行器权限；本轮不运行 Unit、Integration、Windows Release 或 CI，新增回归为 NOT_RUN。
+
+
+## 46. Phase 2.9 遥控链路实例指标窄屏重排（2026-11-15）
+
+- 每条链路的 RSSI、链路质量、丢包率三个指标格按内容宽度响应式排列：>=760 px 三列，420–759 px 两列，<420 px 单列。
+- 两列布局中丢包率指标跨两列占满第二行，避免产生半行空白；单列布局中三个指标各占整行。
+- 三个指标仍独立使用各自 validity mask 和实例 freshness，不合并、不降级、不隐藏。
+- MockLink UI Integration 使用真实 GCS 链路实例验证 700 px 时两列与丢包格整行，400 px 时三格全宽；恢复原始窗口宽度后恢复桌面布局。
+- 仅修改 GroundControl QML 布局、UI Integration 和 SPEC/G15；不修改链路协议、FactGroup、链路状态语义或飞控控制行为。本轮不运行 CI，回归待集中验收。

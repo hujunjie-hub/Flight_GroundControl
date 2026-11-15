@@ -2487,7 +2487,7 @@ SetupPage {
                             GridLayout {
                                 objectName: "flightTelemetry_linkMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
-                                columns: 3
+                                columns: root.availableWidth >= 760 ? 3 : root.availableWidth >= 420 ? 2 : 1
                                 columnSpacing: 6
                                 rowSpacing: 4
                                 Rectangle {
@@ -2542,6 +2542,7 @@ SetupPage {
                                     objectName: "flightTelemetry_linkMetric_loss_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
+                                    Layout.columnSpan: root.availableWidth >= 420 && root.availableWidth < 760 ? 2 : 1
                                     implicitHeight: 52
                                     radius: 5
                                     color: "#082B33"
