@@ -114,6 +114,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject unknownRebootEntry = validEntry;
     unknownRebootEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_REBOOT"));
     unknownRebootEntry.remove(QStringLiteral("rebootRequired"));
+    unknownRebootEntry.insert(QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION"));
 
     QJsonObject invalidTuningPolicyEntry = validEntry;
     invalidTuningPolicyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_TUNING_POLICY"));
@@ -256,16 +257,32 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
         { QStringLiteral("name"), QStringLiteral("VEH_MASS") },
         { QStringLiteral("type"), QStringLiteral("float") },
         { QStringLiteral("domain"), QStringLiteral("VEHICLE_MODEL") },
-        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} }
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("vehicleFamily"), QStringLiteral("MULTIROTOR") },
+        { QStringLiteral("modelVariants"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("controlLaw"), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID") },
+        { QStringLiteral("tuningPolicy"), QStringLiteral("GROUND_ADJUSTABLE") },
+        { QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION") },
+        { QStringLiteral("dependencies"), QJsonArray{} },
+        { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("readOnly"), false }
     };
     const QJsonObject rateGain {
         { QStringLiteral("name"), QStringLiteral("CTL_RATE_KP_X") },
         { QStringLiteral("type"), QStringLiteral("float") },
         { QStringLiteral("domain"), QStringLiteral("CONTROL") },
-        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} }
+        { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("vehicleFamily"), QStringLiteral("MULTIROTOR") },
+        { QStringLiteral("modelVariants"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("controlLaw"), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID") },
+        { QStringLiteral("tuningPolicy"), QStringLiteral("GROUND_ADJUSTABLE") },
+        { QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION") },
+        { QStringLiteral("dependencies"), QJsonArray{} },
+        { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("readOnly"), false }
     };
     const QJsonObject metadata {
-        { QStringLiteral("version"), 1 },
+        { QStringLiteral("version"), 2 },
         { QStringLiteral("sha256"), sourceSha },
         { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
         { QStringLiteral("parameters"), QJsonArray{vehicleMass, rateGain} }
@@ -274,6 +291,9 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
     const QJsonObject profile {
         { QStringLiteral("id"), QStringLiteral("QUAD_X4") },
         { QStringLiteral("status"), QStringLiteral("SIM_ONLY") },
+        { QStringLiteral("vehicleFamily"), QStringLiteral("MULTIROTOR") },
+        { QStringLiteral("modelVariants"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("controlLaw"), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID") },
         { QStringLiteral("hardwareEligible"), false },
         { QStringLiteral("parameterWriteScope"), QStringLiteral("SIL_ONLY") },
         { QStringLiteral("parameterDomains"), QJsonArray{
@@ -282,7 +302,7 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
               QStringLiteral("VEH_MASS"), QStringLiteral("CTL_RATE_KP_X") } }
     };
     const QJsonObject catalog {
-        { QStringLiteral("schema_version"), 1 },
+        { QStringLiteral("schema_version"), 2 },
         { QStringLiteral("source"), QJsonObject{
               { QStringLiteral("repository"), QStringLiteral("hujunjie-hub/Flight") },
               { QStringLiteral("parameterCatalog"), QJsonObject{
@@ -331,6 +351,29 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
     QJsonObject mismatchedProfileMetadata = metadata;
     mismatchedProfileMetadata.insert(QStringLiteral("parameters"), mismatchedProfileParameters);
     QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, mismatchedProfileMetadata).isEmpty());
+
+    // Parameter applicability must exactly match the selected model profile.
+    QJsonArray mismatchedFamilyParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject mismatchedFamilyMass = mismatchedFamilyParameters.at(0).toObject();
+    mismatchedFamilyMass.insert(QStringLiteral("vehicleFamily"), QStringLiteral("FIXED_WING"));
+    mismatchedFamilyParameters.replace(0, mismatchedFamilyMass);
+    QJsonObject mismatchedFamilyMetadata = metadata;
+    mismatchedFamilyMetadata.insert(QStringLiteral("parameters"), mismatchedFamilyParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, mismatchedFamilyMetadata).isEmpty());
+
+    QJsonObject mismatchedControlLawProfile = profile;
+    mismatchedControlLawProfile.insert(QStringLiteral("controlLaw"), QStringLiteral("PID_ONLY"));
+    QJsonObject mismatchedControlLawCatalog = catalog;
+    mismatchedControlLawCatalog.insert(QStringLiteral("profiles"), QJsonArray{mismatchedControlLawProfile});
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(mismatchedControlLawCatalog, metadata).isEmpty());
+
+    QJsonArray unknownDependencyParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject dependentGain = unknownDependencyParameters.at(1).toObject();
+    dependentGain.insert(QStringLiteral("dependencies"), QJsonArray{QStringLiteral("MISSING_PARAMETER")});
+    unknownDependencyParameters.replace(1, dependentGain);
+    QJsonObject unknownDependencyMetadata = metadata;
+    unknownDependencyMetadata.insert(QStringLiteral("parameters"), unknownDependencyParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, unknownDependencyMetadata).isEmpty());
 
     // Ambiguous parameter identities and malformed hardware eligibility fail closed.
     QJsonArray duplicateParameters = metadata.value(QStringLiteral("parameters")).toArray();
