@@ -5203,11 +5203,35 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const qreal baseFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
             const qreal basePanelPadding = page->property("_dashboardPanelPadding").toReal();
             QVERIFY(basePanelPadding > 0.0);
+            const qreal baseAlarmSeverityChipHeight =
+                page->property("_overviewAlarmSeverityChipMinimumHeight").toReal();
+            const qreal baseAlarmPrimaryMinimumHeight =
+                page->property("_overviewAlarmPrimaryMinimumHeight").toReal();
+            const qreal baseAlarmPrimaryInset =
+                page->property("_overviewAlarmPrimaryLeftInset").toReal();
+            const qreal baseAlarmEventSpacing =
+                page->property("_overviewAlarmEventContentSpacing").toReal();
+            const qreal baseAlarmHistorySpacing =
+                page->property("_overviewEventHistoryGridColumnSpacing").toReal();
+            QVERIFY(baseAlarmSeverityChipHeight > 0.0);
+            QVERIFY(baseAlarmPrimaryMinimumHeight > 0.0);
+            QVERIFY(baseAlarmPrimaryInset > 0.0);
+            QVERIFY(baseAlarmEventSpacing > 0.0);
+            QVERIFY(baseAlarmHistorySpacing > 0.0);
 
             // 1672x941 physical reference viewport at 150% UI scale => 1115x627 logical pixels.
             uiScaleFact->setRawValue(150);
             QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.35, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_overviewAlarmSeverityChipMinimumHeight").toReal() >=
+                    baseAlarmSeverityChipHeight * 1.35 &&
+                page->property("_overviewAlarmPrimaryMinimumHeight").toReal() >=
+                    baseAlarmPrimaryMinimumHeight * 1.35 &&
+                page->property("_overviewAlarmPrimaryLeftInset").toReal() >= baseAlarmPrimaryInset * 1.35 &&
+                page->property("_overviewAlarmEventContentSpacing").toReal() >= baseAlarmEventSpacing * 1.35 &&
+                page->property("_overviewEventHistoryGridColumnSpacing").toReal() >=
+                    baseAlarmHistorySpacing * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -5233,6 +5257,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             uiScaleFact->setRawValue(200);
             QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_dashboardPanelPadding").toReal() >= basePanelPadding * 1.8, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_overviewAlarmSeverityChipMinimumHeight").toReal() >=
+                    baseAlarmSeverityChipHeight * 1.8 &&
+                page->property("_overviewAlarmPrimaryMinimumHeight").toReal() >=
+                    baseAlarmPrimaryMinimumHeight * 1.8 &&
+                page->property("_overviewAlarmPrimaryLeftInset").toReal() >= baseAlarmPrimaryInset * 1.8 &&
+                page->property("_overviewAlarmEventContentSpacing").toReal() >= baseAlarmEventSpacing * 1.8 &&
+                page->property("_overviewEventHistoryGridColumnSpacing").toReal() >=
+                    baseAlarmHistorySpacing * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
