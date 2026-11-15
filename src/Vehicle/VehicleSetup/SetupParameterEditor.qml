@@ -1299,6 +1299,13 @@ Item {
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
+                                text: qsTr("仿真接口：尚未接入 Flight SIL 启停与参数注入；当前仅展示已连接飞控的实测遥测")
+                                color: root.amber
+                                font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
                                 visible: dashboardRoot.parameterChangeSummary !== ""
                                 text: dashboardRoot.parameterChangeSummary
                                 color: root.amber
@@ -1433,7 +1440,7 @@ Item {
                                         anchors.margins: 6
                                         spacing: 3
                                         QGCLabel { text: qsTr("影响分析"); color: root.mainText; font.pointSize: ScreenTools.captionFontPointSize; font.weight: ScreenTools.strongFontWeight }
-                                        QGCLabel { Layout.fillWidth: true; text: qsTr("暂无已定义影响关系"); color: root.mutedText; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
+                                        QGCLabel { Layout.fillWidth: true; text: qsTr("参数元数据尚未声明依赖关系；不按名称或分组推断影响"); color: root.mutedText; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
                                     }
                                 }
                                 Rectangle {
