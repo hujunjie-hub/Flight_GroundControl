@@ -221,7 +221,8 @@ Item {
                                     textRole: "displayName"
                                     currentIndex: root._selectedModelProfileIndex
                                     // Selects one registered parameter-tuning profile; does not change the Vehicle hardware type.
-                                    enabled: root._modelProfiles.length > 0 && !dashboardRoot.tuningBusy
+                                    enabled: root._modelProfiles.length > 0 && !root._pendingWrites &&
+                                             !dashboardRoot.tuningBusy
                                     onActivated: index => {
                                         root._selectedModelProfileIndex = index
                                         if (dashboardLoader.item &&
