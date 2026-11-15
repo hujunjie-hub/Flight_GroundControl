@@ -131,6 +131,12 @@ SetupPage {
     // At the 1672x941 reference viewport, tighten decorative spacing and card insets only;
     // telemetry fields, typography roles, trend plot area and diagnostic content remain intact.
     readonly property bool _compactDashboardVertical: availableHeight < 960
+    // Health cells retain the same typography and data while using a tighter, DPI-aware vertical rhythm.
+    readonly property real _healthCellInset: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.30 : 0.36)
+    readonly property real _healthCellMinimumHeight: ScreenTools.defaultFontPixelHeight * 2.95
+    readonly property real _healthCellContentSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.12 : 0.15)
+    readonly property real _healthCellGridSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28)
+    readonly property real _healthPrimaryRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.20 : 0.24)
     readonly property real _dashboardOuterSpacing: _compactDashboardVertical ? 8 : 12
     readonly property real _dashboardHeaderInset: _compactDashboardVertical ? 3 : 5
     readonly property real _dashboardHeaderExtraHeight: _compactDashboardVertical ? 6 : 10
@@ -3219,7 +3225,7 @@ SetupPage {
                         objectName: "flightTelemetry_healthPrimaryGrid"
                         Layout.fillWidth: true
                         columns: 1
-                        rowSpacing: root._dashboardPanelBodySpacing
+                        rowSpacing: root._healthPrimaryRowSpacing
                         Repeater {
                             model: [
                                 { label: qsTr("飞控系统"), family: "operation", available: "operationAvailable" },
@@ -3250,8 +3256,8 @@ SetupPage {
                         objectName: "flightTelemetry_healthPageMatrixGrid"
                         Layout.fillWidth: true
                         columns: root._healthPageColumns
-                        columnSpacing: root._dashboardPanelBodySpacing
-                        rowSpacing: root._dashboardPanelBodySpacing
+                        columnSpacing: root._healthCellGridSpacing
+                        rowSpacing: root._healthCellGridSpacing
                         Repeater {
                             model: root._healthDomains
                             delegate: HealthCell {
@@ -5723,10 +5729,10 @@ SetupPage {
 
         readonly property string statusText: root._familyStatus(availableFact)
         readonly property color statusColor: root._familyStatusColor(availableFact)
-        readonly property real contentInset: root._dashboardPanelPadding
+        readonly property real contentInset: root._healthCellInset
 
         implicitWidth: 150
-        implicitHeight: Math.max(ScreenTools.defaultFontPixelHeight * 3.3,
+        implicitHeight: Math.max(root._healthCellMinimumHeight,
                                  healthCellContent.implicitHeight + contentInset * 2)
         radius: 6
         color: "#082B33"
@@ -5748,7 +5754,7 @@ SetupPage {
             objectName: healthCell.objectName + "_content"
             anchors.fill: parent
             anchors.margins: healthCell.contentInset
-            spacing: root._dashboardPanelBodySpacing * 0.45
+            spacing: root._healthCellContentSpacing
             RowLayout {
                 Layout.fillWidth: true
                 spacing: root._dashboardPanelHeaderSpacing * 0.5
