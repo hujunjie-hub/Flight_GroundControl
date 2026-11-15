@@ -1599,8 +1599,6 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
             QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
-            sendSensorHealthStatus(1850, 1, 2, 0);
-            sendPrearmStatus(1850, 1, 1, 1, 0);
             QQuickItem* healthGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageGrid"), 3000);
             QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrixGrid"), 3000);
             QQuickItem* healthOverview = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview"), 3000);
@@ -1696,6 +1694,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(storageFreeRow->property("valueText").toString(), staleText, 7000);
             QTRY_COMPARE_WITH_TIMEOUT(storageSdState->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(storageNorState->property("valueText").toString(), staleText, 3000);
+            sendSensorHealthStatus(1900, 1, 2, 0);
+            sendResourceStatus(1900, 0, 0x0F);
+            sendPrearmStatus(1900, 1, 1, 1, 0);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->property("titleText").toString(),
                                       translatedTelemetryText("遥测域概览"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthHeadline->property("color").value<QColor>(),
