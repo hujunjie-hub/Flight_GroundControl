@@ -3394,6 +3394,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
             QQuickItem* healthGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageGrid"), 3000);
             QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrixGrid"), 3000);
+            QQuickItem* healthMatrixOperationCell = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthPage_operation"), 3000);
+            QQuickItem* healthMatrixOperationCellContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthPage_operation_content"), 3000);
             QQuickItem* healthOverview = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview"), 3000);
             QQuickItem* healthMatrixPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix"), 3000);
             QQuickItem* healthSafety = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000);
@@ -3438,6 +3442,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_prearmReason"), 3000);
             QQuickItem* prearmTimestamp = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_prearmTimestamp"), 3000);
+            QQuickItem* maintenancePanel = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000);
+            QQuickItem* maintenanceContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceContent"), 3000);
+            QQuickItem* maintenanceIdentityColumn = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceIdentityColumn"), 3000);
+            QQuickItem* maintenanceEventColumn = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceEventColumn"), 3000);
+            QQuickItem* maintenanceResourceColumn = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceResourceColumn"), 3000);
+            QQuickItem* maintenanceBootId = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceBootId"), 3000);
             QQuickItem* maintenanceEvent = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceEventSummary"), 3000);
             QQuickItem* maintenancePrearm = findVisibleItem(
@@ -3489,6 +3505,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* storageDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
             QVERIFY(healthGrid);
             QVERIFY(healthMatrix);
+            QVERIFY(healthMatrixOperationCell);
+            QVERIFY(healthMatrixOperationCellContent);
             QVERIFY(healthOverview);
             QVERIFY(healthMatrixPanel);
             QVERIFY(healthSafety);
@@ -3520,6 +3538,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(prearmModeMask);
             QVERIFY(prearmReason);
             QVERIFY(prearmTimestamp);
+            QVERIFY(maintenancePanel);
+            QVERIFY(maintenanceContent);
+            QVERIFY(maintenanceIdentityColumn);
+            QVERIFY(maintenanceEventColumn);
+            QVERIFY(maintenanceResourceColumn);
+            QVERIFY(maintenanceBootId);
             QTRY_COMPARE_WITH_TIMEOUT(sensorInstanceCard->property("radius").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmCheckCard->property("radius").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceTaskCard->property("radius").toInt(), 6, 3000);
@@ -3979,6 +4003,28 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        topLeft.x() + item->width() <= panel->width() + 1.0 &&
                        topLeft.y() + item->height() <= panel->height() + 1.0;
             };
+            const auto healthCellContentProvidesHeight = [&]() {
+                if (!healthMatrixOperationCell || !healthMatrixOperationCellContent) return false;
+                const qreal inset = page->property("_dashboardPanelPadding").toReal();
+                const QPointF topLeft = healthMatrixOperationCellContent->mapToItem(
+                    healthMatrixOperationCell, 0, 0);
+                return topLeft.x() >= inset - 1.0 && topLeft.y() >= inset - 1.0 &&
+                       healthMatrixOperationCellContent->height() + 0.5 >=
+                           healthMatrixOperationCellContent->implicitHeight() &&
+                       topLeft.x() + healthMatrixOperationCellContent->width() <=
+                           healthMatrixOperationCell->width() - inset + 1.0 &&
+                       topLeft.y() + healthMatrixOperationCellContent->height() <=
+                           healthMatrixOperationCell->height() - inset + 1.0;
+            };
+            const auto maintenancePanelProvidesContentHeight = [&]() {
+                if (!maintenancePanel || !maintenanceContent) return false;
+                const qreal inset = page->property("_dashboardPanelPadding").toReal();
+                const QPointF topLeft = maintenanceContent->mapToItem(maintenancePanel, 0, 0);
+                return topLeft.x() >= inset - 1.0 && topLeft.y() >= inset - 1.0 &&
+                       maintenanceContent->height() + 0.5 >= maintenanceContent->implicitHeight() &&
+                       topLeft.x() + maintenanceContent->width() <= maintenancePanel->width() - inset + 1.0 &&
+                       topLeft.y() + maintenanceContent->height() <= maintenancePanel->height() - inset + 1.0;
+            };
             const qreal metricTileInset = page->property("_dashboardMetricTileInset").toReal();
             const auto detailCardProvidesContentHeight = [metricTileInset](QQuickItem* card, QQuickItem* content) {
                 if (!card || !content) return false;
@@ -3988,9 +4034,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        contentTopLeft.y() + content->height() <= card->height() - metricTileInset + 1.0;
             };
             const auto healthDetailCardsFit = [&]() {
-                if (!detailCardProvidesContentHeight(sensorInstanceCard, sensorInstanceContent) ||
+                if (!healthCellContentProvidesHeight() ||
+                    !maintenancePanelProvidesContentHeight() ||
+                    !detailCardProvidesContentHeight(sensorInstanceCard, sensorInstanceContent) ||
                     !detailCardProvidesContentHeight(prearmCheckCard, prearmRow) ||
                     !detailCardProvidesContentHeight(resourceTaskCard, resourceTaskContent) ||
+                    !itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) ||
+                    !itemFitsInPanel(maintenanceEventColumn, maintenancePanel) ||
+                    !itemFitsInPanel(maintenanceResourceColumn, maintenancePanel) ||
+                    !itemFitsInPanel(maintenanceBootId, maintenanceIdentityColumn) ||
+                    !itemFitsInPanel(maintenanceEvent, maintenanceEventColumn) ||
+                    !itemFitsInPanel(maintenancePrearm, maintenanceResourceColumn) ||
+                    !itemFitsInPanel(maintenanceResourceGrid, maintenanceResourceColumn) ||
                     !itemFitsInPanel(sensorInstanceCard, sensorCard) ||
                     !itemFitsInPanel(sensorHeaderGrid, sensorInstanceCard) ||
                     !itemFitsInPanel(sensorTitle, sensorHeaderGrid) ||
@@ -4018,9 +4073,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             };
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000));
-            QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000));
-            QQuickItem* maintenanceContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceContent"), 3000);
-            QVERIFY(maintenanceContent);
+            QTRY_VERIFY_WITH_TIMEOUT(healthCellContentProvidesHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
@@ -4434,7 +4488,35 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
+
+            // Long Chinese diagnostic text must grow the maintenance strip instead of clipping.
             page->setWidth(1600);
+            const QString originalMaintenanceEventText = maintenanceEvent->property("text").toString();
+            const qreal originalMaintenanceEventHeight = maintenanceEvent->height();
+            const qreal originalMaintenancePanelHeight = maintenancePanel->height();
+            maintenanceEvent->setProperty(
+                "text",
+                QStringLiteral("链路恢复后仍需检查传感器实例接收年龄、解锁前检查结果、资源快照完整性与当前启动周期的一致性。")
+                    .repeated(8));
+            QTRY_VERIFY_WITH_TIMEOUT(maintenanceEvent->height() > originalMaintenanceEventHeight + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanel->height() > originalMaintenancePanelHeight + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceEvent, maintenanceEventColumn), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
+            maintenanceEvent->setProperty("text", originalMaintenanceEventText);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
+
+            // The same content contract must hold in compact and standard vertical-density modes.
+            const qreal compactPanelPadding = page->property("_dashboardPanelPadding").toReal();
+            page->setHeight(1100);
+            QTRY_VERIFY_WITH_TIMEOUT(!page->property("_compactDashboardVertical").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_dashboardPanelPadding").toReal() > compactPanelPadding, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthCellContentProvidesHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
+            page->setHeight(941);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
+
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcTab);
             QVERIFY(_clickItemAt(rcTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
