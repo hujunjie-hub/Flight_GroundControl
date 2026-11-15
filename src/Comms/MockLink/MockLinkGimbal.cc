@@ -265,9 +265,6 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
 
     const float requestedPitch = request.param1;
     const float requestedYaw = request.param2;
-    const uint32_t flags = static_cast<uint32_t>(request.param5);
-
-    qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW - pitch:" << requestedPitch << "yaw:" << requestedYaw << "flags:" << flags;
 
     // NaN means "leave this axis unchanged"; infinities and malformed target IDs are invalid.
     const float requestedDeviceId = request.param7;
@@ -281,6 +278,10 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
         requestedDeviceId > 255.0f || qFloor(requestedDeviceId) != requestedDeviceId) {
         return false;
     }
+    const uint32_t flags = static_cast<uint32_t>(request.param5);
+    qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW - pitch:" << requestedPitch
+                               << "yaw:" << requestedYaw << "flags:" << flags;
+
     const uint8_t targetDeviceId = static_cast<uint8_t>(requestedDeviceId);
     if (targetDeviceId != 0 && targetDeviceId != kGimbalCompId) {
         qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW denied for unknown device" << targetDeviceId;
