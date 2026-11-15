@@ -119,6 +119,7 @@ SetupPage {
     }
     function _healthHeadline() {
         if (!_vehicle) return qsTr("未连接")
+        if (_communicationLost) return qsTr("通信丢失")
         if (!_telemetry || !_telemetry.telemetryAvailable) return qsTr("等待 FCU 遥测")
         const stale = _healthStatusCount(qsTr("数据超时"))
         const waiting = _healthStatusCount(qsTr("等待遥测"))
@@ -2572,8 +2573,17 @@ SetupPage {
                         objectName: "flightTelemetry_healthHeadline"
                         Layout.fillWidth: true
                         text: root._healthHeadline()
-                        color: "#E2ECEF"
+                        color: root._communicationLost ? "#F06464" : "#E2ECEF"
                         typographyRole: "hero"
+                        wrapMode: Text.WordWrap
+                    }
+                    QGCLabel {
+                        objectName: "flightTelemetry_healthCommunicationNote"
+                        Layout.fillWidth: true
+                        visible: root._communicationLost
+                        text: qsTr("链路心跳已丢失；各遥测域仍按独立接收年龄判定，缓存状态不代表链路在线。")
+                        color: "#F0B94B"
+                        font.pointSize: ScreenTools.captionFontPointSize
                         wrapMode: Text.WordWrap
                     }
                     QGCLabel {
