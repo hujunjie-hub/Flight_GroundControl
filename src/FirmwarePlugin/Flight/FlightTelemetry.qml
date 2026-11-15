@@ -111,14 +111,46 @@ SetupPage {
         if (_fact("utcValid") === null) return qsTr("未上报")
         return _fact("utcValid") ? _number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
     }
-    function _resourceCpuLoadText() {
-        if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return _familyStatus("resourceAvailable")
+    function _resourceTaskZero() {
         for (let index = 0; index < _resourceStatuses.length; ++index) {
             const item = _resourceStatuses[index]
-            if (Number(item.taskId) === 0)
-                return _rawValidPermillePercent(item.cpuLoadPermille, item.validityMask, 2)
+            if (Number(item.taskId) === 0) return item
         }
-        return qsTr("未上报")
+        return null
+    }
+    function _resourceInstanceFresh(item) {
+        if (!item || _familyStatus("resourceAvailable") !== qsTr("已接收")) return false
+        const age = Number(item.receiveAgeMs)
+        return Number.isFinite(age) && age >= 0 && age <= _familyFreshnessLimitMs("resource")
+    }
+    function _resourceMetricText(fieldName, bit, decimals, suffix) {
+        if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return _familyStatus("resourceAvailable")
+        const item = _resourceTaskZero()
+        if (!item) return qsTr("未上报")
+        if (!_resourceInstanceFresh(item)) return qsTr("数据超时")
+        return bit === 2
+               ? _rawValidPermillePercent(item[fieldName], item.validityMask, bit)
+               : _rawValidValue(item[fieldName], item.validityMask, bit, decimals, suffix)
+    }
+    function _resourceMetricSample(fieldName, bit, divisor) {
+        if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return null
+        const item = _resourceTaskZero()
+        if (!_resourceInstanceFresh(item) || _rawMaskState(item.validityMask, bit) !== 1) return null
+        const value = Number(item[fieldName])
+        return Number.isFinite(value) && value >= 0 ? value / divisor : null
+    }
+    function _storageFreeText() {
+        if (_familyStatus("storageAvailable") !== qsTr("已接收")) return _familyStatus("storageAvailable")
+        return _validValue("storageFreeKib", "storageValidityMask", 2, 0, " KiB")
+    }
+    function _storageTrendSampleValue() {
+        if (_familyStatus("storageAvailable") !== qsTr("已接收") ||
+                _rawMaskState(_fact("storageValidityMask"), 2) !== 1) return null
+        const value = Number(_fact("storageFreeKib"))
+        return Number.isFinite(value) && value >= 0 ? value : null
+    }
+    function _resourceCpuLoadText() {
+        return _resourceMetricText("cpuLoadPermille", 2, 1, " %")
     }
     function _prearmSummaryText() {
         if (_familyStatus("prearmAvailable") !== qsTr("已接收")) return _familyStatus("prearmAvailable")
@@ -668,6 +700,10 @@ SetupPage {
             velocity: sessionFresh ? _trendSampleValue("navigationAvailable", "velocityStdMps", _navCapabilityVelocity) : null,
             heading: sessionFresh ? _trendSampleValue("navigationAvailable", "headingStdRad", _navCapabilityHeading) : null,
             control: sessionFresh ? _trendSampleValue("controlAvailable", "controlSolveTimeUs") : null,
+            resourceCpu: sessionFresh ? _resourceMetricSample("cpuLoadPermille", 2, 10) : null,
+            resourceWcet: sessionFresh ? _resourceMetricSample("wcetUs", 0, 1) : null,
+            resourceStack: sessionFresh ? _resourceMetricSample("stackFreeBytes", 1, 1) : null,
+            storageFree: sessionFresh ? _storageTrendSampleValue() : null,
             time: sessionFresh ? _timeTrendSampleValue() : null,
             linkRssi: sessionFresh ? _linkTrendSampleValue("rssiDbm", 8, 1, true) : null,
             linkQuality: sessionFresh ? _linkTrendSampleValue("linkQualityPermille", 9, 10, false) : null,
@@ -1948,48 +1984,59 @@ SetupPage {
                     rowSpacing: 10
                     TrendCard {
                         objectName: "flightTelemetry_trend_position"
-                        titleText: root._activeDashboardPage === 3 ? qsTr("接收信号强度 RSSI") : qsTr("水平位置标准差")
-                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("rssiDbm", 8, 0, " dBm")
+                        titleText: root._activeDashboardPage === 1 ? qsTr("系统 CPU 负载")
+                                   : root._activeDashboardPage === 3 ? qsTr("接收信号强度 RSSI")
+                                   : qsTr("水平位置标准差")
+                        valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("cpuLoadPermille", 2, 1, " %")
+                                   : root._activeDashboardPage === 3 ? root._linkMetricText("rssiDbm", 8, 0, " dBm")
                                    : root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m", root._navCapabilityHorizontalPosition)
-                        unitText: root._activeDashboardPage === 3 ? "dBm" : "m"
-                        decimals: root._activeDashboardPage === 3 ? 0 : 3
-                        valueKey: root._activeDashboardPage === 3 ? "linkRssi" : "position"
+                        unitText: root._activeDashboardPage === 1 ? "%" : root._activeDashboardPage === 3 ? "dBm" : "m"
+                        decimals: root._activeDashboardPage === 1 ? 1 : root._activeDashboardPage === 3 ? 0 : 3
+                        valueKey: root._activeDashboardPage === 1 ? "resourceCpu" : root._activeDashboardPage === 3 ? "linkRssi" : "position"
                         lineColor: "#49C7E7"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_velocity"
-                        titleText: root._activeDashboardPage === 3 ? qsTr("链路质量") : qsTr("速度标准差")
-                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("linkQualityPermille", 9, 1, " %")
+                        titleText: root._activeDashboardPage === 1 ? qsTr("任务 WCET")
+                                   : root._activeDashboardPage === 3 ? qsTr("链路质量")
+                                   : qsTr("速度标准差")
+                        valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("wcetUs", 0, 0, " μs")
+                                   : root._activeDashboardPage === 3 ? root._linkMetricText("linkQualityPermille", 9, 1, " %")
                                    : root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s", root._navCapabilityVelocity)
-                        unitText: root._activeDashboardPage === 3 ? "%" : "m/s"
-                        decimals: root._activeDashboardPage === 3 ? 1 : 3
-                        valueKey: root._activeDashboardPage === 3 ? "linkQuality" : "velocity"
+                        unitText: root._activeDashboardPage === 1 ? "μs" : root._activeDashboardPage === 3 ? "%" : "m/s"
+                        decimals: root._activeDashboardPage === 1 ? 0 : root._activeDashboardPage === 3 ? 1 : 3
+                        valueKey: root._activeDashboardPage === 1 ? "resourceWcet" : root._activeDashboardPage === 3 ? "linkQuality" : "velocity"
                         lineColor: "#52D5B1"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_heading"
-                        titleText: root._activeDashboardPage === 3 ? qsTr("丢包率") : qsTr("航向标准差")
-                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("packetLossPpm", 10, 2, " %")
+                        titleText: root._activeDashboardPage === 1 ? qsTr("系统栈剩余")
+                                   : root._activeDashboardPage === 3 ? qsTr("丢包率")
+                                   : qsTr("航向标准差")
+                        valueText: root._activeDashboardPage === 1 ? root._resourceMetricText("stackFreeBytes", 1, 0, " B")
+                                   : root._activeDashboardPage === 3 ? root._linkMetricText("packetLossPpm", 10, 2, " %")
                                    : root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad", root._navCapabilityHeading)
-                        unitText: root._activeDashboardPage === 3 ? "%" : "rad"
-                        decimals: root._activeDashboardPage === 3 ? 2 : 3
-                        valueKey: root._activeDashboardPage === 3 ? "linkLoss" : "heading"
+                        unitText: root._activeDashboardPage === 1 ? "B" : root._activeDashboardPage === 3 ? "%" : "rad"
+                        decimals: root._activeDashboardPage === 1 ? 0 : root._activeDashboardPage === 3 ? 2 : 3
+                        valueKey: root._activeDashboardPage === 1 ? "resourceStack" : root._activeDashboardPage === 3 ? "linkLoss" : "heading"
                         lineColor: "#A99AF2"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_control"
-                        titleText: root._activeDashboardPage === 2 ? qsTr("UTC 时间不确定度")
+                        titleText: root._activeDashboardPage === 1 ? qsTr("存储剩余空间")
+                                   : root._activeDashboardPage === 2 ? qsTr("UTC 时间不确定度")
                                    : root._activeDashboardPage === 3 ? qsTr("RC 输入年龄")
                                    : qsTr("控制求解耗时")
-                        valueText: root._activeDashboardPage === 2 ? root._utcUncertaintyText()
+                        valueText: root._activeDashboardPage === 1 ? root._storageFreeText()
+                                   : root._activeDashboardPage === 2 ? root._utcUncertaintyText()
                                    : root._activeDashboardPage === 3 ? root._rcAgeDisplayText()
                                    : root._trendDisplayValue("controlAvailable", "controlSolveTimeUs", 0, " μs")
-                        unitText: root._activeDashboardPage === 2 ? "μs" : root._activeDashboardPage === 3 ? "ms" : "μs"
+                        unitText: root._activeDashboardPage === 1 ? "KiB" : root._activeDashboardPage === 2 ? "μs" : root._activeDashboardPage === 3 ? "ms" : "μs"
                         decimals: root._activeDashboardPage === 3 ? 1 : 0
-                        valueKey: root._activeDashboardPage === 2 ? "time" : root._activeDashboardPage === 3 ? "rcAge" : "control"
+                        valueKey: root._activeDashboardPage === 1 ? "storageFree" : root._activeDashboardPage === 2 ? "time" : root._activeDashboardPage === 3 ? "rcAge" : "control"
                         lineColor: "#E4B75A"
                         samples: root._trendSamples
                     }
