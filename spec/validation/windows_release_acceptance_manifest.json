@@ -914,7 +914,8 @@
     "navigation_monotonic_timeline_marker_order_and_value_colors_match_for_navigation_time_and_event_rows",
     "health_page_cells_use_dedicated_screen_tools_scaled_insets_and_compact_content_height",
     "health_page_primary_summary_cells_fit_and_desktop_panels_keep_3_6_3_ratio",
-    "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens"
+    "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens",
+    "navigation_time_group_minimum_width_and_two_column_threshold_scale_with_screen_tools_font_width"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
