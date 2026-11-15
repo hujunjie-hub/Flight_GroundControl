@@ -784,7 +784,9 @@ Item {
                                             text: root.activeDomain === 6
                                                   ? qsTr("在线调参尚未开放")
                                                   : !root._flightModelAvailable
-                                                    ? qsTr("未匹配到已注册机型")
+                                                    ? (root._modelProfiles.length > 0
+                                                       ? qsTr("请先选择机型配置")
+                                                       : qsTr("未匹配到已注册机型"))
                                                     : qsTr("当前参数域暂无参数")
                                             color: root.mainText
                                             font.pointSize: ScreenTools.subtitleFontPointSize
@@ -794,9 +796,11 @@ Item {
                                         QGCLabel {
                                             Layout.fillWidth: true
                                             text: root.activeDomain === 6
-                                                  ? qsTr("当前固件尚未声明可在线调参的参数策略。Phase 3 完成安全闭环前，不开放写入操作。")
+                                                  ? qsTr("当前固件尚未声明可在线调参的参数策略。仅开放已登记的 SIL 单参数闭环；试探与批量写入保持关闭。")
                                                   : !root._flightModelAvailable
-                                                    ? qsTr("当前 Flight 固件未匹配到唯一且已登记的机型配置。参数编辑保持锁定，避免将仿真参数用于实机。")
+                                                    ? (root._modelProfiles.length > 0
+                                                       ? qsTr("检测到已登记的调参配置，请先由操作者明确选择。未选择前参数编辑保持锁定。")
+                                                       : qsTr("当前 Flight 固件未匹配到已登记的机型配置。参数编辑保持锁定，避免将仿真参数用于实机。"))
                                                     : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他域参数或示例数据填充。")
                                             color: root.mutedText
                                             font.pointSize: ScreenTools.captionFontPointSize
