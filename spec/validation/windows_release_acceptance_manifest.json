@@ -383,7 +383,12 @@
         "trend_cards_display_explicit_gap_counts_independent_of_latest_sample_state",
         "trend_gap_count_and_color_follow_invalid_samples_without_masking_latest_state",
         "trend_footer_labels_fit_responsive_card_bounds_at_1600_and_400_px",
-        "rc_link_and_failsafe_panel_width_ratio_is_two_to_one_on_desktop_and_medium"
+        "rc_link_and_failsafe_panel_width_ratio_is_two_to_one_on_desktop_and_medium",
+        "navigation_hero_panels_use_4_8_8_4_desktop_spans_and_stack_at_medium_and_narrow_widths",
+        "navigation_estimate_standard_deviation_values_use_neutral_color_separate_from_capability_status",
+        "navigation_capability_states_are_shown_once_without_duplicate_status_labels",
+        "navigation_primary_estimate_and_time_facts_are_not_repeated_in_detail_cards",
+        "navigation_and_time_diagnostic_metadata_remain_in_detail_cards_with_family_freshness_gating"
       ]
     },
     {

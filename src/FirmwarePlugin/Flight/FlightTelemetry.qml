@@ -1130,6 +1130,15 @@ SetupPage {
         return "#8A9A94"
     }
 
+    // Standard-deviation values are measurements, not a health verdict.
+    // Keep the number neutral; use the separate status line for capability/freshness.
+    function _navigationMetricValueColor(requiredMask) {
+        const status = _navigationMetricStatus(requiredMask)
+        if (status === qsTr("数据超时")) return "#F0B94B"
+        if (status === qsTr("已接收")) return "#E6F0F4"
+        return "#A8BBC3"
+    }
+
     // Detail rows follow family freshness → capability → field validity, matching the KPI and trend gates.
     function _navigationMetricDetailValue(factName, requiredMask, decimals, suffix) {
         const status = _navigationMetricStatus(requiredMask)
@@ -2579,64 +2588,106 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_navigationOverview"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
-                    eyebrow: "NAVIGATION OVERVIEW"
-                    titleText: qsTr("导航估计总览")
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "NAVIGATION ESTIMATE UNCERTAINTY"
+                    titleText: qsTr("导航估计不确定度")
                     statusFamily: "navigationAvailable"
-                    QGCLabel { Layout.fillWidth: true; text: root._familyStatus("navigationAvailable"); color: root._familyStatusColor("navigationAvailable"); typographyRole: "hero" }
-                    MetricReadout { labelText: qsTr("水平位置标准差"); valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3); unitText: "m"; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition) }
-                    MetricReadout { labelText: qsTr("速度标准差"); valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3); unitText: "m/s"; statusText: root._navigationMetricStatus(root._navCapabilityVelocity); accentColor: root._navigationMetricColor(root._navCapabilityVelocity) }
-                    MetricReadout { labelText: qsTr("航向标准差"); valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3); unitText: "rad"; statusText: root._navigationMetricStatus(root._navCapabilityHeading); accentColor: root._navigationMetricColor(root._navCapabilityHeading) }
+                    MetricReadout {
+                        objectName: "flightTelemetry_navigationEstimatePosition"
+                        labelText: qsTr("水平位置标准差")
+                        valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3)
+                        unitText: "m"
+                        statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
+                        accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityHorizontalPosition)
+                        statusColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
+                    }
+                    MetricReadout {
+                        objectName: "flightTelemetry_navigationEstimateVelocity"
+                        labelText: qsTr("速度标准差")
+                        valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3)
+                        unitText: "m/s"
+                        statusText: root._navigationMetricStatus(root._navCapabilityVelocity)
+                        accentColor: root._navigationMetricColor(root._navCapabilityVelocity)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityVelocity)
+                        statusColor: root._navigationMetricColor(root._navCapabilityVelocity)
+                    }
+                    MetricReadout {
+                        objectName: "flightTelemetry_navigationEstimateHeading"
+                        labelText: qsTr("航向标准差")
+                        valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3)
+                        unitText: "rad"
+                        statusText: root._navigationMetricStatus(root._navCapabilityHeading)
+                        accentColor: root._navigationMetricColor(root._navCapabilityHeading)
+                        valueColor: root._navigationMetricValueColor(root._navCapabilityHeading)
+                        statusColor: root._navigationMetricColor(root._navCapabilityHeading)
+                    }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationCapabilityPanel"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 8 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "NAVIGATION CAPABILITIES"
-                    titleText: qsTr("导航能力与定位精度")
-                    statusFamily: "navigationAvailable"
+                    titleText: qsTr("导航能力状态")
+                    statusFamily: ""
                     GridLayout {
+                        objectName: "flightTelemetry_navigationCapabilitiesGrid"
                         Layout.fillWidth: true
-                        columns: 2
+                        columns: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 2 : 1
                         columnSpacing: 8
                         rowSpacing: 8
-                        MetricReadout { labelText: qsTr("航向估计"); valueText: root._navigationMetricStatus(root._navCapabilityHeading); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHeading); accentColor: root._navigationMetricColor(root._navCapabilityHeading) }
-                        MetricReadout { labelText: qsTr("水平位置"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition) }
-                        MetricReadout { labelText: qsTr("水平速度"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalVelocity) }
-                        MetricReadout { labelText: qsTr("垂直速度"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityVerticalVelocity) }
+                        MetricReadout {
+                            objectName: "flightTelemetry_navigationCapabilityHeading"
+                            labelText: qsTr("航向估计")
+                            valueText: root._navigationMetricStatus(root._navCapabilityHeading)
+                            unitText: ""
+                            statusText: ""
+                            showStatusText: false
+                            accentColor: root._navigationMetricColor(root._navCapabilityHeading)
+                        }
+                        MetricReadout {
+                            objectName: "flightTelemetry_navigationCapabilityPosition"
+                            labelText: qsTr("水平位置")
+                            valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
+                            unitText: ""
+                            statusText: ""
+                            showStatusText: false
+                            accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
+                        }
+                        MetricReadout {
+                            objectName: "flightTelemetry_navigationCapabilityHorizontalVelocity"
+                            labelText: qsTr("水平速度")
+                            valueText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity)
+                            unitText: ""
+                            statusText: ""
+                            showStatusText: false
+                            accentColor: root._navigationMetricColor(root._navCapabilityHorizontalVelocity)
+                        }
+                        MetricReadout {
+                            objectName: "flightTelemetry_navigationCapabilityVerticalVelocity"
+                            labelText: qsTr("垂直速度")
+                            valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity)
+                            unitText: ""
+                            statusText: ""
+                            showStatusText: false
+                            accentColor: root._navigationMetricColor(root._navCapabilityVerticalVelocity)
+                        }
                     }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationPanelStateEpoch"
-                        labelText: qsTr("导航状态代次")
-                        valueText: root._familyFreshValue("navigationAvailable", root._integer("navStateEpoch"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationPanelOriginId"
-                        labelText: qsTr("原点 ID")
-                        valueText: root._familyFreshValue("navigationAvailable", root._integer("originId"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationPanelCapabilities"
-                        labelText: qsTr("能力掩码")
-                        valueText: root._familyFreshValue("navigationAvailable", root._mask("navigationCapabilities"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationPanelAge"
-                        labelText: qsTr("数据年龄")
-                        valueText: root._familyFreshValue("navigationAvailable", root._ageUsFact("navigationAgeUs"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationPanelReason"
-                        labelText: qsTr("原因")
-                        valueText: root._familyFreshValue("navigationAvailable", root._reasonText(0, root._fact("navigationReasonCode")))
+                    QGCLabel {
+                        objectName: "flightTelemetry_navigationCapabilityNote"
+                        Layout.fillWidth: true
+                        text: qsTr("能力状态仅表示对应数据是否可用，不代表估计不确定度")
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
                     }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationTimePanel"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 8 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "TIME SYNCHRONIZATION"
-                    titleText: qsTr("时间同步")
+                    titleText: qsTr("时间同步状态")
                     statusFamily: "timeAvailable"
                     TelemetryRow {
                         objectName: "flightTelemetry_navigationTimeQuality"
@@ -2662,40 +2713,25 @@ SetupPage {
                         valueColor: root._utcValidityColor()
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_navigationUtcUncertainty"
                         labelText: qsTr("UTC 不确定度")
                         valueText: root._utcUncertaintyText()
                         valueColor: root._utcValidityColor()
                     }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationEventUncertainty"
-                        labelText: qsTr("事件时间不确定度")
-                        valueText: root._familyFreshValue("timeAvailable", root._number("eventUncertaintyUs", 0, " μs"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationTimeEpoch"
-                        labelText: qsTr("时间代次")
-                        valueText: root._familyFreshValue("timeAvailable", root._integer("timeEpoch"))
-                    }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationSourceMappingEpoch"
-                        labelText: qsTr("时钟源映射代次")
-                        valueText: root._familyFreshValue("timeAvailable", root._integer("sourceMappingEpoch"))
-                    }
-                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationChecksPanel"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "FCU MONOTONIC TIMELINE"
-                    titleText: qsTr("导航与时间时序")
+                    titleText: qsTr("FCU 单调时序")
                     // Both domain states stay independent. These stamps share the FCU
                     // monotonic boot-time base and are not a UTC offset measurement.
                     statusFamily: ""
                     GridLayout {
                         objectName: "flightTelemetry_navigationChecksDomains"
                         Layout.fillWidth: true
-                        columns: 2
+                        columns: root.availableWidth >= 760 ? 2 : 1
                         columnSpacing: 8
                         rowSpacing: 8
                         HealthCell {
@@ -3420,49 +3456,85 @@ SetupPage {
                 StatusCard {
                     objectName: "flightTelemetry_card_navigation"
                     visible: root._activeDashboardPage === 2
-                    eyebrow: "NAVIGATION"
-                    statusFamily: "navigationAvailable"
+                    eyebrow: "NAVIGATION DIAGNOSTICS"
+                    statusFamily: ""
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
-                    title: qsTr("导航状态")
+                    title: qsTr("导航诊断详情")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("navigationAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("navigation") }
                     TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelStateEpoch"
+                        labelText: qsTr("导航状态代次")
+                        valueText: root._familyFreshValue("navigationAvailable", root._integer("navStateEpoch"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelOriginId"
+                        labelText: qsTr("原点 ID")
+                        valueText: root._familyFreshValue("navigationAvailable", root._integer("originId"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelCapabilities"
+                        labelText: qsTr("能力掩码")
+                        valueText: root._familyFreshValue("navigationAvailable", root._mask("navigationCapabilities"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelAge"
+                        labelText: qsTr("数据年龄")
+                        valueText: root._familyFreshValue("navigationAvailable", root._ageUsFact("navigationAgeUs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelReason"
+                        labelText: qsTr("原因")
+                        valueText: root._familyFreshValue("navigationAvailable", root._reasonText(0, root._fact("navigationReasonCode")))
+                    }
+
+                    // Retain stable diagnostic selectors for existing UI Integration probes;
+                    // the visible primary values are owned by the hero panels above.
+                    TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationStateOriginDetail"
                         labelText: qsTr("状态代次 / 原点 ID")
                         valueText: root._familyFreshValue("navigationAvailable",
                             root._integer("navStateEpoch") + " / " + root._integer("originId"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationCapabilitiesDetail"
                         labelText: qsTr("能力掩码")
                         valueText: root._familyFreshValue("navigationAvailable", root._mask("navigationCapabilities"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationPositionStd"
                         labelText: qsTr("水平位置标准差")
                         valueText: root._navigationMetricDetailValue("positionStdM", root._navCapabilityHorizontalPosition, 3, " m")
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationVelocityStd"
                         labelText: qsTr("速度标准差")
                         valueText: root._navigationMetricDetailValue("velocityStdMps", root._navCapabilityVelocity, 3, " m/s")
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationHeadingStd"
                         labelText: qsTr("航向标准差")
                         valueText: root._navigationMetricDetailValue("headingStdRad", root._navCapabilityHeading, 3, " rad")
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationAgeDetail"
                         labelText: qsTr("数据年龄")
                         valueText: root._familyFreshValue("navigationAvailable", root._ageUsFact("navigationAgeUs"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationReasonDetail"
                         labelText: qsTr("原因")
                         valueText: root._familyFreshValue("navigationAvailable", root._reasonText(0, root._fact("navigationReasonCode")))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_navigationFcuTimeDetail"
                         labelText: qsTr("FCU 发布时间（启动后）")
                         valueText: root._familyFreshValue("navigationAvailable", root._timestamp("navTimeBootUs"))
@@ -3823,56 +3895,83 @@ SetupPage {
                 StatusCard {
                     objectName: "flightTelemetry_card_time"
                     visible: root._activeDashboardPage === 2
-                    eyebrow: "TIME SYNCHRONIZATION"
-                    statusFamily: "timeAvailable"
+                    eyebrow: "TIME DIAGNOSTICS"
+                    statusFamily: ""
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
-                    title: qsTr("时间同步")
+                    title: qsTr("时间诊断详情")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("timeAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                     TelemetryRow {
+                        objectName: "flightTelemetry_navigationEventUncertainty"
+                        labelText: qsTr("事件时间不确定度")
+                        valueText: root._familyFreshValue("timeAvailable", root._number("eventUncertaintyUs", 0, " μs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationTimeEpoch"
+                        labelText: qsTr("时间代次")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("timeEpoch"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationSourceMappingEpoch"
+                        labelText: qsTr("时钟源映射代次")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("sourceMappingEpoch"))
+                    }
+
+                    // Retain stable diagnostic selectors for existing UI Integration probes;
+                    // primary time-quality and UTC values are owned by the hero panel.
+                    TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeQualityDetail"
                         labelText: qsTr("时间质量")
                         valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
                         valueColor: root._timeQualityColor()
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeDisciplineDetail"
                         labelText: qsTr("本地时钟纪律")
                         valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeUtcValidity"
                         labelText: qsTr("UTC 有效")
                         valueText: root._utcValidityText()
                         valueColor: root._utcValidityColor()
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeUtcTimestamp"
                         labelText: qsTr("FCU UTC 时间")
                         valueText: root._utcTimestampText()
                         valueColor: root._utcValidityColor()
                     }
                     TelemetryRow {
+                        visible: false
                         labelText: qsTr("UTC 不确定度")
                         valueText: root._utcUncertaintyText()
                         valueColor: root._utcValidityColor()
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeEventUncertaintyDetail"
                         labelText: qsTr("事件时间不确定度")
                         valueText: root._familyFreshValue("timeAvailable", root._number("eventUncertaintyUs", 0, " μs"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeEpochDetail"
                         labelText: qsTr("时间代次")
                         valueText: root._familyFreshValue("timeAvailable", root._integer("timeEpoch"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeSourceMappingEpoch"
                         labelText: qsTr("时钟源映射代次")
                         valueText: root._familyFreshValue("timeAvailable", root._integer("sourceMappingEpoch"))
                     }
                     TelemetryRow {
+                        visible: false
                         objectName: "flightTelemetry_timeFcuTimeDetail"
                         labelText: qsTr("FCU 发布时间（启动后）")
                         valueText: root._familyFreshValue("timeAvailable", root._timestamp("timeStatusTimeBootUs"))
@@ -4169,6 +4268,9 @@ SetupPage {
         required property string unitText
         required property string statusText
         property color accentColor: "#49C7E7"
+        property color valueColor: accentColor
+        property color statusColor: accentColor
+        property bool showStatusText: true
 
         Layout.fillWidth: true
         spacing: 3
@@ -4185,7 +4287,7 @@ SetupPage {
             QGCLabel {
                 Layout.fillWidth: true
                 text: metric.valueText
-                color: metric.accentColor
+                color: metric.valueColor
                 font.pointSize: ScreenTools.metricFontPointSize
                 font.weight: ScreenTools.strongFontWeight
                 elide: Text.ElideRight
@@ -4198,8 +4300,9 @@ SetupPage {
         }
         QGCLabel {
             Layout.fillWidth: true
+            visible: metric.showStatusText && metric.statusText.length > 0
             text: metric.statusText
-            color: metric.accentColor
+            color: metric.statusColor
             font.pointSize: ScreenTools.microFontPointSize
         }
     }
