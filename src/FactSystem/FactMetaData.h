@@ -3,6 +3,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
