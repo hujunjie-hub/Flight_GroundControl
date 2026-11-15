@@ -90,15 +90,9 @@ void GimbalController::setActiveGimbal(Gimbal *gimbal)
     }
 
     if (_activeGimbal) {
-        // A stale or disconnected device must never keep a local rate sender alive
-        // after the active-device pointer changes. A zero-rate frame is only sent
-        // while ownership and both telemetry streams are still confirmed.
-        const bool rateControlActive = _rateSenderTimer.isActive() ||
-            !qFuzzyIsNull(_activeGimbal->pitchRate()) ||
-            !qFuzzyIsNull(_activeGimbal->yawRate());
-        if (rateControlActive && _tryGetGimbalControl()) {
-            _sendGimbalAttitudeRates(0.0f, 0.0f);
-        }
+        // Once the old manager status is stale, it is no longer safe to send
+        // commands to that device. Stop local periodic traffic and discard its
+        // cached rates before changing the active-device pointer.
         _rateSenderTimer.stop();
         _activeGimbal->setPitchRate(0.0f);
         _activeGimbal->setYawRate(0.0f);
