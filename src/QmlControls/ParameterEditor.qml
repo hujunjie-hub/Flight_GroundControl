@@ -22,6 +22,22 @@ Item {
     property var    _favorites:         controller.favoriteParameterNames
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property bool externalCategoryNavigation: false
+    // Flight's parameter-center safe mode routes every write through the guarded tuning controller.
+    property bool parameterCenterSafeMode: false
+
+    readonly property var selectedFact: controller.selectedFact
+    readonly property string selectedParameterName: controller.selectedParameterName
+    readonly property bool tuningBusy: controller.tuningBusy
+    readonly property bool canApplySelectedValue: controller.canApplySelectedValue
+    readonly property bool canReadbackSelectedValue: controller.canReadbackSelectedValue
+    readonly property bool canRestorePreviousValue: controller.canRestorePreviousValue
+    readonly property var confirmedValue: controller.confirmedValue
+    readonly property string tuningStatus: controller.tuningStatus
+    readonly property string tuningError: controller.tuningError
+
+    function applySelectedValue(value) { return controller.applySelectedValue(value) }
+    function refreshSelectedValue() { return controller.refreshSelectedValue() }
+    function restorePreviousValue() { return controller.restorePreviousValue() }
 
     function hasCategory(categoryName) {
         if (!categoryName) return false
@@ -58,6 +74,7 @@ Item {
     readonly property bool _canImport: _activeVehicle && !_activeVehicle.armed &&
                                        !_activeVehicle.vehicleLinkManager.communicationLost &&
                                        !_activeVehicle.parameterManager.pendingWrites
+    readonly property bool _canUpload: _canImport && !parameterCenterSafeMode
 
     function _openImport() {
         fileDialog.title = qsTr("Load Parameters")
@@ -87,6 +104,7 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
+            enabled:        !parameterCenterSafeMode
             onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
                                                          Dialog.Cancel | Dialog.Reset,
@@ -95,6 +113,7 @@ Item {
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        _activeVehicle && !_activeVehicle.apmFirmware
+            enabled:        !parameterCenterSafeMode
             onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
                                                          Dialog.Cancel | Dialog.Reset,
@@ -181,7 +200,7 @@ Item {
 
         ParameterDiffDialog {
             paramController: _controller
-            allowUpload: _root._canImport
+            allowUpload: _root._canUpload
         }
     }
 
@@ -433,7 +452,9 @@ Item {
                                                                     ScreenTools.defaultFontPixelWidth * 6)
                                                         : label.contentWidth + ScreenTools.defaultFontPixelWidth
             implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
-            color:          row % 2 === 0 ? "transparent" : qgcPal.windowShade
+            color:          parameterCenterSafeMode && controller.selectedParameterName === fact.name
+                                ? "#0A4652"
+                                : (row % 2 === 0 ? "transparent" : qgcPal.windowShade)
             clip:           true
 
             // Bottom grid line
@@ -524,13 +545,18 @@ Item {
 
             QGCMouseArea {
                 anchors.fill: parent
-                // Only the Value cell opens the editor; name/units/description
-                // remain selectable without accidentally editing the parameter.
-                visible:      column === 2
-                cursorShape:  Qt.PointingHandCursor
-                onClicked: mouse => {
-                    _editorDialogFact = fact
-                    editorDialogFactory.open()
+                // In parameter-center safe mode, the table is a read-only selector.
+                // The dedicated tuning panel is the only path to a single guarded write.
+                visible:      column === 1 || column === 2
+                cursorShape:  parameterCenterSafeMode || column === 2
+                               ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: {
+                    if (parameterCenterSafeMode) {
+                        controller.selectParameterFact(fact)
+                    } else if (column === 2) {
+                        _editorDialogFact = fact
+                        editorDialogFactory.open()
+                    }
                 }
             }
         }
