@@ -349,6 +349,7 @@ void ParameterEditorControllerTest::_onlineTuningRequiresRegisteredSilProfile()
 
     Fact *const fact = manager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SYS_AUTOSTART"));
     QVERIFY(fact);
+    QVERIFY(!controller.setSelectedModelProfileId(QStringLiteral("QUAD_X4")));
     QVERIFY(controller.selectParameterFact(fact));
     QCOMPARE(controller.selectedParameterName(), QStringLiteral("SYS_AUTOSTART"));
 
