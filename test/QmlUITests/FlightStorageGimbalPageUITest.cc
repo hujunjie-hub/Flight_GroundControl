@@ -726,6 +726,17 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!activeGimbal->gimbalHaveControl());
             QVERIFY(secondGimbal->gimbalHaveControl());
 
+            const double secondPitchBeforeRate = currentPitch();
+            const double secondYawBeforeRate = currentYaw();
+            vehicle->gimbalController()->sendGimbalRate(6.0f, 8.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentPitch() - secondPitchBeforeRate) > 1.0, 4000);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentYaw() - secondYawBeforeRate) > 1.0, 4000);
+            vehicle->gimbalController()->sendGimbalRate(0.0f, 0.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
+                             firstDevicePitchBeforeSwitch) < 0.5);
+
             // An explicit unknown device ID must be denied without routing the
             // command to either the default or the currently selected device.
             const QString secondPitchBeforeUnknownDevice = pitchValue->property("text").toString();
