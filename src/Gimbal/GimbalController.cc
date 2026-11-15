@@ -645,6 +645,14 @@ void GimbalController::setGimbalRetract(bool set)
 void GimbalController::sendRate()
 {
     if (!_tryGetGimbalControl()) {
+        // Do not leave a periodic sender alive after ownership or telemetry
+        // freshness is lost. Also discard local rate targets so a later
+        // reacquisition cannot unexpectedly resume an old joystick command.
+        _rateSenderTimer.stop();
+        if (_activeGimbal) {
+            _activeGimbal->setPitchRate(0.0f);
+            _activeGimbal->setYawRate(0.0f);
+        }
         return;
     }
 
@@ -673,6 +681,11 @@ void GimbalController::sendRate()
 void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg_s)
 {
     if (!_tryGetGimbalControl()) {
+        _rateSenderTimer.stop();
+        if (_activeGimbal) {
+            _activeGimbal->setPitchRate(0.0f);
+            _activeGimbal->setYawRate(0.0f);
+        }
         return;
     }
 
