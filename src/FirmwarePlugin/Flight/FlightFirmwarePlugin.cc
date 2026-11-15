@@ -12,9 +12,67 @@
 #include <QtCore/QJsonParseError>
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
+#include <QtCore/QHash>
+#include <QtCore/QSet>
 #include <cmath>
 
 namespace {
+
+const QSet<QString> &supportedModelParameterDomains()
+{
+    static const QSet<QString> domains {
+        QStringLiteral("VEHICLE_MODEL"),
+        QStringLiteral("FMS"),
+        QStringLiteral("CONTROL"),
+        QStringLiteral("INS"),
+        QStringLiteral("PLANT"),
+        QStringLiteral("ACTUATOR"),
+        QStringLiteral("SIMULATION")
+    };
+    return domains;
+}
+
+bool readUniqueStringSet(const QJsonValue &value, QSet<QString> &strings)
+{
+    if (!value.isArray()) {
+        return false;
+    }
+
+    const QJsonArray array = value.toArray();
+    if (array.isEmpty()) {
+        return false;
+    }
+
+    for (const QJsonValue &entry : array) {
+        if (!entry.isString()) {
+            return false;
+        }
+        const QString raw = entry.toString();
+        const QString normalized = raw.trimmed();
+        if (normalized.isEmpty() || normalized != raw || strings.contains(normalized)) {
+            return false;
+        }
+        strings.insert(normalized);
+    }
+    return true;
+}
+
+bool isSha256(const QString &value)
+{
+    if (value.size() != 64) {
+        return false;
+    }
+    for (const QChar character : value) {
+        const ushort code = character.unicode();
+        const bool decimal = code >= '0' && code <= '9';
+        const bool lowerHex = code >= 'a' && code <= 'f';
+        const bool upperHex = code >= 'A' && code <= 'F';
+        if (!decimal && !lowerHex && !upperHex) {
+            return false;
+        }
+    }
+    return true;
+}
 
 bool isSilVehicle(const Vehicle *vehicle)
 {
@@ -52,6 +110,139 @@ FlightFirmwarePlugin::~FlightFirmwarePlugin()
 {
 }
 
+QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
+    const QJsonObject &catalog, const QJsonObject &parameterMetadata)
+{
+    if (catalog.value(QStringLiteral("schema_version")).toInt(-1) != 1 ||
+        parameterMetadata.value(QStringLiteral("version")).toInt(-1) != 1) {
+        return {};
+    }
+
+    const QJsonObject source = catalog.value(QStringLiteral("source")).toObject();
+    const QJsonObject parameterCatalog = source.value(QStringLiteral("parameterCatalog")).toObject();
+    const QString catalogSha = parameterCatalog.value(QStringLiteral("sha256")).toString();
+    const QString metadataSha = parameterMetadata.value(QStringLiteral("sha256")).toString();
+    if (source.value(QStringLiteral("repository")).toString() != QStringLiteral("hujunjie-hub/Flight") ||
+        !isSha256(catalogSha) || !isSha256(metadataSha) || catalogSha != metadataSha) {
+        return {};
+    }
+
+    const QJsonArray profileEntries = catalog.value(QStringLiteral("profiles")).toArray();
+    if (profileEntries.isEmpty()) {
+        return {};
+    }
+
+    QSet<QString> catalogProfileIds;
+    for (const QJsonValue &value : profileEntries) {
+        if (!value.isObject()) {
+            return {};
+        }
+        const QString rawId = value.toObject().value(QStringLiteral("id")).toString();
+        const QString profileId = rawId.trimmed();
+        if (profileId.isEmpty() || profileId != rawId || catalogProfileIds.contains(profileId)) {
+            return {};
+        }
+        catalogProfileIds.insert(profileId);
+    }
+
+    QSet<QString> metadataProfileIds;
+    if (!readUniqueStringSet(parameterMetadata.value(QStringLiteral("modelProfiles")), metadataProfileIds) ||
+        metadataProfileIds != catalogProfileIds) {
+        return {};
+    }
+
+    const QJsonArray parameterEntries = parameterMetadata.value(QStringLiteral("parameters")).toArray();
+    if (parameterEntries.isEmpty()) {
+        return {};
+    }
+
+    QHash<QString, QString> parameterDomainsByName;
+    QHash<QString, QSet<QString>> parameterProfilesByName;
+    for (const QJsonValue &value : parameterEntries) {
+        if (!value.isObject()) {
+            return {};
+        }
+        const QJsonObject parameter = value.toObject();
+        const QString rawName = parameter.value(QStringLiteral("name")).toString();
+        const QString name = rawName.trimmed();
+        const QString domain = parameter.value(QStringLiteral("domain")).toString();
+        if (name.isEmpty() || name != rawName || parameterDomainsByName.contains(name) ||
+            parameter.value(QStringLiteral("type")).toString() != QStringLiteral("float") ||
+            !supportedModelParameterDomains().contains(domain)) {
+            return {};
+        }
+
+        QSet<QString> parameterProfiles;
+        if (!readUniqueStringSet(parameter.value(QStringLiteral("modelProfiles")), parameterProfiles)) {
+            return {};
+        }
+        for (const QString &profileId : parameterProfiles) {
+            if (!catalogProfileIds.contains(profileId)) {
+                return {};
+            }
+        }
+
+        parameterDomainsByName.insert(name, domain);
+        parameterProfilesByName.insert(name, parameterProfiles);
+    }
+
+    QHash<QString, QSet<QString>> profileParameterNames;
+    for (const QJsonValue &value : profileEntries) {
+        const QJsonObject profile = value.toObject();
+        const QString profileId = profile.value(QStringLiteral("id")).toString();
+        const QString status = profile.value(QStringLiteral("status")).toString();
+        const QJsonValue hardwareEligible = profile.value(QStringLiteral("hardwareEligible"));
+        const QString writeScope = profile.value(QStringLiteral("parameterWriteScope")).toString();
+
+        if (status.isEmpty() || !hardwareEligible.isBool() || writeScope.isEmpty()) {
+            return {};
+        }
+        if (status == QStringLiteral("SIM_ONLY")) {
+            if (hardwareEligible.toBool() || writeScope != QStringLiteral("SIL_ONLY")) {
+                return {};
+            }
+        } else if (status == QStringLiteral("HARDWARE_VALIDATED")) {
+            if (!hardwareEligible.toBool() || writeScope != QStringLiteral("HARDWARE_VALIDATED")) {
+                return {};
+            }
+        } else if (hardwareEligible.toBool() || writeScope != QStringLiteral("LOCKED")) {
+            return {};
+        }
+
+        QSet<QString> parameterNames;
+        QSet<QString> declaredDomains;
+        if (!readUniqueStringSet(profile.value(QStringLiteral("parameterNames")), parameterNames) ||
+            !readUniqueStringSet(profile.value(QStringLiteral("parameterDomains")), declaredDomains)) {
+            return {};
+        }
+
+        QSet<QString> actualDomains;
+        for (const QString &name : parameterNames) {
+            if (!parameterDomainsByName.contains(name) ||
+                !parameterProfilesByName.value(name).contains(profileId)) {
+                return {};
+            }
+            actualDomains.insert(parameterDomainsByName.value(name));
+        }
+        if (actualDomains != declaredDomains) {
+            return {};
+        }
+        profileParameterNames.insert(profileId, parameterNames);
+    }
+
+    // The metadata and registry must agree in both directions: no parameter may
+    // silently disappear from a profile, and no profile may claim an unlisted Fact.
+    for (auto it = parameterProfilesByName.cbegin(); it != parameterProfilesByName.cend(); ++it) {
+        for (const QString &profileId : it.value()) {
+            if (!profileParameterNames.value(profileId).contains(it.key())) {
+                return {};
+            }
+        }
+    }
+
+    return profileEntries.toVariantList();
+}
+
 QVariantList FlightFirmwarePlugin::vehicleModelProfiles(const Vehicle *vehicle) const
 {
     // Only explicitly identified Flight SIL may select from registered SIM_ONLY tuning profiles.
@@ -60,22 +251,22 @@ QVariantList FlightFirmwarePlugin::vehicleModelProfiles(const Vehicle *vehicle) 
     }
 
     static const QVariantList registeredProfiles = []() -> QVariantList {
-        QFile file(QStringLiteral(":/FirmwarePlugin/Flight/FlightVehicleModelCatalog.json"));
-        if (!file.open(QIODevice::ReadOnly)) {
+        QFile catalogFile(QStringLiteral(":/FirmwarePlugin/Flight/FlightVehicleModelCatalog.json"));
+        QFile parameterMetadataFile(QStringLiteral(":/FirmwarePlugin/Flight/FlightParameterFactMetaData.json"));
+        if (!catalogFile.open(QIODevice::ReadOnly) || !parameterMetadataFile.open(QIODevice::ReadOnly)) {
             return {};
         }
 
-        QJsonParseError parseError;
-        const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
-        if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+        QJsonParseError catalogParseError;
+        QJsonParseError metadataParseError;
+        const QJsonDocument catalogDocument = QJsonDocument::fromJson(catalogFile.readAll(), &catalogParseError);
+        const QJsonDocument metadataDocument = QJsonDocument::fromJson(parameterMetadataFile.readAll(), &metadataParseError);
+        if (catalogParseError.error != QJsonParseError::NoError || !catalogDocument.isObject() ||
+            metadataParseError.error != QJsonParseError::NoError || !metadataDocument.isObject()) {
             return {};
         }
 
-        const QJsonObject catalog = document.object();
-        if (catalog.value(QStringLiteral("schema_version")).toInt(-1) != 1) {
-            return {};
-        }
-        return catalog.value(QStringLiteral("profiles")).toArray().toVariantList();
+        return _validatedVehicleModelProfiles(catalogDocument.object(), metadataDocument.object());
     }();
 
     QVariantList compatibleProfiles;
