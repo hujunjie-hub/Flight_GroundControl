@@ -540,7 +540,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
 - Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
 - Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
-- Phase 4：PARTIAL（已接入基于 FCU_CONTROL_STATUS 的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及仅在匹配 PARAM_VALUE 确认后生成的同启动会话参数时间标记；boot/时间戳重置和活动飞行器切换清空历史；参数目标/反馈响应、仿真、影响分析和 AI 建议未完成；构建与测试 NOT_RUN）。
+- Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：NOT_RUN。
 
 本规范是参数中心 3.0 后续设计、实现和验收的唯一基线。若用户确认新的视觉变化，必须先更新本规范和参考图，再修改实现。
