@@ -469,7 +469,10 @@
         "all_four_dashboard_trend_grids_keep_4_columns_at_1672x941",
         "all_four_dashboard_grids_use_compact_spacing_tokens_at_1672x941",
         "all_four_dashboard_trend_canvases_remain_at_least_64px_at_1672x941",
-        "twelve_consecutive_fcu_boot_epochs_reject_all_recent_retired_navigation_sessions"
+        "twelve_consecutive_fcu_boot_epochs_reject_all_recent_retired_navigation_sessions",
+        "health_sensor_prearm_and_resource_cards_include_two_screen_scaled_content_insets",
+        "health_detail_content_containers_retain_implicit_height_and_scaled_top_bottom_insets",
+        "health_detail_card_content_height_is_verified_at_1600_1000_900_760_759_700_400_px"
       ]
     },
     {
@@ -808,7 +811,8 @@
     "navigation_time_and_event_timestamps_remain_family_gated_after_boot_epoch_switch",
     "dashboard_vertical_density_compacts_at_1672x941_and_restores_without_hiding_telemetry_or_shrinking_64px_trend_canvas",
     "health_detail_metric_tiles_and_sensor_header_fit_at_1600_1000_900_760_759_700_400_px",
-    "all_four_dashboard_pages_and_detail_grids_render_in_compact_1672x941_mode"
+    "all_four_dashboard_pages_and_detail_grids_render_in_compact_1672x941_mode",
+    "health_detail_cards_reserve_scaled_content_insets_at_1600_1000_900_760_759_700_400_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
