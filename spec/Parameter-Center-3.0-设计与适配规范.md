@@ -232,7 +232,7 @@
 - SO3 姿态增益：3
 - 仿真：1
 
-当前元数据已包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces、rebootRequired。Phase 2 首轮已增加 domain 分类，但尚未提供完整的机型适用性、控制律和在线调参策略；不能仅根据参数名前缀或 domain 猜测所有机型兼容性。
+当前元数据包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces 和 domain。`rebootRequired` 仅在固件源目录明确声明时输出；缺失表示未知，不得用默认 false 冒充“无需重启”。Phase 2 首轮尚未提供完整的机型适用性、控制律和在线调参策略；不能仅根据参数名前缀或 domain 猜测所有机型兼容性。
 
 跨仓库模型资料核查（2026-11-15）：
 - Flight 仓库当前 config/vehicle_model.yaml 仅登记 profile=QUAD_X4，status=SIM_ONLY；文件明确说明这是 synthetic X4 fixture，电机编号和偏航力矩符号没有硬件证据，hardware_thrust_curve 仍为 TBD。
@@ -353,7 +353,7 @@
 - ParameterEditor.qml 使用 ParameterEditorController，现有 UI 包含搜索、全部/已修改/收藏筛选、隐藏只读、导入、工具菜单、刷新、默认值恢复、导出和参数差异预览等能力。
 - ParameterEditorController 按 Fact 的 category / group 构建分类和分组，暴露 searchText、currentCategory、currentGroup、showModifiedOnly、showFavoritesOnly、hideReadOnly、favoriteParameterNames 等属性；参数文件差异发送最终通过 Fact::setRawValue 进入现有参数写入路径。
 - ParameterManager 已提供 parametersReady、missingParameters、pendingWrites、loadProgress、parameterDownloadSkipped 等状态，以及参数刷新、批量刷新、读取、默认值恢复和现有 MAVLink 参数管理路径。当前参数写入确认等待常量为 1000 ms；新 UI 必须沿用现有 ParameterManager 行为，不能另建写入通道。
-- FlightParameterMetaData::parseParameterJson 当前仅接受 float 类型和七种受支持 domain（VEHICLE_MODEL / FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION），并校验 min/max/default 的有限数值、范围顺序、默认值边界、0–9 位 decimalPlaces 及 rebootRequired/readOnly/writeOnly 布尔类型；缺失/未知 domain、不支持的类型、非法数值/范围、非法布尔标志和重复参数名均拒绝写入元数据缓存并输出警告。合法 rebootRequired、readOnly、writeOnly 分别映射到 FactMetaData 对应属性。实时参数本身仍可由 ParameterMetaData 的通用 fallback 创建，但不会获得有效 domain，因此不会混入参数中心的域过滤列表。vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 仍待后续接入。
+- FlightParameterMetaData::parseParameterJson 当前仅接受 float 类型和七种受支持 domain（VEHICLE_MODEL / FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION），并校验 min/max/default 的有限数值、范围顺序、默认值边界、0–9 位 decimalPlaces 及 rebootRequired/readOnly/writeOnly 布尔类型；缺失/未知 domain、不支持的类型、非法数值/范围、非法布尔标志和重复参数名均拒绝写入元数据缓存并输出警告。合法 rebootRequired、readOnly、writeOnly 分别映射到 FactMetaData 对应属性；缺失 rebootRequired 时保留“未知”状态，不解释为无需重启。实时参数本身仍可由 ParameterMetaData 的通用 fallback 创建，但不会获得有效 domain，因此不会混入参数中心的域过滤列表。vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 仍待后续接入。
 - FlightParameterFactMetaData.json 当前包含 49 个 Flight 参数，源文件标识为 middleware/protocol/mavlink/parameters/ground_parameters.json；group 分布为机体模型 1、MPC 权重 21、位置环回退 6、姿态角速度环 17、SO3 姿态增益 3、仿真 1。
 - 当前唯一机型上下文应优先复用 activeVehicle 与对应 FirmwarePlugin / 参数元数据；页面下拉框不得创建第二套 Vehicle 选择/管理机制，也不得把切换 UI 模型误当作改变飞控硬件类型。
 
@@ -484,11 +484,11 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - FlightParameterFactMetaData.json 的 49 个参数增加显式 domain 字段，原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留。
 - 当前 group → domain 映射为：机体模型 → VEHICLE_MODEL（1 项）；MPC 权重、位置环回退、姿态角速度环、SO3 姿态增益 → CONTROL（47 项）；仿真 → SIMULATION（1 项）。
 - 当前 FMS、INS、PLANT、ACTUATOR 在这 49 项 Flight 参数元数据中没有登记参数；页面显示明确空态，不从其他域借用或伪造参数。
-- FlightParameterMetaData::parseParameterJson 对七种受支持 domain 执行 fail-closed 校验，且仅将合法 float 元数据写入缓存；未知 domain、类型不支持、非有限数值、min/max 倒置、default 越界、decimalPlaces 超出 0–9、非法 rebootRequired/readOnly/writeOnly 类型和重复参数名均拒绝缓存并记录警告。通过校验的 domain 写入 FactMetaData.category，rebootRequired/readOnly/writeOnly 分别写入 FactMetaData 对应属性，原始 group 不变，ParameterEditorController 继续按 category / group 组织原生 Fact。
+- FlightParameterMetaData::parseParameterJson 对七种受支持 domain 执行 fail-closed 校验，且仅将合法 float 元数据写入缓存；未知 domain、类型不支持、非有限数值、min/max 倒置、default 越界、decimalPlaces 超出 0–9、非法 rebootRequired/readOnly/writeOnly 类型和重复参数名均拒绝缓存并记录警告。通过校验的 domain 写入 FactMetaData.category，rebootRequired/readOnly/writeOnly 分别写入 FactMetaData 对应属性，原始 group 不变；FactMetaData / Fact 增加 vehicleRebootRequiredKnown，缺失字段保持未知。ParameterEditorController 继续按 category / group 组织原生 Fact。
 - ParameterEditor 新增 externalCategoryNavigation、hasCategory、selectCategoryByName：默认 false 时保持原有 PX4 / ArduPilot 等参数页行为；参数中心启用外层参数域选择，原生分组导航只显示当前域的 group，原搜索、全部/已修改/收藏、只读过滤、导入/导出和工具菜单继续保留。
 - 外层参数域导航已联动真实 ParameterEditor category。当前域没有固件参数时显示“当前参数域暂无参数”，不显示其他域参数；在线调参域因没有 tuningPolicy 白名单保持锁定。
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
-- FlightFirmwarePluginTest 新增元数据解析回归用例，覆盖合法 CONTROL 参数、未知 domain、非法 min/max 范围、不支持类型、rebootRequired 布尔映射/非法类型和重复参数名；测试代码已登记，本轮不执行构建或测试，集中验收时再运行。
+- FlightFirmwarePluginTest 新增元数据解析回归用例，覆盖合法 CONTROL 参数、未知 domain、非法 min/max 范围、不支持类型、rebootRequired 已声明/未声明/非法类型和重复参数名；测试代码已登记，本轮不执行构建或测试，集中验收时再运行。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
 - 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不在 QML 内硬编码型号或重复判断固件身份。Flight SIL 通过身份校验后，插件返回注册的 SIM_ONLY / SIL_ONLY profiles；用户必须单选一个 profile 作为参数调优上下文，ParameterEditor 只显示该 profile 的参数名与参数域白名单。该选择不改变 activeVehicle 的真实硬件类型。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
@@ -504,8 +504,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 ### Phase 2 / Phase 3 安全边界补充
 
-- Flight 参数元数据将 `rebootRequired` 映射到 `FactMetaData::setVehicleRebootRequired`；该字段若存在但不是 JSON 布尔值，则整条元数据拒绝缓存。
-- 在线调参详情卡片从当前选中 Fact 的 `vehicleRebootRequired` 显示“应用后需要重启飞控 / 无需重启飞控”；不根据参数名推断重启要求，也不把写入确认等同于持久保存。
+- Flight 参数元数据仅在固件源目录明确声明时生成 `rebootRequired`；生成器不再将缺失字段写成 false。字段存在但不是 JSON 布尔值时，整条元数据拒绝缓存；缺失时通过 `vehicleRebootRequiredKnown=false` 保留未知状态。
+- 在线调参详情卡片从当前选中 Fact 的 `vehicleRebootRequiredKnown` 和 `vehicleRebootRequired` 显示“需要重启 / 无需重启 / 固件未声明”；不根据参数名推断重启要求，也不把写入确认等同于持久保存。当前 49 项 Flight 参数源目录没有提供重启要求，因此显示“固件未声明，请查阅固件说明”。
 - 目标值输入在 QML 层先执行有限数值和 Fact min/max 边界校验；空值、非数值和越界值会显示原因并禁用“应用到飞控”。C++ 控制器仍独立执行 Fact 元数据转换/范围校验，前端校验不替代底层安全检查。
 - 同一元数据文档中出现重复参数名时，所有同名条目均拒绝缓存，避免“先到先得”导致不确定的参数范围、单位或描述。
 - 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
