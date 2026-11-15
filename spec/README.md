@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.41
+- 版本 4.42
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -203,6 +203,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 2026-11-15 固件构建快照采用「最近已知」显示；Profile 匹配要求 operation fresh，并使用当前启动周期已接收的 BUILD_INFO 快照；构建快照 age stale 不会单独使静态 Profile 失效，新 boot epoch 清空快照。增加 fresh/stale/recovery/new-boot MockLink 断言。本轮未运行 CI，待集中验收。
 
-- 2026-11-15 总览总控页通信状态收口：顶部 FCU 遥测 KPI 与只读状态徽标现在读取 VehicleLinkManager 全链路 communicationLost，通信丢失红色提示、恢复后恢复已收到状态；不改变各遥测域独立 freshness。新增 MockLink Integration 和 G15 manifest 验收项。本轮不运行 CI，新增回归为 NOT_RUN，待集中验收。
+- 2026-11-15 总览总控页通信状态收口：顶部「FCU 通信状态」KPI 与只读状态徽标读取 VehicleLinkManager 全链路 communicationLost；通信丢失红色提示，恢复后恢复已收到状态；各遥测域保持独立 freshness。新增 MockLink Integration 和 G15 manifest 验收项。本轮不运行 CI，新增回归为 NOT_RUN，待集中验收。
 
 - 2026-11-15 诊断大屏设计 SPEC 章节编号复核：修复导航时间线、构建快照、遥控链路、总览通信状态和导航时间线精修章节的重复/跳号，确保章节 1–64 连续唯一；不涉及产品代码或测试行为，本轮不运行 CI。
