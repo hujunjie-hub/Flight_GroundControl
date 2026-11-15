@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.47
+- 版本：6.48
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -986,7 +986,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 
 
 
-## 68. Phase 2.22 导航页主视觉层级与诊断详情去重（2026-11-15）
+## 70. Phase 2.24 导航页主视觉层级与诊断详情去重（2026-11-15）
 
 - 导航页四张主视觉面板按信息密度采用桌面 12 列网格的 4/8 + 8/4 布局：第一行「导航估计不确定度」4 列、「导航能力状态」8 列；第二行「时间同步状态」8 列、「FCU 单调时序」4 列。760–1279 px 使用 6 列整行堆叠，低于 760 px 使用单列。
 - 「导航估计不确定度」只展示水平位置、速度和航向标准差。标准差数值使用中性前景色，独立状态行使用能力/新鲜度语义色；绿色仅表示对应能力位具备且 family fresh，不代表精度达到某个阈值。
@@ -997,4 +997,14 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 增加 1600 px 下 4/8 + 8/4 面板位置、宽度比例、行高对齐和时间线边界断言；1000/900 px 验证 6 列堆叠与能力/域状态双列；700/400 px 验证单列；验证估计数值中性颜色、能力状态语义色、能力状态不重复显示，以及主视觉与详情卡不重复呈现同一字段。
 - 为兼容既有 UI Integration 选择器，已迁移字段保留不可见的旧选择器；其值仍按原 family freshness 更新，但不参与布局、不产生第二份可见诊断信息。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、spec/README.md 与 Windows Release G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、时间同步服务、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
+
+
+## 71. Phase 2.25 遥控页 RC family 状态徽标去重（2026-11-15）
+
+- `HeroPanel` 新增 `showStatusBadge` 显示开关，默认 `true`，不改变既有页面；状态色条仍由 `statusFamily` 控制，徽标可独立隐藏。
+- 遥控输入监视 `flightTelemetry_rcStickMonitor` 是 RC family 状态徽标的唯一主视觉归属；逻辑轴输入 `flightTelemetry_rcChannelMonitor` 设置 `showStatusBadge: false`，保留 `statusFamily: "rcInputAvailable"`，因此仍保留一致的 freshness 色条，但不重复显示「已接收/超时」徽标。
+- 横滚、俯仰、偏航、油门各 AxisGauge 继续按 `rcValidAxesMask` 独立显示字段有效性；本次不改变逻辑轴数据、手型映射、family freshness、接收年龄或失控保护判断。
+- MockLink `FlightTelemetryPageUITest` 断言主输入面板徽标可见、逻辑轴面板徽标隐藏，且逻辑轴面板仍绑定 `rcInputAvailable`，防止去重时误删 freshness 语义。
+- 仅修改 `FlightTelemetry.qml`、`FlightTelemetryPageUITest.cc`、本 SPEC、Windows Release 验收指南、G15 manifest 与项目 SPEC 索引；不修改 MAVLink、FlightTelemetryFactGroup、FlightRadio 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
