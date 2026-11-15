@@ -276,7 +276,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(heroFlight->property("statusFamily").toString().isEmpty());
             QVERIFY(heroNavigation);
             QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
-            QVERIFY(heroNavigation->property("statusFamily").toString().isEmpty());
             QVERIFY(heroRcInput);
             QVERIFY(trendPanel);
             QVERIFY(trendGrid);
