@@ -679,14 +679,17 @@ Item {
                                     { t: qsTr("机型参数映射"),
                                       d: !root._flightModelAvailable
                                          ? (root._modelProfiles.length > 0 ? qsTr("等待操作者选择机型配置") : qsTr("未登记可调机型"))
-                                         : parameterEditorLoader.status !== Loader.Ready
-                                           ? qsTr("正在校验飞控参数清单")
-                                           : dashboardRoot.modelProfileBound
-                                             ? qsTr("校验通过 · %1 项").arg(root._modelParameterCount)
-                                             : qsTr("校验失败 · 参数编辑已锁定"),
+                                         : !root._parametersReady
+                                           ? qsTr("等待参数列表完整下载")
+                                           : parameterEditorLoader.status !== Loader.Ready
+                                             ? qsTr("正在校验飞控参数清单")
+                                             : dashboardRoot.modelProfileBound
+                                               ? qsTr("校验通过 · %1 项").arg(root._modelParameterCount)
+                                               : qsTr("校验失败 · 参数编辑已锁定"),
                                       s: !root._flightModelAvailable ? 2
-                                         : parameterEditorLoader.status !== Loader.Ready ? 2
-                                           : dashboardRoot.modelProfileBound ? 1 : 0 }
+                                         : !root._parametersReady ? 2
+                                           : parameterEditorLoader.status !== Loader.Ready ? 2
+                                             : dashboardRoot.modelProfileBound ? 1 : 0 }
                                 ]
                                 delegate: RowLayout {
                                     required property var modelData
