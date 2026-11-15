@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.36
+- 版本：6.37
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；本轮完成遥控链路页主视觉分区与响应式比例调整；保留并继续维护当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页补齐 VehicleLinkManager 全链路通信丢失提示与恢复颜色；保留当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -906,3 +906,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 新增/更新 1600、1000、900、700、400 px 布局断点断言：验证宽屏 6/6 + 8/4、中屏 3/3 + 4/2、窄屏单列；验证逻辑轴仪表 2/1 列、链路指标 3/2/1 列、双摇杆不越界与宽屏轨迹放大。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 和本 SPEC；不修改 FlightRadio.qml、MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、遥控手型映射算法、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增布局回归状态为 NOT_RUN，待后续集中验收。
+
+## 62. Phase 2.17 总览总控页全链路通信丢失状态适配（2026-11-15）
+
+- 总览页「FCU 遥测接收」KPI 与页面只读监控状态徽标，除区分未连接、等待 FCU 遥测、已收到 FCU 遥测外，新增独立的「通信丢失」状态。
+- 通信状态唯一依据为当前 Vehicle 的 `vehicleLinkManager.communicationLost`，即 VehicleLinkManager 对所有活动链路心跳的整体判定；不得用 `telemetryAvailable` 代替当前链路状态。该 Fact 只说明曾收到 FCU 遥测，不代表通信当前正常，也不代表各遥测域健康。
+- 全链路通信丢失时，总览 KPI 和页头状态徽标立即切换为红色「通信丢失」，并显示「链路心跳超时；各遥测域仍按独立新鲜度判定」；链路恢复后，在 VehicleLinkManager 报告通信恢复时恢复为「已收到 FCU 遥测」。
+- 六域拓扑节点、13 类健康矩阵、每个 family/instance freshness 与 validityMask 均保持各自数据源和状态，不因全链路状态徽标而被强制染色；缓存值不得被提升为当前值。
+- 仅修改 GroundControl 总览 QML、MockLink UI Integration、G15 manifest 与 SPEC；不修改 VehicleLinkManager 心跳判定阈值、MAVLink、FactGroup、Flight 控制行为或只读边界。
+- MockLink Integration 使用 `MockLink::setCommLost(true/false)` 触发真实 VehicleLinkManager 心跳丢失/恢复，验证 KPI 文案、页头状态、红/绿颜色及通信恢复；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增回归为 NOT_RUN，等待集中验收。
+
