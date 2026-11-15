@@ -953,8 +953,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailReason_2"));
             QQuickItem* linkDetailReceiveAge = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailReceiveAge_2"));
-            QQuickItem* linkInstanceReason = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_linkInstanceReason_2"), 3000);
+            QQuickItem* linkInstanceReason = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkInstanceReason_2"));
             QQuickItem* linkDetailMetrics = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
             QQuickItem* invalidOtherLinkDetailMetrics = findItem(
@@ -985,7 +985,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(linkDetailState);
             QVERIFY(linkDetailReason);
             QVERIFY(linkDetailReceiveAge);
-            QVERIFY(linkInstanceReason);
+            QVERIFY(!linkInstanceReason);
             QVERIFY(linkDetailMetrics);
             QVERIFY(invalidOtherLinkDetailMetrics);
             QVERIFY(gcsFcuAge);
@@ -1010,8 +1010,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("原因：")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailReceiveAge->property("text").toString().contains(
                                          translatedTelemetryText("地面站接收年龄：")), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(linkInstanceReason->property("text").toString().contains(
-                                         translatedTelemetryText("原因：")), 3000);
+
             QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("labelText").toString(),
                                       translatedTelemetryText("FCU 数据年龄"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("valueText").toString(),
