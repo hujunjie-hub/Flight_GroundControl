@@ -23,7 +23,7 @@ SetupPage {
                                          ? _telemetry.linkStatuses : []
     readonly property var _resourceStatuses: _ageRefreshTick >= 0 && _telemetry
                                              ? _telemetry.resourceStatuses : []
-    readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 760 ? 6 : 1
+    readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 1000 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1450 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _healthColumns: availableWidth >= 1450 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1450 ? 4 : availableWidth >= 760 ? 2 : 1
@@ -1078,6 +1078,9 @@ SetupPage {
                         objectName: "flightTelemetry_topologyCanvas"
                         Layout.fillWidth: true
                         Layout.preferredHeight: 158
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        Component.onCompleted: requestPaint()
                         onPaint: {
                             const ctx = getContext("2d")
                             if (!ctx) return
@@ -2384,7 +2387,7 @@ SetupPage {
         property string detailText: ""
         property color accentColor: "#42CFA8"
 
-        implicitWidth: 230
+        implicitWidth: 180
         implicitHeight: 76
         radius: 10
         color: "#0A222B"
