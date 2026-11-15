@@ -14,6 +14,7 @@
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
+#include "VehicleLinkManager.h"
 
 UT_REGISTER_TEST(FlightTelemetryPageUITest, TestLabel::Integration)
 
@@ -119,6 +120,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_dashboardSubtitleCompact"));
             QQuickItem* readOnlyBadge =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
+            QQuickItem* connectionStatus =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_connectionStatus"), 3000);
             QQuickItem* summaryTelemetry =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTelemetry"), 3000);
             QQuickItem* summaryOperation =
@@ -248,6 +251,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(dashboardSubtitle);
             QVERIFY(compactDashboardSubtitle);
             QVERIFY(readOnlyBadge);
+            QVERIFY(connectionStatus);
             QVERIFY(summaryTelemetry);
             QVERIFY(summaryOperation);
             QVERIFY(summaryFailsafe);
@@ -2704,5 +2708,27 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+
+            // Global link loss must override the latched "telemetry received" fact,
+            // then recover only after the MockLink resumes MAVLink heartbeats.
+            mockLink->setCommLost(true);
+            constexpr int commLossTimeoutMs = VehicleLinkManager::kTestCommLostDetectionTimeoutMs + 1000;
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(),
+                                      translatedTelemetryText("通信丢失"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(connectionStatus->property("text").toString(),
+                                      translatedTelemetryText("通信丢失"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("accentColor").value<QColor>(),
+                                      QColor("#F06464"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(
+                summaryTelemetry->property("detailText").toString(),
+                translatedTelemetryText("链路心跳超时；各遥测域仍按独立新鲜度判定"), commLossTimeoutMs);
+
+            mockLink->setCommLost(false);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(),
+                                      translatedTelemetryText("已收到 FCU 遥测"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(connectionStatus->property("text").toString(),
+                                      translatedTelemetryText("已收到 FCU 遥测"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("accentColor").value<QColor>(),
+                                      QColor("#45D39A"), commLossTimeoutMs);
         });
 }
