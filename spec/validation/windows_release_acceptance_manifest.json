@@ -850,7 +850,8 @@
     "rc_stick_cards_display_live_horizontal_vertical_channel_mapping_for_mode_1_2_3",
     "link_quality_progress_bar_requires_fresh_family_fresh_instance_validity_and_0_to_1000_permille",
     "link_quality_bar_fraction_matches_permille_and_hides_for_invalid_or_out_of_range_values",
-    "link_quality_null_or_empty_value_is_invalid_even_when_validity_bit_is_set"
+    "link_quality_null_or_empty_value_is_invalid_even_when_validity_bit_is_set",
+    "navigation_timeline_geometry_scales_with_screen_tools_font_metrics_and_fits_compact_reference_viewport"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
