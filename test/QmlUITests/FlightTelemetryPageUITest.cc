@@ -4621,11 +4621,33 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_label"), 3000);
             QQuickItem* navigationEstimateStatus = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_status"), 3000);
+            QQuickItem* navigationEstimateMetricsAtWidth[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading"), 3000)};
+            QQuickItem* navigationEstimateBadgesAtWidth[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_statusBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity_statusBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading_statusBadge"), 3000)};
+            QQuickItem* navigationCapabilityMetricsAtWidth[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPosition"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity"), 3000)};
+            QQuickItem* navigationCapabilityBadgesAtWidth[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_valueBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPosition_valueBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity_valueBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity_valueBadge"), 3000)};
             QVERIFY(navigationEstimateMetric);
             QVERIFY(navigationCapabilityMetric);
             QVERIFY(navigationEstimateLabel);
             QVERIFY(navigationCapabilityLabel);
             QVERIFY(navigationEstimateStatus);
+            for (QQuickItem* metric : navigationEstimateMetricsAtWidth) QVERIFY(metric);
+            for (QQuickItem* badge : navigationEstimateBadgesAtWidth) QVERIFY(badge);
+            for (QQuickItem* metric : navigationCapabilityMetricsAtWidth) QVERIFY(metric);
+            for (QQuickItem* badge : navigationCapabilityBadgesAtWidth) QVERIFY(badge);
             const qreal navigationCapabilityGridSpacing =
                 page->property("_navigationCapabilityGridSpacing").toReal();
             const qreal navigationTimeColumnSpacing =
@@ -4673,6 +4695,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateLabel->property("wrapMode").toInt() != 0, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityLabel->property("wrapMode").toInt() != 0, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatus->property("wrapMode").toInt() != 0, 3000);
+                const auto navigationMetricBadgeFits = [](QQuickItem* badge, QQuickItem* metric) {
+                    const auto topLeft = badge->mapToItem(metric, 0, 0);
+                    return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                           topLeft.x() + badge->width() <= metric->width() + 1.0 &&
+                           topLeft.y() + badge->height() <= metric->height() + 1.0;
+                };
+                for (int metricIndex = 0; metricIndex < 3; ++metricIndex) {
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateBadgesAtWidth[metricIndex]->isVisible(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationMetricBadgeFits(navigationEstimateBadgesAtWidth[metricIndex],
+                                                  navigationEstimateMetricsAtWidth[metricIndex]), 3000);
+                }
+                for (int metricIndex = 0; metricIndex < 4; ++metricIndex) {
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityBadgesAtWidth[metricIndex]->isVisible(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationMetricBadgeFits(navigationCapabilityBadgesAtWidth[metricIndex],
+                                                  navigationCapabilityMetricsAtWidth[metricIndex]), 3000);
+                }
                 if (width >= 1280) {
                     QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryPanels[0]->y(),
                                               navigationBoundaryPanels[1]->y(), 3000);
