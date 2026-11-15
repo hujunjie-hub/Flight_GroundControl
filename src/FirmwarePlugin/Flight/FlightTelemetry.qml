@@ -2297,6 +2297,7 @@ SetupPage {
                                 text: qsTr("原因：%1 · 接收年龄：%2").arg(root._reasonText(0, modelData.reasonCode)).arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
                                 color: "#8298A2"
                                 font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
                             }
                             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#104B55" }
                         }
