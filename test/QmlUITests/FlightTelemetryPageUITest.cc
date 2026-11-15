@@ -537,6 +537,28 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationStateOriginDetail"));
             QQuickItem* navigationPositionStdDetail =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPositionStd"));
+            QQuickItem* navigationPanelStateEpoch =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPanelStateEpoch"));
+            QQuickItem* navigationPanelOriginId =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPanelOriginId"));
+            QQuickItem* navigationPanelCapabilities =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPanelCapabilities"));
+            QQuickItem* navigationPanelAge =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPanelAge"));
+            QQuickItem* navigationPanelReason =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPanelReason"));
+            QQuickItem* navigationTimeQuality =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"));
+            QQuickItem* navigationTimeDiscipline =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"));
+            QQuickItem* navigationEventUncertainty =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationEventUncertainty"));
+            QQuickItem* navigationTimeEpoch =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeEpoch"));
+            QQuickItem* navigationSourceMappingEpoch =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationSourceMappingEpoch"));
+            QQuickItem* healthMaintenanceBootId =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceBootId"));
             QQuickItem* timeQualityDetail =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_timeQualityDetail"));
             QQuickItem* timeDisciplineDetail =
@@ -554,6 +576,17 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(operationFlightModeDetail);
             QVERIFY(navigationStateOriginDetail);
             QVERIFY(navigationPositionStdDetail);
+            QVERIFY(navigationPanelStateEpoch);
+            QVERIFY(navigationPanelOriginId);
+            QVERIFY(navigationPanelCapabilities);
+            QVERIFY(navigationPanelAge);
+            QVERIFY(navigationPanelReason);
+            QVERIFY(navigationTimeQuality);
+            QVERIFY(navigationTimeDiscipline);
+            QVERIFY(navigationEventUncertainty);
+            QVERIFY(navigationTimeEpoch);
+            QVERIFY(navigationSourceMappingEpoch);
+            QVERIFY(healthMaintenanceBootId);
             QVERIFY(timeQualityDetail);
             QVERIFY(timeDisciplineDetail);
             QVERIFY(rcFailsafeDetail);
@@ -575,6 +608,17 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelOriginId->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelCapabilities->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelAge->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelReason->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationEventUncertainty->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeEpoch->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationSourceMappingEpoch->property("valueText").toString(), waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMaintenanceBootId->property("text").toString().contains(waitingText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), waitingText, 3000);
@@ -1058,6 +1102,17 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("8 / 12"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(),
                                       QStringLiteral("0.125 m"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(),
+                                      QStringLiteral("8"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelOriginId->property("valueText").toString(),
+                                      QStringLiteral("12"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelAge->property("valueText").toString(),
+                                      QStringLiteral("2500 μs"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationPanelCapabilities->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationPanelReason->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMaintenanceBootId->property("text").toString().contains(
+                                         QStringLiteral("启动 ID：")) &&
+                                     !healthMaintenanceBootId->property("text").toString().contains(waitingText), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
@@ -1122,6 +1177,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationEventUncertainty->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeEpoch->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationSourceMappingEpoch->property("valueText").toString() != waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
                                       translatedTelemetryText("是"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
@@ -1191,6 +1253,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > timeFreshnessTick, 1500);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationEventUncertainty->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeEpoch->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationSourceMappingEpoch->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueColor").toString(),
                                       QStringLiteral("#F0B94B"), 3000);
@@ -1206,6 +1273,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationEventUncertainty->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeEpoch->property("valueText").toString() != waitingText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationSourceMappingEpoch->property("valueText").toString() != waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueColor").toString(),
                                       QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
@@ -1395,6 +1469,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelOriginId->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelCapabilities->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelAge->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelReason->property("valueText").toString(), staleText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMaintenanceBootId->property("text").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
@@ -1424,6 +1504,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("解锁中"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(),
                                       QStringLiteral("8 / 12"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(),
+                                      QStringLiteral("8"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPanelOriginId->property("valueText").toString(),
+                                      QStringLiteral("12"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMaintenanceBootId->property("text").toString().contains(
+                                         QStringLiteral("启动 ID：")) &&
+                                     !healthMaintenanceBootId->property("text").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(),
                                       QStringLiteral("0.140 m"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
