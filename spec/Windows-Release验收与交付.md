@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.77
+版本：4.78
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -728,5 +728,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 使用完整当前 recentEvents 缓存统计严重、错误、警告、信息、未知五类事件数量；统计不得只使用优先摘要前 4 条或历史展示最近 8 条。
 - severity=3/2/1/0 分别映射严重/错误/警告/信息；负数、超范围、null、缺失或非整数必须计入未知，不得并入信息或严重。
 - 告警 family 非 fresh 或事件缓存为空时不显示实时分布；首条 fresh FCU_EVENT 到达后显示并更新对应类别数量。
-- MockLink UI Integration 覆盖单事件、五条混合严重度事件、未知字段计数和 700/400 px 五个 chip 的父子边界。
+- MockLink UI Integration 覆盖单事件、五条混合严重度事件、未知字段计数，以及 1600/1400/1000/900/700/400 px 五个 chip 的列数与父子边界；六列中屏告警卡使用三列，其余桌面/堆叠布局使用五列。
 - 本轮按用户要求不运行 CI、Unit、Integration、Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 完整回归。
