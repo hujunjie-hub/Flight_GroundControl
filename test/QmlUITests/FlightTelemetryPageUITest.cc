@@ -4090,6 +4090,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStackFree"), 3000);
             QQuickItem* maintenanceStorageFree = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStorageFree"), 3000);
+            QQuickItem* maintenanceCpuTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceCpuTile"), 3000);
+            QQuickItem* maintenanceWcetTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceWcetTile"), 3000);
+            QQuickItem* maintenanceStackFreeTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStackFreeTile"), 3000);
+            QQuickItem* maintenanceStorageFreeTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceStorageFreeTile"), 3000);
             QQuickItem* maintenanceResourceGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceResourceGrid"), 3000);
             QQuickItem* resourceCoverageRow = findVisibleItem(
@@ -4184,6 +4192,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(maintenanceWcet);
             QVERIFY(maintenanceStackFree);
             QVERIFY(maintenanceStorageFree);
+            QVERIFY(maintenanceCpuTile);
+            QVERIFY(maintenanceWcetTile);
+            QVERIFY(maintenanceStackFreeTile);
+            QVERIFY(maintenanceStorageFreeTile);
             QVERIFY(maintenanceResourceGrid);
             QVERIFY(resourceCoverageRow);
             QVERIFY(healthSafetyPrearm);
@@ -4659,14 +4671,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             };
             const auto maintenanceResourceMetricsFit = [&]() {
                 QQuickItem* metrics[] = {maintenanceCpu, maintenanceWcet, maintenanceStackFree, maintenanceStorageFree};
-                for (QQuickItem* metric : metrics) {
-                    if (!metric) return false;
-                    const QPointF topLeft = metric->mapToItem(maintenanceResourceGrid, 0, 0);
-                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
-                        topLeft.x() + metric->width() > maintenanceResourceGrid->width() + 1.0 ||
-                        topLeft.y() + metric->height() > maintenanceResourceGrid->height() + 1.0) {
-                        return false;
-                    }
+                QQuickItem* tiles[] = {
+                    maintenanceCpuTile, maintenanceWcetTile, maintenanceStackFreeTile, maintenanceStorageFreeTile};
+                const qreal expectedInset = page->property("_healthMaintenanceMetricInset").toReal();
+                for (int index = 0; index < 4; ++index) {
+                    QQuickItem* metric = metrics[index];
+                    QQuickItem* tile = tiles[index];
+                    if (!metric || !tile || qAbs(tile->property("contentInset").toReal() - expectedInset) > 0.5 ||
+                        qAbs(tile->property("radius").toReal() - 4.0) > 0.5 ||
+                        tile->height() + 0.5 < tile->property("implicitHeight").toReal()) return false;
+                    const QPointF tileTopLeft = tile->mapToItem(maintenanceResourceGrid, 0, 0);
+                    if (tileTopLeft.x() < -1.0 || tileTopLeft.y() < -1.0 ||
+                        tileTopLeft.x() + tile->width() > maintenanceResourceGrid->width() + 1.0 ||
+                        tileTopLeft.y() + tile->height() > maintenanceResourceGrid->height() + 1.0) return false;
+                    const QPointF valueTopLeft = metric->mapToItem(tile, 0, 0);
+                    if (valueTopLeft.x() < expectedInset - 1.0 || valueTopLeft.y() < expectedInset - 1.0 ||
+                        metric->height() + 0.5 < metric->implicitHeight() ||
+                        valueTopLeft.x() + metric->width() > tile->width() - expectedInset + 1.0 ||
+                        valueTopLeft.y() + metric->height() > tile->height() - expectedInset + 1.0) return false;
                 }
                 return true;
             };
@@ -4800,7 +4822,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->property("_healthMaintenanceSectionSpacing").toReal() <
                     page->property("_dashboardPanelBodySpacing").toReal() &&
                 page->property("_healthMaintenanceCardGap").toReal() <
-                    page->property("_dashboardGridSpacing").toReal(), 3000);
+                    page->property("_dashboardGridSpacing").toReal() &&
+                page->property("_healthMaintenanceMetricInset").toReal() <
+                    page->property("_healthMaintenanceCardInset").toReal(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
