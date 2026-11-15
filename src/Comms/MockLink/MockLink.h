@@ -84,6 +84,9 @@ public:
     /// Test API: places the simulated vehicle into the given pose during calibration
     void setCalibrationPose(MockLinkPX4Calibration::Pose pose) const { _mockLinkPX4Calibration->setPose(pose); }
 
+    /// Test API: simulate one gimbal device going offline and rediscovering.
+    bool setGimbalDeviceOnlineForTesting(uint8_t gimbalDeviceId, bool online);
+
     MockLinkFTP *mockLinkFTP() const;
 
     /// Set the armed state of the simulated vehicle
