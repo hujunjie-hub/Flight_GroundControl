@@ -41,6 +41,9 @@ MockLinkGimbal::~MockLinkGimbal()
     for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
         delete device;
     }
+    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+        delete manager;
+    }
 }
 
 bool MockLinkGimbal::addSimulatedDevice(
@@ -74,9 +77,54 @@ bool MockLinkGimbal::addSimulatedDevice(
     return true;
 }
 
+bool MockLinkGimbal::addSimulatedManager(
+    uint8_t managerCompId,
+    uint8_t gimbalDeviceId,
+    bool hasRollAxis,
+    bool hasPitchAxis,
+    bool hasYawAxis,
+    bool hasYawFollow,
+    bool hasYawLock,
+    bool hasRetract,
+    bool hasNeutral)
+{
+    if (managerCompId == 0 || managerCompId == _managerCompId ||
+        gimbalDeviceId == 0 || gimbalDeviceId == managerCompId) {
+        return false;
+    }
+
+    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+        if (manager->_managerCompId == managerCompId ||
+            manager->_deviceCompId == gimbalDeviceId) {
+            return false;
+        }
+    }
+
+    _additionalManagers.append(new MockLinkGimbal(
+        _mockLink,
+        hasRollAxis,
+        hasPitchAxis,
+        hasYawAxis,
+        hasYawFollow,
+        hasYawLock,
+        hasRetract,
+        hasNeutral,
+        gimbalDeviceId,
+        managerCompId));
+    return true;
+}
+
 bool MockLinkGimbal::setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool online)
 {
-    MockLinkGimbal *const device = _deviceForId(gimbalDeviceId);
+    MockLinkGimbal *device = _deviceForId(gimbalDeviceId);
+    if (!device) {
+        for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+            device = manager->_deviceForId(gimbalDeviceId);
+            if (device) {
+                break;
+            }
+        }
+    }
     if (!device) {
         return false;
     }
@@ -122,6 +170,33 @@ MockLinkGimbal *MockLinkGimbal::_deviceForId(uint8_t gimbalDeviceId)
             return device;
         }
     }
+    return nullptr;
+}
+
+MockLinkGimbal *MockLinkGimbal::_managerForTargetComponent(uint8_t targetComponent)
+{
+    if (targetComponent == _managerCompId || targetComponent == _deviceCompId) {
+        return this;
+    }
+
+    for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
+        if (device->_deviceCompId == targetComponent) {
+            return this;
+        }
+    }
+
+    for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+        if (manager->_managerCompId == targetComponent ||
+            manager->_deviceCompId == targetComponent) {
+            return manager;
+        }
+        for (MockLinkGimbal *device : std::as_const(manager->_additionalDevices)) {
+            if (device->_deviceCompId == targetComponent) {
+                return manager;
+            }
+        }
+    }
+
     return nullptr;
 }
 
