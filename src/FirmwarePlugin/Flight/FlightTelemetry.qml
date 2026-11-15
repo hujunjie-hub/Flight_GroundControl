@@ -1121,6 +1121,16 @@ SetupPage {
         }
     }
 
+    function _rcReceiverFailsafeColor() {
+        const familyStatus = _familyStatus("rcInputAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("rcInputAvailable")
+        const value = _fact("rcReceiverFailsafe")
+        if (value === null || value === undefined) return "#8A9A94"
+        if (value === true || Number(value) === 1) return "#F06464"
+        if (value === false || Number(value) === 0) return "#45D39A"
+        return "#8A9A94"
+    }
+
     function _operationHeadline() {
         const familyStatus = _familyStatus("operationAvailable")
         if (familyStatus !== qsTr("已接收")) {
@@ -2722,11 +2732,13 @@ SetupPage {
                         valueColor: root._failsafeColor()
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_healthSafetyReceiverFailsafe"
                         labelText: qsTr("接收机失效保护")
                         valueText: root._familyStatus("rcInputAvailable") !== qsTr("已接收")
                                    ? root._familyStatus("rcInputAvailable")
                                    : root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
                                      : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
+                        valueColor: root._rcReceiverFailsafeColor()
                     }
                     TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
                     TelemetryRow {
@@ -3467,11 +3479,13 @@ SetupPage {
                         valueColor: root._failsafeColor()
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_rcFailsafeReceiverStatus"
                         labelText: qsTr("接收机失效保护")
                         valueText: root._familyStatus("rcInputAvailable") !== qsTr("已接收")
                                    ? root._familyStatus("rcInputAvailable")
                                    : root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
                                      : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
+                        valueColor: root._rcReceiverFailsafeColor()
                     }
                     TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
                     TelemetryRow {
@@ -4309,6 +4323,7 @@ SetupPage {
                         valueText: root._familyFreshValue("rcInputAvailable",
                             root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
                                 : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")))
+                        valueColor: root._rcReceiverFailsafeColor()
                     }
                     TelemetryRow {
                         objectName: "flightTelemetry_rcLinkStateDetail"
