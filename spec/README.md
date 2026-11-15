@@ -283,7 +283,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 飞控配置外壳高 DPI 收口：Flight 配置顶栏高度与 FlyViewToolBar 内容高度同步按 ScreenTools 字体高度缩放，默认仍为 56 px；左侧导航宽度默认 160 px、随 UI Scale 扩展并限制最大 240 px，内边距/导航项间距/按钮 padding 同步缩放。MockLink UI Integration 新增 100%/150%/200% 真实 UI Scale 回归，验证顶栏/侧栏/按钮尺寸并恢复原始设置。本轮未运行 CI，新增验收 NOT_RUN。
 
 
-- 2026-11-16 导航时间同步分层：时钟纪律与 UTC 参考分组呈现，UTC 有效性/时间质量/时钟纪律使用状态徽标；有效 UTC 不确定度和时间戳使用中性数值色；导航与时间 family 在 FCU 单调时序中独立显示状态。新增默认 840 px、随 ScreenTools 字体宽度放大的分组重排及 1600/1672×941、1000/900/840/839/760/759/700/400 px UI Integration 回归，未运行 CI，新增回归 NOT_RUN。
+- 2026-11-16 导航时间同步分层：时钟纪律与 UTC 参考分组呈现，UTC 有效性/时间质量/时钟纪律使用状态徽标；有效 UTC 不确定度和时间戳使用中性数值色；导航与时间 family 在 FCU 单调时序中独立显示状态。新增默认 840 px、随 ScreenTools 字体宽度放大的分组重排及 1600/1672×941、1000/900/840/839/760/759/700/400 px UI Integration 回归；真实 uiScalePercent 100/150/200% 检查分组阈值、最小宽度、状态徽标和 FCU 单调时间线行高，未运行 CI，新增回归 NOT_RUN。
 
 
 - 2026-11-16 飞行健康页 Phase 2.71：13 域矩阵和六个重点域状态单元改用独立 ScreenTools 缩放密度 token，收紧非必要内边距/间距；保留全部文字与接收年龄，验证单元内容边界和桌面 3:6:3 主视觉比例。本轮未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
