@@ -1048,21 +1048,10 @@ SetupPage {
         return "#8A9A94"
     }
 
-    // Detailed rows retain a last-known value under the card's stale badge,
-    // but never expose a number when the corresponding capability is absent.
+    // Detail rows follow family freshness → capability → field validity, matching the KPI and trend gates.
     function _navigationMetricDetailValue(factName, requiredMask, decimals, suffix) {
-        if (!_fact("navigationAvailable")) {
-            return qsTr("未上报")
-        }
-        const rawMask = _fact("navigationCapabilities")
-        const mask = Number(rawMask)
-        if (!Number.isInteger(mask) || mask < 0 || mask > 0xFF) {
-            return qsTr("未知")
-        }
-        if ((mask & requiredMask) !== requiredMask) {
-            return qsTr("未具备")
-        }
-        return _number(factName, decimals, suffix)
+        const status = _navigationMetricStatus(requiredMask)
+        return status === qsTr("已接收") ? _number(factName, decimals, suffix) : status
     }
 
     function _trendSampleValue(availableName, factName, requiredCapabilityMask) {
@@ -2893,31 +2882,64 @@ SetupPage {
                         valueText: root._familyStatus("operationAvailable")
                     }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("operation") }
-                    TelemetryRow { labelText: qsTr("解锁状态"); valueText: root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")]) }
-                    TelemetryRow { labelText: qsTr("飞行模式"); valueText: root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")]) }
-                    TelemetryRow { labelText: qsTr("控制权"); valueText: root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationArmStateDetail"
+                        labelText: qsTr("解锁状态")
+                        valueText: root._familyFreshValue("operationAvailable", root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")]))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationFlightModeDetail"
+                        labelText: qsTr("飞行模式")
+                        valueText: root._familyFreshValue("operationAvailable", root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")]))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationAuthorityDetail"
+                        labelText: qsTr("控制权")
+                        valueText: root._familyFreshValue("operationAvailable", root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_failsafeValue"
                         labelText: qsTr("失效保护等级")
-                        valueText: root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                        valueText: root._familyFreshValue("operationAvailable", root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")]))
                         valueColor: root._failsafeColor()
                     }
-                    TelemetryRow { labelText: qsTr("任务状态"); valueText: root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]) }
                     TelemetryRow {
+                        objectName: "flightTelemetry_operationMissionStateDetail"
+                        labelText: qsTr("任务状态")
+                        valueText: root._familyFreshValue("operationAvailable", root._enum("missionState", [qsTr("空闲"), qsTr("已加载"), qsTr("执行中"), qsTr("暂停"), qsTr("中止"), qsTr("完成")]))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationBootProfileDetail"
                         labelText: qsTr("启动 ID（HEX）/ 配置 ID")
-                        valueText: String(root._fact("opBootIdHex") || qsTr("未上报")) + " / " + root._integer("opProfileId")
+                        valueText: root._familyFreshValue("operationAvailable",
+                            String(root._fact("opBootIdHex") || qsTr("未上报")) + " / " + root._integer("opProfileId"))
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_operationEpochsDetail"
                         labelText: qsTr("控制权 / 指令代次")
-                        valueText: root._integer("authorityEpoch") + " / " + root._integer("directiveEpoch")
+                        valueText: root._familyFreshValue("operationAvailable",
+                            root._integer("authorityEpoch") + " / " + root._integer("directiveEpoch"))
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_operationPermitEpochDetail"
                         labelText: qsTr("输出许可代次")
-                        valueText: root._integer("permitEpoch")
+                        valueText: root._familyFreshValue("operationAvailable", root._integer("permitEpoch"))
                     }
-                    TelemetryRow { labelText: qsTr("请求 ID"); valueText: root._integer("requestId") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("operationReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("opTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationRequestIdDetail"
+                        labelText: qsTr("请求 ID")
+                        valueText: root._familyFreshValue("operationAvailable", root._integer("requestId"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationReasonDetail"
+                        labelText: qsTr("原因")
+                        valueText: root._familyFreshValue("operationAvailable", root._reasonText(0, root._fact("operationReasonCode")))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_operationFcuTimeDetail"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._familyFreshValue("operationAvailable", root._timestamp("opTimeBootUs"))
+                    }
                 }
 
                 StatusCard {
@@ -2929,8 +2951,17 @@ SetupPage {
                     title: qsTr("导航状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("navigationAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("navigation") }
-                    TelemetryRow { labelText: qsTr("状态代次 / 原点 ID"); valueText: root._integer("navStateEpoch") + " / " + root._integer("originId") }
-                    TelemetryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationStateOriginDetail"
+                        labelText: qsTr("状态代次 / 原点 ID")
+                        valueText: root._familyFreshValue("navigationAvailable",
+                            root._integer("navStateEpoch") + " / " + root._integer("originId"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationCapabilitiesDetail"
+                        labelText: qsTr("能力掩码")
+                        valueText: root._familyFreshValue("navigationAvailable", root._mask("navigationCapabilities"))
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_navigationPositionStd"
                         labelText: qsTr("水平位置标准差")
@@ -2946,9 +2977,21 @@ SetupPage {
                         labelText: qsTr("航向标准差")
                         valueText: root._navigationMetricDetailValue("headingStdRad", root._navCapabilityHeading, 3, " rad")
                     }
-                    TelemetryRow { labelText: qsTr("数据年龄"); valueText: root._ageUsFact("navigationAgeUs") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("navTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationAgeDetail"
+                        labelText: qsTr("数据年龄")
+                        valueText: root._familyFreshValue("navigationAvailable", root._ageUsFact("navigationAgeUs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationReasonDetail"
+                        labelText: qsTr("原因")
+                        valueText: root._familyFreshValue("navigationAvailable", root._reasonText(0, root._fact("navigationReasonCode")))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationFcuTimeDetail"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._familyFreshValue("navigationAvailable", root._timestamp("navTimeBootUs"))
+                    }
                 }
 
                 StatusCard {
@@ -3297,8 +3340,17 @@ SetupPage {
                     title: qsTr("时间同步")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("timeAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
-                    TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
-                    TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeQualityDetail"
+                        labelText: qsTr("时间质量")
+                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                        valueColor: root._timeQualityColor()
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeDisciplineDetail"
+                        labelText: qsTr("本地时钟纪律")
+                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_timeUtcValidity"
                         labelText: qsTr("UTC 有效")
@@ -3316,14 +3368,26 @@ SetupPage {
                         valueText: root._utcUncertaintyText()
                         valueColor: root._utcValidityColor()
                     }
-                    TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
-                    TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeEventUncertaintyDetail"
+                        labelText: qsTr("事件时间不确定度")
+                        valueText: root._familyFreshValue("timeAvailable", root._number("eventUncertaintyUs", 0, " μs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeEpochDetail"
+                        labelText: qsTr("时间代次")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("timeEpoch"))
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_timeSourceMappingEpoch"
                         labelText: qsTr("时钟源映射代次")
-                        valueText: root._integer("sourceMappingEpoch")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("sourceMappingEpoch"))
                     }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("timeStatusTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeFcuTimeDetail"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._familyFreshValue("timeAvailable", root._timestamp("timeStatusTimeBootUs"))
+                    }
                 }
 
                 StatusCard {
@@ -3336,26 +3400,51 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }
                     TelemetryRow {
+                        objectName: "flightTelemetry_rcRollPitchDetail"
                         labelText: qsTr("横滚 / 俯仰")
-                        valueText: root._validValue("rcRollNorm", "rcValidAxesMask", 0, 3, "")
-                                   + " / " +
-                                   root._validValue("rcPitchNorm", "rcValidAxesMask", 1, 3, "")
+                        valueText: root._familyFreshValue("rcInputAvailable",
+                            root._validValue("rcRollNorm", "rcValidAxesMask", 0, 3, "")
+                            + " / " +
+                            root._validValue("rcPitchNorm", "rcValidAxesMask", 1, 3, ""))
                     }
                     TelemetryRow {
+                        objectName: "flightTelemetry_rcYawThrottleDetail"
                         labelText: qsTr("偏航 / 油门")
-                        valueText: root._validValue("rcYawNorm", "rcValidAxesMask", 2, 3, "")
-                                   + " / " +
-                                   root._validValue("rcThrottleNorm", "rcValidAxesMask", 3, 3, "")
+                        valueText: root._familyFreshValue("rcInputAvailable",
+                            root._validValue("rcYawNorm", "rcValidAxesMask", 2, 3, "")
+                            + " / " +
+                            root._validValue("rcThrottleNorm", "rcValidAxesMask", 3, 3, ""))
                     }
-                    TelemetryRow { labelText: qsTr("有效轴掩码"); valueText: root._mask("rcValidAxesMask") }
-                    TelemetryRow { labelText: qsTr("接收机失效保护"); valueText: root._fact("rcReceiverFailsafe") === null ? qsTr("未上报") : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")) }
                     TelemetryRow {
-                        labelText: qsTr("链路状态")
-                        valueText: root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
-                        valueColor: root._rcLinkStateColor(root._fact("rcLinkState"))
+                        objectName: "flightTelemetry_rcAxesMaskDetail"
+                        labelText: qsTr("有效轴掩码")
+                        valueText: root._familyFreshValue("rcInputAvailable", root._mask("rcValidAxesMask"))
                     }
-                    TelemetryRow { labelText: qsTr("输入年龄"); valueText: root._ageUsFact("rcAgeUs") }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("rcTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_rcFailsafeDetail"
+                        labelText: qsTr("接收机失效保护")
+                        valueText: root._familyFreshValue("rcInputAvailable",
+                            root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
+                                : (root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_rcLinkStateDetail"
+                        labelText: qsTr("链路状态")
+                        valueText: root._familyFreshValue("rcInputAvailable", root._enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]))
+                        valueColor: root._familyStatus("rcInputAvailable") === qsTr("已接收")
+                                    ? root._rcLinkStateColor(root._fact("rcLinkState"))
+                                    : root._familyStatusColor("rcInputAvailable")
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_rcInputAgeDetail"
+                        labelText: qsTr("输入年龄")
+                        valueText: root._familyFreshValue("rcInputAvailable", root._ageUsFact("rcAgeUs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_rcFcuTimeDetail"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._familyFreshValue("rcInputAvailable", root._timestamp("rcTimeBootUs"))
+                    }
                 }
 
                 StatusCard {
