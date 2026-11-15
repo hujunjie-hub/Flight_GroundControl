@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.28
+- 版本 4.29
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -183,3 +183,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 大屏 SPEC 章节顺序复核：事件历史响应式布局与预检完整覆盖率分别编号为第 50/51 章，所有章节编号唯一且按文档顺序递增。
 
 - 2026-11-15 本轮增量：总览告警列表元信息/FCU 时间取消省略并改为 WordWrap，增加 700/400 px 卡片高度与边界断言。本轮未运行 CI。
+
+- 2026-11-15 飞行健康页资源实例计数 freshness 收口：资源卡任务实例数量现在跟随 resourceAvailable family 状态，超时不再显示缓存计数；增加新鲜/过期 MockLink Integration 断言。本轮未运行 CI，待集中验收。

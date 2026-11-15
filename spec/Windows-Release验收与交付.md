@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.15  
+版本：4.16  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -433,3 +433,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 告警事件内容列的最小宽度设为 0；卡片高度应跟随换行后的 RowLayout 内容高度增长。
 - 集中验收在 700/400 px 检查文本 wrapMode、卡片内容高度和元信息/时间右下角均在告警面板边界内。
 - 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。
+
+
+### G15 资源任务实例计数 freshness 补充（2026-11-15）
+
+- resourceAvailable family fresh 时显示当前已接收的任务实例数量；family stale/等待时显示对应状态，不把缓存数组长度当作当前数量。
+- 实例明细保留最近缓存上下文，但每项 CPU/WCET/栈/截止期/AXI 仍独立受实例 freshness 和字段 validity 控制。
+- FlightTelemetryPageUITest 新增真实 MockLink 新鲜计数与 family stale 转换断言；本轮不运行 CI，集中验收时执行，不构成 PASS。

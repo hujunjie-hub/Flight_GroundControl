@@ -361,7 +361,8 @@
         "health_prearm_summary_reports_missing_items_and_requires_fifteen_fresh_passes_for_green",
         "overview_alarm_event_metadata_and_fcu_time_wrap_without_elision",
         "overview_alarm_event_labels_fit_alarm_card_at_700_and_400_px",
-        "overview_alarm_event_cards_expand_to_wrapped_content_height"
+        "overview_alarm_event_cards_expand_to_wrapped_content_height",
+        "health_resource_task_instance_count_follows_resource_family_freshness"
       ]
     },
     {
@@ -607,7 +608,8 @@
     "health_prearm_summary_reports_missing_items_and_requires_fifteen_fresh_passes_for_green",
     "overview_alarm_event_metadata_and_fcu_time_wrap_without_elision",
     "overview_alarm_event_labels_fit_alarm_card_at_700_and_400_px",
-    "overview_alarm_event_cards_expand_to_wrapped_content_height"
+    "overview_alarm_event_cards_expand_to_wrapped_content_height",
+    "health_resource_task_instance_count_follows_resource_family_freshness"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
