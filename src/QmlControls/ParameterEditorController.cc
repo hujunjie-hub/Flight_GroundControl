@@ -537,6 +537,7 @@ bool ParameterEditorController::_profileAllowsSelectedParameter() const
 void ParameterEditorController::_invalidatePendingTuningOperation(const QString &reason)
 {
     if (_tuningBusy || _readbackPending || _writeAckPendingReadback) {
+        _confirmedValue.clear();
         _tuningBusy = false;
         _readbackPending = false;
         _writeAckPendingReadback = false;
@@ -851,8 +852,9 @@ bool ParameterEditorController::restorePreviousValue()
 void ParameterEditorController::_selectedFactVehicleUpdated(const QVariant &rawValue)
 {
     Q_UNUSED(rawValue);
-    if (_selectedFact) {
+    if (_selectedFact && (!_writeFailureNeedsReadback || _readbackPending)) {
         // vehicleUpdated is emitted only for values received from the vehicle, not optimistic UI edits.
+        // Ignore late values after an invalidated/failed operation until an explicit readback is pending.
         _confirmedValue = _selectedFact->cookedValue();
         emit tuningStateChanged();
     }
@@ -878,6 +880,7 @@ void ParameterEditorController::_parameterWriteSucceeded(int componentId, const 
         _pendingComponentId = -1;
         _pendingOriginalValue.clear();
         _pendingTargetValue.clear();
+        _confirmedValue.clear();
         _readbackPending = false;
         _writeAckPendingReadback = false;
         _tuningBusy = false;
@@ -923,6 +926,7 @@ void ParameterEditorController::_parameterWriteFailed(int componentId, const QSt
     _pendingComponentId = -1;
     _pendingOriginalValue.clear();
     _pendingTargetValue.clear();
+    _confirmedValue.clear();
     _readbackPending = false;
     _writeAckPendingReadback = false;
     _tuningBusy = false;
@@ -1016,9 +1020,11 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
         _pendingComponentId = -1;
         _pendingOriginalValue.clear();
         _pendingTargetValue.clear();
+        _confirmedValue.clear();
         _tuningStatus = tr("飞控已确认写入，但独立回读失败");
         _tuningError = tr("不能将本次修改标记为成功；请重新回读飞控实际参数。");
     } else {
+        _confirmedValue.clear();
         _writeFailureNeedsReadback = true;
         _tuningStatus = tr("回读失败");
         _tuningError = tr("飞控未返回该参数的有效回读值；完成有效回读前禁止继续写入。");
