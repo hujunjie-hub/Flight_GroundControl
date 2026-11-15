@@ -468,7 +468,8 @@
         "all_four_dashboard_detail_grids_keep_12_columns_at_1672x941",
         "all_four_dashboard_trend_grids_keep_4_columns_at_1672x941",
         "all_four_dashboard_grids_use_compact_spacing_tokens_at_1672x941",
-        "all_four_dashboard_trend_canvases_remain_at_least_64px_at_1672x941"
+        "all_four_dashboard_trend_canvases_remain_at_least_64px_at_1672x941",
+        "twelve_consecutive_fcu_boot_epochs_reject_all_recent_retired_navigation_sessions"
       ]
     },
     {
@@ -575,7 +576,8 @@
     "multi_vehicle_isolation",
     "disconnect_reconnect_state_reset",
     "QML_unknown_invalid_and_stale_presentation",
-    "read_only_diagnostics_no_control_authority"
+    "read_only_diagnostics_no_control_authority",
+    "twelve_consecutive_fcu_boot_epochs_reject_all_recent_retired_navigation_sessions"
   ],
   "separate_interop_matrix": [
     "Flight_UDP_SIL_normal_interop",
