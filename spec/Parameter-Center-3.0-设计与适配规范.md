@@ -416,7 +416,6 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 影响关系盘点：当前 `FlightParameterFactMetaData.json` 提供 name/type/domain/group/范围/默认值/modelProfiles 等字段，未声明 dependencies 或 validationRules；`FlightVehicleModelCatalog.json` 提供机型、域和参数白名单，不包含参数影响图。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
 - 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
 - ParameterEditorController 回归测试增加“非 Flight SIL 未授权写入不得产生 parameterWriteConfirmed 事件”断言；本轮不运行构建、QML UI 测试、单元测试或 CI，新增测试保持 NOT_RUN。
-- 本轮未运行 Windows 构建、QML UI 测试、单元测试或 CI，所有运行时验收保持 NOT_RUN。
 
 ### Phase 5：视觉收口与集中验收
 
