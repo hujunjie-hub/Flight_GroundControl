@@ -68,6 +68,7 @@ SetupPage {
     readonly property real _dashboardPanelHeaderSpacing: ScreenTools.defaultFontPixelWidth * 0.8
     readonly property real _dashboardPanelSectionSpacing: ScreenTools.defaultFontPixelHeight * 0.45
     readonly property real _dashboardPanelBodySpacing: ScreenTools.defaultFontPixelHeight * 0.4
+    readonly property real _dashboardGridSpacing: ScreenTools.defaultFontPixelHeight * 0.67
 
     Settings {
         id: stickSettings
@@ -1890,8 +1891,8 @@ SetupPage {
                 visible: root._activeDashboardPage === 0
                 Layout.fillWidth: true
                 columns: root._dashboardColumns
-                columnSpacing: 12
-                rowSpacing: 12
+                columnSpacing: root._dashboardGridSpacing
+                rowSpacing: root._dashboardGridSpacing
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroFlight"
@@ -2518,8 +2519,8 @@ SetupPage {
                 visible: root._activeDashboardPage === 1
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: root._dashboardGridSpacing
+                rowSpacing: root._dashboardGridSpacing
                 HeroPanel {
                     objectName: "flightTelemetry_healthOverview"
                     fillRowHeight: true
@@ -2735,8 +2736,8 @@ SetupPage {
                 visible: root._activeDashboardPage === 2
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: root._dashboardGridSpacing
+                rowSpacing: root._dashboardGridSpacing
                 HeroPanel {
                     objectName: "flightTelemetry_navigationOverview"
                     fillRowHeight: true
@@ -3143,8 +3144,8 @@ SetupPage {
                 visible: root._activeDashboardPage === 3
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: root._dashboardGridSpacing
+                rowSpacing: root._dashboardGridSpacing
                 HeroPanel {
                     objectName: "flightTelemetry_rcStickMonitor"
                     fillRowHeight: true
@@ -3543,8 +3544,8 @@ SetupPage {
                 columns: root._activeDashboardPage === 1
                          ? (root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1)
                          : root._dashboardColumns
-                columnSpacing: 12
-                rowSpacing: 12
+                columnSpacing: root._dashboardGridSpacing
+                rowSpacing: root._dashboardGridSpacing
 
                 StatusCard {
                     objectName: "flightTelemetry_card_operation"
