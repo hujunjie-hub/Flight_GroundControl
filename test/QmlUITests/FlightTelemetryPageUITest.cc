@@ -3105,6 +3105,26 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* overviewFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
             QQuickItem* overviewNavigation = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* overviewRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
+            QQuickItem* overviewFlightModeRow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlightModeRow"), 3000);
+            QQuickItem* overviewFlightModeContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlightModeContent"), 3000);
+            QQuickItem* overviewUnlockContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroUnlockContent"), 3000);
+            QQuickItem* overviewArmBadge =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroArmStateBadge"), 3000);
+            QQuickItem* overviewArmState =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroArmState"), 3000);
+            QQuickItem* overviewFailsafeBand =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafeBand"), 3000);
+            QQuickItem* overviewFailsafeContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafeContent"), 3000);
+            QQuickItem* overviewAuthorityRow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthorityRow"), 3000);
+            QQuickItem* overviewAuthorityContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroAuthorityContent"), 3000);
+            QQuickItem* overviewAuthorityNote =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_authorityNote"), 3000);
             QVERIFY(summaryBand);
             QVERIFY(diagnosticDetailsTitle);
             QVERIFY(summaryOperation);
@@ -3116,6 +3136,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(overviewFlight);
             QVERIFY(overviewNavigation);
             QVERIFY(overviewRcInput);
+            QVERIFY(overviewFlightModeRow);
+            QVERIFY(overviewFlightModeContent);
+            QVERIFY(overviewUnlockContent);
+            QVERIFY(overviewArmBadge);
+            QVERIFY(overviewArmState);
+            QVERIFY(overviewFailsafeBand);
+            QVERIFY(overviewFailsafeContent);
+            QVERIFY(overviewAuthorityRow);
+            QVERIFY(overviewAuthorityContent);
+            QVERIFY(overviewAuthorityNote);
 
             QQuickItem* overviewFlightTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight_title"), 3000);
@@ -3183,6 +3213,82 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
 
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewNavigation->height()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewRcInput->height()) < 1.0, 3000);
+
+            const auto overviewItemFitsInPanel = [](QQuickItem* item, QQuickItem* panel) {
+                if (!item || !panel) return false;
+                const QPointF topLeft = item->mapToItem(panel, 0, 0);
+                return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                       topLeft.x() + item->width() <= panel->width() + 1.0 &&
+                       topLeft.y() + item->height() <= panel->height() + 1.0;
+            };
+            const auto overviewInsetContentFits = [](QQuickItem* content, QQuickItem* panel,
+                                                      qreal leading, qreal trailing, qreal vertical) {
+                if (!content || !panel || !content->isVisible()) return false;
+                const QPointF topLeft = content->mapToItem(panel, 0, 0);
+                return qAbs(topLeft.x() - leading) <= 1.0 &&
+                       qAbs(topLeft.y() - vertical) <= 1.0 &&
+                       content->width() + leading + trailing <= panel->width() + 1.0 &&
+                       content->height() + 2.0 * vertical <= panel->height() + 1.0 &&
+                       content->height() + 1.0 >= content->implicitHeight();
+            };
+            const auto overviewFlightSafetyLayoutFits = [&]() {
+                const qreal modeRowSpacing = page->property("_overviewFlightModeRowSpacing").toReal();
+                const qreal modeContentSpacing = page->property("_overviewFlightModeContentSpacing").toReal();
+                const qreal unlockContentSpacing = page->property("_overviewFlightUnlockContentSpacing").toReal();
+                const qreal armHorizontalInset = overviewArmBadge->property("horizontalInset").toReal();
+                const qreal armVerticalInset = overviewArmBadge->property("verticalInset").toReal();
+                const qreal failsafeLeadingInset = overviewFailsafeBand->property("contentLeadingInset").toReal();
+                const qreal failsafeTrailingInset = overviewFailsafeBand->property("contentHorizontalInset").toReal();
+                const qreal failsafeVerticalInset = overviewFailsafeBand->property("contentVerticalInset").toReal();
+                const qreal failsafeMinimumHeight = overviewFailsafeBand->property("minimumHeight").toReal();
+                const qreal authorityInset = overviewAuthorityRow->property("contentHorizontalInset").toReal();
+                const qreal authorityVerticalInset = overviewAuthorityRow->property("contentVerticalInset").toReal();
+                const qreal authorityMinimumHeight = overviewAuthorityRow->property("minimumHeight").toReal();
+                const qreal expectedFailsafeHeight =
+                    qMax(failsafeMinimumHeight,
+                         overviewFailsafeContent->implicitHeight() + 2.0 * failsafeVerticalInset);
+                const qreal expectedAuthorityHeight =
+                    qMax(authorityMinimumHeight,
+                         overviewAuthorityContent->implicitHeight() + 2.0 * authorityVerticalInset);
+                if (modeRowSpacing <= 0.0 || modeContentSpacing <= 0.0 || unlockContentSpacing <= 0.0 ||
+                    armHorizontalInset <= 0.0 || armVerticalInset <= 0.0 ||
+                    failsafeLeadingInset <= 0.0 || failsafeTrailingInset <= 0.0 ||
+                    failsafeVerticalInset <= 0.0 || failsafeMinimumHeight <= 0.0 ||
+                    authorityInset <= 0.0 || authorityVerticalInset <= 0.0 ||
+                    authorityMinimumHeight <= 0.0 ||
+                    qAbs(overviewFlightModeRow->property("spacing").toReal() - modeRowSpacing) > 0.01 ||
+                    qAbs(overviewFlightModeContent->property("spacing").toReal() - modeContentSpacing) > 0.01 ||
+                    qAbs(overviewUnlockContent->property("spacing").toReal() - unlockContentSpacing) > 0.01 ||
+                    qAbs(overviewArmBadge->property("implicitWidth").toReal() -
+                         (overviewArmState->implicitWidth() + 2.0 * armHorizontalInset)) > 1.0 ||
+                    qAbs(overviewArmBadge->property("implicitHeight").toReal() -
+                         (overviewArmState->implicitHeight() + 2.0 * armVerticalInset)) > 1.0 ||
+                    qAbs(overviewFailsafeBand->property("implicitHeight").toReal() - expectedFailsafeHeight) > 1.0 ||
+                    overviewFailsafeBand->height() + 1.0 < expectedFailsafeHeight ||
+                    qAbs(overviewAuthorityRow->property("implicitHeight").toReal() - expectedAuthorityHeight) > 1.0 ||
+                    overviewAuthorityRow->height() + 1.0 < expectedAuthorityHeight ||
+                    overviewAuthorityNote->property("wrapMode").toInt() == 0) {
+                    return false;
+                }
+                return overviewItemFitsInPanel(overviewFlightModeRow, overviewFlight) &&
+                       overviewItemFitsInPanel(overviewArmBadge, overviewFlight) &&
+                       overviewInsetContentFits(overviewFailsafeContent, overviewFailsafeBand,
+                                                failsafeLeadingInset, failsafeTrailingInset,
+                                                failsafeVerticalInset) &&
+                       overviewItemFitsInPanel(overviewFailsafeBand, overviewFlight) &&
+                       overviewInsetContentFits(overviewAuthorityContent, overviewAuthorityRow,
+                                                authorityInset, authorityInset, authorityVerticalInset) &&
+                       overviewItemFitsInPanel(overviewAuthorityRow, overviewFlight) &&
+                       overviewItemFitsInPanel(overviewAuthorityNote, overviewFlight);
+            };
+            const qreal overviewOriginalWidth = page->width();
+            const int overviewSafetyWidths[] = {1600, 1400, 1000, 900, 700, 400};
+            for (int width : overviewSafetyWidths) {
+                page->setWidth(width);
+                QTRY_VERIFY_WITH_TIMEOUT(overviewFlightSafetyLayoutFits(), 3000);
+            }
+            page->setWidth(overviewOriginalWidth);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewFlightSafetyLayoutFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryBand->property("radius").toInt(), 8, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("radius").toInt(), 8, 3000);
             const QString pageGrids[] = {
