@@ -2153,16 +2153,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* title = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
             QQuickItem* dashboardGrid =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
+            QVERIFY(page);
+            QVERIFY(tabs);
+            QVERIFY(title);
+            QVERIFY(dashboardGrid);
             const qreal expectedDashboardGridSpacing = page->property("_dashboardGridSpacing").toReal();
             const auto dashboardGridSpacingMatches = [expectedDashboardGridSpacing](QQuickItem* grid) {
                 return grid &&
                        qAbs(grid->property("columnSpacing").toReal() - expectedDashboardGridSpacing) < 0.01 &&
                        qAbs(grid->property("rowSpacing").toReal() - expectedDashboardGridSpacing) < 0.01;
             };
-            QVERIFY(page);
-            QVERIFY(tabs);
-            QVERIFY(title);
-            QVERIFY(dashboardGrid);
             const qreal originalPageWidth = page->width();
             QVERIFY(originalPageWidth > 0);
             const char* diagnosticCards[] = {
