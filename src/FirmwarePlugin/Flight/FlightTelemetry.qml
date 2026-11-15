@@ -55,6 +55,19 @@ SetupPage {
         "/InstrumentValueIcons/radio.svg"
     ]
     readonly property int _healthPageColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
+
+    // Shared visual tokens for all primary and diagnostic panels on the four-page dashboard.
+    readonly property int _dashboardPanelRadius: 8
+    readonly property color _dashboardPanelBackground: "#06232B"
+    readonly property color _dashboardPanelBorder: "#0B6873"
+    readonly property color _dashboardPanelEyebrow: "#45D6E5"
+    readonly property color _dashboardPanelTitle: "#E6F0F4"
+    readonly property color _dashboardPanelDivider: "#104B55"
+    readonly property int _dashboardPanelPadding: 10
+    readonly property int _dashboardPanelHeaderSpacing: 8
+    readonly property int _dashboardPanelSectionSpacing: 8
+    readonly property int _dashboardPanelBodySpacing: 7
+
     Settings {
         id: stickSettings
         category: "FlightRadio"
@@ -4354,6 +4367,40 @@ SetupPage {
         }
     }
 
+    component FamilyStatusBadge: Rectangle {
+        id: badge
+        required property string statusText
+        required property color statusColor
+
+        implicitHeight: 24
+        implicitWidth: badgeContent.implicitWidth + 18
+        radius: 12
+        color: Qt.rgba(statusColor.r, statusColor.g, statusColor.b, 0.10)
+        border.width: 1
+        border.color: Qt.rgba(statusColor.r, statusColor.g, statusColor.b, 0.32)
+
+        RowLayout {
+            id: badgeContent
+            anchors.centerIn: parent
+            spacing: 6
+
+            Rectangle {
+                Layout.preferredWidth: 6
+                Layout.preferredHeight: 6
+                radius: 3
+                color: badge.statusColor
+            }
+
+            QGCLabel {
+                objectName: badge.objectName + "_text"
+                text: badge.statusText
+                color: badge.statusColor
+                font.pointSize: ScreenTools.captionFontPointSize
+                font.weight: ScreenTools.strongFontWeight
+            }
+        }
+    }
+
     component HeroPanel: Rectangle {
         id: hero
         required property string titleText
@@ -4361,19 +4408,22 @@ SetupPage {
         property string statusFamily: ""
         property bool fillRowHeight: false
         property bool showStatusBadge: true
+        readonly property int panelPadding: root._dashboardPanelPadding
+        readonly property int panelSectionSpacing: root._dashboardPanelSectionSpacing
+        readonly property int panelBodySpacing: root._dashboardPanelBodySpacing
         readonly property color currentStatusColor: statusFamily.length > 0
-                                                            ? root._familyStatusColor(statusFamily) : "#0B6873"
+                                                            ? root._familyStatusColor(statusFamily) : root._dashboardPanelBorder
         default property alias contentData: bodyColumn.data
 
         Layout.fillWidth: true
         Layout.fillHeight: hero.fillRowHeight
         Layout.alignment: hero.fillRowHeight ? Qt.AlignLeft : Qt.AlignTop
         implicitWidth: 300
-        implicitHeight: heroColumn.implicitHeight + 20
-        radius: 8
-        color: "#06232B"
+        implicitHeight: heroColumn.implicitHeight + panelPadding * 2
+        radius: root._dashboardPanelRadius
+        color: root._dashboardPanelBackground
         border.width: 1
-        border.color: "#0B6873"
+        border.color: root._dashboardPanelBorder
 
         Rectangle {
             width: 3
@@ -4388,59 +4438,51 @@ SetupPage {
         ColumnLayout {
             id: heroColumn
             anchors.fill: parent
-            anchors.margins: 9
-            spacing: 7
+            anchors.margins: hero.panelPadding
+            spacing: hero.panelSectionSpacing
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: root._dashboardPanelHeaderSpacing
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
                     QGCLabel {
                         Layout.fillWidth: true
+                        objectName: hero.objectName + "_eyebrow"
                         text: hero.eyebrow
-                        color: "#45D6E5"
+                        color: root._dashboardPanelEyebrow
                         font.pointSize: ScreenTools.captionFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
                     QGCLabel {
                         Layout.fillWidth: true
+                        objectName: hero.objectName + "_title"
                         text: hero.titleText
-                        color: "#E6F0F4"
+                        color: root._dashboardPanelTitle
                         font.pointSize: ScreenTools.titleFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
                 }
-                Rectangle {
+                FamilyStatusBadge {
                     objectName: hero.objectName + "_statusBadge"
                     visible: hero.showStatusBadge && hero.statusFamily.length > 0
-                    radius: 10
-                    implicitWidth: heroStatusText.implicitWidth + 16
-                    implicitHeight: heroStatusText.implicitHeight + 10
-                    color: Qt.rgba(hero.currentStatusColor.r, hero.currentStatusColor.g, hero.currentStatusColor.b, 0.10)
-                    border.color: Qt.rgba(hero.currentStatusColor.r, hero.currentStatusColor.g, hero.currentStatusColor.b, 0.28)
-                    QGCLabel {
-                        id: heroStatusText
-                        anchors.centerIn: parent
-                        text: root._familyStatus(hero.statusFamily)
-                        color: hero.currentStatusColor
-                        font.pointSize: ScreenTools.captionFontPointSize
-                        font.weight: ScreenTools.strongFontWeight
-                    }
+                    Layout.alignment: Qt.AlignVCenter
+                    statusText: root._familyStatus(hero.statusFamily)
+                    statusColor: hero.currentStatusColor
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#104B55"
+                color: root._dashboardPanelDivider
             }
 
             ColumnLayout {
                 id: bodyColumn
                 Layout.fillWidth: true
-                spacing: 7
+                spacing: hero.panelBodySpacing
             }
         }
     }
@@ -4583,10 +4625,10 @@ SetupPage {
         Layout.fillWidth: true
         implicitWidth: 140
         implicitHeight: Math.max(174, Math.min(238, width * 0.45 + 64))
-        radius: 8
+        radius: root._dashboardPanelRadius
         color: "#082E36"
         border.width: 1
-        border.color: "#0B6873"
+        border.color: root._dashboardPanelBorder
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 7
@@ -4734,10 +4776,10 @@ SetupPage {
         Layout.fillWidth: true
         implicitWidth: 230
         implicitHeight: Math.max(134, trendContent.implicitHeight + 16)
-        radius: 8
+        radius: root._dashboardPanelRadius
         color: "#082B33"
         border.width: 1
-        border.color: "#0B6873"
+        border.color: root._dashboardPanelBorder
 
         ColumnLayout {
             id: trendContent
@@ -5049,17 +5091,20 @@ SetupPage {
         required property string title
         property string eyebrow: "FCU TELEMETRY"
         property string statusFamily: ""
+        readonly property int panelPadding: root._dashboardPanelPadding
+        readonly property int panelSectionSpacing: root._dashboardPanelSectionSpacing
+        readonly property int panelBodySpacing: root._dashboardPanelBodySpacing
         readonly property color currentStatusColor: root._familyStatusColor(statusFamily)
         default property alias rows: detailColumn.data
 
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
         implicitWidth: 300
-        implicitHeight: cardColumn.implicitHeight + 24
-        radius: 8
-        color: "#06232B"
+        implicitHeight: cardColumn.implicitHeight + panelPadding * 2
+        radius: root._dashboardPanelRadius
+        color: root._dashboardPanelBackground
         border.width: 1
-        border.color: "#0B6873"
+        border.color: root._dashboardPanelBorder
 
         Rectangle {
             width: 3
@@ -5074,12 +5119,12 @@ SetupPage {
         ColumnLayout {
             id: cardColumn
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 9
+            anchors.margins: card.panelPadding
+            spacing: card.panelSectionSpacing
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: root._dashboardPanelHeaderSpacing
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -5087,64 +5132,42 @@ SetupPage {
 
                     QGCLabel {
                         Layout.fillWidth: true
+                        objectName: card.objectName + "_eyebrow"
                         text: card.eyebrow
-                        color: "#45D6E5"
+                        color: root._dashboardPanelEyebrow
                         font.pointSize: ScreenTools.captionFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
 
                     QGCLabel {
                         Layout.fillWidth: true
+                        objectName: card.objectName + "_title"
                         text: card.title
-                        color: "#E2ECE7"
+                        color: root._dashboardPanelTitle
                         font.pointSize: ScreenTools.titleFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
                 }
 
-                Rectangle {
+                FamilyStatusBadge {
+                    objectName: card.objectName + "_statusBadge"
                     visible: card.statusFamily !== ""
                     Layout.alignment: Qt.AlignVCenter
-                    radius: 12
-                    implicitHeight: 24
-                    implicitWidth: statusBadgeContent.implicitWidth + 18
-                    color: Qt.rgba(card.currentStatusColor.r, card.currentStatusColor.g,
-                                   card.currentStatusColor.b, 0.10)
-                    border.width: 1
-                    border.color: Qt.rgba(card.currentStatusColor.r, card.currentStatusColor.g,
-                                          card.currentStatusColor.b, 0.32)
-
-                    RowLayout {
-                        id: statusBadgeContent
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Rectangle {
-                            Layout.preferredWidth: 6
-                            Layout.preferredHeight: 6
-                            radius: 3
-                            color: card.currentStatusColor
-                        }
-
-                        QGCLabel {
-                            text: root._familyStatus(card.statusFamily)
-                            color: card.currentStatusColor
-                            font.pointSize: ScreenTools.secondaryFontPointSize
-                        }
-                    }
+                    statusText: root._familyStatus(card.statusFamily)
+                    statusColor: card.currentStatusColor
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#104B55"
+                color: root._dashboardPanelDivider
             }
 
             ColumnLayout {
                 id: detailColumn
                 Layout.fillWidth: true
-                spacing: 7
+                spacing: card.panelBodySpacing
             }
         }
     }
