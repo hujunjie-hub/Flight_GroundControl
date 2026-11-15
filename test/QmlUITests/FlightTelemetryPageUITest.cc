@@ -313,6 +313,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(topologyCanvas);
             QVERIFY(!topologyCanvas->property("labelFontFamily").toString().isEmpty());
             QVERIFY(topologyCanvas->property("labelFontPointSize").toReal() >= 7.0);
+            QVERIFY(topologyCanvas->property("densityScale").toReal() >= 1.0);
+            QVERIFY(topologyCanvas->property("geometryScale").toReal() >= 0.72);
+            QVERIFY(topologyCanvas->property("preferredCanvasHeight").toReal() >= 176.0);
             QVERIFY(topologyNodesGrid);
             QVERIFY(topologyLegend);
             QVERIFY(topologyLegendTitle);
@@ -445,6 +448,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                          topologyLegendColors[index]);
             }
             QQuickItem* topologyNodeItems[6]{};
+            QQuickItem* topologyNodeContents[6]{};
             for (int index = 0; index < 6; ++index) {
                 const QString nodeName = QStringLiteral("flightTelemetry_topologyNode_")
                                          + QString::fromLatin1(topologyFamilies[index]);
@@ -471,6 +475,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 const QString receiveAgePrefix =
                     translatedTelemetryText("接收 %1").section(QStringLiteral("%1"), 0, 0);
                 QVERIFY(ageItem->property("text").toString().startsWith(receiveAgePrefix));
+                const QString contentName = QStringLiteral("flightTelemetry_topologyNodeContent_")
+                                            + QString::fromLatin1(topologyFamilies[index]);
+                topologyNodeContents[index] = findVisibleItem(_rootItem, contentName, 3000);
+                QVERIFY2(topologyNodeContents[index], qPrintable(contentName));
             }
             const QVariantList initialTopologyConnections =
                 topologyCanvas->property("familyConnectionStates").toList();
@@ -642,17 +650,66 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto topologyNodeGridSpacingMatches = [&]() {
+                const qreal expected = page->property("_overviewTopologyNodeGridSpacing").toReal();
+                return expected > 0.0 &&
+                       qAbs(topologyNodesGrid->property("columnSpacing").toReal() - expected) < 0.01 &&
+                       qAbs(topologyNodesGrid->property("rowSpacing").toReal() - expected) < 0.01;
+            };
+
+            const auto topologyNodeCardsFit = [&]() {
+                for (int index = 0; index < 6; ++index) {
+                    QQuickItem* card = topologyNodeItems[index];
+                    QQuickItem* content = topologyNodeContents[index];
+                    if (!card || !content || !content->isVisible()) return false;
+                    const qreal horizontalInset = card->property("contentHorizontalInset").toReal();
+                    const qreal leadingInset = card->property("contentLeadingInset").toReal();
+                    const qreal verticalInset = card->property("contentVerticalInset").toReal();
+                    const qreal contentSpacing = card->property("contentSpacing").toReal();
+                    const QPointF contentTopLeft = content->mapToItem(card, 0, 0);
+                    if (horizontalInset <= 0.0 || leadingInset < horizontalInset ||
+                        verticalInset <= 0.0 || contentSpacing <= 0.0 ||
+                        qAbs(contentTopLeft.x() - leadingInset) > 1.0 ||
+                        qAbs(contentTopLeft.y() - verticalInset) > 1.0 ||
+                        content->width() + leadingInset + horizontalInset > card->width() + 1.0 ||
+                        content->height() + 2.0 * verticalInset > card->height() + 1.0 ||
+                        content->height() + 1.0 < content->implicitHeight() ||
+                        qAbs(card->implicitHeight() -
+                             (content->implicitHeight() + 2.0 * verticalInset)) > 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
             const auto topologyCanvasLabelsFit = [&]() {
                 const qreal canvasWidth = topologyCanvas->width();
                 const qreal canvasHeight = topologyCanvas->height();
                 const qreal centerX = canvasWidth / 2.0;
                 const qreal centerY = canvasHeight / 2.0;
-                const qreal ringRadius = qMin(qMin(76.0, canvasHeight * 0.42), canvasWidth * 0.16);
-                const qreal nodeX = qMin(canvasWidth * 0.34, ringRadius + 36.0);
-                const qreal nodeY = qMin(canvasHeight * 0.40, ringRadius + 8.0);
+                const qreal densityScale = topologyCanvas->property("densityScale").toReal();
+                const qreal geometryScale = topologyCanvas->property("geometryScale").toReal();
+                const qreal expectedScale = qMax<qreal>(0.72, qMin<qreal>(1.0, canvasWidth / 480.0)) *
+                                            densityScale;
+                const qreal ringRadius = topologyCanvas->property("ringRadius").toReal();
+                const qreal nodeX = topologyCanvas->property("nodeOffsetX").toReal();
+                const qreal nodeY = topologyCanvas->property("nodeOffsetY").toReal();
+                const qreal sideLabelOffset = topologyCanvas->property("sideLabelOffset").toReal();
+                const qreal diagonalLabelOffset = topologyCanvas->property("diagonalLabelOffset").toReal();
+                const qreal topLabelOffset = topologyCanvas->property("topLabelOffset").toReal();
+                const qreal bottomLabelOffset = topologyCanvas->property("bottomLabelOffset").toReal();
+                const qreal preferredCanvasHeight = topologyCanvas->property("preferredCanvasHeight").toReal();
                 const QString labelFontFamily = topologyCanvas->property("labelFontFamily").toString();
                 const qreal labelFontPointSize = topologyCanvas->property("labelFontPointSize").toReal();
-                if (labelFontFamily.isEmpty() || labelFontPointSize <= 0.0) return false;
+                if (densityScale < 1.0 || geometryScale < 0.72 ||
+                    qAbs(geometryScale - expectedScale) > 0.01 ||
+                    canvasHeight + 1.0 < preferredCanvasHeight ||
+                    ringRadius <= 0.0 || nodeX <= 0.0 || nodeY <= 0.0 ||
+                    sideLabelOffset <= 0.0 || diagonalLabelOffset <= 0.0 ||
+                    topLabelOffset <= 0.0 || bottomLabelOffset <= 0.0 ||
+                    labelFontFamily.isEmpty() || labelFontPointSize <= 0.0) {
+                    return false;
+                }
                 QFont labelFont(labelFontFamily);
                 labelFont.setPointSizeF(labelFontPointSize);
                 labelFont.setBold(true);
@@ -667,12 +724,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                     Qt::Alignment alignment;
                 };
                 const LabelAnchor anchors[] = {
-                    {centerX - nodeX + 14.0, centerY - nodeY - 9.0, Qt::AlignLeft},
-                    {centerX, centerY - canvasHeight * 0.40 + 20.0, Qt::AlignHCenter},
-                    {centerX + nodeX - 14.0, centerY - nodeY - 9.0, Qt::AlignRight},
-                    {centerX - nodeX + 14.0, centerY + nodeY + 9.0, Qt::AlignLeft},
-                    {centerX, centerY + canvasHeight * 0.40 - 18.0, Qt::AlignHCenter},
-                    {centerX + nodeX - 14.0, centerY + nodeY + 9.0, Qt::AlignRight}};
+                    {centerX - nodeX + sideLabelOffset, centerY - nodeY - diagonalLabelOffset, Qt::AlignLeft},
+                    {centerX, centerY - canvasHeight * 0.40 + topLabelOffset, Qt::AlignHCenter},
+                    {centerX + nodeX - sideLabelOffset, centerY - nodeY - diagonalLabelOffset, Qt::AlignRight},
+                    {centerX - nodeX + sideLabelOffset, centerY + nodeY + diagonalLabelOffset, Qt::AlignLeft},
+                    {centerX, centerY + canvasHeight * 0.40 - bottomLabelOffset, Qt::AlignHCenter},
+                    {centerX + nodeX - sideLabelOffset, centerY + nodeY + diagonalLabelOffset, Qt::AlignRight}};
                 for (int index = 0; index < 6; ++index) {
                     const qreal textWidth = metrics.horizontalAdvance(labels[index]);
                     const qreal left = anchors[index].alignment == Qt::AlignRight
@@ -875,9 +932,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                topologyCanvas->height() + 1.0 >= topologyCanvas->property("preferredCanvasHeight").toReal(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationCard->y(), latestEventCard->y(), 3000);
@@ -899,7 +958,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             page->setWidth(1000);
@@ -918,7 +978,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
@@ -932,7 +993,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
@@ -953,7 +1015,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
@@ -972,7 +1035,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit() && topologyNodeCardsFit() &&
+                                     topologyNodeGridSpacingMatches(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
