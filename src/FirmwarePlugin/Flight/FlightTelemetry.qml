@@ -212,7 +212,11 @@ SetupPage {
     function _timeDisciplineColor() {
         const familyStatus = _familyStatus("timeAvailable")
         if (familyStatus !== qsTr("已接收")) return _familyStatusColor("timeAvailable")
-        switch (Number(_fact("timeDisciplineState"))) {
+        const raw = _fact("timeDisciplineState")
+        if (raw === null || raw === undefined || raw === "") return "#8A9A94"
+        const state = Number(raw)
+        if (!Number.isInteger(state)) return "#8A9A94"
+        switch (state) {
         case 0:
         case 2: return "#45D39A" // Nominal / locked
         case 1:
