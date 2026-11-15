@@ -2315,11 +2315,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendPositionGaps->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
 
-            // A new FCU boot epoch clears the local trend buffer before new-session samples are appended.
+            // A new FCU boot epoch may first appear on any accepted telemetry family, not only OPERATION_STATUS.
             const int previousBootTrendSampleCount = trendPosition->property("sampleCount").toInt();
             constexpr uint64_t nextBootId = 0x8877665544332211ULL;
-            sendOperationStatus(1000, nextBootId);
-            sendNavigationStatus(1100, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
+            sendNavigationStatus(1000, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
+            // The old trend session must be cleared immediately even while the new OPERATION_STATUS is absent.
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(), QString(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount,
+                                     3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.001000 s"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventValue->property("text").toString(), waitingText, 3000);
+            sendOperationStatus(1100, nextBootId);
             sendControlStatus(1200, nextBootId, 1900);
             sendTimeStatus(1250, nextBootId, 1700000011123456ULL, 1);
 
