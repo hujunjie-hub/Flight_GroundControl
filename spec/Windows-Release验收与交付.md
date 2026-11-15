@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.51
+版本：4.52
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -610,3 +610,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MockLink UI Integration 通过真实 MAVLink 路径注入严重度 3、1、3 三条事件，验证事件总数、最新同级最高严重度置顶、同严重度按本地接收序号降序，以及严重度 1 的琥珀色语义。
 - 页面优先级提示文案为「最高严重度置顶 · 同级按本地接收序号」，必须与 UI Integration 预期一致。
 - 新增断言覆盖 waiting empty state、首条事件到达后的空态隐藏、实时列表重排；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，状态保持 NOT_RUN。
+
+
+### G15 飞行健康页预检覆盖与资源快照分层（2026-11-15）
+
+- 「安全监测」是预检结果（通过/警告/失败/未知）的唯一摘要位置；维护横条显示预检 fresh/stale/missing 覆盖数量，覆盖色只表达完整度，不被 checkState 的失败/警告污染。
+- 维护横条必须显示 CPU 负载、任务 WCET、系统栈剩余、存储剩余；resource taskId=0 指标分别遵循对应 validity bit 和实例 freshness，storage 遵循 storage family freshness/validity。
+- FlightTelemetryPageUITest 使用 MockLink 验证 15 项完整覆盖与失败/警告结论分色、四项资源数值和颜色，并在 1600/1000/900/700/400 px 验证资源子网格所有指标位于父边界内。
+- 按用户要求不运行 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待集中验收。
