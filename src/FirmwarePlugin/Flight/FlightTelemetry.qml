@@ -3851,8 +3851,9 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_navigation"
-                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
-                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
+                                    // Preserve full FCU boot-relative timestamps when their integer part grows.
+                                    Layout.preferredWidth: Math.max(root._navigationTimelineValueColumnWidth, implicitWidth)
+                                    Layout.minimumWidth: Math.max(root._navigationTimelineValueMinimumWidth, implicitWidth)
                                     text: root._navigationTimelineValueText("navigationAvailable", "navTimeBootUs")
                                     color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3920,8 +3921,9 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_time"
-                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
-                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
+                                    // Preserve full FCU boot-relative timestamps when their integer part grows.
+                                    Layout.preferredWidth: Math.max(root._navigationTimelineValueColumnWidth, implicitWidth)
+                                    Layout.minimumWidth: Math.max(root._navigationTimelineValueMinimumWidth, implicitWidth)
                                     text: root._navigationTimelineValueText("timeAvailable", "timeStatusTimeBootUs")
                                     color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                     font.family: ScreenTools.fixedFontFamily
@@ -3989,8 +3991,9 @@ SetupPage {
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_value_event"
-                                    Layout.preferredWidth: root._navigationTimelineValueColumnWidth
-                                    Layout.minimumWidth: root._navigationTimelineValueMinimumWidth
+                                    // Preserve full FCU boot-relative timestamps when their integer part grows.
+                                    Layout.preferredWidth: Math.max(root._navigationTimelineValueColumnWidth, implicitWidth)
+                                    Layout.minimumWidth: Math.max(root._navigationTimelineValueMinimumWidth, implicitWidth)
                                     text: root._navigationTimelineValueText("eventAvailable", "eventTimeBootUs")
                                     color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                     font.family: ScreenTools.fixedFontFamily
