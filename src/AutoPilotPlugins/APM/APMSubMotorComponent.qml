@@ -201,7 +201,7 @@ SetupPage {
                 width:               parent.width
                 anchors.left:        parent.left
                 anchors.right:       parent.right
-                font.pointSize:      ScreenTools.largeFontPointSize
+                font.pointSize:      ScreenTools.titleFontPointSize
                 text:                qsTr("Automatic Motor Direction Detection")
             }
 

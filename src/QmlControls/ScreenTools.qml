@@ -10,9 +10,7 @@ import QGroundControl
  The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
  size which can be used to adjust user interface for varying available screen real estate.
 
- QGC has four standard font sizes: default, small, medium and large. The QGC controls use the default font for display and you should use this font
- for most text within the system that is drawn using something other than a standard QGC control. The small font is smaller than the default font.
- The medium and large fonts are larger than the default font.
+ Use ScreenTools semantic typography roles for body text, captions, headings, metrics and overlays. Legacy small/medium/large properties remain compatibility aliases only.
 
  Usage:
 
@@ -26,12 +24,12 @@ import QGroundControl
 Item {
     id: _screenTools
 
-    //-- The point and pixel font size values are computed at runtime
+    //-- The semantic font-size values are computed at runtime
 
     property real defaultFontPointSize:     10
     property real platformFontPointSize:    10
 
-    readonly property real smallFontPointRatio:      0.75
+    readonly property real smallFontPointRatio:      0.78
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
 
@@ -57,21 +55,26 @@ Item {
     /// The default amount of space in between controls in a dialog
     property real defaultDialogControlSpacing: defaultFontPixelHeight / 2
 
-    property real smallFontPointSize:       10
-    property real mediumFontPointSize:      10
-    property real largeFontPointSize:       10
+    // Deprecated compatibility aliases. New QML must use semantic roles directly.
+    readonly property real smallFontPointSize:  captionFontPointSize
+    readonly property real mediumFontPointSize: subtitleFontPointSize
+    readonly property real largeFontPointSize:  titleFontPointSize
 
     // Semantic typography tokens. Keep page-specific hierarchy in roles rather than
     // repeating point-size multipliers throughout QML.
     readonly property real microFontPointSize:        Math.max(7.0, defaultFontPointSize * 0.72)
-    readonly property real captionFontPointSize:      Math.max(8.0, defaultFontPointSize * 0.78)
+    readonly property real captionFontPointSize:      Math.max(8.0, defaultFontPointSize * smallFontPointRatio)
     readonly property real secondaryFontPointSize:    defaultFontPointSize * 0.84
     readonly property real compactBodyFontPointSize:  defaultFontPointSize * 0.88
     readonly property real bodyFontPointSize:         defaultFontPointSize
-    readonly property real subtitleFontPointSize:     mediumFontPointSize
-    readonly property real titleFontPointSize:        largeFontPointSize
-    readonly property real metricFontPointSize:       largeFontPointSize * 1.05
-    readonly property real heroFontPointSize:         largeFontPointSize * 1.35
+    readonly property real subtitleFontPointSize:     defaultFontPointSize * mediumFontPointRatio
+    readonly property real titleFontPointSize:        defaultFontPointSize * largeFontPointRatio
+    readonly property real metricFontPointSize:       titleFontPointSize * 1.05
+    readonly property real heroFontPointSize:         titleFontPointSize * 1.35
+    readonly property real bodyEmphasisFontPointSize:       defaultFontPointSize * 1.1
+    readonly property real captionEmphasisFontPointSize:    captionFontPointSize * 1.1
+    readonly property real sectionHeadingFontPointSize:     defaultFontPointSize + 1
+    readonly property real worldOverlayFontPointSize:       heroFontPointSize * 1.25
 
     readonly property int regularFontWeight:          Font.Normal
     readonly property int emphasisFontWeight:         Font.DemiBold
@@ -158,6 +161,10 @@ Item {
         case "eyebrow":      return captionFontPointSize
         case "secondary":    return secondaryFontPointSize
         case "compact-body": return compactBodyFontPointSize
+        case "body-emphasis": return bodyEmphasisFontPointSize
+        case "caption-emphasis": return captionEmphasisFontPointSize
+        case "section-heading": return sectionHeadingFontPointSize
+        case "world-overlay": return worldOverlayFontPointSize
         case "subtitle":     return subtitleFontPointSize
         case "title":        return titleFontPointSize
         case "metric":       return metricFontPointSize
@@ -169,6 +176,10 @@ Item {
     function fontWeightForRole(role) {
         switch (role) {
         case "eyebrow":
+        case "body-emphasis":
+        case "caption-emphasis":
+        case "section-heading":
+        case "world-overlay":
         case "subtitle":
         case "title":
         case "metric":       return emphasisFontWeight
@@ -198,9 +209,6 @@ Item {
         defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
         defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
         defaultFontDescent      = ScreenToolsController.defaultFontDescent(defaultFontPointSize)
-        smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
-        mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
-        largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
         minTouchPixels          = Math.round(minTouchMillimeters * realPixelDensity)
         if (minTouchPixels / Screen.height > 0.15) {
             // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing

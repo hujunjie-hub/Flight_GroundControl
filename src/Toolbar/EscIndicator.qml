@@ -86,13 +86,13 @@ Item {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 color:                      qgcPal.text
                 text:                       _onlineMotorCount.toString()
-                font.pointSize:             ScreenTools.smallFontPointSize
+                font.pointSize:             ScreenTools.captionFontPointSize
             }
 
             QGCLabel {
                 color:          getEscStatusColor()
                 text:           _escHealthy ? qsTr("OK") : qsTr("ERR")
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
             }
         }
     }

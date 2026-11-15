@@ -185,7 +185,7 @@ Rectangle {
                        width:       flick.width
                        focus:       true
                        font.family: ScreenTools.fixedFontFamily
-                       font.pointSize: ScreenTools.defaultFontPointSize
+                       font.pointSize: ScreenTools.bodyFontPointSize
                        onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
                     }
                 }
@@ -366,7 +366,7 @@ Rectangle {
                 GroupBox { title: "Controls preview"
                 Column {
                     id: ctlPrevColumn
-                    property real _colWidth: ScreenTools.defaultFontPointSize * 18
+                    property real _colWidth: ScreenTools.bodyFontPointSize * 18
                     property real _height: _colWidth*0.15
                     property color _bkColor: qgcPal.window
                     spacing: 10
@@ -471,14 +471,14 @@ Rectangle {
                             width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text:   qsTr("Hover Button")
-                            radius: ScreenTools.defaultFontPointSize
+                            radius: ScreenTools.bodyFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                         }
                         ToolStripHoverButton {
                             width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text:   qsTr("Hover Button")
-                            radius: ScreenTools.defaultFontPointSize
+                            radius: ScreenTools.bodyFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                             enabled: false
                         }

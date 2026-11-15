@@ -97,7 +97,7 @@ Rectangle {
                 Layout.fillWidth:    true
                 Layout.maximumWidth: _labelWidth + _textFieldWidth
                 wrapMode:            Text.WordWrap
-                font.pointSize:      ScreenTools.smallFontPointSize
+                font.pointSize:      ScreenTools.captionFontPointSize
                 text:                qsTr("Note: Home altitude is not modified.")
             }
 
@@ -137,7 +137,7 @@ Rectangle {
             QGCLabel {
                 Layout.fillWidth: true
                 wrapMode:         Text.WordWrap
-                font.pointSize:   ScreenTools.smallFontPointSize
+                font.pointSize:   ScreenTools.captionFontPointSize
                 text:             qsTr("Home position must be set to reposition the mission.")
                 visible:          !_hasHome
             }
@@ -287,7 +287,7 @@ Rectangle {
             QGCLabel {
                 Layout.fillWidth: true
                 wrapMode:         Text.WordWrap
-                font.pointSize:   ScreenTools.smallFontPointSize
+                font.pointSize:   ScreenTools.captionFontPointSize
                 text:             qsTr("Home position must be set to rotate the mission.")
                 visible:          !_hasHome
             }
@@ -314,7 +314,7 @@ Rectangle {
                 Layout.fillWidth:    true
                 Layout.maximumWidth: _labelWidth + _textFieldWidth
                 wrapMode:            Text.WordWrap
-                font.pointSize:      ScreenTools.smallFontPointSize
+                font.pointSize:      ScreenTools.captionFontPointSize
                 text:                qsTr("Note: Complex items are rotated by moving their reference coordinate: their geometry and orientation are not changed.")
             }
 

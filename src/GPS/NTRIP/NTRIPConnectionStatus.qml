@@ -38,7 +38,7 @@ ColumnLayout {
         text:             qsTr("Connected but no data received recently")
         color:            qgcPal.colorOrange
         wrapMode:         Text.WordWrap
-        font.pointSize:   ScreenTools.smallFontPointSize
+        font.pointSize:   ScreenTools.captionFontPointSize
         visible:          root._dataStale && root._connected
         Layout.fillWidth: true
     }
@@ -65,7 +65,7 @@ ColumnLayout {
 
         QGCLabel {
             text: qsTr("Message Types")
-            font.pointSize: ScreenTools.smallFontPointSize
+            font.pointSize: ScreenTools.captionFontPointSize
             color: qgcPal.colorGrey
         }
 
@@ -95,7 +95,7 @@ ColumnLayout {
                         id: chipLabel
                         anchors.centerIn: parent
                         text: qsTr("%1 × %2").arg(chip._idLabel).arg(chip.modelData[1])
-                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.captionFontPointSize
                     }
                 }
             }
@@ -114,7 +114,7 @@ ColumnLayout {
         text:           qsTr("Warning: Data usage: %1 — consider connection costs").arg(root._stats ? root._formatDataSize(root._stats.bytesReceived) : "")
         wrapMode:       Text.WordWrap
         color:          qgcPal.warningText
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.captionFontPointSize
         visible:        root._connected
                         && root._stats && root._stats.bytesReceived > root._dataWarningLimitBytes
         Layout.fillWidth: true
@@ -139,7 +139,7 @@ ColumnLayout {
         text:           root._ntripMgr ? root._ntripMgr.securityWarning : ""
         wrapMode:       Text.WordWrap
         color:          qgcPal.colorOrange
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.captionFontPointSize
         visible:        root._connected
                         && root._ntripMgr
                         && root._ntripMgr.securityWarning !== ""
@@ -150,7 +150,7 @@ ColumnLayout {
         text:           (root._ntripMgr ? root._ntripMgr.statusMessage : "")
         wrapMode:       Text.WordWrap
         color:          qgcPal.colorRed
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.captionFontPointSize
         visible:        root._status === NTRIPManager.Error
                         && (root._ntripMgr ? root._ntripMgr.statusMessage : "") !== ""
         Layout.fillWidth: true

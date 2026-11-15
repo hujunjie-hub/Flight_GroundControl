@@ -65,7 +65,7 @@ Rectangle {
                 text: qsTr("Above camera commands will take affect immediately upon mission start.")
                 wrapMode: Text.WordWrap
                 horizontalAlignment: Text.AlignHCenter
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 visible: cameraSection.visible && cameraSection.checked
             }
         }

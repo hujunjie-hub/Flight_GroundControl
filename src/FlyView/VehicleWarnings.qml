@@ -23,7 +23,7 @@ Rectangle {
             anchors.horizontalCenter:   parent.horizontalCenter
             visible:                    _noGPSLockVisible
             color:                      "black"
-            font.pointSize:             ScreenTools.largeFontPointSize
+            font.pointSize:             ScreenTools.titleFontPointSize
             text:                       qsTr("No GPS Lock for Vehicle")
         }
 
@@ -31,7 +31,7 @@ Rectangle {
             anchors.horizontalCenter:   parent.horizontalCenter
             visible:                    _prearmErrorVisible
             color:                      "black"
-            font.pointSize:             ScreenTools.largeFontPointSize
+            font.pointSize:             ScreenTools.titleFontPointSize
             text:                       _activeVehicle ? _activeVehicle.prearmError : ""
         }
 
@@ -42,7 +42,7 @@ Rectangle {
             horizontalAlignment:        Text.AlignHCenter
             wrapMode:                   Text.WordWrap
             color:                      "black"
-            font.pointSize:             ScreenTools.largeFontPointSize
+            font.pointSize:             ScreenTools.titleFontPointSize
             text:                       qsTr("The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure.")
         }
     }

@@ -66,7 +66,7 @@ Item {
             QGCLabel {
                 id:                     gimbalIdLabel
                 anchors.horizontalCenter: parent.horizontalCenter
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   control.gimbalName(activeGimbal)
                 color:                  qgcPal.text
                 visible:                multiGimbalSetup
@@ -83,7 +83,7 @@ Item {
 
             QGCLabel {
                 id:                     statusLabel
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   activeGimbal && activeGimbal.retracted ?
                                             qsTr("Retracted") :
                                             (activeGimbal && activeGimbal.yawLock ? qsTr("Yaw locked") : qsTr("Yaw follow"))
@@ -93,13 +93,13 @@ Item {
             }
             QGCLabel {
                 id:             pitchLabel
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.valueString : ""
                 color:          qgcPal.text
             }
             QGCLabel {
                 id:             panLabel
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 text:           activeGimbal ?
                                     (showAzimuth ?
                                         (qsTr("Az: ") + activeGimbal.absoluteYaw.valueString) :

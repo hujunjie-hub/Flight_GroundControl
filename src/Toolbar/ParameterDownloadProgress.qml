@@ -49,7 +49,7 @@ Item {
         QGCLabel {
             anchors.centerIn:   parent
             text:               qsTr("Downloading")
-            font.pointSize:     ScreenTools.largeFontPointSize
+            font.pointSize:     ScreenTools.titleFontPointSize
         }
 
         QGCLabel {

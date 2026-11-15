@@ -19,7 +19,7 @@ ColumnLayout {
 
     QGCLabel {
         text: control.heading
-        font.pointSize: ScreenTools.largeFontPointSize
+        font.pointSize: ScreenTools.titleFontPointSize
         visible: control.heading !== ""
     }
 

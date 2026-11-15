@@ -43,7 +43,7 @@ MapQuickItem {
             anchors.top:                parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _root.map
-            font.pointSize:             ScreenTools.defaultFontPointSize
+            font.pointSize:             ScreenTools.bodyFontPointSize
             visible:                    !isNaN(altitude)
             text:                       visible ? QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(altitude, 0) + "\n" + callsign : ""
         }

@@ -40,7 +40,7 @@ Rectangle {
             anchors.left:       parent.left
             anchors.right:      parent.right
             wrapMode:           Text.WordWrap
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.captionFontPointSize
             text:               controller.masterController.controllerVehicle.supports.missionRelativeAltitudeOnly
                                 ? qsTr("Flight can transfer rally points. Automatic return still uses Home.")
                                 : qsTr("Rally Points provide alternate landing points when performing a Return to Launch (RTL).")

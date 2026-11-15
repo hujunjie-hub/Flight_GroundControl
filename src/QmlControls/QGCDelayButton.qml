@@ -20,7 +20,7 @@ DelayButton {
     property real   backRadius:     ScreenTools.defaultBorderRadius
     property real   heightFactor:   0.5
     property real   fontWeight:     Font.Normal // default for qml Text
-    property real   pointSize:      ScreenTools.defaultFontPointSize
+    property real   pointSize:      ScreenTools.bodyFontPointSize
     property int    defaultDelay:   500
 
     property alias wrapMode:            text.wrapMode
@@ -91,7 +91,7 @@ DelayButton {
             text:                       qsTr("Hold to Confirm")
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
-            font.pointSize:             ScreenTools.smallFontPointSize
+            font.pointSize:             ScreenTools.captionFontPointSize
             color:                      control._showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
             visible:                    control._showHelp
         }

@@ -44,7 +44,7 @@ ColumnLayout {
     QGCLabel {
         Layout.fillWidth: true
         text: root._language.shortDescription
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.captionFontPointSize
         wrapMode: Text.WordWrap
     }
 

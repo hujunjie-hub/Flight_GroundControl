@@ -171,7 +171,7 @@ Item {
             font.family:    ScreenTools.normalFontFamily
         }
         Text {
-            text:           ScreenTools.defaultFontPointSize
+            text:           ScreenTools.bodyFontPointSize
             color:          qgcPal.text
             font.family:    ScreenTools.normalFontFamily
         }

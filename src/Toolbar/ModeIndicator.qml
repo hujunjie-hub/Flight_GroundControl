@@ -10,7 +10,7 @@ QGCComboBox {
     anchors.verticalCenter: parent.verticalCenter
     alternateText:          _activeVehicle ? _activeVehicle.flightMode : ""
     model:                  _flightModes
-    font.pointSize:         ScreenTools.mediumFontPointSize
+    font.pointSize:         ScreenTools.subtitleFontPointSize
     currentIndex:           -1
     sizeToContents:         true
 

@@ -17,8 +17,8 @@ ColumnLayout {
     property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder
     property string outerBorderColor    : defaultBorderColor
 
-    property string defaultHeadingPointSize:    ScreenTools.defaultFontPointSize + 1
-    property string headingPointSize:           defaultHeadingPointSize
+    property real defaultHeadingPointSize:      ScreenTools.sectionHeadingFontPointSize
+    property real headingPointSize:             defaultHeadingPointSize
 
     property string heading
     property string headingDescription
@@ -52,7 +52,7 @@ ColumnLayout {
             Layout.fillWidth:   true
             text:               headingDescription
             wrapMode:           Text.WordWrap
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.captionFontPointSize
             visible:            headingDescription !== ""
         }
     }

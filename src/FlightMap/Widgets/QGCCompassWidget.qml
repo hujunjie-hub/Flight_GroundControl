@@ -22,7 +22,7 @@ Rectangle {
 
     property real _defaultSize:                 usedByMultipleVehicleList ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 10
     property real _sizeRatio:                   (usedByMultipleVehicleList || ScreenTools.isTinyScreen) ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:                    ScreenTools.defaultFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.defaultFontPointSize * _sizeRatio
+    property int  _fontSize:                    ScreenTools.bodyFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.bodyFontPointSize * _sizeRatio
     readonly property bool _liveVehicle:        vehicle && !vehicle.vehicleLinkManager.communicationLost
     property real _heading:                     _liveVehicle ? vehicle.heading.rawValue : NaN
     property real _headingToHome:               vehicle ? vehicle.headingToHome.rawValue : 0
@@ -128,7 +128,7 @@ Rectangle {
     QGCLabel {
         anchors.horizontalCenter:   parent.horizontalCenter
         y:                          size * headingLabelOffset
-        font.pointSize:             Math.max(6, ScreenTools.defaultFontPointSize * dialScale)
+        font.pointSize:             Math.max(6, ScreenTools.bodyFontPointSize * dialScale)
         text:                       !usedByMultipleVehicleList ? (isFinite(_heading) ? _heading.toFixed(0) + "°" : qsTr("—")) : ""
         horizontalAlignment:        Text.AlignHCenter
     }

@@ -68,7 +68,7 @@ ToolIndicatorPage {
 
                 SettingsGroupLayout {
                     heading:            qsTr("Motor %1 %2").arg(object.id.rawValue + 1).arg( _isThisMotorHealthy ? "" : qsTr("- OFFLINE"))
-                    headingPointSize:   ScreenTools.defaultFontPointSize * ScreenTools.smallFontPointRatio
+                    headingPointSize:   ScreenTools.bodyFontPointSize * ScreenTools.smallFontPointRatio
                     outerBorderColor:   _isThisMotorHealthy ? QGroundControl.globalPalette.colorGreen : QGroundControl.globalPalette.colorRed
 
                     property bool _isThisMotorHealthy: _isMotorHealthy(index)

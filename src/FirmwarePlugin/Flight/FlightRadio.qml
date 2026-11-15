@@ -188,7 +188,7 @@ SetupPage {
                         Layout.fillWidth: true
                         QGCLabel {
                             text: qsTr("摇杆实时监视")
-                            font.pointSize: ScreenTools.defaultFontPointSize
+                            font.pointSize: ScreenTools.bodyFontPointSize
                         }
                         Item { Layout.fillWidth: true }
                         QGCLabel {

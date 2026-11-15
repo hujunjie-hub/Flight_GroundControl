@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the shared QML typography contract for Flight GroundControl."""
+"""Enforce the project-wide QML typography contract."""
 
 from __future__ import annotations
 
@@ -12,24 +12,38 @@ from pathlib import Path
 @dataclass(frozen=True)
 class Violation:
     file: str
+    line: int
     message: str
 
 
-def _has(content: str, pattern: str) -> bool:
-    return re.search(pattern, content, re.MULTILINE) is not None
+LEGACY_FONT_TOKEN = re.compile(
+    r"\b(?:ScreenTools|root\.screenTools)\.(?:default|small|medium|large)FontPointSize\b"
+)
+FONT_FAMILY = re.compile(r"\bfont\.family\s*:\s*(.*?)\s*$")
+FONT_POINT_SIZE = re.compile(r"\bfont\.pointSize\s*:\s*(.*?)\s*$")
+FONT_PIXEL_SIZE = re.compile(r"\bfont\.pixelSize\s*:")
+DYNAMIC_SCALE_EXCEPTIONS = {
+    "src/AppSettings/DebugWindow.qml",
+    "src/FlightMap/Widgets/CompassDial.qml",
+    "src/FlightMap/Widgets/FlightTelemetryCompass.qml",
+    "src/FlightMap/Widgets/QGCCompassWidget.qml",
+}
+POINT_SIZE_PREVIEW_EXCEPTIONS = {"src/AppSettings/DebugWindow.qml"}
 
 
-def analyze_file(path: Path) -> list[Violation]:
+def _relative(path: Path, root: Path) -> str:
     try:
-        content = path.read_text(encoding="utf-8")
-    except OSError as error:
-        return [Violation(str(path), f"cannot read file: {error}")]
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
+
+def _contract_violations(path: Path, content: str) -> list[Violation]:
     issues: list[Violation] = []
 
     def require(condition: bool, message: str) -> None:
         if not condition:
-            issues.append(Violation(str(path), message))
+            issues.append(Violation(str(path), 1, message))
 
     name = path.name
     if name == "ScreenTools.qml":
@@ -39,14 +53,38 @@ def analyze_file(path: Path) -> list[Violation]:
             "secondaryFontPointSize",
             "compactBodyFontPointSize",
             "bodyFontPointSize",
+            "bodyEmphasisFontPointSize",
+            "captionEmphasisFontPointSize",
+            "sectionHeadingFontPointSize",
             "subtitleFontPointSize",
             "titleFontPointSize",
             "metricFontPointSize",
             "heroFontPointSize",
+            "worldOverlayFontPointSize",
             "fontPointSizeForRole",
             "fontWeightForRole",
         ):
             require(token in content, f"missing semantic typography token/function: {token}")
+        require(
+            "readonly property real smallFontPointSize:  captionFontPointSize" in content,
+            "legacy small font size must remain a compatibility alias to caption",
+        )
+        require(
+            "readonly property real mediumFontPointSize: subtitleFontPointSize" in content,
+            "legacy medium font size must remain a compatibility alias to subtitle",
+        )
+        require(
+            "readonly property real largeFontPointSize:  titleFontPointSize" in content,
+            "legacy large font size must remain a compatibility alias to title",
+        )
+        require(
+            "readonly property real subtitleFontPointSize:     defaultFontPointSize * mediumFontPointRatio" in content,
+            "subtitle font size must derive from the base size, not the legacy alias",
+        )
+        require(
+            "readonly property real titleFontPointSize:        defaultFontPointSize * largeFontPointRatio" in content,
+            "title font size must derive from the base size, not the legacy alias",
+        )
 
     elif name == "QGCLabel.qml":
         require('property string typographyRole: "body"' in content, "QGCLabel must expose typographyRole")
@@ -54,19 +92,19 @@ def analyze_file(path: Path) -> list[Violation]:
         require("ScreenTools.fontWeightForRole(typographyRole)" in content, "QGCLabel must use semantic weight roles")
         require("ScreenTools.normalFontFamily" in content, "QGCLabel must use the application font family")
         require("Font.PreferDefaultHinting" in content, "QGCLabel must use the shared hinting preference")
-        require(_has(content, r"antialiasing:\s*true"), "QGCLabel antialiasing must remain enabled")
+        require(re.search(r"antialiasing:\s*true", content) is not None, "QGCLabel antialiasing must remain enabled")
 
     elif name == "QGCRadioButton.qml":
         require(
-            _has(content, r"font\.family:\s*control\.font\.family"),
+            re.search(r"font\.family:\s*control\.font\.family", content) is not None,
             "radio button content must inherit control.font.family",
         )
         require(
-            not _has(content, r"font\.family:\s*control\.font\.pointSize"),
+            re.search(r"font\.family:\s*control\.font\.pointSize", content) is None,
             "radio button font.family must never be bound to pointSize",
         )
         require("Font.PreferDefaultHinting" in content, "radio button must use shared hinting preference")
-        require(_has(content, r"antialiasing:\s*true"), "radio button text antialiasing must remain enabled")
+        require(re.search(r"antialiasing:\s*true", content) is not None, "radio button text antialiasing must remain enabled")
 
     elif name == "QGCSlider.qml":
         require('typographyRole: "caption"' in content, "QGCSlider labels must use the shared caption role")
@@ -86,7 +124,11 @@ def analyze_file(path: Path) -> list[Violation]:
 
     elif name == "FlightTelemetry.qml":
         require(
-            not _has(content, r"font\.(?:pointSize|pixelSize)\s*:\s*ScreenTools\.(?:default|large|small|medium)FontPointSize\s*\*"),
+            re.search(
+                r"font\.(?:pointSize|pixelSize)\s*:\s*ScreenTools\.(?:default|large|small|medium)FontPointSize\s*\*",
+                content,
+            )
+            is None,
             "FlightTelemetry must use semantic ScreenTools tokens instead of inline font-size multipliers",
         )
         require('typographyRole: "hero"' in content, "FlightTelemetry hero values must use the shared hero role")
@@ -109,14 +151,74 @@ def analyze_file(path: Path) -> list[Violation]:
     return issues
 
 
-def main() -> int:
-    files = [Path(argument) for argument in sys.argv[1:]]
-    if not files:
-        files = [Path(line.strip()) for line in sys.stdin if line.strip()]
+def _scan_qml(path: Path, root: Path) -> list[Violation]:
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as error:
+        return [Violation(str(path), 1, f"cannot read file: {error}")]
 
-    violations = [violation for path in files for violation in analyze_file(path)]
-    for violation in violations:
-        print(f"{violation.file}: error: {violation.message}")
+    relative = _relative(path, root)
+    # Remove block comments before scanning declarations; line comments are stripped per line.
+    scan_content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+    issues = _contract_violations(path, content)
+
+    for line_number, raw_line in enumerate(scan_content.splitlines(), start=1):
+        line = raw_line.split("//", 1)[0].strip()
+        if not line:
+            continue
+
+        if relative != "src/QmlControls/ScreenTools.qml" and LEGACY_FONT_TOKEN.search(line):
+            issues.append(Violation(relative, line_number, "use a semantic ScreenTools font token; legacy size aliases are deprecated"))
+
+        if FONT_PIXEL_SIZE.search(line):
+            issues.append(Violation(relative, line_number, "font.pixelSize is not allowed; use a point-size semantic token for DPI scaling"))
+
+        family_match = FONT_FAMILY.search(line)
+        if family_match:
+            value = family_match.group(1).strip().rstrip(";")
+            allowed = (
+                value in {
+                    "ScreenTools.normalFontFamily",
+                    "ScreenTools.fixedFontFamily",
+                    "normalFontFamily",
+                    "fixedFontFamily",
+                }
+                or value.endswith(".font.family")
+                or "ScreenTools.normalFontFamily" in value
+                or "ScreenTools.fixedFontFamily" in value
+            )
+            if not allowed:
+                issues.append(Violation(relative, line_number, f"font.family must inherit ScreenTools or a parent/control font, got: {value}"))
+
+        point_match = FONT_POINT_SIZE.search(line)
+        if point_match:
+            value = point_match.group(1).strip().rstrip(";")
+            numeric_literal = re.fullmatch(r"[+-]?\d+(?:\.\d+)?", value) is not None
+            if numeric_literal and relative not in POINT_SIZE_PREVIEW_EXCEPTIONS:
+                issues.append(Violation(relative, line_number, f"hard-coded font.pointSize is not allowed: {value}"))
+            if "*" in value and relative not in DYNAMIC_SCALE_EXCEPTIONS:
+                issues.append(Violation(relative, line_number, "page-local font-size multipliers are not allowed; use a semantic role/token"))
+
+    return issues
+
+
+def main() -> int:
+    root = Path.cwd()
+    if "--all" in sys.argv[1:]:
+        qml_files = sorted((root / "src").rglob("*.qml"))
+        contract_files = [
+            root / "src/QGCApplication.cc",
+            root / "src/QmlControls/ScreenToolsController.cc",
+        ]
+        paths = qml_files + [path for path in contract_files if path.exists()]
+    else:
+        paths = [Path(argument) for argument in sys.argv[1:] if argument != "--all"]
+        if not paths:
+            paths = [Path(line.strip()) for line in sys.stdin if line.strip()]
+
+    violations = [issue for path in paths for issue in _scan_qml(path, root)] if paths else []
+    for issue in violations:
+        print(f"{issue.file}:{issue.line}: error: {issue.message}")
 
     if violations:
         print(f"Found {len(violations)} QML typography violation(s).", file=sys.stderr)

@@ -58,7 +58,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     font.bold: true
                     font.family: ScreenTools.fixedFontFamily
-                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.pointSize: ScreenTools.bodyFontPointSize
                     text: parent.display ?? ""
                 }
 
@@ -186,7 +186,7 @@ Item {
                     color: root._levelColor(parent.level)
                     elide: Text.ElideRight
                     font.family: ScreenTools.fixedFontFamily
-                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.pointSize: ScreenTools.bodyFontPointSize
                     text: parent.display ?? ""
                 }
             }

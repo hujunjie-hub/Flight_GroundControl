@@ -203,9 +203,9 @@ Item {
             labelBackgroundVisible: false
             labelTextColor: qgcPal.text
             axisXLabelFont.family: ScreenTools.fixedFontFamily
-            axisXLabelFont.pointSize: ScreenTools.smallFontPointSize
+            axisXLabelFont.pointSize: ScreenTools.captionFontPointSize
             axisYLabelFont.family: ScreenTools.fixedFontFamily
-            axisYLabelFont.pointSize: ScreenTools.smallFontPointSize
+            axisYLabelFont.pointSize: ScreenTools.captionFontPointSize
         }
 
         axisX: ValueAxis {

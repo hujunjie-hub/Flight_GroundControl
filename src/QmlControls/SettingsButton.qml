@@ -45,7 +45,7 @@ Button {
             text:                   control.text
             color:                  control.textColor
             font.family:            ScreenTools.normalFontFamily
-            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.pointSize:         ScreenTools.bodyFontPointSize
             font.weight:            Font.Normal
             horizontalAlignment:    QGCLabel.AlignLeft
         }

@@ -8,7 +8,7 @@ import QGroundControl.Controls
 ColumnLayout {
     property var    instrumentValueData:        null
 
-    property var    _rgFontSizes:               [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
+    property var    _rgFontSizes:               [ ScreenTools.bodyFontPointSize, ScreenTools.captionFontPointSize, ScreenTools.subtitleFontPointSize, ScreenTools.titleFontPointSize ]
     property var    _rgFontSizeRatios:          [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
     property real   _doubleDescent:             ScreenTools.defaultFontDescent * 2
     property real   _tightDefaultFontHeight:    ScreenTools.defaultFontPixelHeight - _doubleDescent
@@ -56,7 +56,7 @@ ColumnLayout {
     QGCLabel {
         Layout.alignment:   Qt.AlignVCenter
         height:             _tightHeight
-        font.pointSize:     ScreenTools.smallFontPointSize
+        font.pointSize:     ScreenTools.captionFontPointSize
         text:               instrumentValueData.text
         color:              _color
         opacity:            instrumentValueData.currentOpacity

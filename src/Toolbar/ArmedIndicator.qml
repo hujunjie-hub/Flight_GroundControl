@@ -11,7 +11,7 @@ QGCComboBox {
     anchors.verticalCenter: parent.verticalCenter
     alternateText:          _armed ? qsTr("Armed") : qsTr("Disarmed")
     model:                  [ qsTr("Arm"), qsTr("Disarm") ]
-    font.pointSize:         ScreenTools.mediumFontPointSize
+    font.pointSize:         ScreenTools.subtitleFontPointSize
     currentIndex:           -1
     sizeToContents:         true
 

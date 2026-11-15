@@ -119,7 +119,7 @@ ToolIndicatorPage {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: qsTr("%1 Version").arg(QGroundControl.appName)
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: QGCLabel.WordWrap
                 }
 
@@ -127,7 +127,7 @@ ToolIndicatorPage {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: QGroundControl.qgcVersion
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: QGCLabel.WrapAnywhere
                 }
 
@@ -135,7 +135,7 @@ ToolIndicatorPage {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: QGroundControl.qgcAppDate
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: QGCLabel.WrapAnywhere
                     visible: QGroundControl.qgcDailyBuild
 

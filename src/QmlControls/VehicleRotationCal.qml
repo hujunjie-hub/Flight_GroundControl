@@ -86,7 +86,7 @@ Rectangle {
             height:                 parent.height
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignBottom
-            font.pointSize:         ScreenTools.mediumFontPointSize
+            font.pointSize:         ScreenTools.subtitleFontPointSize
         }
     }
 }

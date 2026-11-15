@@ -17,7 +17,7 @@ SetupPage {
 
             QGCLabel {
                 text: qsTr("板载存储")
-                font.pointSize: ScreenTools.largeFontPointSize
+                font.pointSize: ScreenTools.titleFontPointSize
             }
 
             Rectangle {
@@ -35,7 +35,7 @@ SetupPage {
 
                     QGCLabel {
                         text: qsTr("日志管理暂不可用")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                        font.pointSize: ScreenTools.subtitleFontPointSize
                     }
 
                     QGCLabel {

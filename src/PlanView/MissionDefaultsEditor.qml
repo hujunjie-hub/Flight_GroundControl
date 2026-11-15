@@ -153,7 +153,7 @@ Rectangle {
             QGCLabel {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 text: qsTr("The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.")
             }
 

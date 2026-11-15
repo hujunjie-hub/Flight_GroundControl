@@ -25,7 +25,7 @@ SetupPage {
             width: availableWidth
             spacing: 12
 
-            QGCLabel { text: qsTr("Flight Safety"); font.pointSize: ScreenTools.largeFontPointSize }
+            QGCLabel { text: qsTr("Flight Safety"); font.pointSize: ScreenTools.titleFontPointSize }
             GridLayout {
                 Layout.fillWidth: true
                 columns: availableWidth >= 760 ? 3 : 1

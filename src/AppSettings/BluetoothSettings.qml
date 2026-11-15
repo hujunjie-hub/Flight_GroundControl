@@ -387,7 +387,7 @@ ColumnLayout {
 
             QGCLabel {
                 text: rssiDisplay.hasConnected ? qsTr("(Connected)") : qsTr("(Last Scan)")
-                font.pointSize: root.screenTools.smallFontPointSize
+                font.pointSize: root.screenTools.captionFontPointSize
                 color: root.palette.buttonText
             }
         }
@@ -443,7 +443,7 @@ ColumnLayout {
         visible:          root.isBleMode && showBleConfig.checked
         wrapMode:         Text.WordWrap
         Layout.fillWidth: true
-        font.pointSize:   root.screenTools.smallFontPointSize
+        font.pointSize:   root.screenTools.captionFontPointSize
         color:            root.palette.buttonText
     }
 
@@ -579,14 +579,14 @@ ColumnLayout {
                         QGCLabel {
                             visible:        deviceBtn.isPaired
                             text:           qsTr("Paired")
-                            font.pointSize: root.screenTools.smallFontPointSize
+                            font.pointSize: root.screenTools.captionFontPointSize
                             color:          root.palette.buttonText
                         }
 
                         QGCLabel {
                             visible:        deviceBtn.hasRssi
                             text:           deviceBtn.rssiVal + " dBm"
-                            font.pointSize: root.screenTools.smallFontPointSize
+                            font.pointSize: root.screenTools.captionFontPointSize
                             color:          root.palette.buttonText
                         }
                     }
@@ -620,7 +620,7 @@ ColumnLayout {
             Layout.fillWidth:    true
             horizontalAlignment: Text.AlignHCenter
             wrapMode:            Text.WordWrap
-            font.pointSize:      root.screenTools.smallFontPointSize
+            font.pointSize:      root.screenTools.captionFontPointSize
             color:               root.palette.buttonText
         }
     }

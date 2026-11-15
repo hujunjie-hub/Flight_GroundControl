@@ -56,7 +56,7 @@ Rectangle {
         QGCLabel {
             Layout.alignment:   Qt.AlignHCenter
             text:               qsTr("Terrain Load Progress")
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.captionFontPointSize
         }
 
         Rectangle {

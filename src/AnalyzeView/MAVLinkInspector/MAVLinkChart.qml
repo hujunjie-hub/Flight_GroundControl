@@ -89,7 +89,7 @@ ColumnLayout {
                 QGCLabel {
                     text: modelData.label
                     color: index < _graphsView.seriesList.length ? _graphsView.seriesList[index].color : qgcPal.text
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
             }
         }
@@ -118,9 +118,9 @@ ColumnLayout {
             labelBackgroundVisible: false
             labelTextColor: qgcPal.text
             axisXLabelFont.family: ScreenTools.fixedFontFamily
-            axisXLabelFont.pointSize: ScreenTools.smallFontPointSize
+            axisXLabelFont.pointSize: ScreenTools.captionFontPointSize
             axisYLabelFont.family: ScreenTools.fixedFontFamily
-            axisYLabelFont.pointSize: ScreenTools.smallFontPointSize
+            axisYLabelFont.pointSize: ScreenTools.captionFontPointSize
         }
 
         axisX: ValueAxis {
@@ -145,7 +145,7 @@ ColumnLayout {
                         }
                         color: qgcPal.text
                         font.family: ScreenTools.fixedFontFamily
-                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.captionFontPointSize
                     }
                 }
             }

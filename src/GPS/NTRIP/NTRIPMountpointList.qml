@@ -64,7 +64,7 @@ QGCListView {
                     QGCLabel {
                         visible:    entry.mountpoint === root.selectedMountpoint
                         text:       qsTr("(selected)")
-                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.captionFontPointSize
                         color:      qgcPal.buttonHighlightText
                     }
                 }
@@ -79,7 +79,7 @@ QGCListView {
                         if (entry.distanceKm >= 0) parts.push(entry.distanceKm.toFixed(1) + " km")
                         return parts.join(" · ")
                     }
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     color:  entry.mountpoint === root.selectedMountpoint
                                 ? qgcPal.buttonHighlightText : qgcPal.colorGrey
                 }

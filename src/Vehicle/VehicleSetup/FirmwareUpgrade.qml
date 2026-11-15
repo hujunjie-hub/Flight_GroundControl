@@ -588,7 +588,7 @@ SetupPage {
                 Layout.preferredWidth:              parent.width
                 Layout.fillHeight:  true
                 readOnly:           true
-                font.pointSize:     ScreenTools.defaultFontPointSize
+                font.pointSize:     ScreenTools.bodyFontPointSize
                 textFormat:         TextEdit.RichText
                 text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
                 color:              qgcPal.text

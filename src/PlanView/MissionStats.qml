@@ -29,7 +29,7 @@ Rectangle {
     property bool _currentItemIsVTOLTakeoff: _currentMissionItemValid && _currentMissionItem.command == 84
     property bool _missionValid: missionItems !== undefined
 
-    property real _dataFontSize: ScreenTools.defaultFontPointSize
+    property real _dataFontSize: ScreenTools.bodyFontPointSize
     property real _largeValueWidth: ScreenTools.defaultFontPixelWidth * 8
     property real _mediumValueWidth: ScreenTools.defaultFontPixelWidth * 4
     property real _smallValueWidth: ScreenTools.defaultFontPixelWidth * 3
@@ -97,7 +97,7 @@ Rectangle {
                 QGCLabel {
                     text: qsTr("Selected Waypoint")
                     Layout.columnSpan: 8
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
 
                 QGCLabel { text: qsTr("Alt diff:"); font.pointSize: _dataFontSize; }
@@ -150,7 +150,7 @@ Rectangle {
                 QGCLabel {
                     text: qsTr("Total Mission")
                     Layout.columnSpan: 5
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
 
                 QGCLabel { text: qsTr("Distance:"); font.pointSize: _dataFontSize; }
@@ -186,7 +186,7 @@ Rectangle {
                 QGCLabel {
                     text: qsTr("Battery")
                     Layout.columnSpan: 3
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
 
                 QGCLabel { text: qsTr("Batteries required:"); font.pointSize: _dataFontSize; }

@@ -27,7 +27,7 @@ FlightMap {
     property real _margins: ScreenTools.defaultFontPixelWidth * 0.5
 
     property bool _saveRealEstate: ScreenTools.isTinyScreen || ScreenTools.isShortScreen
-    property real _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+    property real _adjustableFontPointSize: _saveRealEstate ? ScreenTools.captionFontPointSize : ScreenTools.bodyFontPointSize
 
     property string _mapAdjustedColor: _map.isSatelliteMap ? "white" : "black"
     property bool _tooManyTiles: QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
@@ -180,7 +180,7 @@ FlightMap {
                     anchors.right: parent.right
                     wrapMode: Text.WordWrap
                     text: tileSet ? tileSet.name : ""
-                    font.pointSize: _saveRealEstate ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
+                    font.pointSize: _saveRealEstate ? ScreenTools.bodyFontPointSize : ScreenTools.subtitleFontPointSize
                     horizontalAlignment: Text.AlignHCenter
                     visible: _defaultSet
                 }
@@ -422,7 +422,7 @@ FlightMap {
                     anchors.right: parent.right
                     wrapMode: Text.WordWrap
                     text: qsTr("Add New Set")
-                    font.pointSize: _saveRealEstate ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
+                    font.pointSize: _saveRealEstate ? ScreenTools.bodyFontPointSize : ScreenTools.subtitleFontPointSize
                     horizontalAlignment: Text.AlignHCenter
                 }
 
@@ -559,7 +559,7 @@ FlightMap {
                                             text: sliderMinZoom.value
                                             anchors.centerIn: parent
                                             font.family: ScreenTools.normalFontFamily
-                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            font.pointSize: ScreenTools.captionFontPointSize
                                             color: qgcPal.buttonText
                                         }
                                     }
@@ -602,7 +602,7 @@ FlightMap {
                                             text: sliderMaxZoom.value
                                             anchors.centerIn: parent
                                             font.family: ScreenTools.normalFontFamily
-                                            font.pointSize: ScreenTools.smallFontPointSize
+                                            font.pointSize: ScreenTools.captionFontPointSize
                                             color: qgcPal.buttonText
                                         }
                                     }

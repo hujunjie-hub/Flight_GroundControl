@@ -150,21 +150,21 @@ Item {
 
                     QGCLabel {
                         text: " | "
-                        font.pointSize:       ScreenTools.largeFontPointSize
+                        font.pointSize:       ScreenTools.titleFontPointSize
                         color:                qgcPal.text
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     QGCLabel {
                         text:                 _vehicle ? _vehicle.id : ""
-                        font.pointSize:       ScreenTools.largeFontPointSize
+                        font.pointSize:       ScreenTools.titleFontPointSize
                         color:                qgcPal.text
                         Layout.alignment:     Qt.AlignHCenter
                     }
 
                     QGCLabel {
                         text: " | "
-                        font.pointSize:       ScreenTools.largeFontPointSize
+                        font.pointSize:       ScreenTools.titleFontPointSize
                         color:                qgcPal.text
                         Layout.alignment:     Qt.AlignHCenter
                     }
@@ -176,7 +176,7 @@ Item {
 
                         FlightModeMenu {
                             Layout.alignment:     Qt.AlignHCenter
-                            font.pointSize:       ScreenTools.largeFontPointSize
+                            font.pointSize:       ScreenTools.titleFontPointSize
                             color:                qgcPal.text
                             currentVehicle:       _vehicle
                         }

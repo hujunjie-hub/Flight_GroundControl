@@ -24,7 +24,7 @@ SetupPage {
 
             QGCLabel {
                 text: vehicleComponent ? vehicleComponent.name : qsTr("配置")
-                font.pointSize: ScreenTools.largeFontPointSize
+                font.pointSize: ScreenTools.titleFontPointSize
             }
 
             QGCLabel {
@@ -52,7 +52,7 @@ SetupPage {
                     QGCLabel {
                         Layout.alignment: Qt.AlignHCenter
                         text: qsTr("页面框架已就位")
-                        font.pointSize: ScreenTools.largeFontPointSize
+                        font.pointSize: ScreenTools.titleFontPointSize
                     }
 
                     QGCLabel {

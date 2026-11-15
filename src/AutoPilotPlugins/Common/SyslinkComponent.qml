@@ -63,7 +63,7 @@ SetupPage {
                         id:                 channelHelp
                         Layout.columnSpan:  radioGrid.columns
                         Layout.fillWidth:   true
-                        font.pointSize:     ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.captionFontPointSize
                         wrapMode:           Text.WordWrap
                         text:               "Channel can be between 0 and 125"
                     }
@@ -88,7 +88,7 @@ SetupPage {
                         id:                 addressHelp
                         Layout.columnSpan:  radioGrid.columns
                         Layout.fillWidth:   true
-                        font.pointSize:     ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.captionFontPointSize
                         wrapMode:           Text.WordWrap
                         text:               qsTr("Address in hex. Default is E7E7E7E7E7.")
                     }

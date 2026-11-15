@@ -56,7 +56,7 @@ Node {
         Text {
             color: "red"
             font.family: ScreenTools.normalFontFamily
-            font.pixelSize: 25
+            font.pointSize: ScreenTools.worldOverlayFontPointSize
             text: vehicle ? Number(vehicle.id) : ""
         }
     }

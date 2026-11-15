@@ -483,7 +483,7 @@ Item {
                     anchors.left:       orientationCalArea.left
                     width:              parent.width
                     wrapMode:           Text.WordWrap
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    font.pointSize:     ScreenTools.subtitleFontPointSize
                     visible:            text !== ""
                 }
 

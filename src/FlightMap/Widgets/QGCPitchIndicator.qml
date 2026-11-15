@@ -11,7 +11,7 @@ Rectangle {
     property real _reticleSlot:     _reticleSpacing + _reticleHeight
     property real _longDash:        size * 0.35
     property real _shortDash:       size * 0.25
-    property real _fontSize:        ScreenTools.defaultFontPointSize * 0.75
+    property real _fontSize:        ScreenTools.bodyFontPointSize * 0.75
 
     height: size
     width:  size

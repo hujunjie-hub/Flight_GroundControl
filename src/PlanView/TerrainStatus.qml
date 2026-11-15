@@ -30,7 +30,7 @@ Rectangle {
         id:                     titleLabel
         anchors.top:            parent.bottom
         width:                  parent.height
-        font.pointSize:         ScreenTools.smallFontPointSize
+        font.pointSize:         ScreenTools.captionFontPointSize
         text:                   qsTr("Height AMSL (%1)").arg(_unitsConversion.appSettingsVerticalDistanceUnitsString)
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
@@ -69,9 +69,9 @@ Rectangle {
                     labelBackgroundVisible:     false
                     labelTextColor:             qgcPal.text
                     axisXLabelFont.family:      ScreenTools.fixedFontFamily
-                    axisXLabelFont.pointSize:   ScreenTools.smallFontPointSize
+                    axisXLabelFont.pointSize:   ScreenTools.captionFontPointSize
                     axisYLabelFont.family:      ScreenTools.fixedFontFamily
-                    axisYLabelFont.pointSize:   ScreenTools.smallFontPointSize
+                    axisYLabelFont.pointSize:   ScreenTools.captionFontPointSize
                 }
 
                 axisX: ValueAxis {

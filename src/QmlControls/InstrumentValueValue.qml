@@ -13,8 +13,8 @@ ColumnLayout {
                                         : QGroundControl.multiVehicleManager.activeVehicle
     property alias  contentWidth:                   label.contentWidth
 
-    property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
-    property var    _rgFontSizeRatios:              [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
+    property var    _rgFontSizes:                   [ ScreenTools.bodyFontPointSize, ScreenTools.captionFontPointSize, ScreenTools.subtitleFontPointSize, ScreenTools.titleFontPointSize ]
+    property var    _rgFontSizeRatios:              [ 1, ScreenTools.captionFontPointSize / ScreenTools.bodyFontPointSize, ScreenTools.subtitleFontPointSize / ScreenTools.bodyFontPointSize, ScreenTools.titleFontPointSize / ScreenTools.bodyFontPointSize ]
     property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
     property real   _tightDefaultFontHeight:        ScreenTools.defaultFontPixelHeight - _doubleDescent
     property var    _rgFontSizeTightHeights:        [ _tightDefaultFontHeight * _rgFontSizeRatios[0] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[1] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[2] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[3] + 2 ]

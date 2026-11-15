@@ -121,7 +121,7 @@ ColumnLayout {
         QGCLabel {
             Layout.fillWidth:   true
             text:               allChecksPassed ? qsTr("(Passed)") : qsTr("In Progress")
-            font.pointSize:     ScreenTools.mediumFontPointSize
+            font.pointSize:     ScreenTools.subtitleFontPointSize
         }
         QGCButton {
             width:              1.2 * ScreenTools.defaultFontPixelHeight

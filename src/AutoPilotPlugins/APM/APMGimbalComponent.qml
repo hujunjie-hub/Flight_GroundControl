@@ -74,7 +74,7 @@ SetupPage {
             text: qsTr("Gimbal settings are not available for this firmware version.")
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pointSize: ScreenTools.titleFontPointSize
             wrapMode: Text.WordWrap
             width: availableWidth
             height: availableHeight

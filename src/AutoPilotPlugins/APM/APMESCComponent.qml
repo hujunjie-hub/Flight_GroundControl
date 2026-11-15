@@ -71,7 +71,7 @@ SetupPage {
 
                     QGCLabel {
                         text: _restartRequired
-                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.captionFontPointSize
                     }
 
                     LabelledFactTextField {

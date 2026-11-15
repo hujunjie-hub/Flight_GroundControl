@@ -35,12 +35,12 @@ SetupPage {
                     visible:                    actuators.mixer.groups.count > 0
                     QGCLabel {
                         text:                   qsTr("Geometry") + (actuators.mixer.title ? ": " + actuators.mixer.title : "")
-                        font.pointSize:         ScreenTools.mediumFontPointSize
+                        font.pointSize:         ScreenTools.subtitleFontPointSize
                         Layout.fillWidth:       true
                     }
                     QGCLabel {
                         text:                   "<a href='"+actuators.mixer.helpUrl+"'>?</a>"
-                        font.pointSize:         ScreenTools.mediumFontPointSize
+                        font.pointSize:         ScreenTools.subtitleFontPointSize
                         visible:                actuators.mixer.helpUrl
                         textFormat:             Text.RichText
                         onLinkActivated: (link) => {
@@ -177,7 +177,7 @@ SetupPage {
                 // actuator testing
                 QGCLabel {
                     text:               qsTr("Actuator Testing")
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    font.pointSize:     ScreenTools.subtitleFontPointSize
                 }
 
                 Rectangle {
@@ -322,7 +322,7 @@ SetupPage {
             Column {
                 QGCLabel {
                     text:               qsTr("Actuator Outputs")
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    font.pointSize:     ScreenTools.subtitleFontPointSize
                     bottomPadding:      ScreenTools.defaultFontPixelHeight
                 }
                 QGCLabel {

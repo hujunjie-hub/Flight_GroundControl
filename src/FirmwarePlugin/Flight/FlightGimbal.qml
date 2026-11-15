@@ -18,7 +18,7 @@ SetupPage {
             width: availableWidth
             spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
-            QGCLabel { text: qsTr("Gimbal"); font.pointSize: ScreenTools.largeFontPointSize }
+            QGCLabel { text: qsTr("Gimbal"); font.pointSize: ScreenTools.titleFontPointSize }
             RowLayout {
                 QGCLabel { text: qsTr("云台设备") }
                 QGCComboBox {

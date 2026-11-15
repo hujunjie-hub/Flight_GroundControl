@@ -75,7 +75,7 @@ Item {
                     return isFinite(gps.hdop.value) ? qsTr("%1 satellites · HDOP %2").arg(gps.count.valueString).arg(gps.hdop.value.toFixed(1))
                                                    : qsTr("%1 satellites").arg(gps.count.valueString)
                 }
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
             }
         }
     }

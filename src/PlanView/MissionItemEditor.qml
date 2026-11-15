@@ -125,7 +125,7 @@ Rectangle {
                 //: Indicator in Plan view to show mission item is not ready for save/send
                 text:               qsTr("?")
                 color:              qgcPal.warningText
-                font.pointSize:     ScreenTools.smallFontPointSize
+                font.pointSize:     ScreenTools.captionFontPointSize
             }
         }
 

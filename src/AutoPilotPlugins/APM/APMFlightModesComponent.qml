@@ -99,7 +99,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:           qsTr("Simple")
-                                font.pointSize: ScreenTools.smallFontPointSize
+                                font.pointSize: ScreenTools.captionFontPointSize
                                 visible:        _customSimpleMode
                             }
                             Repeater {
@@ -114,7 +114,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:           qsTr("Super-Simple")
-                                font.pointSize: ScreenTools.smallFontPointSize
+                                font.pointSize: ScreenTools.captionFontPointSize
                                 visible:        _customSimpleMode
                             }
                             Repeater {

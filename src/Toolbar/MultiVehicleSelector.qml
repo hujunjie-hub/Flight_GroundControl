@@ -37,7 +37,7 @@ RowLayout {
 
         QGCLabel {
             text:               _activeVehicle ? qsTr("Vehicle") + " " + _activeVehicle.id : qsTr("N/A")
-            font.pointSize:     ScreenTools.mediumFontPointSize
+            font.pointSize:     ScreenTools.subtitleFontPointSize
             Layout.alignment:   Qt.AlignCenter
 
             MouseArea {

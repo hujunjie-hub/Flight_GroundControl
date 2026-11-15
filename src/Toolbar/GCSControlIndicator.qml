@@ -102,7 +102,7 @@ Item {
 
                 // Action label
                 QGCLabel {
-                    font.pointSize:     ScreenTools.defaultFontPointSize * 1.1
+                    font.pointSize:     ScreenTools.bodyEmphasisFontPointSize
                     text:               qsTr("GCS ") + requestSysIdRequestingControl + qsTr(" is requesting control")
                     font.bold:          true
                     Layout.columnSpan:  2
@@ -124,7 +124,7 @@ Item {
                 }
                 // Action label
                 QGCLabel {
-                    font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
+                    font.pointSize:         ScreenTools.bodyEmphasisFontPointSize
                     text:                   qsTr("Ignoring automatically in ") + requestProgressTracker.progressLabel + qsTr(" seconds")
                 }
                 QGCButton {
@@ -179,7 +179,7 @@ Item {
 
                 // Action label
                 QGCLabel {
-                    font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
+                    font.pointSize:         ScreenTools.bodyEmphasisFontPointSize
                     text:                   qsTr("Reverting back to takeover not allowed if GCS ") + requestSysIdRequestingControl +
                                             qsTr(" doesn't take control in ") + revertTakeoverProgressTracker.progressLabel +
                                             qsTr(" seconds ...")
@@ -364,7 +364,7 @@ Item {
             id:                     gcsInControlIndicator
             text:                   gcsMain
             font.bold:              true
-            font.pointSize:         ScreenTools.smallFontPointSize * 1.1
+            font.pointSize:         ScreenTools.captionEmphasisFontPointSize
             color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
             anchors.bottom:         parent.bottom
             anchors.bottomMargin:   -margins * 0.7

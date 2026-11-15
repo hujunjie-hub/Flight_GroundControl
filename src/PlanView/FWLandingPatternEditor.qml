@@ -230,7 +230,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Approximate glide slope altitudes.")
             }
 
@@ -239,7 +239,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Actual flight path will vary.")
             }
 
@@ -248,7 +248,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Avoid tailwind on landing.")
             }
         }

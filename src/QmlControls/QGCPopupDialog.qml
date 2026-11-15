@@ -230,7 +230,7 @@ Popup {
                 objectName:         "popupDialog_title"
                 Layout.fillWidth:   true
                 text:               root.title
-                font.pointSize:     ScreenTools.mediumFontPointSize
+                font.pointSize:     ScreenTools.subtitleFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
 

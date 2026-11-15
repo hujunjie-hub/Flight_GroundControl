@@ -197,7 +197,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Actual flight path will vary.")
             }
 
@@ -206,7 +206,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Avoid tailwind on approach to land.")
             }
 
@@ -215,7 +215,7 @@ Rectangle {
                 anchors.right:          parent.right
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 text:                   qsTr("* Ensure landing distance is enough to complete transition.")
             }
         }

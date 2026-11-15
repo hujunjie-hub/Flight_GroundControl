@@ -144,18 +144,18 @@ Rectangle {
 
             QGCLabel {
                 text: qsTr("Altitude (AMSL)")
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
             }
             FactTextField {
                 fact: _root._settingsItem ? _root._settingsItem.plannedHomePositionAltitude : null
                 Layout.fillWidth: true
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 visible: _root._settingsItem && _root._settingsItem.terrainQueryFailed
             }
             QGCLabel {
                 text: _root._settingsItem ? _root._settingsItem.plannedHomePositionAltitude.valueString + " " + _root._settingsItem.plannedHomePositionAltitude.units : ""
                 Layout.fillWidth: true
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 visible: !_root._settingsItem || !_root._settingsItem.terrainQueryFailed
             }
         }
@@ -163,7 +163,7 @@ Rectangle {
         QGCLabel {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
+            font.pointSize: ScreenTools.captionFontPointSize
             text: qsTr("Actual position/alt set by vehicle at flight time.")
             horizontalAlignment: Text.AlignHCenter
             visible: plannedHomePositionSection.checked && _root.missionController.homePositionSet

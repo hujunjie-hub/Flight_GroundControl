@@ -51,7 +51,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 wrapMode:           Text.WordWrap
-                font.pointSize:     myGeoFenceController.supported ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                font.pointSize:     myGeoFenceController.supported ? ScreenTools.captionFontPointSize : ScreenTools.bodyFontPointSize
                 text:               myGeoFenceController.supported ?
                                         qsTr("GeoFencing allows you to set a virtual fence around the area you want to fly in.") :
                                         qsTr("This vehicle does not support GeoFence.")

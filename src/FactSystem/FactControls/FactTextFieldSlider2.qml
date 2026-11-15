@@ -49,7 +49,7 @@ Row {
             QGCLabel {
                 text:                   fact.name
                 font.bold:              true
-                font.pointSize:         ScreenTools.defaultFontPointSize * 1.1
+                font.pointSize:         ScreenTools.bodyEmphasisFontPointSize
                 anchors.verticalCenter: parent.verticalCenter
             }
 

@@ -90,7 +90,7 @@ Item {
         readonly property real number: available && fact && !duration ? fact.value : NaN
         readonly property string displayValue: available && fact && duration ? fact.valueString :
             (isFinite(number) ? (Math.abs(number) < 0.05 ? 0 : number).toLocaleString(Qt.locale(), 'f', 1) : "—")
-        readonly property real fontSize: ScreenTools.defaultFontPointSize * panel._diameter / panel._fontHeight *
+        readonly property real fontSize: ScreenTools.bodyFontPointSize * panel._diameter / panel._fontHeight *
             (primaryValue ? 0.43 : 0.2)
         readonly property real iconGap: primaryValue ? panel._gap : Math.max(3, panel._gap - 1)
         readonly property real unitGap: Math.max(2, panel._gap - 2)

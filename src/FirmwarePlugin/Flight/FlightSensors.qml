@@ -53,7 +53,7 @@ SetupPage {
 
             QGCLabel {
                 text: qsTr("传感器 配置")
-                font.pointSize: ScreenTools.largeFontPointSize
+                font.pointSize: ScreenTools.titleFontPointSize
             }
 
             QGCLabel {

@@ -53,7 +53,7 @@ RowLayout {
         verticalAlignment:  Text.AlignVCenter
         text:               mainStatusText()
         color:              qgcPal.text
-        font.pointSize:     ScreenTools.largeFontPointSize
+        font.pointSize:     ScreenTools.titleFontPointSize
 
         property string _commLostText:      qsTr("Comms Lost")
         property string _readyToFlyText:    qsTr("Ready to Fly")
@@ -165,7 +165,7 @@ RowLayout {
         verticalAlignment:  Text.AlignVCenter
         text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
         color:              qgcPal.text
-        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
+        font.pointSize:     _vehicleInAir ? ScreenTools.titleFontPointSize : ScreenTools.bodyFontPointSize
         visible:            _activeVehicle && _activeVehicle.vtol
 
         QGCMouseArea {

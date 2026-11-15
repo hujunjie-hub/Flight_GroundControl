@@ -41,8 +41,8 @@ SetupPage {
             readonly property string _badCompassCalText: qsTr("The calibration for Compass %1 appears to be poor. ") +
                                                          qsTr("Check the compass position within your vehicle and re-do the calibration.")
 
-            readonly property int sideBarH1PointSize:  ScreenTools.mediumFontPointSize
-            readonly property int mainTextH1PointSize: ScreenTools.mediumFontPointSize // Seems to be unused
+            readonly property int sideBarH1PointSize:  ScreenTools.subtitleFontPointSize
+            readonly property int mainTextH1PointSize: ScreenTools.subtitleFontPointSize // Seems to be unused
 
             readonly property int rotationColumnWidth: 250
 
@@ -849,7 +849,7 @@ SetupPage {
                             anchors.left:       orientationCalArea.left
                             width:              parent.width
                             wrapMode:           Text.WordWrap
-                            font.pointSize:     ScreenTools.mediumFontPointSize
+                            font.pointSize:     ScreenTools.subtitleFontPointSize
                         }
 
                         Flow {

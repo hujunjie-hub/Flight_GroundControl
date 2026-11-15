@@ -114,7 +114,7 @@ Canvas {
             horizontalAlignment:    Text.AlignHCenter
             verticalAlignment:      Text.AlignVCenter
             color:                  "white"
-            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.pointSize:         ScreenTools.bodyFontPointSize
             fontSizeMode:           Text.Fit
             text:                   _index
         }

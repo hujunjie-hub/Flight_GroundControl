@@ -468,7 +468,7 @@ ApplicationWindow {
                 QGCLabel {
                     id:             toolbarDrawerText
                     text:           toolDrawer.toolTitle
-                    font.pointSize: ScreenTools.largeFontPointSize
+                    font.pointSize: ScreenTools.titleFontPointSize
                 }
             }
         }
@@ -548,7 +548,7 @@ ApplicationWindow {
                     id:                 vehicleWarningLabel
                     anchors.centerIn:   parent
                     text:               qsTr("Vehicle Error")
-                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.pointSize:     ScreenTools.captionFontPointSize
                     color:              qgcPal.alertText
                 }
             }
@@ -572,7 +572,7 @@ ApplicationWindow {
                     id:                 additionalErrorsLabel
                     anchors.centerIn:   parent
                     text:               qsTr("Additional errors received")
-                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.pointSize:     ScreenTools.captionFontPointSize
                     color:              qgcPal.alertText
                 }
             }

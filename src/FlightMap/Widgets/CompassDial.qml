@@ -11,7 +11,7 @@ Item {
     property real dialScale: 1
     property color northColor: qgcPal.text
     readonly property real _tickSize: ScreenTools.defaultFontPixelHeight * dialScale
-    readonly property real _pointSize: Math.max(6, ScreenTools.defaultFontPointSize * dialScale)
+    readonly property real _pointSize: Math.max(6, ScreenTools.bodyFontPointSize * dialScale)
     property real offsetRadius: width / 2 - _tickSize / 2
     readonly property real labelRotation: _lockNoseUpCompass && isFinite(_heading) ? _heading : 0
 

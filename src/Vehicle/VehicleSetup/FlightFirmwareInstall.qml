@@ -42,7 +42,7 @@ Item {
 
         QGCLabel {
             text: qsTr("Flight Firmware (SWD)")
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pointSize: ScreenTools.titleFontPointSize
         }
 
         ProgressBar {

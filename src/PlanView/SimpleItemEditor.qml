@@ -178,7 +178,7 @@ Rectangle {
                     }
 
                     QGCLabel {
-                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.captionFontPointSize
                         text: qsTr("Actual AMSL alt sent: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
                         visible: missionItem.altitudeFrame === QGroundControl.AltitudeFrameCalcAboveTerrain
                     }
@@ -196,7 +196,7 @@ Rectangle {
                             spacing: 0
 
                             QGCLabel {
-                                font.pointSize: ScreenTools.smallFontPointSize
+                                font.pointSize: ScreenTools.captionFontPointSize
                                 text: object.name
                                 visible: object.name !== ""
                             }
@@ -276,7 +276,7 @@ Rectangle {
                             spacing: 0
 
                             QGCLabel {
-                                font.pointSize: ScreenTools.smallFontPointSize
+                                font.pointSize: ScreenTools.captionFontPointSize
                                 text: object.name
                                 visible: object.name !== ""
                             }

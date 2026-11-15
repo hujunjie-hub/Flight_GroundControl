@@ -107,14 +107,14 @@ Rectangle {
         QGCLabel {
             anchors.centerIn: parent
             text: qsTr("Syncing Mission")
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pointSize: ScreenTools.titleFontPointSize
             visible: _controllerProgressPct !== 1
         }
 
         QGCLabel {
             anchors.centerIn: parent
             text: qsTr("Done")
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pointSize: ScreenTools.titleFontPointSize
             visible: _controllerProgressPct === 1
         }
 

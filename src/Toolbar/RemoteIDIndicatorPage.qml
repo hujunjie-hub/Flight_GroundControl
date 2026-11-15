@@ -97,7 +97,7 @@ ToolIndicatorPage {
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                         }
 
                         QGCMouseArea {
@@ -121,7 +121,7 @@ ToolIndicatorPage {
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                         }
 
                         QGCMouseArea {
@@ -146,7 +146,7 @@ ToolIndicatorPage {
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                         }
 
                         QGCMouseArea {
@@ -171,7 +171,7 @@ ToolIndicatorPage {
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                         }
 
                         QGCMouseArea {
@@ -196,7 +196,7 @@ ToolIndicatorPage {
                             horizontalAlignment:    Text.AlignHCenter
                             verticalAlignment:      Text.AlignVCenter
                             font.bold:              true
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                         }
 
                         QGCMouseArea {
@@ -247,7 +247,7 @@ ToolIndicatorPage {
                         horizontalAlignment:    Text.AlignHCenter
                         verticalAlignment:      Text.AlignVCenter
                         font.bold:              true
-                        font.pointSize:         ScreenTools.largeFontPointSize
+                        font.pointSize:         ScreenTools.titleFontPointSize
                     }
 
                     Timer {
@@ -333,7 +333,7 @@ ToolIndicatorPage {
 
                         QGCLabel {
                             text:                   qsTr("If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.")
-                            font.pointSize:         ScreenTools.smallFontPointSize
+                            font.pointSize:         ScreenTools.captionFontPointSize
                             wrapMode:               Text.WordWrap
                             Layout.preferredWidth:  sendSelfIDSlider.width
                             visible:                !sendSelfIDSlider._fact.rawValue

@@ -73,7 +73,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     text: qsTr("Not currently available")
                     visible: !activeJoystick
                 }

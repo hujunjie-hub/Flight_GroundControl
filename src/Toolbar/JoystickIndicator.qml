@@ -176,8 +176,8 @@ Item {
                     QGCLabel {
                         text:    _activeJoystick ? _activeJoystick.guid : ""
                         visible: _activeJoystick && _activeJoystick.guid
-                        font.family: "monospace"
-                        font.pixelSize: ScreenTools.smallFontPointSize
+                        font.family: ScreenTools.fixedFontFamily
+                        font.pointSize: ScreenTools.captionFontPointSize
                         elide:   Text.ElideMiddle
                         Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 20
                     }

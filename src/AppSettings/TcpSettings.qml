@@ -49,7 +49,7 @@ GridLayout {
         Layout.columnSpan:      2
         Layout.preferredWidth:  _secondColumnWidth
         Layout.fillWidth:       true
-        font.pointSize:         ScreenTools.smallFontPointSize
+        font.pointSize:         ScreenTools.captionFontPointSize
         wrapMode:               Text.WordWrap
         text:                   qsTr("You can enter an IP address (e.g. 192.168.1.1) or hostname (e.g. my-drone.local)")
         color:                  qgcPal.text

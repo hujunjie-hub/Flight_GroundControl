@@ -174,7 +174,7 @@ SettingsGroupLayout {
             id:               feedbackTextArea
             Layout.fillWidth: true
             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 4
-            font.pointSize:   ScreenTools.defaultFontPointSize
+            font.pointSize:   ScreenTools.bodyFontPointSize
             text:             _mavlinkLogManager ? _mavlinkLogManager.feedback : ""
             enabled:          !_disableDataPersistence
             color:            qgcPal.textFieldText

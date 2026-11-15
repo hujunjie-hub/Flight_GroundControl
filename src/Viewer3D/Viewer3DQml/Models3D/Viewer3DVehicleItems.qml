@@ -220,7 +220,7 @@ Node {
                 Text {
                     color: "black"
                     font.family: ScreenTools.normalFontFamily
-                    font.pixelSize: 20
+                    font.pointSize: ScreenTools.heroFontPointSize
                     text: (model.itemName === "W") ? String(model.index) : model.itemName
                 }
             }

@@ -112,7 +112,7 @@ MapQuickItem {
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _map
             text:                       visible && vehicle ? qsTr("Vehicle %1").arg(vehicle.id) : ""
-            font.pointSize:             ScreenTools.smallFontPointSize
+            font.pointSize:             ScreenTools.captionFontPointSize
             visible:                    _multiVehicle
         }
 

@@ -299,7 +299,7 @@ Rectangle {
                 verticalAlignment:      Text.AlignVCenter
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.mediumFontPointSize
+                font.pointSize:         ScreenTools.subtitleFontPointSize
                 text:                   qsTr("%1 does not currently support configuration of your vehicle. ").arg(QGroundControl.appName) +
                                         "If your vehicle is already configured you can still Fly."
             }
@@ -319,7 +319,7 @@ Rectangle {
                     width:              disconnectedRect.width - _defaultTextWidth * 4
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode:           Text.WordWrap
-                    font.pointSize:     ScreenTools.largeFontPointSize
+                    font.pointSize:     ScreenTools.titleFontPointSize
                     text:               !_activeVehicle
                                             ? qsTr("Vehicle configuration pages will display after you connect your vehicle and parameters have been downloaded.")
                                             : (_activeVehicle.parameterManager.parameterDownloadSkipped
@@ -349,7 +349,7 @@ Rectangle {
                 verticalAlignment:      Text.AlignVCenter
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.mediumFontPointSize
+                font.pointSize:         ScreenTools.subtitleFontPointSize
                 text:                   qsTr("Vehicle did not return the full parameter list. ") +
                                         qsTr("As a result, the configuration pages are not available.")
             }
@@ -373,7 +373,7 @@ Rectangle {
                     Layout.fillWidth:   true
                     wrapMode:           Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
-                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    font.pointSize:     ScreenTools.subtitleFontPointSize
                     text: {
                         if (!_activeVehicle) {
                             return qsTr("参数页已保留。连接载具后会自动下载参数，也可以在这里手动重新下载。")
@@ -415,7 +415,7 @@ Rectangle {
                 verticalAlignment:      Text.AlignVCenter
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
-                font.pointSize:         ScreenTools.mediumFontPointSize
+                font.pointSize:         ScreenTools.subtitleFontPointSize
                 text:                   _messagePanelText
             }
         }
@@ -602,7 +602,7 @@ Rectangle {
                                     QGCLabel {
                                         text:  vehicleConfigView._sectionDisplayName(compColumn.comp, modelData)
                                         color: sectionBtn.textColor
-                                        font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                                        font.pointSize: ScreenTools.compactBodyFontPointSize
                                         horizontalAlignment: Text.AlignLeft
                                         Layout.fillWidth: true
                                     }

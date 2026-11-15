@@ -177,7 +177,7 @@ RowLayout {
         QGCLabel {
             id:                 chartTitleLabel
             text:               _chartTitle
-            font.pointSize:     ScreenTools.defaultFontPointSize
+            font.pointSize:     ScreenTools.bodyFontPointSize
             font.family:        ScreenTools.normalFontFamily
             anchors.horizontalCenter: parent.horizontalCenter
         }
@@ -206,7 +206,7 @@ RowLayout {
                 max:                    0
                 labelFormat:            "%.1f"
                 titleText:              ScreenTools.isShortScreen ? "" : qsTr("sec")
-                titleFont.pointSize:    ScreenTools.defaultFontPointSize
+                titleFont.pointSize:    ScreenTools.bodyFontPointSize
                 titleFont.family:       ScreenTools.normalFontFamily
             }
 
@@ -216,7 +216,7 @@ RowLayout {
                 max:                    10
                 titleText:              unit
                 tickInterval:           _tickSeparation
-                titleFont.pointSize:    ScreenTools.defaultFontPointSize
+                titleFont.pointSize:    ScreenTools.bodyFontPointSize
                 titleFont.family:       ScreenTools.normalFontFamily
             }
 
@@ -274,7 +274,7 @@ RowLayout {
                     }
                     QGCLabel {
                         text:               modelData.name
-                        font.pointSize:     ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.captionFontPointSize
                     }
                 }
             }
@@ -327,12 +327,12 @@ RowLayout {
                 visible: autoModeChange.checked
                 QGCLabel {
                     text:            qsTr("Switches to 'Stabilized' when you click Start.")
-                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.pointSize:     ScreenTools.captionFontPointSize
                 }
 
                 QGCLabel {
                     text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
-                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.pointSize:     ScreenTools.captionFontPointSize
                 }
             }
         }

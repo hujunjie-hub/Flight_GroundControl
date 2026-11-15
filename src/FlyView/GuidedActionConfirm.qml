@@ -119,7 +119,7 @@ Rectangle {
         QGCLabel {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            font.pointSize: ScreenTools.smallFontPointSize
+            font.pointSize: ScreenTools.captionFontPointSize
             text: control.message
             visible: text.length > 0
             wrapMode: Text.WordWrap

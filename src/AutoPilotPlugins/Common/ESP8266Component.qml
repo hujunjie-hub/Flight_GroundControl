@@ -14,7 +14,7 @@ Item {
     property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 16
     property real _labelWidth:      ScreenTools.defaultFontPixelWidth * 10
     property real _statusWidth:     ScreenTools.defaultFontPixelWidth * 6
-    property real _smallFont:       ScreenTools.smallFontPointSize
+    property real _smallFont:       ScreenTools.captionFontPointSize
 
     readonly property string    dialogTitle:    qsTr("controller WiFi Bridge")
     property int                stStatus:       XMLHttpRequest.UNSENT

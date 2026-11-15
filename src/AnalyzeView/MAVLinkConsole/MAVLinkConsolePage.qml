@@ -115,7 +115,7 @@ AnalyzePage {
                     color: qgcPal.text
                     selectedTextColor: qgcPal.windowShade
                     selectionColor: qgcPal.text
-                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.pointSize: ScreenTools.bodyFontPointSize
                     font.family: ScreenTools.fixedFontFamily
 
                     Component.onCompleted: {

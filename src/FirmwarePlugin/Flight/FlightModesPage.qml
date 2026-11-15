@@ -43,7 +43,7 @@ SetupPage {
             width: availableWidth
             spacing: 10
 
-            QGCLabel { text: qsTr("飞行模式配置"); font.pointSize: ScreenTools.largeFontPointSize }
+            QGCLabel { text: qsTr("飞行模式配置"); font.pointSize: ScreenTools.titleFontPointSize }
             QGCLabel {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap

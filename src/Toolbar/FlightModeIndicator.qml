@@ -13,7 +13,7 @@ Item {
     property bool   showIndicator:          true
     property bool   waitForParameters:      false
 
-    property real fontPointSize:    ScreenTools.largeFontPointSize
+    property real fontPointSize:    ScreenTools.titleFontPointSize
     property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
     property bool allowEditMode:    true
     property bool editMode:         false
@@ -56,7 +56,7 @@ Item {
             Layout.alignment:       Qt.AlignVCenter
             horizontalAlignment:    Text.AlignHCenter
             text:                   _vtolInFWDFlight ? qsTr("FW\nVTOL") : qsTr("MR\nVTOL")
-            font.pointSize:         ScreenTools.smallFontPointSize
+            font.pointSize:         ScreenTools.captionFontPointSize
             wrapMode:               Text.WordWrap
             visible:                _isVTOL
         }
@@ -234,7 +234,7 @@ Item {
                 id:                     hiddenModesLabel
                 text:                   qsTr("Some Modes Hidden")
                 Layout.fillWidth:       true
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 horizontalAlignment:    Text.AlignHCenter
                 visible:                false
 

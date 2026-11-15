@@ -274,6 +274,11 @@
       "required": true,
       "pass": [
         "ScreenTools_exposes_semantic_font_size_and_weight_roles",
+        "legacy_font_size_names_are_compatibility_aliases_only",
+        "qml_typography_scan_covers_all_src_qml_files",
+        "no_fixed_font_pixel_size_in_product_qml",
+        "no_hardcoded_font_family_or_invalid_family_binding",
+        "no_undocumented_page_local_font_size_multipliers",
         "QGuiApplication_default_font_family_matches_ScreenTools_normalFontFamily",
         "QGCLabel_uses_typographyRole_and_shared_font_family",
         "shared_text_controls_use_normal_font_family_and_default_hinting",

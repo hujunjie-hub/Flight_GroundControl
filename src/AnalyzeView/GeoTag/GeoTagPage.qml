@@ -361,7 +361,7 @@ AnalyzePage {
                             Layout.fillWidth:   true
                             text:               qsTr("Adjust if camera clock differs from flight log")
                             opacity:            0.7
-                            font.pointSize:     ScreenTools.smallFontPointSize
+                            font.pointSize:     ScreenTools.captionFontPointSize
                         }
                     }
 
@@ -381,7 +381,7 @@ AnalyzePage {
                             Layout.fillWidth:   true
                             text:               qsTr("Verify time offset before committing")
                             opacity:            0.7
-                            font.pointSize:     ScreenTools.smallFontPointSize
+                            font.pointSize:     ScreenTools.captionFontPointSize
                         }
                     }
                 }
@@ -442,27 +442,27 @@ AnalyzePage {
                             Row {
                                 spacing: _margin / 4
                                 Rectangle { width: 10; height: 10; radius: 2; color: qgcPal.text; opacity: 0.5 }
-                                QGCLabel { text: qsTr("Pending"); font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel { text: qsTr("Pending"); font.pointSize: ScreenTools.captionFontPointSize }
                             }
                             Row {
                                 spacing: _margin / 4
                                 Rectangle { width: 10; height: 10; radius: 2; color: qgcPal.colorBlue }
-                                QGCLabel { text: qsTr("Processing"); font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel { text: qsTr("Processing"); font.pointSize: ScreenTools.captionFontPointSize }
                             }
                             Row {
                                 spacing: _margin / 4
                                 Rectangle { width: 10; height: 10; radius: 2; color: qgcPal.colorGreen }
-                                QGCLabel { text: qsTr("Tagged"); font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel { text: qsTr("Tagged"); font.pointSize: ScreenTools.captionFontPointSize }
                             }
                             Row {
                                 spacing: _margin / 4
                                 Rectangle { width: 10; height: 10; radius: 2; color: qgcPal.colorOrange }
-                                QGCLabel { text: qsTr("Skipped"); font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel { text: qsTr("Skipped"); font.pointSize: ScreenTools.captionFontPointSize }
                             }
                             Row {
                                 spacing: _margin / 4
                                 Rectangle { width: 10; height: 10; radius: 2; color: qgcPal.colorRed }
-                                QGCLabel { text: qsTr("Failed"); font.pointSize: ScreenTools.smallFontPointSize }
+                                QGCLabel { text: qsTr("Failed"); font.pointSize: ScreenTools.captionFontPointSize }
                             }
                         }
                     }
@@ -534,7 +534,7 @@ AnalyzePage {
                                         }
                                         return ""
                                     }
-                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                    font.pointSize:     ScreenTools.captionFontPointSize
                                     opacity:            0.7
                                     visible:            model.status === 2
                                 }
@@ -543,7 +543,7 @@ AnalyzePage {
                                 QGCLabel {
                                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 12
                                     text:               model.errorMessage ? model.errorMessage : model.statusString
-                                    font.pointSize:     ScreenTools.smallFontPointSize
+                                    font.pointSize:     ScreenTools.captionFontPointSize
                                     color:              model.status === 4 ? qgcPal.colorRed : (model.status === 3 ? qgcPal.colorOrange : qgcPal.text)
                                     elide:              Text.ElideRight
                                     horizontalAlignment: Text.AlignRight

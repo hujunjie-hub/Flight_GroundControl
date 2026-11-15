@@ -107,7 +107,7 @@ ColumnLayout {
             QGCLabel{
                 Layout.fillWidth: true
                 Layout.maximumWidth: additionalAxesRcChannelsOverride.x + additionalAxesRcChannelsOverride.width
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
                 wrapMode: Text.WordWrap
                 text: qsTr("Deadband can be set during the first step of calibration by gently wiggling each axis. ")
             }

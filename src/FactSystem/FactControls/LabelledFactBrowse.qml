@@ -40,7 +40,7 @@ RowLayout {
 
         QGCLabel {
             Layout.fillWidth:   true
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.captionFontPointSize
             text:               root.fact.rawValue === "" ? root.defaultText : root.fact.value
             elide:              Text.ElideMiddle
         }

@@ -45,7 +45,7 @@ Rectangle {
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Zoom")
-                font.pointSize: ScreenTools.smallFontPointSize
+                font.pointSize: ScreenTools.captionFontPointSize
             }
 
             QGCSlider {
@@ -187,7 +187,7 @@ Rectangle {
                 QGCLabel {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Video")
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     visible: videoCaptureButton.visible && photoCaptureButton.visible
                 }
 
@@ -271,7 +271,7 @@ Rectangle {
                 QGCLabel {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Photo")
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                     visible: videoCaptureButton.visible && photoCaptureButton.visible
                 }
 
@@ -305,7 +305,7 @@ Rectangle {
                     id: storageStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Free: ") + _camera.storageFreeStr
-                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.pointSize: ScreenTools.bodyFontPointSize
                     visible: _camera.storageStatus === MavlinkCameraControlInterface.STORAGE_READY
                 }
 
@@ -313,7 +313,7 @@ Rectangle {
                     id: batteryStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Battery: ") + _camera.batteryRemainingStr
-                    font.pointSize: ScreenTools.defaultFontPointSize
+                    font.pointSize: ScreenTools.bodyFontPointSize
                     visible: _camera.batteryRemaining >= 0
                 }
             }
@@ -356,7 +356,7 @@ Rectangle {
                 QGCLabel {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Camera Tracking")
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
             }
 

@@ -61,7 +61,7 @@ Item {
                 text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
                 font.bold:          true
                 color:              "white"
-                font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+                font.pointSize:     useSmallFont ? ScreenTools.captionFontPointSize : ScreenTools.titleFontPointSize
                 anchors.centerIn:   parent
             }
         }

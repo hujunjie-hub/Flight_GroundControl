@@ -43,6 +43,10 @@
 | secondary | `secondaryFontPointSize` | 次级正文、数据注释 |
 | compact-body | `compactBodyFontPointSize` | 紧凑布局正文 |
 | body | `bodyFontPointSize` | 默认正文、菜单、按钮、输入框 |
+| body-emphasis | `bodyEmphasisFontPointSize` | 强调型正文 |
+| caption-emphasis | `captionEmphasisFontPointSize` | 强调型辅助说明 |
+| section-heading | `sectionHeadingFontPointSize` | 设置分组标题 |
+| world-overlay | `worldOverlayFontPointSize` | 三维视图世界空间标注 |
 | subtitle | `subtitleFontPointSize` | 分区副标题 |
 | title | `titleFontPointSize` | 页面/卡片标题 |
 | metric | `metricFontPointSize` | 重点数值 |
@@ -53,6 +57,7 @@
 - 使用 `QGCLabel.typographyRole` 选择语义角色；确有特殊控件约束时可直接使用上述 ScreenTools 令牌。
 - 禁止在页面中出现 `font.pointSize: ScreenTools.defaultFontPointSize * 0.8` 之类的局部系数。
 - 禁止用固定 `font.pixelSize` 代替点字号；尺寸必须跟随 Qt 高 DPI 与应用 UI Scale。
+- 旧 `smallFontPointSize` / `mediumFontPointSize` / `largeFontPointSize` 仅保留为兼容别名，项目内部 QML 必须使用语义令牌。
 
 ## 4. 字重、抗锯齿与 Hinting
 
@@ -95,7 +100,9 @@
 
 1. 仪表盘主指标、卡片标题、辅助说明等明确的语义角色差异。
 2. 代码/终端/原始遥测数据等有明确理由的等宽字体。
-3. SVG、地图覆盖层、视频 OSD 等受绘制空间约束的专用文本；必须说明字体和 DPI 处理方式。
+3. 地图罗盘/遥测覆盖层允许依据地图尺寸动态缩放，但基准必须来自 `ScreenTools` 语义字号；对应例外限定在 `src/FlightMap/Widgets/CompassDial.qml`、`FlightTelemetryCompass.qml` 和 `QGCCompassWidget.qml`。
+4. `src/AppSettings/DebugWindow.qml` 的字体预览样本允许列出显式 point size；这仅用于调试预览，不得用于业务页面。
+5. 三维视图的世界空间标注使用 `worldOverlayFontPointSize` / `heroFontPointSize`，必须使用 point size，不得使用固定 pixel size。
 
 任何例外都必须在对应页面设计规范中登记，并优先使用 ScreenTools 令牌。禁止为了单个截图临时写入字号系数、透明度或系统字体名。
 
@@ -104,13 +111,14 @@
 必需检查：
 
 1. ScreenTools 包含全部语义字号和字重角色。
-2. QGCLabel 通过 typographyRole 选择字号/字重。
-3. QGCRadioButton 的 contentItem 字体族必须绑定 `control.font.family`。
-4. 核心共享文本控件使用统一字体族和 `Font.PreferDefaultHinting`。
-5. 中文界面按显式语言或 System locale 选择已安装的 CJK 字体。
-6. FlightTelemetry 不允许出现散落的字号乘数。
-7. TopLevelViewsTest 验证设置侧栏字体族、字号、字重、Hinting/抗锯齿，以及中文字体选择。
-8. Windows 实机截图覆盖 100%、125%、150% DPI，并记录系统缩放、应用 UI Scale、屏幕分辨率、页面和截图。
+2. 字体静态检查递归覆盖 `src/**/*.qml` 全部页面（当前 459 个 QML 文件），不再只检查共享控件白名单。
+3. QGCLabel 通过 typographyRole 选择字号/字重。
+4. QGCRadioButton 的 contentItem 字体族必须绑定 `control.font.family`。
+5. 核心共享文本控件使用统一字体族和 `Font.PreferDefaultHinting`。
+6. 中文界面按显式语言或 System locale 选择已安装的 CJK 字体。
+7. FlightTelemetry 不允许出现散落的字号乘数。
+8. TopLevelViewsTest 验证设置侧栏字体族、字号、字重、Hinting/抗锯齿，以及中文字体选择。
+9. Windows 实机截图覆盖 100%、125%、150% DPI，并记录系统缩放、应用 UI Scale、屏幕分辨率、页面和截图。
 
 Windows DPI 视觉检查在本地完成并登记 RUN_ID；没有截图和环境记录时必须标记 `NOT_RUN`。
 

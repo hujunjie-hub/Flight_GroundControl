@@ -59,7 +59,7 @@ QGCPopupDialog {
 
         QGCLabel {
             text: qsTr("Altitude frame for mission items")
-            font.pointSize: ScreenTools.smallFontPointSize
+            font.pointSize: ScreenTools.captionFontPointSize
         }
 
         Repeater {
@@ -87,7 +87,7 @@ QGCPopupDialog {
                         width:              ScreenTools.defaultFontPixelWidth * 40
                         text:               help
                         wrapMode:           Label.WordWrap
-                        font.pointSize:     ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.captionFontPointSize
                         color:              modeNameLabel.color
                     }
                 }
