@@ -4097,7 +4097,7 @@ SetupPage {
                             required property var modelData
                             objectName: "flightTelemetry_sensorInstanceCard_" + modelData.sensorInstanceId
                             Layout.fillWidth: true
-                            implicitHeight: sensorInstanceContent.implicitHeight + 12
+                            implicitHeight: sensorInstanceContent.implicitHeight + root._dashboardMetricTileInset * 2
                             radius: 6
                             color: "#082B34"
                             border.width: 1
@@ -4114,6 +4114,7 @@ SetupPage {
                             }
                             ColumnLayout {
                                 id: sensorInstanceContent
+                                objectName: "flightTelemetry_sensorInstanceContent_" + modelData.sensorInstanceId
                                 anchors.fill: parent
                                 anchors.margins: root._dashboardMetricTileInset
                                 spacing: root._dashboardMetricTileGap * 0.7
@@ -4365,7 +4366,7 @@ SetupPage {
                             required property var modelData
                             objectName: "flightTelemetry_prearmCheckCard_" + modelData.checkId
                             Layout.fillWidth: true
-                            implicitHeight: prearmCheckGrid.implicitHeight + 14
+                            implicitHeight: prearmCheckGrid.implicitHeight + root._dashboardMetricTileInset * 2
                             radius: 6
                             color: "#082B34"
                             border.width: 1
@@ -4468,7 +4469,7 @@ SetupPage {
                             required property var modelData
                             objectName: "flightTelemetry_resourceTaskCard_" + modelData.taskId
                             Layout.fillWidth: true
-                            implicitHeight: resourceTaskContent.implicitHeight + 12
+                            implicitHeight: resourceTaskContent.implicitHeight + root._dashboardMetricTileInset * 2
                             radius: 6
                             color: "#082B34"
                             border.width: 1
@@ -4476,6 +4477,7 @@ SetupPage {
 
                             ColumnLayout {
                                 id: resourceTaskContent
+                                objectName: "flightTelemetry_resourceTaskContent_" + modelData.taskId
                                 anchors.fill: parent
                                 anchors.margins: root._dashboardMetricTileInset
                                 spacing: root._dashboardMetricTileGap
