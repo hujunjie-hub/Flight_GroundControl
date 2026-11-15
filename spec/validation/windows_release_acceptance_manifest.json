@@ -331,7 +331,11 @@
         "health_summary_resource_coverage_uses_per_task_instance_freshness",
         "navigation_utc_summary_detail_and_accent_follow_valid_invalid_stale_and_recovered_states",
         "rc_receiver_failsafe_summary_detail_is_gated_by_rc_input_freshness",
-        "link_summary_reports_fresh_stale_and_waiting_link_instance_counts"
+        "link_summary_reports_fresh_stale_and_waiting_link_instance_counts",
+        "time_quality_summary_color_tracks_local_sync_locked_holdover_degraded_and_invalid_states",
+        "time_quality_summary_color_is_overridden_by_time_family_waiting_or_stale_state",
+        "utc_validity_summary_color_remains_independent_from_time_quality_enum",
+        "overview_and_navigation_time_quality_kpis_share_one_color_mapping"
       ]
     },
     {
@@ -528,7 +532,11 @@
     "health_summary_resource_coverage_uses_per_task_instance_freshness",
     "navigation_utc_summary_detail_and_accent_follow_valid_invalid_stale_and_recovered_states",
     "rc_receiver_failsafe_summary_detail_is_gated_by_rc_input_freshness",
-    "link_summary_reports_fresh_stale_and_waiting_link_instance_counts"
+    "link_summary_reports_fresh_stale_and_waiting_link_instance_counts",
+    "time_quality_summary_color_tracks_local_sync_locked_holdover_degraded_and_invalid_states",
+    "time_quality_summary_color_is_overridden_by_time_family_waiting_or_stale_state",
+    "utc_validity_summary_color_remains_independent_from_time_quality_enum",
+    "overview_and_navigation_time_quality_kpis_share_one_color_mapping"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

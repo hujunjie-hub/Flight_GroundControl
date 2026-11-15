@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.15
+- 版本 4.16
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -114,7 +114,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
-- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；总览总控、飞行健康、导航时序、遥控与链路四页结构、页面专属 KPI/趋势、原始字段与只读边界均已实现并同步 SPEC/G15。总览包含六域真实 freshness 拓扑、告警严重度排序、同级按地面站本地接收序号排序、FCU_EVENT 启动相对时间、彩色严重度和可换行事件原因、3/2/3/2 节点网格和六档节点边界/freshness 回归；整机多域复合面板不再使用 operation 单域徽标。健康页完成 13 域矩阵、资源/传感器/预检实例 freshness 门控，以及控制器/执行器详情 freshness 门控；导航页完成 capability/UTC/freshness 门控；遥控与链路页完成四面板 3/3/3/3 均衡、逐实例链路有效性和非 RC 数据链路优先级。当前继续补齐 KPI 辅助说明与主值的 freshness/validity 一致性；CI、Windows Release 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
+- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；总览总控、飞行健康、导航时序、遥控与链路四页结构、页面专属 KPI/趋势、原始字段与只读边界均已实现并同步 SPEC/G15。总览包含六域真实 freshness 拓扑、告警严重度排序、同级按地面站本地接收序号排序、FCU_EVENT 启动相对时间、彩色严重度和可换行事件原因、3/2/3/2 节点网格和六档节点边界/freshness 回归；整机多域复合面板不再使用 operation 单域徽标。健康页完成 13 域矩阵、资源/传感器/预检实例 freshness 门控，以及控制器/执行器详情 freshness 门控；导航页完成 capability/UTC/timeQuality freshness 与颜色门控；遥控与链路页完成四面板 3/3/3/3 均衡、逐实例链路有效性和非 RC 数据链路优先级。CI、Windows Release 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
 - FGC-0047（全项目字体体系、中文字体回退与渲染一致性）继续扩展到全仓 QML：旧 default/small/medium/large 字号令牌引用迁移到语义令牌；三维视图固定 pixelSize 改为 pointSize；摇杆遥测等宽字族改用 ScreenTools.fixedFontFamily；新增 body-emphasis、caption-emphasis、section-heading、world-overlay 语义令牌。`qml-typography-check --all` 递归扫描全部 `src/**/*.qml`（当前 459 个文件），覆盖旧字号别名、固定 pixelSize、硬编码字体族和页面局部字号乘数；动态地图罗盘缩放和 DebugWindow 字体预览列为明确例外。新提交的精确 HEAD CI 尚待运行；Windows 100%/125%/150% 实机视觉检查尚未完成，保持 NOT_RUN。
@@ -156,3 +156,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 飞行健康页继续收口：控制器与执行器详情缓存 Fact 全部受各自 family freshness 门控；安全监测控制求解器摘要与详情一致。
 
 - 2026-11-15 本轮增量：诊断大屏 KPI 辅助说明改为遵守 family freshness、实例 receiveAgeMs 和字段 validity。传感器覆盖率、资源 task 实例覆盖率、执行器掩码、UTC 有效性、RC 接收机 failsafe 和链路实例覆盖率均补充状态门控及 MockLink Integration 断言。本轮未运行 CI，待集中验收。
+
+- 2026-11-15 本轮增量：时间质量 KPI 新增 timeQuality 枚举分色，区分仅本地时钟、同步中、锁定、保持、降级和无效；UTC 不确定度仍独立按 utcValid 分色，time family 超时优先于缓存枚举。本轮新增 MockLink 组合状态断言，未运行 CI。

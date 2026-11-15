@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.10
+- 版本：6.11
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；本轮继续补齐 KPI 辅助说明与主值的 family/per-instance freshness、UTC 有效性颜色、RC failsafe 和链路覆盖率一致性；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 已闭环；本轮补齐 timeQuality 枚举状态与 UTC 有效性的独立颜色门控；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -704,3 +704,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 链路实例摘要分别统计新鲜/超时/等待实例，避免将缓存实例数量解释为当前在线链路数量。
 - MockLink Integration 增加 UTC 有效/无效/超时/恢复、RC failsafe 新鲜/超时、传感器覆盖率、资源实例覆盖率、执行器未接收和多链路实例新鲜度断言。
 - 仅调整地面站 KPI 呈现和 UI Integration；不修改 FlightTelemetry 协议、FactGroup 解码、飞控健康判定、控制权限或任何飞行控制行为。本阶段按用户要求不运行 CI，所有新增回归待集中验收。
+
+
+## 42. Phase 2.9 时间质量枚举与 UTC 有效性分色（2026-11-15）
+
+- 「时间质量」强调色由 time family freshness 与 timeQuality 枚举共同决定：仅本地时钟为中性灰、同步中为琥珀色、锁定为绿色、保持/降级为琥珀色、无效为红色。
+- time family 等待/超时时优先显示 family 状态颜色，不允许旧的 timeQuality 枚举覆盖等待/超时状态。
+- 「UTC 不确定度」仍独立服从 utcValid：UTC 无效为红色，time family 超时为琥珀色，等待/未上报为中性灰；UTC validity 与 timeQuality 不互相代替。
+- 总览页与导航时序页的时间质量 KPI 使用同一颜色映射；UTC 不确定度 KPI 使用独立 UTC validity 颜色映射。
+- MockLink Integration 增加 FCU_TIME_STATUS.time_quality=locked/invalid 且 utc_valid=true 的组合断言，并验证 time family stale 时两项 KPI 均转为琥珀色。
+- 仅修改地面站 QML、MockLink UI Integration 与 SPEC；不改变 FCU_TIME_STATUS、FactGroup、时间同步服务、飞控时间纪律算法或控制行为。本轮不运行 CI，新增回归留待集中验收。

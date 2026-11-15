@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.3  
+版本：4.4  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -346,3 +346,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 遥控页 RC failsafe 辅助说明随 rcInput family freshness 变化；RC 超时后不得继续显示“接收机失效保护未触发”。
 - 链路实例摘要分别统计新鲜、超时和等待实例；链路 family 新鲜不代表每个链路实例均新鲜。
 - 新增 MockLink UI Integration 断言覆盖上述状态；本轮未运行 CI，不形成 PASS 证据。后续 exact-HEAD 集中执行 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 与本地参考图/DPI 验收。
+
+
+### G15 时间质量 KPI 分色补充（2026-11-15）
+
+- 总览与导航页「时间质量」按 timeQuality 枚举分色：仅本地时钟灰、同步中琥珀、锁定绿、保持/降级琥珀、无效红。
+- time family 等待/超时优先于缓存 timeQuality 枚举，必须使用 family 对应的灰/琥珀状态。
+- UTC 不确定度 KPI 独立使用 utcValid 颜色，不得与 timeQuality 颜色混用；UTC 无效红、time 超时琥珀。
+- 新增 MockLink locked/invalid 与 UTC valid 组合断言，以及 family stale 两项 KPI 同时转琥珀的断言；本轮 CI 未运行，留待集中验收。

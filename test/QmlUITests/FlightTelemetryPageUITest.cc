@@ -569,15 +569,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mavlink_msg_fcu_nav_status_encode(systemId, componentId, &message, &payload);
                 mockLink->respondWithMavlinkMessage(message);
             };
-            auto sendTimeStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint64_t unixTimeUs,
-                                      uint8_t utcValid) {
+            auto sendTimeStatusWithQuality = [&](uint64_t timeBootUs, uint64_t sessionBootId,
+                                                uint64_t unixTimeUs, uint8_t utcValid, uint8_t timeQuality) {
                 mavlink_fcu_time_status_t payload{};
                 payload.time_boot_us = timeBootUs;
                 payload.boot_id = sessionBootId;
                 payload.profile_id = profileId;
                 payload.time_epoch = 17;
                 payload.source_mapping_epoch = 23;
-                payload.time_quality = 2;
+                payload.time_quality = timeQuality;
                 payload.discipline_state = 2;
                 payload.event_uncertainty_us = 42;
                 payload.utc_uncertainty_us = 125;
@@ -587,6 +587,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mavlink_message_t message{};
                 mavlink_msg_fcu_time_status_encode(systemId, componentId, &message, &payload);
                 mockLink->respondWithMavlinkMessage(message);
+            };
+            auto sendTimeStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint64_t unixTimeUs,
+                                      uint8_t utcValid) {
+                sendTimeStatusWithQuality(timeBootUs, sessionBootId, unixTimeUs, utcValid, 2);
             };
 
             auto sendEventStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId,
@@ -920,6 +924,24 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            sendTimeStatusWithQuality(lastOperationTime + 350, bootId,
+                                      1700000007123456ULL, 1, 5);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("无效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            sendTimeStatusWithQuality(lastOperationTime + 375, bootId,
+                                      1700000007123456ULL, 1, 2);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendControl->property("valueKey").toString(), QStringLiteral("time"), 3000);
@@ -962,6 +984,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTime->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             sendTimeStatus(lastOperationTime + 600, bootId, 1700000010123456ULL, 1);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),

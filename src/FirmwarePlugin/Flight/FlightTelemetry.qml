@@ -157,6 +157,22 @@ SetupPage {
         if (validity === qsTr("数据超时")) return "#F0B94B"
         return "#8A9A94"
     }
+    function _timeQualityColorFor(value) {
+        switch (Number(value)) {
+        case 0: return "#8A9A94" // Local clock only
+        case 1: return "#F0B94B" // Synchronizing
+        case 2: return "#45D39A" // Locked
+        case 3:
+        case 4: return "#F0B94B" // Holdover / degraded
+        case 5: return "#F06464" // Invalid
+        default: return "#8A9A94"
+        }
+    }
+    function _timeQualityColor() {
+        const familyStatus = _familyStatus("timeAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("timeAvailable")
+        return _timeQualityColorFor(_fact("timeQuality"))
+    }
     function _utcUncertaintyText() {
         const validity = _utcValidityText()
         if (validity !== qsTr("是")) return validity === qsTr("否") ? qsTr("无效") : validity
@@ -408,7 +424,7 @@ SetupPage {
             case 2: return _failsafeColor()
             case 3: return _navigationMetricColor(_navCapabilityHorizontalPosition)
             case 4: return _familyStatusColor("linkAvailable")
-            default: return _familyStatusColor("timeAvailable")
+            default: return _timeQualityColor()
             }
         }
         if (_activeDashboardPage === 1)
@@ -418,7 +434,7 @@ SetupPage {
         if (_activeDashboardPage === 2)
             return [_familyStatusColor("navigationAvailable"), _navigationMetricColor(_navCapabilityHorizontalPosition),
                     _navigationMetricColor(_navCapabilityVelocity), _navigationMetricColor(_navCapabilityHeading),
-                    _familyStatusColor("timeAvailable"), _utcValidityColor()][index]
+                    _timeQualityColor(), _utcValidityColor()][index]
         return [_familyStatusColor("rcInputAvailable"), _familyStatusColor("rcInputAvailable"),
                 _rcLinkStateColor(_fact("rcLinkState")), _familyStatusColor("linkAvailable"),
                 _familyStatusColor("linkAvailable"), _familyStatusColor("rcInputAvailable")][index]
