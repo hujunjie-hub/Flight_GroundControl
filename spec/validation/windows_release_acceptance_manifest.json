@@ -603,7 +603,10 @@
         "acquiring_and_moving_device_155_does_not_change_device_154_attitude_or_owner_pair",
         "unknown_gimbal_device_id_is_denied_without_mutating_any_device",
         "gimbal_device_155_release_clears_only_device_155_owner_pair",
-        "gimbal_rate_control_on_device_155_changes_only_device_155_attitude_and_zero_rate_stops_only_device_155"
+        "gimbal_rate_control_on_device_155_changes_only_device_155_attitude_and_zero_rate_stops_only_device_155",
+        "mocklink_broadcast_set_message_interval_fans_out_to_all_gimbal_device_components",
+        "mocklink_broadcast_interval_acknowledgement_uses_the_manager_component",
+        "mocklink_unknown_gimbal_device_availability_toggle_is_rejected_without_side_effects"
       ]
     }
   ],
