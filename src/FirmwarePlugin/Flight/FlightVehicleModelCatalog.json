@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "source": {
+    "repository": "hujunjie-hub/Flight",
+    "parameterCatalog": {
+      "path": "middleware/protocol/mavlink/parameters/ground_parameters.json",
+      "sha256": "63547de6956d277f6557300c93e0ff6673542e619515ca5f26983f38fc1e3e8e"
+    },
+    "vehicleModel": "config/vehicle_model.yaml",
+    "controllerTuning": "config/controller_tuning.yaml",
+    "estimatorTuning": "config/estimator_tuning.yaml"
+  },
+  "profiles": [
+    {
+      "id": "QUAD_X4",
+      "displayName": "QUAD_X4 · 仿真专用",
+      "status": "SIM_ONLY",
+      "hardwareEligible": false,
+      "parameterWriteScope": "SIL_ONLY",
+      "sourceDescription": "Synthetic X4 fixture; motor numbering and yaw signs have no hardware evidence",
+      "hardwareThrustCurve": "TBD: no hardware output calibration is supplied",
+      "controllerTuningStatus": "SIM_ONLY",
+      "estimatorTuningStatus": "DRAFT_PENDING_DATASET",
+      "parameterDomains": [
+        "CONTROL",
+        "SIMULATION",
+        "VEHICLE_MODEL"
+      ],
+      "parameterNames": [
+        "VEH_MASS",
+        "CTL_ACT_DLY",
+        "CTL_FB_KD_X",
+        "CTL_FB_KD_Y",
+        "CTL_FB_KD_Z",
+        "CTL_FB_KP_X",
+        "CTL_FB_KP_Y",
+        "CTL_FB_KP_Z",
+        "CTL_HOVER_THR",
+        "CTL_MPC_Q0",
+        "CTL_MPC_Q1",
+        "CTL_MPC_Q2",
+        "CTL_MPC_Q3",
+        "CTL_MPC_Q4",
+        "CTL_MPC_Q5",
+        "CTL_MPC_QF0",
+        "CTL_MPC_QF1",
+        "CTL_MPC_QF2",
+        "CTL_MPC_QF3",
+        "CTL_MPC_QF4",
+        "CTL_MPC_QF5",
+        "CTL_MPC_R0",
+        "CTL_MPC_R1",
+        "CTL_MPC_R2",
+        "CTL_MPC_S0",
+        "CTL_MPC_S1",
+        "CTL_MPC_S2",
+        "CTL_SEED_POS",
+        "CTL_SEED_VEL",
+        "CTL_RATE_DCUT",
+        "CTL_RATE_ILIM_X",
+        "CTL_RATE_ILIM_Y",
+        "CTL_RATE_ILIM_Z",
+        "CTL_RATE_KAW_X",
+        "CTL_RATE_KAW_Y",
+        "CTL_RATE_KAW_Z",
+        "CTL_RATE_KD_X",
+        "CTL_RATE_KD_Y",
+        "CTL_RATE_KD_Z",
+        "CTL_RATE_KI_X",
+        "CTL_RATE_KI_Y",
+        "CTL_RATE_KI_Z",
+        "CTL_RATE_KP_X",
+        "CTL_RATE_KP_Y",
+        "CTL_RATE_KP_Z",
+        "CTL_SO3_X",
+        "CTL_SO3_Y",
+        "CTL_SO3_Z",
+        "SIM_TLM_HZ"
+      ]
+    }
+  ]
+}

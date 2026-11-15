@@ -30,6 +30,7 @@ public:
     bool supportsMissionSpeedSection() const override { return false; }
     double missionAltitudeSliderMaximum() const override { return 10.0; }
     bool flightConfigurationLayout() const override { return true; }
+    QVariantList vehicleModelProfiles(const Vehicle *vehicle) const override;
     bool missionRelativeAltitudeOnly() const override { return true; }
     bool supportsMissionClear(const Vehicle *vehicle) const override;
     bool supportsGuidedAction(const Vehicle *vehicle, GuidedAction action) const override;

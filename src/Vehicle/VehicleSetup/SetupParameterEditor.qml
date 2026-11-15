@@ -10,16 +10,11 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isFlight: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
-    // Explicit version-property dependencies ensure this gate reevaluates when MAVLink version discovery completes.
-    readonly property int _firmwareMajorVersion: _activeVehicle ? _activeVehicle.firmwareMajorVersion : -1
-    readonly property int _firmwareMinorVersion: _activeVehicle ? _activeVehicle.firmwareMinorVersion : -1
-    readonly property int _firmwarePatchVersion: _activeVehicle ? _activeVehicle.firmwarePatchVersion : -1
-    readonly property bool _flightSilModelAvailable: _activeVehicle &&
-                                                     _activeVehicle.gitHash === "FLTSIL01" &&
-                                                     _firmwareMajorVersion >= 0 &&
-                                                     _firmwareMinorVersion >= 0 &&
-                                                     _firmwarePatchVersion >= 0 &&
-                                                     _activeVehicle.versionCompare(1, 9, 2) >= 0
+    // The firmware plugin returns only a uniquely matched, registered model profile.
+    readonly property var _modelProfiles: _activeVehicle ? _activeVehicle.vehicleModelProfiles : []
+    readonly property bool _flightModelAvailable: _modelProfiles.length === 1
+    readonly property int _modelParameterCount: _flightModelAvailable && _modelProfiles[0].parameterNames
+                                                ? _modelProfiles[0].parameterNames.length : 0
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
                                               !_activeVehicle.parameterManager.missingParameters
@@ -68,8 +63,11 @@ Item {
             property bool parameterDomainAvailable: false
 
             function domainCategoryName(domainIndex) {
+                if (!root._flightModelAvailable) {
+                    return "__NO_PARAMETER_DOMAIN__"
+                }
                 switch (domainIndex) {
-                case 0: return root._flightSilModelAvailable ? "VEHICLE_MODEL" : "__NO_PARAMETER_DOMAIN__"
+                case 0: return "VEHICLE_MODEL"
                 case 1: return "FMS"
                 case 2: return "CONTROL"
                 case 3: return "INS"
@@ -161,30 +159,32 @@ Item {
                                     elide: Text.ElideRight
                                 }
                                 ComboBox {
-                                id: modelProfileSelector
-                                Layout.preferredWidth: 178
-                                Layout.preferredHeight: 30
-                                model: root._flightSilModelAvailable ? [qsTr("QUAD_X4 · 仿真专用")] : []
-                                currentIndex: root._flightSilModelAvailable ? 0 : -1
-                                enabled: root._flightSilModelAvailable
-                                font.pointSize: ScreenTools.captionFontPointSize
-                                contentItem: QGCLabel {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 26
-                                    text: root._flightSilModelAvailable ? modelProfileSelector.currentText : qsTr("实机模型未登记")
-                                    color: root._flightSilModelAvailable ? root.cyan : root.mutedText
+                                    id: modelProfileSelector
+                                    Layout.preferredWidth: 178
+                                    Layout.preferredHeight: 30
+                                    model: root._modelProfiles
+                                    textRole: "displayName"
+                                    currentIndex: root._flightModelAvailable ? 0 : -1
+                                    // The profile is detected from firmware identity; manual switching is not supported yet.
+                                    enabled: false
                                     font.pointSize: ScreenTools.captionFontPointSize
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                    contentItem: QGCLabel {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 26
+                                        text: root._flightModelAvailable ? modelProfileSelector.currentText : qsTr("实机模型未登记")
+                                        color: root._flightModelAvailable ? root.cyan : root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    background: Rectangle {
+                                        radius: 5
+                                        color: "#06202A"
+                                        border.width: 1
+                                        border.color: root._flightModelAvailable ? root.cyan : "#16424C"
+                                    }
                                 }
-                                background: Rectangle {
-                                    radius: 5
-                                    color: "#06202A"
-                                    border.width: 1
-                                    border.color: root._flightSilModelAvailable ? root.cyan : "#16424C"
-                                }
-                            }
                             }
                         }
                     }
@@ -674,7 +674,7 @@ Item {
                                 Loader {
                                     id: parameterEditorLoader
                                     anchors.fill: parent
-                                    active: root._parametersReady
+                                    active: root._parametersReady && root._flightModelAvailable
                                     sourceComponent: parameterEditorComponent
                                     onLoaded: dashboardRoot.syncParameterDomain()
                                 }
@@ -683,7 +683,7 @@ Item {
                                     id: parameterEditorComponent
                                     ParameterEditor {
                                         externalCategoryNavigation: true
-                                        enabled: root._linkHealthy && root._parametersReady && dashboardRoot.parameterDomainAvailable
+                                        enabled: root._flightModelAvailable && root._linkHealthy && root._parametersReady && dashboardRoot.parameterDomainAvailable
                                     }
                                 }
 
@@ -697,12 +697,20 @@ Item {
                                     }
                                 }
 
+                                Connections {
+                                    target: root._activeVehicle
+                                    function onVehicleModelProfilesChanged() {
+                                        dashboardRoot.syncParameterDomain()
+                                    }
+                                }
+
                                 Rectangle {
                                     anchors.fill: parent
-                                    visible: parameterEditorLoader.status === Loader.Ready &&
-                                             parameterEditorLoader.item &&
-                                             root._parametersReady && root._linkHealthy &&
-                                             !dashboardRoot.parameterDomainAvailable
+                                    visible: root._parametersReady && root._linkHealthy &&
+                                             (!root._flightModelAvailable ||
+                                              (parameterEditorLoader.status === Loader.Ready &&
+                                               parameterEditorLoader.item &&
+                                               !dashboardRoot.parameterDomainAvailable))
                                     color: "#E606202A"
                                     border.width: 1
                                     border.color: "#14505B"
@@ -714,8 +722,8 @@ Item {
                                             Layout.fillWidth: true
                                             text: root.activeDomain === 6
                                                   ? qsTr("在线调参尚未开放")
-                                                  : root.activeDomain === 0 && !root._flightSilModelAvailable
-                                                    ? qsTr("实机模型尚未登记")
+                                                  : !root._flightModelAvailable
+                                                    ? qsTr("未匹配到已注册机型")
                                                     : qsTr("当前参数域暂无参数")
                                             color: root.mainText
                                             font.pointSize: ScreenTools.subtitleFontPointSize
@@ -726,9 +734,9 @@ Item {
                                             Layout.fillWidth: true
                                             text: root.activeDomain === 6
                                                   ? qsTr("当前固件尚未声明可在线调参的参数策略。Phase 3 完成安全闭环前，不开放写入操作。")
-                                                  : root.activeDomain === 0 && !root._flightSilModelAvailable
-                                                    ? qsTr("当前仅有 QUAD_X4 仿真模型（SIM_ONLY），没有实机验证证据。该参数域保持锁定。")
-                                                    : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他参数或示例数据填充。")
+                                                  : !root._flightModelAvailable
+                                                    ? qsTr("当前 Flight 固件未匹配到唯一且已登记的机型配置。参数编辑保持锁定，避免将仿真参数用于实机。")
+                                                    : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他域参数或示例数据填充。")
                                             color: root.mutedText
                                             font.pointSize: ScreenTools.captionFontPointSize
                                             wrapMode: Text.WordWrap
@@ -987,7 +995,7 @@ Item {
                     color: root._parametersReady ? root.green : root.amber
                     font.pointSize: ScreenTools.captionFontPointSize
                 }
-                QGCLabel { text: qsTr("Flight 参数元数据：49 项"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
+                QGCLabel { text: root._flightModelAvailable ? qsTr("Flight 参数元数据：%1 项").arg(root._modelParameterCount) : qsTr("Flight 参数元数据：未登记"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
                 Item { Layout.fillWidth: true }
                 QGCLabel {
                     text: root._pendingWrites ? qsTr("同步状态：等待写入确认") : qsTr("同步状态：无待写入")

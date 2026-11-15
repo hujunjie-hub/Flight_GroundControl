@@ -190,6 +190,7 @@ public:
     Q_PROPERTY(QString              stabilizedFlightMode        READ stabilizedFlightMode                                           CONSTANT)
     Q_PROPERTY(QString              firmwareTypeString          READ firmwareTypeString                                             NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString              vehicleTypeString           READ vehicleTypeString                                              NOTIFY vehicleTypeChanged)
+    Q_PROPERTY(QVariantList         vehicleModelProfiles        READ vehicleModelProfiles                                           NOTIFY vehicleModelProfilesChanged)
     Q_PROPERTY(QString              vehicleImageOpaque          READ vehicleImageOpaque                                             CONSTANT)
     Q_PROPERTY(QString              vehicleImageOutline         READ vehicleImageOutline                                            CONSTANT)
     Q_PROPERTY(QVariantList         toolIndicators              READ toolIndicators                                                 NOTIFY toolIndicatorsChanged)
@@ -672,6 +673,7 @@ public:
     void setFirmwareCustomVersion(int majorVersion, int minorVersion, int patchVersion);
     // versionNotSetValue inherited from VehicleTypes
 
+    QVariantList vehicleModelProfiles() const;
     QString gitHash() const { return _gitHash; }
     quint64 vehicleUID() const { return _uid; }
     QString vehicleUIDStr();
@@ -792,6 +794,7 @@ signals:
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
     void gitHashChanged                 (QString hash);
+    void vehicleModelProfilesChanged    ();
     void vehicleUIDChanged              ();
     void loadProgressChanged            (float value);
 

@@ -278,6 +278,8 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(_standardModes, &StandardModes::modesUpdated, this, &Vehicle::flightModesChanged);
     connect(this, &Vehicle::gitHashChanged, this, &Vehicle::flightModesChanged);
     connect(this, &Vehicle::firmwareVersionChanged, this, &Vehicle::flightModesChanged);
+    connect(this, &Vehicle::gitHashChanged, this, [this](const QString &) { emit vehicleModelProfilesChanged(); });
+    connect(this, &Vehicle::firmwareVersionChanged, this, &Vehicle::vehicleModelProfilesChanged);
     // Re-emit flightModeChanged after available modes mapping updates so UI refreshes
     // the human-readable mode name even if HEARTBEAT arrived earlier.
     connect(_standardModes, &StandardModes::modesUpdated, this, [this]() {
@@ -522,6 +524,11 @@ void Vehicle::_offlineHoverSpeedSettingChanged(QVariant value)
 QString Vehicle::firmwareTypeString() const
 {
     return QGCMAVLink::firmwareClassToString(_firmwareType);
+}
+
+QVariantList Vehicle::vehicleModelProfiles() const
+{
+    return _firmwarePlugin ? _firmwarePlugin->vehicleModelProfiles(this) : QVariantList{};
 }
 
 void Vehicle::resetCounters()

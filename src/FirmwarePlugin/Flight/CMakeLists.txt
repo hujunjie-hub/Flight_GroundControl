@@ -26,6 +26,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flight_parameter_metadata
     PREFIX "/FirmwarePlugin/Flight"
     FILES
         FlightParameterFactMetaData.json
+        FlightVehicleModelCatalog.json
 )
 
 qt_add_resources(${CMAKE_PROJECT_NAME} flight_configure_pages

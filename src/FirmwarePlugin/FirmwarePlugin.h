@@ -116,6 +116,8 @@ public:
     virtual bool supportsMissionSpeedSection() const { return true; }
     virtual double missionAltitudeSliderMaximum() const { return 121.92; }
     virtual bool flightConfigurationLayout() const { return false; }
+    /// Returns model profiles proven compatible with this connected vehicle. Empty means unregistered.
+    virtual QVariantList vehicleModelProfiles(const Vehicle* /*vehicle*/) const { return {}; }
     virtual bool missionRelativeAltitudeOnly() const { return false; }
 
     /// @return true: the vehicle accepts "clear plan" (MISSION_CLEAR_ALL) while a plan is loaded

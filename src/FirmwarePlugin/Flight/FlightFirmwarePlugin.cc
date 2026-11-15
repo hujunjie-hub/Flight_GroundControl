@@ -5,7 +5,12 @@
 #include "MissionItem.h"
 #include "Vehicle.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QStringList>
+#include <QtCore/QVariant>
 #include <cmath>
 
 namespace {
@@ -44,6 +49,48 @@ FlightFirmwarePlugin::FlightFirmwarePlugin()
 
 FlightFirmwarePlugin::~FlightFirmwarePlugin()
 {
+}
+
+QVariantList FlightFirmwarePlugin::vehicleModelProfiles(const Vehicle *vehicle) const
+{
+    // Only the explicitly identified Flight SIL may consume the current SIM_ONLY profile.
+    if (!isSilVehicle(vehicle)) {
+        return {};
+    }
+
+    static const QVariantList registeredProfiles = []() -> QVariantList {
+        QFile file(QStringLiteral(":/FirmwarePlugin/Flight/FlightVehicleModelCatalog.json"));
+        if (!file.open(QIODevice::ReadOnly)) {
+            return {};
+        }
+
+        QJsonParseError parseError;
+        const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
+        if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+            return {};
+        }
+
+        const QJsonObject catalog = document.object();
+        if (catalog.value(QStringLiteral("schema_version")).toInt(-1) != 1) {
+            return {};
+        }
+        return catalog.value(QStringLiteral("profiles")).toArray().toVariantList();
+    }();
+
+    QVariantList compatibleProfiles;
+    for (const QVariant &value : registeredProfiles) {
+        const QVariantMap profile = value.toMap();
+        if (profile.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
+            profile.value(QStringLiteral("hardwareEligible")).toBool() ||
+            profile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
+            continue;
+        }
+        compatibleProfiles.append(profile);
+    }
+
+    // Firmware identity alone cannot distinguish multiple model variants. Fail closed until
+    // the firmware reports an explicit model-profile id.
+    return compatibleProfiles.size() == 1 ? compatibleProfiles : QVariantList{};
 }
 
 FactGroup *FlightFirmwarePlugin::createFactGroup(Vehicle *vehicle) const

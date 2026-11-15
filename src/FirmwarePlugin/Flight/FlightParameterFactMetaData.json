@@ -1,7 +1,10 @@
 {
   "version": 1,
   "source": "middleware/protocol/mavlink/parameters/ground_parameters.json",
-  "sha256": "aaf8389ebeb4489c89b0db0d8196be62473de1f415463d07451aacbc747a84dc",
+  "sha256": "63547de6956d277f6557300c93e0ff6673542e619515ca5f26983f38fc1e3e8e",
+  "modelProfiles": [
+    "QUAD_X4"
+  ],
   "parameters": [
     {
       "name": "VEH_MASS",
@@ -15,7 +18,10 @@
       "default": 1.5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "VEHICLE_MODEL"
+      "domain": "VEHICLE_MODEL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_ACT_DLY",
@@ -29,7 +35,10 @@
       "default": 0,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KD_X",
@@ -43,7 +52,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KD_Y",
@@ -57,7 +69,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KD_Z",
@@ -71,7 +86,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KP_X",
@@ -85,7 +103,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KP_Y",
@@ -99,7 +120,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_FB_KP_Z",
@@ -113,7 +137,10 @@
       "default": 2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_HOVER_THR",
@@ -127,7 +154,10 @@
       "default": 0.5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q0",
@@ -141,7 +171,10 @@
       "default": 8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q1",
@@ -155,7 +188,10 @@
       "default": 8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q2",
@@ -169,7 +205,10 @@
       "default": 12,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q3",
@@ -183,7 +222,10 @@
       "default": 3,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q4",
@@ -197,7 +239,10 @@
       "default": 3,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_Q5",
@@ -211,7 +256,10 @@
       "default": 4,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF0",
@@ -225,7 +273,10 @@
       "default": 8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF1",
@@ -239,7 +290,10 @@
       "default": 8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF2",
@@ -253,7 +307,10 @@
       "default": 12,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF3",
@@ -267,7 +324,10 @@
       "default": 3,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF4",
@@ -281,7 +341,10 @@
       "default": 3,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_QF5",
@@ -295,7 +358,10 @@
       "default": 4,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_R0",
@@ -309,7 +375,10 @@
       "default": 0.8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_R1",
@@ -323,7 +392,10 @@
       "default": 0.8,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_R2",
@@ -337,7 +409,10 @@
       "default": 1,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_S0",
@@ -351,7 +426,10 @@
       "default": 0.2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_S1",
@@ -365,7 +443,10 @@
       "default": 0.2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_MPC_S2",
@@ -379,7 +460,10 @@
       "default": 0.25,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_SEED_POS",
@@ -393,7 +477,10 @@
       "default": 0.5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_SEED_VEL",
@@ -407,7 +494,10 @@
       "default": 1,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_DCUT",
@@ -421,7 +511,10 @@
       "default": 40,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_ILIM_X",
@@ -435,7 +528,10 @@
       "default": 0.2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_ILIM_Y",
@@ -449,7 +545,10 @@
       "default": 0.2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_ILIM_Z",
@@ -463,7 +562,10 @@
       "default": 0.2,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KAW_X",
@@ -477,7 +579,10 @@
       "default": 5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KAW_Y",
@@ -491,7 +596,10 @@
       "default": 5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KAW_Z",
@@ -505,7 +613,10 @@
       "default": 5,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KD_X",
@@ -519,7 +630,10 @@
       "default": 0.002,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KD_Y",
@@ -533,7 +647,10 @@
       "default": 0.002,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KD_Z",
@@ -547,7 +664,10 @@
       "default": 0.002,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KI_X",
@@ -561,7 +681,10 @@
       "default": 0.05,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KI_Y",
@@ -575,7 +698,10 @@
       "default": 0.05,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KI_Z",
@@ -589,7 +715,10 @@
       "default": 0.05,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KP_X",
@@ -603,7 +732,10 @@
       "default": 0.12,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KP_Y",
@@ -617,7 +749,10 @@
       "default": 0.12,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_RATE_KP_Z",
@@ -631,7 +766,10 @@
       "default": 0.12,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_SO3_X",
@@ -645,7 +783,10 @@
       "default": 6,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_SO3_Y",
@@ -659,7 +800,10 @@
       "default": 6,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "CTL_SO3_Z",
@@ -673,7 +817,10 @@
       "default": 6,
       "decimalPlaces": 4,
       "rebootRequired": false,
-      "domain": "CONTROL"
+      "domain": "CONTROL",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     },
     {
       "name": "SIM_TLM_HZ",
@@ -687,7 +834,10 @@
       "default": 5,
       "decimalPlaces": 1,
       "rebootRequired": false,
-      "domain": "SIMULATION"
+      "domain": "SIMULATION",
+      "modelProfiles": [
+        "QUAD_X4"
+      ]
     }
   ]
 }

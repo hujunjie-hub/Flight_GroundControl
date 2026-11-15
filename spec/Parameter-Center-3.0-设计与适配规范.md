@@ -460,6 +460,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 本轮将当前 Flight 固件的真实参数元数据接入参数域导航，未扩大任何参数写入权限：
 
+- Flight 仓库 tools/generate_qgc_parameter_metadata.py 已成为参数域与机型元数据的可重复生成入口：从 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 生成 FlightParameterFactMetaData.json 与 FlightVehicleModelCatalog.json；参数项携带 domain 和 modelProfiles，注册表包含硬件资格、写入范围、参数域及精确参数清单。生成器新增单元测试，未运行 CI。
+
 - FlightParameterFactMetaData.json 的 49 个参数增加显式 domain 字段，原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留。
 - 当前 group → domain 映射为：机体模型 → VEHICLE_MODEL（1 项）；MPC 权重、位置环回退、姿态角速度环、SO3 姿态增益 → CONTROL（47 项）；仿真 → SIMULATION（1 项）。
 - 当前 FMS、INS、PLANT、ACTUATOR 在这 49 项 Flight 参数元数据中没有登记参数；页面显示明确空态，不从其他域借用或伪造参数。
@@ -469,7 +471,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
-- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态，并提供唯一模型下拉入口；目前只有 Flight SIL 可选 QUAD_X4 · 仿真专用（SIM_ONLY），硬件连接时下拉禁用并显示“实机模型未登记”。跨仓库核查发现 Flight/config/vehicle_model.yaml 只有 QUAD_X4 合成模型，尚无实机证据；参数中心仅在 gitHash=FLTSIL01 且固件版本 ≥1.9.2（同时等待 major/minor/patch 版本属性就绪，再按 FlightFirmwarePlugin::isSilVehicle 的版本门槛校验）时开放该仿真模型域，实机连接时锁定 VEHICLE_MODEL。模型注册、兼容性阻断和真实硬件模型切换仍是 Phase 2 未完成项。
+- 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不再在 QML 内硬编码型号或重复判断 gitHash/版本。Flight SIL 只有在插件确认唯一匹配的 QUAD_X4 / SIM_ONLY 注册项时显示该型号；下拉为只读展示，固件尚未报告可区分多机型的 profile id 前不允许手动切换。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
@@ -483,7 +485,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，等待分阶段实施。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 49 项参数首轮 domain 分类、当前域搜索隔离、唯一模型下拉入口及 SIL-only QUAD_X4 门控已接入；实机模型注册/兼容性/在线调参策略未完成，构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（Flight 参数元数据已由固件源配置生成；模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 参数域门控和未登记机型锁定已接入；硬件模型注册、在线调参安全策略、仿真/回读闭环未完成，构建与测试 NOT_RUN）。
 - Phase 3：NOT_RUN。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。
