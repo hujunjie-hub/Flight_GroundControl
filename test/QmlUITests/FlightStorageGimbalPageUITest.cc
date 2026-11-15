@@ -979,6 +979,34 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                              secondPitchBeforeManager2Control) < 0.5);
             QVERIFY(std::abs(legacyGimbal->absolutePitch()->rawValue().toDouble() -
                              legacyPitchBeforeManager2Control) < 0.5);
+
+            const double manager2PitchBeforeRate = currentPitch();
+            const double manager2YawBeforeRate = currentYaw();
+            const double firstPitchBeforeManager2Rate =
+                activeGimbal->absolutePitch()->rawValue().toDouble();
+            const double secondPitchBeforeManager2Rate =
+                secondGimbal->absolutePitch()->rawValue().toDouble();
+            const double legacyPitchBeforeManager2Rate =
+                legacyGimbal->absolutePitch()->rawValue().toDouble();
+            vehicle->gimbalController()->sendGimbalRate(6.0f, 8.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentPitch() - manager2PitchBeforeRate) > 1.0, 4000);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentYaw() - manager2YawBeforeRate) > 1.0, 4000);
+            vehicle->gimbalController()->sendGimbalRate(0.0f, 0.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            const double manager2PitchAfterZeroRate = currentPitch();
+            const double manager2YawAfterZeroRate = currentYaw();
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            QVERIFY(std::abs(currentPitch() - manager2PitchAfterZeroRate) < 0.5);
+            QVERIFY(std::abs(currentYaw() - manager2YawAfterZeroRate) < 0.5);
+            QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
+                             firstPitchBeforeManager2Rate) < 0.5);
+            QVERIFY(std::abs(secondGimbal->absolutePitch()->rawValue().toDouble() -
+                             secondPitchBeforeManager2Rate) < 0.5);
+            QVERIFY(std::abs(legacyGimbal->absolutePitch()->rawValue().toDouble() -
+                             legacyPitchBeforeManager2Rate) < 0.5);
+
             QVERIFY(!activeGimbal->gimbalHaveControl());
             QVERIFY(!secondGimbal->gimbalHaveControl());
             QVERIFY(!legacyGimbal->gimbalHaveControl());
