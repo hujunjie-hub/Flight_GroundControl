@@ -2083,6 +2083,7 @@ SetupPage {
             }
 
             ColumnLayout {
+                visible: false // The dedicated Flight Health page owns the status legend.
                 Layout.fillWidth: true
                 spacing: 5
 
