@@ -772,8 +772,8 @@
     "summary_band_and_kpi_content_fit_all_responsive_breakpoints",
     "four_reference_tabs_use_project_svg_icons_with_20px_baseline_geometry_scaled_with_screen_tools_and_no_font_dependent_glyphs",
     "trend_cards_expose_renderable_sample_and_gap_counts_for_ui_regression",
-    "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
-    "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells",
+    "trend_canvases_use_64px_baseline_plot_area_scaled_with_screen_tools_and_earlier_latest_time_axis",
+    "trend_and_status_panels_use_eight_px_baseline_radius_scaled_with_screen_tools_with_six_px_health_cells",
     "dashboard_tabs_provide_hover_feedback_and_preserve_active_state_priority",
     "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints",
     "dashboard_detail_cards_are_partitioned_by_page_as_4_6_2_2_without_losing_diagnostic_fields",
@@ -904,7 +904,7 @@
     "rc_axis_out_of_range_with_validity_bit_set_hides_matching_stick_and_recovers_with_valid_sample",
     "trend_buffer_clears_when_new_boot_is_first_seen_on_navigation_before_operation_status",
     "navigation_time_and_event_timestamps_remain_family_gated_after_boot_epoch_switch",
-    "dashboard_vertical_density_compacts_at_1672x941_and_restores_without_hiding_telemetry_or_shrinking_64px_trend_canvas",
+    "dashboard_vertical_density_compacts_at_1672x941_and_restores_without_hiding_telemetry_while_preserving_64px_trend_canvas_baseline",
     "health_detail_metric_tiles_and_sensor_header_fit_at_1600_1000_900_760_759_700_400_px",
     "all_four_dashboard_pages_and_detail_grids_render_in_compact_1672x941_mode",
     "health_detail_cards_reserve_scaled_content_insets_at_1600_1000_900_760_759_700_400_px",
@@ -951,7 +951,11 @@
     "health_maintenance_metric_tile_content_fits_at_all_responsive_widths",
     "navigation_time_groups_and_monotonic_timeline_scale_at_100_150_200_percent_ui_scale",
     "navigation_time_status_badges_and_timeline_rows_remain_inside_panels_at_high_dpi",
-    "navigation_high_dpi_timeline_order_marker_label_value_and_utc_timestamp_parent_bounds_are_verified_at_100_150_200_percent"
+    "navigation_high_dpi_timeline_order_marker_label_value_and_utc_timestamp_parent_bounds_are_verified_at_100_150_200_percent",
+    "overview_trend_grid_spacing_card_insets_and_minimum_height_scale_with_screen_tools",
+    "overview_trend_canvas_preserves_64px_baseline_and_scales_to_96px_128px_at_150_200_percent_ui_scale",
+    "overview_trend_canvas_plot_inset_grid_line_series_line_marker_radii_and_glow_scale_with_ui_density",
+    "overview_trend_cards_footer_labels_canvas_and_grid_fit_parent_bounds_at_100_150_200_percent_ui_scale"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
