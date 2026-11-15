@@ -424,7 +424,8 @@
         "overview_alarm_live_priority_reorders_new_highest_severity_and_breaks_ties_by_local_receive_sequence",
         "overview_alarm_priority_hint_matches_severity_then_local_sequence_ordering_contract",
         "health_maintenance_prearm_coverage_is_separated_from_safety_outcome_summary",
-        "health_maintenance_resource_snapshot_shows_cpu_wcet_stack_and_storage_with_validity_gating"
+        "health_maintenance_resource_snapshot_shows_cpu_wcet_stack_and_storage_with_validity_gating",
+        "rc_link_page_medium_760_to_1279_uses_two_rows_3_3_then_4_2_column_spans"
       ]
     },
     {
@@ -641,7 +642,7 @@
     "overview_topology_nodes_bind_six_real_family_freshness_states_and_receive_ages",
     "overview_alarm_events_sort_by_severity_descending_then_event_sequence_descending",
     "overview_hero_panels_preserve_desktop_column_order_and_fit_responsive_grid_bounds",
-    "rc_link_page_uses_four_equal_width_three_column_hero_panels_on_desktop",
+    "rc_link_page_uses_desktop_6_6_then_8_4_and_medium_3_3_then_4_2_hero_layouts",
     "rc_link_page_hero_panels_align_to_a_shared_desktop_row_height",
     "rc_link_page_hero_panels_reflow_to_full_width_rows_at_medium_and_single_column_on_narrow_layouts",
     "rc_link_page_400px_panels_and_dual_sticks_fit_within_parent_bounds",
