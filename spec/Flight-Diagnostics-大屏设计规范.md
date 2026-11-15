@@ -1370,7 +1370,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 导航页「FCU UTC 时间」从普通左右分栏 TelemetryRow 改为独立的全宽堆叠时间戳行：字段标签单独一行，UTC 时间值使用固定宽度字体与轻量深色底框，完整保留 `yyyy-MM-dd HH:mm:ss.ffffff UTC` 六位微秒与 UTC 标识。
 - 时间值允许按空格自然换行，不使用省略号、不截断微秒、不改写时间值；UTC 有效/无效/等待/超时仍由原 `timeAvailable` freshness 与 `utc_valid` 门控决定，强调色仍复用 `_utcValidityColor()`。
 - 760 px 及以上时间同步网格为双列时，UTC 时间戳行横跨两列；UTC 不确定度回到第二行右侧，与 UTC 有效性并排，避免长时间戳挤占半列并保持原三行信息密度。低于 760 px 时继续单列全宽排列。
-- MockLink UI Integration 在 1600/1000/900/700/400 px 下检查 UTC 时间戳行宽度、值标签宽度、内容高度和时间同步卡片边界；既有 UTC 有效/无效/超时/恢复与微秒值断言继续生效。
+- MockLink UI Integration 在 1672×941 紧凑垂直模式及 1600/1000/900/700/400 px 下检查导航四块主视觉的 4/8 + 8/4 比例、同排等高、卡片边界、UTC 时间戳行/值标签宽度和内容高度；既有 UTC 有效/无效/超时/恢复与微秒值断言继续生效。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 验收指南和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、UTC 时间服务、freshness 阈值或飞控控制行为。
 - 按用户要求本轮不运行、不触发 CI/Unit/Integration/Windows Release；新增回归状态为 NOT_RUN，等待后续集中验收。
 
