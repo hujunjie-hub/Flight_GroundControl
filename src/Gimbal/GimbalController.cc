@@ -80,9 +80,11 @@ void GimbalController::setActiveGimbal(Gimbal *gimbal)
 
     // Do not orphan a device while this GCS still has confirmed control of it.
     // The operator must release ownership before selecting another device.
+    const bool communicationLost = !_vehicle || !_vehicle->vehicleLinkManager() ||
+        _vehicle->vehicleLinkManager()->communicationLost();
     if (_activeGimbal && _activeGimbal->ownershipStatusValid() &&
         _activeGimbal->managerStatusFresh() && _activeGimbal->gimbalHaveControl() &&
-        !_vehicle->vehicleLinkManager()->communicationLost()) {
+        !communicationLost) {
         qCWarning(GimbalControllerLog) << "Set active gimbal: release control before switching devices";
         return;
     }
