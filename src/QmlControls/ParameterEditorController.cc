@@ -446,7 +446,28 @@ bool ParameterEditorController::_profileAllowsSelectedParameter() const
         !selectedProfile.contains(QStringLiteral("hardwareEligible")) ||
         hardwareEligible.metaType().id() != QMetaType::Bool ||
         hardwareEligible.toBool() ||
-        selectedProfile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
+        selectedProfile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY") ||
+        selectedProfile.value(QStringLiteral("vehicleFamily")).toString() != _selectedFact->vehicleFamily() ||
+        selectedProfile.value(QStringLiteral("controlLaw")).toString() != _selectedFact->controlLaw()) {
+        return false;
+    }
+
+    QSet<QString> profileVariants;
+    for (const QVariant &variant : selectedProfile.value(QStringLiteral("modelVariants")).toList()) {
+        const QString value = variant.toString();
+        if (value.isEmpty() || profileVariants.contains(value)) {
+            return false;
+        }
+        profileVariants.insert(value);
+    }
+    QSet<QString> factVariants;
+    for (const QString &variant : _selectedFact->modelVariants()) {
+        if (variant.isEmpty() || factVariants.contains(variant)) {
+            return false;
+        }
+        factVariants.insert(variant);
+    }
+    if (profileVariants.isEmpty() || profileVariants != factVariants) {
         return false;
     }
 
@@ -496,6 +517,21 @@ QString ParameterEditorController::_tuningBlockReason() const
     }
     if (_selectedFact->writeOnly()) {
         return tr("该参数标记为只写，无法完成 PARAM_VALUE 回读确认，因此禁止在线调参。");
+    }
+    if (_selectedFact->tuningPolicy() == QStringLiteral("READ_ONLY")) {
+        return tr("该参数的调参策略为只读，仅允许查看和回读。");
+    }
+    if (_selectedFact->tuningPolicy() != QStringLiteral("GROUND_ADJUSTABLE")) {
+        return tr("当前调参策略不支持地面单参数写入，已保持锁定。");
+    }
+    const QString updatePolicy = _selectedFact->updatePolicy();
+    if (updatePolicy == QStringLiteral("OFFLINE_ONLY")) {
+        return tr("该参数仅允许离线修改，禁止在线写入。");
+    }
+    if (updatePolicy != QStringLiteral("IMMEDIATE") &&
+        updatePolicy != QStringLiteral("FIRMWARE_CONFIRMATION") &&
+        updatePolicy != QStringLiteral("REBOOT_REQUIRED")) {
+        return tr("参数更新策略未声明或不受支持，已禁止写入。");
     }
     if (!_profileAllowsSelectedParameter()) {
         return tr("所选机型配置未通过 SIL-only 注册检查；实机写入保持锁定。");
