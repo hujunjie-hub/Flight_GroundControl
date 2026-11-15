@@ -3302,6 +3302,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
                     }
                     const qreal navigationOriginalWidth = page->width();
+                    const qreal navigationOriginalHeight = page->height();
                     page->setWidth(1600);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageGrid->property("columns").toInt(), 12, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGrid->property("columns").toInt(), 4, 3000);
@@ -3372,6 +3373,49 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     for (QQuickItem* row : navigationTimelineRows) {
                         QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
                     }
+                    page->setWidth(1672);
+                    page->setHeight(941);
+                    QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationPageGrid->property("columns").toInt(), 12, 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 2, 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageCapabilities->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationPageTime->y(), navigationPageChecks->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationPageTime->y() > navigationPageOverview->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationPageOverview->x() < navigationPageCapabilities->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationPageTime->x() < navigationPageChecks->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationPageOverview->height() - navigationPageCapabilities->height()) < 1.0, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationPageTime->height() - navigationPageChecks->height()) < 1.0, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationPageCapabilities->width() / navigationPageOverview->width() - 2.0) < 0.05, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationPageTime->width() / navigationPageChecks->width() - 2.0) < 0.05, 3000);
+                    QQuickItem* navigationCompactPanels[] = {
+                        navigationPageOverview, navigationPageCapabilities, navigationPageTime, navigationPageChecks};
+                    const auto navigationCompactPanelFitsInGrid = [](QQuickItem* panel, QQuickItem* grid) {
+                        const auto topLeft = panel->mapToItem(grid, 0, 0);
+                        return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                               topLeft.x() + panel->width() <= grid->width() + 1.0 &&
+                               topLeft.y() + panel->height() <= grid->height() + 1.0;
+                    };
+                    for (QQuickItem* panel : navigationCompactPanels) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationCompactPanelFitsInGrid(panel, navigationPageGrid), 3000);
+                    }
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->width() >= navigationPageTime->width() * 0.82, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationUtcTimestampValue->width() >= navigationTimeMetricRows[4]->width() * 0.9, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationUtcTimestampValue->height() + 1.0 >=
+                            navigationUtcTimestampValue->implicitHeight(), 3000);
+                    for (QQuickItem* row : navigationTimeMetricRows) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationTimeMetricFitsInPanel(row, navigationPageTime), 3000);
+                    }
+                    for (QQuickItem* row : navigationTimelineRows) {
+                        QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
+                    }
+                    page->setHeight(navigationOriginalHeight);
                     page->setWidth(navigationOriginalWidth);
                     QTRY_COMPARE_WITH_TIMEOUT(
                         timeSourceMappingEpoch->property("labelText").toString(),
