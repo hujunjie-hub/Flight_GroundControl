@@ -439,7 +439,9 @@ ApplicationWindow {
             anchors.left:   parent.left
             anchors.right:  parent.right
             anchors.top:    parent.top
-            height:         toolDrawer.flightConfig && !ScreenTools.isMobile ? 56 : ScreenTools.toolbarHeight
+            height:         toolDrawer.flightConfig && !ScreenTools.isMobile
+                                 ? Math.max(56, ScreenTools.defaultFontPixelHeight * 5.6)
+                                 : ScreenTools.toolbarHeight
             color:          toolDrawer.flightConfig ? "#031A20" : qgcPal.toolbarBackground
 
             Loader {
