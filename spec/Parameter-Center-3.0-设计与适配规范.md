@@ -256,6 +256,9 @@
 | updatePolicy | 即时生效 / 需飞控确认 / 需重启 / 仅离线 |
 | dependencies | 已定义的参数依赖关系 |
 | validationRules | 单参数及组合校验规则 |
+| sourceFile | 参数配置来源文件 |
+| sourcePath | 配置文件内的精确字段路径（含数组索引） |
+| sourceKind | 标量 / 向量 / 矩阵 / 存储项 |
 
 - 未提供适用性信息的参数默认不跨机型推断，不允许因此扩大写入范围。当前 schema v2 对缺失的 vehicleFamily/modelVariants/controlLaw/tuningPolicy/updatePolicy 执行 fail-closed。
 - 机型、控制律或固件能力未知时，相关参数显示为未知/未验证，默认只读。
