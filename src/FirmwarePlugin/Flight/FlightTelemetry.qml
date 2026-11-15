@@ -182,7 +182,9 @@ SetupPage {
         const counts = { critical: 0, error: 0, warning: 0, info: 0, unknown: 0 }
         const records = events && typeof events.length === "number" ? events : []
         for (let index = 0; index < records.length; ++index) {
-            const severity = Number(records[index].severity)
+            const rawSeverity = records[index] ? records[index].severity : undefined
+            const severity = rawSeverity === null || rawSeverity === undefined || rawSeverity === ""
+                              ? NaN : Number(rawSeverity)
             if (!Number.isInteger(severity)) {
                 ++counts.unknown
             } else {
