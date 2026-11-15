@@ -1345,13 +1345,6 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(tabs);
             QVERIFY(title);
             QVERIFY(dashboardGrid);
-            QVERIFY(diagnosticDetailsTitle);
-            QVERIFY(summaryOperation);
-            QVERIFY(summaryNavigation);
-            QVERIFY(summaryLink);
-            QVERIFY(storageFreeRow);
-            QVERIFY(storageSdState);
-            QVERIFY(storageNorState);
             const qreal originalPageWidth = page->width();
             QVERIFY(originalPageWidth > 0);
             const char* diagnosticCards[] = {
@@ -1389,6 +1382,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* overviewNavigation = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* overviewRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
             QVERIFY(summaryBand);
+            QVERIFY(diagnosticDetailsTitle);
+            QVERIFY(summaryOperation);
+            QVERIFY(summaryNavigation);
+            QVERIFY(summaryLink);
+            QVERIFY(storageFreeRow);
+            QVERIFY(storageSdState);
+            QVERIFY(storageNorState);
             QVERIFY(overviewFlight);
             QVERIFY(overviewNavigation);
             QVERIFY(overviewRcInput);
