@@ -17,7 +17,6 @@
       "max": 50,
       "default": 1.5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "VEHICLE_MODEL",
       "modelProfiles": [
         "QUAD_X4"
@@ -34,7 +33,6 @@
       "max": 0.04,
       "default": 0,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -51,7 +49,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -68,7 +65,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -85,7 +81,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -102,7 +97,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -119,7 +113,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -136,7 +129,6 @@
       "max": 50,
       "default": 2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -153,7 +145,6 @@
       "max": 0.95,
       "default": 0.5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -170,7 +161,6 @@
       "max": 1000,
       "default": 8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -187,7 +177,6 @@
       "max": 1000,
       "default": 8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -204,7 +193,6 @@
       "max": 1000,
       "default": 12,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -221,7 +209,6 @@
       "max": 1000,
       "default": 3,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -238,7 +225,6 @@
       "max": 1000,
       "default": 3,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -255,7 +241,6 @@
       "max": 1000,
       "default": 4,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -272,7 +257,6 @@
       "max": 1000,
       "default": 8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -289,7 +273,6 @@
       "max": 1000,
       "default": 8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -306,7 +289,6 @@
       "max": 1000,
       "default": 12,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -323,7 +305,6 @@
       "max": 1000,
       "default": 3,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -340,7 +321,6 @@
       "max": 1000,
       "default": 3,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -357,7 +337,6 @@
       "max": 1000,
       "default": 4,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -374,7 +353,6 @@
       "max": 1000,
       "default": 0.8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -391,7 +369,6 @@
       "max": 1000,
       "default": 0.8,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -408,7 +385,6 @@
       "max": 1000,
       "default": 1,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -425,7 +401,6 @@
       "max": 100,
       "default": 0.2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -442,7 +417,6 @@
       "max": 100,
       "default": 0.2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -459,7 +433,6 @@
       "max": 100,
       "default": 0.25,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -476,7 +449,6 @@
       "max": 100,
       "default": 0.5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -493,7 +465,6 @@
       "max": 100,
       "default": 1,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -510,7 +481,6 @@
       "max": 449,
       "default": 40,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -527,7 +497,6 @@
       "max": 10,
       "default": 0.2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -544,7 +513,6 @@
       "max": 10,
       "default": 0.2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -561,7 +529,6 @@
       "max": 10,
       "default": 0.2,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -578,7 +545,6 @@
       "max": 100,
       "default": 5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -595,7 +561,6 @@
       "max": 100,
       "default": 5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -612,7 +577,6 @@
       "max": 100,
       "default": 5,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -629,7 +593,6 @@
       "max": 20,
       "default": 0.002,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -646,7 +609,6 @@
       "max": 20,
       "default": 0.002,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -663,7 +625,6 @@
       "max": 20,
       "default": 0.002,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -680,7 +641,6 @@
       "max": 20,
       "default": 0.05,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -697,7 +657,6 @@
       "max": 20,
       "default": 0.05,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -714,7 +673,6 @@
       "max": 20,
       "default": 0.05,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -731,7 +689,6 @@
       "max": 20,
       "default": 0.12,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -748,7 +705,6 @@
       "max": 20,
       "default": 0.12,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -765,7 +721,6 @@
       "max": 20,
       "default": 0.12,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -782,7 +737,6 @@
       "max": 50,
       "default": 6,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -799,7 +753,6 @@
       "max": 50,
       "default": 6,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -816,7 +769,6 @@
       "max": 50,
       "default": 6,
       "decimalPlaces": 4,
-      "rebootRequired": false,
       "domain": "CONTROL",
       "modelProfiles": [
         "QUAD_X4"
@@ -833,7 +785,6 @@
       "max": 10,
       "default": 5,
       "decimalPlaces": 1,
-      "rebootRequired": false,
       "domain": "SIMULATION",
       "modelProfiles": [
         "QUAD_X4"
