@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.90
+版本：4.91
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -835,6 +835,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 
 ### G15 飞行健康页紧凑密度与主视觉比例（2026-11-16）
+- 维护与可靠性区域必须包含启动身份、最近异常、预检/资源三张独立卡片；三卡使用统一圆角/背景/边框与左侧强调色，事件卡色条和事件摘要共享原有严重度颜色。
+- 卡片 contentInset 必须等于页面公开的 `_healthMaintenanceCardInset`；卡片内容完整落在父卡内且高度不小于 implicitHeight；卡片间距和内部间距必须使用独立 ScreenTools 缩放 token。
+- 1280 px 及以上三列、760–1279 px 两列、低于 760 px 单列；桌面同一行卡片等高，中屏第三卡换行，窄屏纵向堆叠。保留启动 ID、事件摘要/接收年龄、预检覆盖和四项资源数值。
+- 新增 MockLink UI Integration 检查三张卡片的对象存在、圆角、内容边界、缩放内边距及多视口布局；本轮不运行 CI/Build/Unit/Integration/Windows Release，新增断言 NOT_RUN。
+
 
 - 13 域矩阵与六个重点域状态单元的 contentInset 必须等于页面公开的 `_healthCellInset`，且随 ScreenTools 字体像素高度缩放；实际高度不得小于 implicitHeight，内容容器必须完整落在单元内部。
 - 健康矩阵间距、重点域行间距和单元内容间距必须使用独立紧凑 token，并小于通用 dashboard body spacing；不得通过缩小字体、隐藏接收年龄、删减状态文字或省略遥测域换取空间。
