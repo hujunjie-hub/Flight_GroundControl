@@ -957,7 +957,8 @@
     "overview_trend_canvas_preserves_64px_baseline_and_scales_to_96px_128px_at_150_200_percent_ui_scale",
     "overview_trend_canvas_plot_inset_grid_line_series_line_marker_radii_and_glow_scale_with_ui_density",
     "overview_trend_cards_footer_labels_canvas_and_grid_fit_parent_bounds_at_100_150_200_percent_ui_scale",
-    "navigation_timeline_rows_are_contained_by_timeline_and_long_fcu_time_values_are_not_clipped"
+    "navigation_timeline_rows_are_contained_by_timeline_and_long_fcu_time_values_are_not_clipped",
+    "overview_navigation_kpi_readouts_scale_spacing_and_fit_parent_bounds_at_100_150_200_percent_ui_scale"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
