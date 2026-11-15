@@ -439,6 +439,14 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(pitchValue->property("text").toString(), stablePitch);
             QCOMPARE(yawValue->property("text").toString(), stableYaw);
 
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,
+                                    false, 44.0f, 90.0f, NAN, NAN, attitudeFlags | 0x8000u,
+                                    0, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(pitchValue->property("text").toString(), stablePitch);
+            QCOMPARE(yawValue->property("text").toString(), stableYaw);
+
             // The page's 5 Hz target sender is active only while a slider is dragged.
             const double pitchTargetBefore = pitchSlider->property("value").toDouble();
             const QPoint start = pitchSlider->mapToScene(
