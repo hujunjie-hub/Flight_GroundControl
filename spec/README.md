@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.94
+- 版本 4.95
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -254,3 +254,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 导航时序页 UTC 时间戳全宽适配：FCU UTC 时间独立成堆叠全宽行，固定宽度字体、深色底框、自然换行，保留六位微秒和 UTC 标识；双列布局下横跨两列，UTC 不确定度与 UTC 有效性并排。新增 1672×941 紧凑大屏四卡比例/等高/边界与 1600/1000/900/700/400 px 内容边界回归，未运行 CI/Unit/Integration，新增回归 NOT_RUN。
+
+
+- 2026-11-15 导航时序页辅助网格高 DPI 收口：能力、时间同步、导航/时间域状态子网格间距统一由 ScreenTools 字体像素宽高驱动，MetricReadout 内部间距随 UI Scale 缩放，标签/状态文本支持窄宽度换行；MockLink UI Integration 新增 1280/1279/760/759 px spacing 与换行断言。本轮未运行 CI/Unit/Integration/Windows Release，新增回归 NOT_RUN，待集中验收。
