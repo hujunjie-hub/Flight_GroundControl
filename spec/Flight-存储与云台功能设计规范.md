@@ -1,6 +1,6 @@
 # Flight 存储与云台配置页设计规范
 
-- 版本：1.3
+- 版本：1.4
 - 日期：2026-11-15
 - 适用固件：Flight
 - 适用页面：Configure / 存储卡、Configure / 云台
@@ -110,7 +110,8 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 每个参数按 MAVLink 定义解释：0 = 无人控制（清空对应字段）；-1 = 保持不变；-2 = 将发送方自己的 system/component ID 写入对应字段；-3 = 仅当发送方拥有完整 owner pair 时释放该 pair；正整数 = 设置显式 ID。
 - -3 必须以完整的 sysid/compid 参数对出现；部分 -3、部分清零导致的半 owner pair、非整数 ID、越界 ID、零源 ID 的 -2 和未定义负值均拒绝，拒绝时不得改变任一 owner slot。
 - 未持有 primary/secondary 控制权的发送方，其 `MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW` 命令必须被拒绝。
-- PITCHYAW 的 param7 只允许 0（全部设备）或本 MockLink 云台设备 ID；未知设备 ID、无穷角度/角速度和非法 flags 必须拒绝。
+- PITCHYAW 的 param7 只允许 0（全部设备）或本 MockLink 云台设备 ID；未知设备 ID、无穷角度/角速度和未知 flags 位必须拒绝。
+- `GIMBAL_MANAGER_SET_ATTITUDE` 仅接受当前 MockLink 约定的 rate-only NaN quaternion 形式；目标设备、目标组件、控制权、轴能力、角速度有限性和 flags 位均须校验。
 - yaw-lock 与 retract 命令必须在后续 GIMBAL_DEVICE_ATTITUDE_STATUS 中反映真实状态变化。
 - 不得因为其他 GCS 发来 -3 就清除当前 owner。
 - 共享状态和 1 Hz 状态发送使用同一互斥锁，避免配置写入与状态读取竞争。
