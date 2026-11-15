@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.2  
+版本：4.3  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -336,3 +336,13 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 本轮新增的 MockLink Integration 断言覆盖逐实例三个指标、GCS 优先于 RC、非 RC 链路超时后不回退 RC、四面板均衡和中窄屏重排；本轮未运行 CI，未形成 PASS 证据。后续集中执行 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地参考图/DPI 验收。
 
 - 健康页控制器/执行器 freshness 验收：分别注入 controlAvailable、actuatorAvailable fresh → stale → recovered；求解器、序号、求解耗时、DOF、执行器掩码、许可代次、输出策略、原因和 FCU 时间戳必须同步显示状态/恢复值，不得保留旧值冒充当前值。
+
+
+### G15 KPI 辅助值 freshness 一致性补充（2026-11-15）
+
+- 六项 KPI 的辅助说明不得绕过主值的 family freshness、实例 receiveAgeMs 或 validity/capability 门控。
+- 健康页传感器覆盖率按新鲜/超时/等待实例计数；资源摘要按 task 实例 freshness 计数；未收到 actuator family 时不得显示缓存执行器掩码。
+- 导航页 UTC 辅助说明和强调色必须同步反映 UTC valid/invalid/time stale/recovered；time 超时后显示“数据超时”并使用琥珀色，不保留旧的“UTC 有效”。
+- 遥控页 RC failsafe 辅助说明随 rcInput family freshness 变化；RC 超时后不得继续显示“接收机失效保护未触发”。
+- 链路实例摘要分别统计新鲜、超时和等待实例；链路 family 新鲜不代表每个链路实例均新鲜。
+- 新增 MockLink UI Integration 断言覆盖上述状态；本轮未运行 CI，不形成 PASS 证据。后续 exact-HEAD 集中执行 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 与本地参考图/DPI 验收。

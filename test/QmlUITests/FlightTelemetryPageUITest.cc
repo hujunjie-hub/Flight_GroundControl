@@ -686,6 +686,23 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendResourceStatus = [&](uint64_t timeBootUs, uint16_t taskId) {
+                mavlink_fcu_resource_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.task_id = taskId;
+                payload.validity_mask = 0x0F;
+                payload.wcet_us = 1500;
+                payload.stack_free_bytes = 4096;
+                payload.deadline_miss_count = 0;
+                payload.axi_free_bytes = 8192;
+                payload.cpu_load_permille = 450;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_resource_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             auto sendPrearmStatus = [&](uint64_t timeBootUs, uint32_t checkEpoch, uint16_t checkId,
                                         uint8_t checkState, uint16_t recoveryCondition) {
                 mavlink_fcu_prearm_status_t payload{};
@@ -731,6 +748,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(),
+                                      translatedTelemetryText("接收机失效保护未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(3).arg(0).arg(0),
+                                      3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
             QQuickItem* rightStickReadout = findVisibleItem(
@@ -896,6 +918,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
+                                      translatedTelemetryText("UTC 有效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendControl->property("valueKey").toString(), QStringLiteral("time"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("validSampleCount").toInt() >= 2, 3000);
 
@@ -910,6 +936,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
+                                      translatedTelemetryText("UTC 无效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > previousTimeTrendSamples, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendControl->property("lastSampleValid").toBool(), 3000);
@@ -927,6 +957,17 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > invalidTimeTrendSamples, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("lastSampleValid").toBool(), 3000);
+            const int timeFreshnessTick = page->property("_ageRefreshTick").toInt();
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > timeFreshnessTick, 1500);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("valueText").toString(), staleText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryTime->property("detailText").toString().contains(staleText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            sendTimeStatus(lastOperationTime + 600, bootId, 1700000010123456ULL, 1);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
+                                      translatedTelemetryText("UTC 有效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
@@ -960,6 +1001,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
                                          QStringLiteral("GCS 地面站")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(1).arg(2).arg(0),
+                                      3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
@@ -1381,6 +1426,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 }
             }
             sendSensorHealthStatus(1700, 1, 2, 0);
+            sendResourceStatus(1750, 0);
             sendPrearmStatus(1800, 1, 1, 1, 0);
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
@@ -1453,6 +1499,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       QColor("#E2ECEF"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(sensorPrimary->property("statusText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmPrimary->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("detailText").toString(),
+                                      translatedTelemetryText("%1 / 4 有效 · %2 超时 · %3 等待").arg(1).arg(0).arg(3),
+                                      3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("detailText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("detailText").toString(),
+                                      translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(1).arg(0).arg(0),
+                                      3000);
             QTRY_COMPARE_WITH_TIMEOUT(sensorState->property("text").toString(),
                                       translatedTelemetryText("健康"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmState->property("text").toString(),
@@ -1511,6 +1564,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       translatedTelemetryText("通过"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(stalePrearmDetails->property("text").toString().contains(
                                          translatedTelemetryText("最近上报")), 3000);
+
+            const QVariantList resourceCoverageSamples{
+                QVariantMap{{QStringLiteral("taskId"), 0}, {QStringLiteral("receiveAgeMs"), 6000}},
+                QVariantMap{{QStringLiteral("taskId"), 1}, {QStringLiteral("receiveAgeMs"), 100}}};
+            QVariant resourceCoverage;
+            QVERIFY(QMetaObject::invokeMethod(page, "_resourceCoverageTextFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, resourceCoverage),
+                                              Q_ARG(QVariant, QVariant::fromValue(resourceCoverageSamples))));
+            QCOMPARE(resourceCoverage.toString(),
+                     translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待").arg(1).arg(1).arg(0));
 
             QVariant prearmCoverage;
             QVERIFY(QMetaObject::invokeMethod(page, "_prearmCheckCoverageText", Qt::DirectConnection,

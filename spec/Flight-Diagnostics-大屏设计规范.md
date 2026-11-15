@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.9
+- 版本：6.10
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；总览事件历史可读性已收尾；旧版 SYS_STATUS 兼容传感器状态新增 freshness 门控；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；本轮继续补齐 KPI 辅助说明与主值的 family/per-instance freshness、UTC 有效性颜色、RC failsafe 和链路覆盖率一致性；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -71,7 +71,7 @@
 | 导航时序 | 导航状态、水平位置 σ、速度 σ、航向 σ、时间质量、UTC 不确定度 | 位置/速度/航向分别服从 capability bit3、bit5+bit6、bit2；UTC 不确定度仅在 UTC 有效时显示 |
 | 遥控与链路 | 遥控输入、有效输入轴、RC 链路状态、数据链路、链路实例、遥控接收年龄 | 有效轴由 rcValidAxesMask 决定；链路指标只显示 validityMask 标记有效的字段 |
 
-KPI 是信息索引，不是综合健康评分。任何 family 未收到、超时、无效或能力位缺失时，必须显示对应状态，不能用 0、绿色或上一次有效值伪装为当前值。KPI 只显示当前页有意义的指标，禁止为了对齐参考图而伪造电池、卫星、HDOP、振动、温度、SNR、RTT、吞吐量或不存在的原始 RC 通道。
+KPI 是信息索引，不是综合健康评分。任何 family 未收到、超时、无效或能力位缺失时，必须显示对应状态，不能用 0、绿色或上一次有效值伪装为当前值。KPI 主值、辅助说明和强调色必须服从同一 family freshness、实例 receiveAgeMs 与字段 validity/capability 规则；不得出现主值已超时但辅助文字仍显示旧的有效/健康/未触发状态。KPI 只显示当前页有意义的指标，禁止为了对齐参考图而伪造电池、卫星、HDOP、振动、温度、SNR、RTT、吞吐量或不存在的原始 RC 通道。
 
 ### 2.4 三栏主视觉区
 
@@ -691,3 +691,16 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - SysStatusSensorInfoTest 使用短注入超时验证正常 → Stale，并验证通信丢失立即失效、通信恢复后等待新 SYS_STATUS 才恢复。
 - VehicleLinkManagerTest::_simpleCommLossTest 通过真实 MockLink/VehicleLinkManager 信号路径验证断链时立即 stale，重连后由新 SYS_STATUS 恢复 fresh。
 - 本轮未运行 Unit、Integration、Windows Release 或 CI；相关回归状态均为 NOT_RUN，待集中验收。
+
+
+## 41. Phase 2.9 KPI 辅助值 freshness 与状态颜色一致性（2026-11-15）
+
+- 六项 KPI 的主值、辅助说明和强调色共享同一数据有效性语义；任何 family 未收到/超时、字段未上报或 UTC 无效时，辅助说明不得继续显示缓存的旧状态。
+- 飞行健康页的传感器覆盖率复用逐实例 freshness 计数，显示有效、超时和等待实例数；不再把缓存实例总数当作当前有效数量。
+- 执行器掩码辅助说明只有 actuator family 新鲜且掩码已上报时才显示；等待或超时显示对应状态。
+- 系统资源辅助说明按 taskId 实例 receiveAgeMs 统计新鲜/超时/等待实例；family 不新鲜时不展示旧实例数。
+- 导航页 UTC 辅助说明统一经过 time family freshness 与 utcValid 门控；UTC 无效使用红色，time family 超时使用琥珀色，恢复有效后回到绿色。
+- 遥控页接收机 failsafe 辅助说明受 rcInput family freshness 门控；RC 超时后不保留旧的“未触发”文字。
+- 链路实例摘要分别统计新鲜/超时/等待实例，避免将缓存实例数量解释为当前在线链路数量。
+- MockLink Integration 增加 UTC 有效/无效/超时/恢复、RC failsafe 新鲜/超时、传感器覆盖率、资源实例覆盖率、执行器未接收和多链路实例新鲜度断言。
+- 仅调整地面站 KPI 呈现和 UI Integration；不修改 FlightTelemetry 协议、FactGroup 解码、飞控健康判定、控制权限或任何飞行控制行为。本阶段按用户要求不运行 CI，所有新增回归待集中验收。

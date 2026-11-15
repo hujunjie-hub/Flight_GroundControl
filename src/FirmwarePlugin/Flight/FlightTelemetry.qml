@@ -332,6 +332,26 @@ SetupPage {
                 _familyStatus("linkAvailable") === qsTr("已接收") ? String(_linkStatuses.length) : _familyStatus("linkAvailable"),
                 _receiveAgeText("rcInput")][index]
     }
+    function _actuatorMaskSummaryText() {
+        const familyStatus = _familyStatus("actuatorAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const mask = _fact("actuatorAvailableMask")
+        if (mask === null || mask === undefined) return qsTr("未上报")
+        return qsTr("可用执行器掩码：%1").arg(_mask("actuatorAvailableMask"))
+    }
+    function _rcReceiverFailsafeSummaryText() {
+        const familyStatus = _familyStatus("rcInputAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const failsafe = _fact("rcReceiverFailsafe")
+        if (failsafe === null || failsafe === undefined) return qsTr("接收机失效保护未上报")
+        return failsafe ? qsTr("接收机失效保护触发") : qsTr("接收机失效保护未触发")
+    }
+    function _utcValiditySummaryText() {
+        const validity = _utcValidityText()
+        if (validity === qsTr("是")) return qsTr("UTC 有效")
+        if (validity === qsTr("否")) return qsTr("UTC 无效")
+        return qsTr("UTC 状态：%1").arg(validity)
+    }
     function _summaryTileDetail(index) {
         if (_activeDashboardPage === 0) {
             switch (index) {
@@ -352,12 +372,12 @@ SetupPage {
         if (_activeDashboardPage === 1) {
             switch (index) {
             case 0: return _receiveAgeText("operation")
-            case 1: return qsTr("%1 个传感器实例").arg(_sensorStatuses.length)
+            case 1: return _sensorCoverageText()
             case 2: return _familyStatus("controlAvailable") === qsTr("已接收")
                         ? _enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])
                         : _receiveAgeText("control")
-            case 3: return qsTr("可用执行器掩码：%1").arg(_mask("actuatorAvailableMask"))
-            case 4: return qsTr("%1 个任务资源实例").arg(_resourceStatuses.length)
+            case 3: return _actuatorMaskSummaryText()
+            case 4: return _resourceCoverageText()
             default: return _familyStatus("eventAvailable") === qsTr("已接收") ? qsTr("当前启动周期事件") : _familyStatus("eventAvailable")
             }
         }
@@ -368,16 +388,15 @@ SetupPage {
             case 2: return _navigationMetricStatus(_navCapabilityVelocity)
             case 3: return _navigationMetricStatus(_navCapabilityHeading)
             case 4: return _utcUncertaintyText()
-            default: return _fact("utcValid") === null ? qsTr("UTC 状态未上报") : (_fact("utcValid") ? qsTr("UTC 有效") : qsTr("UTC 无效"))
+            default: return _utcValiditySummaryText()
             }
         }
         switch (index) {
         case 0: return qsTr("RC 接收年龄：%1").arg(_receiveAgeText("rcInput"))
         case 1: return qsTr("有效轴由 rcValidAxesMask 决定")
-        case 2: return _fact("rcReceiverFailsafe") === null ? qsTr("接收机失效保护未上报")
-                    : (_fact("rcReceiverFailsafe") ? qsTr("接收机失效保护触发") : qsTr("接收机失效保护未触发"))
+        case 2: return _rcReceiverFailsafeSummaryText()
         case 3: return qsTr("链路接收年龄：%1").arg(_receiveAgeText("link"))
-        case 4: return qsTr("当前仅显示协议已上报链路实例")
+        case 4: return _linkInstanceCoverageText()
         default: return _receiveAgeText("rcInput")
         }
     }
@@ -399,7 +418,7 @@ SetupPage {
         if (_activeDashboardPage === 2)
             return [_familyStatusColor("navigationAvailable"), _navigationMetricColor(_navCapabilityHorizontalPosition),
                     _navigationMetricColor(_navCapabilityVelocity), _navigationMetricColor(_navCapabilityHeading),
-                    _familyStatusColor("timeAvailable"), _familyStatusColor("timeAvailable")][index]
+                    _familyStatusColor("timeAvailable"), _utcValidityColor()][index]
         return [_familyStatusColor("rcInputAvailable"), _familyStatusColor("rcInputAvailable"),
                 _rcLinkStateColor(_fact("rcLinkState")), _familyStatusColor("linkAvailable"),
                 _familyStatusColor("linkAvailable"), _familyStatusColor("rcInputAvailable")][index]
@@ -762,6 +781,37 @@ SetupPage {
         }
         return qsTr("%1 / 4 有效 · %2 超时 · %3 等待")
                 .arg(fresh).arg(stale).arg(waiting + Math.max(0, 4 - statuses.length))
+    }
+
+    function _resourceCoverageTextFor(statuses) {
+        if (!statuses || statuses.length === 0) return qsTr("未上报")
+        let fresh = 0, stale = 0, waiting = 0
+        for (let index = 0; index < statuses.length; ++index) {
+            const status = _resourceInstanceStatus(statuses[index])
+            if (status === qsTr("已接收")) ++fresh
+            else if (status === qsTr("数据超时")) ++stale
+            else ++waiting
+        }
+        return qsTr("%1 新鲜 · %2 超时 · %3 等待").arg(fresh).arg(stale).arg(waiting)
+    }
+    function _resourceCoverageText() {
+        const familyStatus = _familyStatus("resourceAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        return _resourceCoverageTextFor(_resourceStatuses)
+    }
+    function _linkInstanceCoverageText() {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const statuses = _linkStatuses
+        if (statuses.length === 0) return qsTr("未上报")
+        let fresh = 0, stale = 0, waiting = 0
+        for (let index = 0; index < statuses.length; ++index) {
+            const age = Number(statuses[index].receiveAgeMs)
+            if (_linkInstanceFresh(age)) ++fresh
+            else if (!Number.isFinite(age) || age < 0) ++waiting
+            else ++stale
+        }
+        return qsTr("%1 新鲜 · %2 超时 · %3 等待").arg(fresh).arg(stale).arg(waiting)
     }
 
     function _linkStateColor(state, receiveAgeMs) {

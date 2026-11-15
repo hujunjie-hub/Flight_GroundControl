@@ -324,7 +324,14 @@
         "health_safety_solver_summary_matches_control_family_freshness",
         "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling",
         "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette",
-        "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order"
+        "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order",
+        "dashboard_summary_auxiliary_values_follow_family_freshness_and_validity",
+        "health_summary_sensor_coverage_counts_fresh_stale_and_waiting_instances",
+        "health_summary_actuator_mask_is_hidden_until_actuator_family_is_fresh",
+        "health_summary_resource_coverage_uses_per_task_instance_freshness",
+        "navigation_utc_summary_detail_and_accent_follow_valid_invalid_stale_and_recovered_states",
+        "rc_receiver_failsafe_summary_detail_is_gated_by_rc_input_freshness",
+        "link_summary_reports_fresh_stale_and_waiting_link_instance_counts"
       ]
     },
     {
@@ -514,7 +521,14 @@
     "health_safety_solver_summary_matches_control_family_freshness",
     "overview_priority_and_history_events_show_fcu_boot_relative_time_without_utc_mislabeling",
     "overview_event_history_keeps_reason_visible_and_severity_color_matches_priority_palette",
-    "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order"
+    "overview_alarm_and_history_label_sequence_as_ground_station_local_receive_order",
+    "dashboard_summary_auxiliary_values_follow_family_freshness_and_validity",
+    "health_summary_sensor_coverage_counts_fresh_stale_and_waiting_instances",
+    "health_summary_actuator_mask_is_hidden_until_actuator_family_is_fresh",
+    "health_summary_resource_coverage_uses_per_task_instance_freshness",
+    "navigation_utc_summary_detail_and_accent_follow_valid_invalid_stale_and_recovered_states",
+    "rc_receiver_failsafe_summary_detail_is_gated_by_rc_input_freshness",
+    "link_summary_reports_fresh_stale_and_waiting_link_instance_counts"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
