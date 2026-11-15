@@ -676,8 +676,23 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!release->property("enabled").toBool());
 
             // A broadcast SET_MESSAGE_INTERVAL must fan out to both device
-            // components, and its acknowledgement must come from the manager.
+            // components and be acknowledged by the manager component.
             QVERIFY(!mockLink->setGimbalDeviceOnlineForTesting(200, false));
+            uint8_t broadcastAckComponent = 0;
+            int broadcastAckCount = 0;
+            const QMetaObject::Connection broadcastAckConnection =
+                connect(vehicle, &Vehicle::mavlinkMessageReceived, this,
+                        [&](const mavlink_message_t &message) {
+                    if (message.msgid != MAVLINK_MSG_ID_COMMAND_ACK) {
+                        return;
+                    }
+                    mavlink_command_ack_t ack{};
+                    mavlink_msg_command_ack_decode(&message, &ack);
+                    if (ack.command == MAV_CMD_SET_MESSAGE_INTERVAL) {
+                        broadcastAckComponent = message.compid;
+                        ++broadcastAckCount;
+                    }
+                });
             auto sendBroadcastAttitudeInterval = [vehicle](float intervalUs) {
                 auto sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
                 if (!sharedLink) {
@@ -699,12 +714,19 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                     NAN, NAN, NAN, NAN, NAN);
                 QVERIFY(vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), command));
             };
+            const int expectedBroadcastAckCount = broadcastAckCount + 1;
             sendBroadcastAttitudeInterval(-1);
+            QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedBroadcastAckCount, 1000);
+            QCOMPARE(broadcastAckComponent, static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1));
             QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->attitudeStatusFresh(), 4500);
             QTRY_VERIFY_WITH_TIMEOUT(!secondGimbal->attitudeStatusFresh(), 4500);
+            const int expectedResumeAckCount = broadcastAckCount + 1;
             sendBroadcastAttitudeInterval(1000000);
+            QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedResumeAckCount, 1000);
+            QCOMPARE(broadcastAckComponent, static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1));
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
+            disconnect(broadcastAckConnection);
 
             // Take only device 154 offline while vehicle heartbeats and device
             // 155 continue normally. This exercises per-device freshness rather
