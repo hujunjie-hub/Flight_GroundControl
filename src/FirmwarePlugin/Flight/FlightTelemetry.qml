@@ -171,10 +171,11 @@ SetupPage {
     readonly property real _dashboardSummarySpacing: _compactDashboardVertical ? 8 : 10
     readonly property real _dashboardSummaryIconSize: _compactDashboardVertical ? 24 : 26
     readonly property real _dashboardSummaryMinHeight: _compactDashboardVertical ? 60 : 66
-    readonly property real _dashboardTrendGridSpacing: _compactDashboardVertical ? 8 : 10
-    readonly property real _dashboardTrendInset: _compactDashboardVertical ? 6 : 8
-    readonly property real _dashboardTrendSpacing: _compactDashboardVertical ? 4 : 5
-    readonly property real _dashboardTrendMinimumHeight: _compactDashboardVertical ? 128 : 134
+    readonly property real _dashboardTrendGridSpacing: (_compactDashboardVertical ? 8 : 10) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTrendInset: (_compactDashboardVertical ? 6 : 8) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTrendSpacing: (_compactDashboardVertical ? 4 : 5) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTrendMinimumHeight: (_compactDashboardVertical ? 128 : 134) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTrendCanvasMinimumHeight: 64 * _dashboardVerticalDensityScale
 
     // Keep the FCU monotonic timeline legible as the application font scale changes.
     // The default scale retains the current compact geometry; high-DPI layouts grow with ScreenTools.
@@ -5903,6 +5904,9 @@ SetupPage {
         required property var samples
 
         property int decimals: 0
+        readonly property real contentInset: root._dashboardTrendInset
+        readonly property real contentSpacing: root._dashboardTrendSpacing
+        readonly property real minimumCanvasHeight: root._dashboardTrendCanvasMinimumHeight
 
         readonly property var plotValues: (samples || []).map(sample => sample[valueKey])
         readonly property var validValues: plotValues.filter(value => Number.isFinite(value))
@@ -5939,6 +5943,7 @@ SetupPage {
             spacing: root._dashboardTrendSpacing
             RowLayout {
                 Layout.fillWidth: true
+                spacing: root._dashboardTrendSpacing
                 QGCLabel {
                     Layout.fillWidth: true
                     text: plotCard.titleText
@@ -5958,7 +5963,7 @@ SetupPage {
                 objectName: plotCard.objectName + "_canvas"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredHeight: 64
+                Layout.preferredHeight: root._dashboardTrendCanvasMinimumHeight
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
                 Connections {
@@ -5971,16 +5976,18 @@ SetupPage {
                     ctx.save()
                     ctx.clearRect(0, 0, width, height)
 
-                    const left = 5
-                    const right = Math.max(left + 1, width - 5)
-                    const top = 5
-                    const bottom = Math.max(top + 1, height - 5)
+                    const density = root._dashboardVerticalDensityScale
+                    const plotInset = 5 * density
+                    const left = plotInset
+                    const right = Math.max(left + density, width - plotInset)
+                    const top = plotInset
+                    const bottom = Math.max(top + density, height - plotInset)
                     const values = plotCard.plotValues
                     const lineColor = plotCard.lineColor.toString()
 
                     // Low-contrast HUD grid: five time divisions and three value guides.
                     ctx.strokeStyle = "#24434C"
-                    ctx.lineWidth = 1
+                    ctx.lineWidth = density
                     ctx.globalAlpha = 0.72
                     for (let row = 0; row < 3; ++row) {
                         const y = top + (bottom - top) * row / 2
@@ -6011,7 +6018,7 @@ SetupPage {
                             const x = xForIndex(index)
                             const y = (top + bottom) / 2
                             ctx.beginPath()
-                            ctx.arc(x, y, 3, 0, Math.PI * 2)
+                            ctx.arc(x, y, 3 * density, 0, Math.PI * 2)
                             ctx.fillStyle = lineColor
                             ctx.fill()
                         }
@@ -6029,7 +6036,7 @@ SetupPage {
                         const lastX = xForIndex(endIndex)
                         if (startIndex === endIndex) {
                             ctx.beginPath()
-                            ctx.arc(firstX, yForValue(values[startIndex]), 2.6, 0, Math.PI * 2)
+                            ctx.arc(firstX, yForValue(values[startIndex]), 2.6 * density, 0, Math.PI * 2)
                             ctx.fillStyle = lineColor
                             ctx.fill()
                             return
@@ -6062,11 +6069,11 @@ SetupPage {
                             else ctx.lineTo(x, y)
                         }
                         ctx.strokeStyle = lineColor
-                        ctx.lineWidth = 2
+                        ctx.lineWidth = 2 * density
                         ctx.lineCap = "round"
                         ctx.lineJoin = "round"
                         ctx.shadowColor = lineColor
-                        ctx.shadowBlur = 6
+                        ctx.shadowBlur = 6 * density
                         ctx.stroke()
                         ctx.shadowBlur = 0
                     }
@@ -6087,13 +6094,13 @@ SetupPage {
                         const currentX = xForIndex(values.length - 1)
                         const currentY = yForValue(values[values.length - 1])
                         ctx.beginPath()
-                        ctx.arc(currentX, currentY, 5, 0, Math.PI * 2)
+                        ctx.arc(currentX, currentY, 5 * density, 0, Math.PI * 2)
                         ctx.globalAlpha = 0.28
                         ctx.fillStyle = lineColor
                         ctx.fill()
                         ctx.globalAlpha = 1
                         ctx.beginPath()
-                        ctx.arc(currentX, currentY, 2.4, 0, Math.PI * 2)
+                        ctx.arc(currentX, currentY, 2.4 * density, 0, Math.PI * 2)
                         ctx.fillStyle = "#E8FFFF"
                         ctx.fill()
                     }
@@ -6103,6 +6110,7 @@ SetupPage {
             RowLayout {
                 objectName: plotCard.objectName + "_timeAxis"
                 Layout.fillWidth: true
+                spacing: root._dashboardTrendSpacing
                 QGCLabel {
                     text: qsTr("较早")
                     color: "#688A94"
@@ -6117,6 +6125,7 @@ SetupPage {
             }
             RowLayout {
                 Layout.fillWidth: true
+                spacing: root._dashboardTrendSpacing
                 QGCLabel {
                     objectName: plotCard.objectName + "_scale"
                     Layout.fillWidth: true
