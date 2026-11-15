@@ -197,6 +197,22 @@ SetupPage {
         if (familyStatus !== qsTr("已接收")) return _familyStatusColor("timeAvailable")
         return _timeQualityColorFor(_fact("timeQuality"))
     }
+
+    // LocalTimebaseDisciplineState is distinct from TimeQuality:
+    // NOMINAL (0) is healthy, while TimeQuality.LOCAL_ONLY (0) is neutral.
+    function _timeDisciplineColor() {
+        const familyStatus = _familyStatus("timeAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("timeAvailable")
+        switch (Number(_fact("timeDisciplineState"))) {
+        case 0:
+        case 2: return "#45D39A" // Nominal / locked
+        case 1:
+        case 3:
+        case 4: return "#F0B94B" // Acquiring / holdover / degraded
+        case 5: return "#F06464" // Invalid
+        default: return "#8A9A94"
+        }
+    }
     function _utcUncertaintyText() {
         const validity = _utcValidityText()
         if (validity !== qsTr("是")) return validity === qsTr("否") ? qsTr("无效") : validity
@@ -1439,6 +1455,19 @@ SetupPage {
         return qsTr("FCU +%1 s").arg((value / 1000000).toFixed(preserveMicroseconds === true ? 6 : 3))
     }
 
+    function _navigationTimelineTimestampStatus(availableFact, factName) {
+        const familyStatus = _familyStatus(availableFact)
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const raw = _fact(factName)
+        if (raw === null || raw === undefined || raw === "") return qsTr("未上报")
+        const value = Number(raw)
+        if (!Number.isFinite(value) || !Number.isInteger(value) ||
+                value < 0 || value > 9007199254740991) {
+            return qsTr("无效")
+        }
+        return qsTr("已接收")
+    }
+
     function _navigationTimelineOrderForData() {
         const definitions = [
             { key: "navigation", available: "navigationAvailable", fact: "navTimeBootUs" },
@@ -1448,13 +1477,10 @@ SetupPage {
         const items = []
         for (let index = 0; index < definitions.length; ++index) {
             const definition = definitions[index]
-            const status = _familyStatus(definition.available)
+            const status = _navigationTimelineTimestampStatus(definition.available, definition.fact)
             const raw = status === qsTr("已接收") ? _fact(definition.fact) : null
             const value = Number(raw)
-            const hasTimestamp = status === qsTr("已接收") &&
-                                 raw !== null && raw !== undefined && raw !== "" &&
-                                 Number.isFinite(value) && Number.isInteger(value) &&
-                                 value >= 0 && value <= 9007199254740991
+            const hasTimestamp = status === qsTr("已接收")
             items.push({
                 key: definition.key,
                 hasTimestamp: hasTimestamp,
@@ -1480,9 +1506,12 @@ SetupPage {
         return status === qsTr("已接收") ? _eventBootTimeText(_fact(factName), true) : status
     }
 
-    function _navigationTimelineColor(availableFact, accentColor) {
-        const status = _familyStatus(availableFact)
-        return status === qsTr("已接收") ? accentColor : _familyStatusColor(availableFact)
+    function _navigationTimelineColor(availableFact, factName, accentColor) {
+        const status = _navigationTimelineTimestampStatus(availableFact, factName)
+        if (status === qsTr("已接收")) return accentColor
+        if (status === qsTr("数据超时")) return "#F0B94B"
+        if (status === qsTr("无效")) return "#F06464"
+        return "#8A9A94"
     }
 
     function _eventSeverityLabel(severity) {
@@ -2996,6 +3025,7 @@ SetupPage {
                             objectName: "flightTelemetry_navigationTimeDiscipline"
                             labelText: qsTr("本地时钟纪律")
                             valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                            valueColor: root._timeDisciplineColor()
                         }
                         TelemetryRow {
                             Layout.fillWidth: true
@@ -3073,7 +3103,7 @@ SetupPage {
                                     radius: 4
                                     x: 1
                                     y: 3
-                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_navigation"
@@ -3082,7 +3112,7 @@ SetupPage {
                                     width: 14
                                     height: 14
                                     text: ("0" + (root._navigationTimelineOrder.navigation + 1)).slice(-2)
-                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.microFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3116,7 +3146,7 @@ SetupPage {
                                     Layout.preferredWidth: 144
                                     Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("navigationAvailable", "navTimeBootUs")
-                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    color: root._navigationTimelineColor("navigationAvailable", "navTimeBootUs", "#49C7E7")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3142,7 +3172,7 @@ SetupPage {
                                     radius: 4
                                     x: 1
                                     y: 3
-                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_time"
@@ -3151,7 +3181,7 @@ SetupPage {
                                     width: 14
                                     height: 14
                                     text: ("0" + (root._navigationTimelineOrder.time + 1)).slice(-2)
-                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.microFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3185,7 +3215,7 @@ SetupPage {
                                     Layout.preferredWidth: 144
                                     Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("timeAvailable", "timeStatusTimeBootUs")
-                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    color: root._navigationTimelineColor("timeAvailable", "timeStatusTimeBootUs", "#52D5B1")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3211,7 +3241,7 @@ SetupPage {
                                     radius: 4
                                     x: 1
                                     y: 3
-                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                 }
                                 QGCLabel {
                                     objectName: "flightTelemetry_navigationTimeline_order_event"
@@ -3220,7 +3250,7 @@ SetupPage {
                                     width: 14
                                     height: 14
                                     text: ("0" + (root._navigationTimelineOrder.event + 1)).slice(-2)
-                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.microFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3254,7 +3284,7 @@ SetupPage {
                                     Layout.preferredWidth: 144
                                     Layout.minimumWidth: 124
                                     text: root._navigationTimelineValueText("eventAvailable", "eventTimeBootUs")
-                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    color: root._navigationTimelineColor("eventAvailable", "eventTimeBootUs", "#A99AF2")
                                     font.family: ScreenTools.fixedFontFamily
                                     font.pointSize: ScreenTools.captionFontPointSize
                                     font.weight: ScreenTools.strongFontWeight
@@ -3266,7 +3296,7 @@ SetupPage {
                     }
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("由上至下：最早 → 最近 · FCU 单调启动时间 · 非 UTC · 不表示时钟同步偏差")
+                        text: qsTr("仅有效时间戳按早 → 晚排序；无效/未上报/超时置后 · FCU 单调时间，非 UTC")
                         color: "#8298A2"
                         font.pointSize: ScreenTools.microFontPointSize
                         wrapMode: Text.WordWrap
@@ -4239,6 +4269,7 @@ SetupPage {
                         objectName: "flightTelemetry_timeDisciplineDetail"
                         labelText: qsTr("本地时钟纪律")
                         valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                        valueColor: root._timeDisciplineColor()
                     }
                     TelemetryRow {
                         visible: false
