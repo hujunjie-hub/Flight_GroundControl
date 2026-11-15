@@ -34,6 +34,8 @@ SetupPage {
     readonly property int _dashboardColumns: availableWidth >= 1280 ? 12 : availableWidth >= 1000 ? 6 : 1
     readonly property int _summaryColumns: availableWidth >= 1280 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _overviewKpiColumns: availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property int _overviewPriorityEventLimit: 4
+    readonly property int _eventHistoryDisplayLimit: 8
     readonly property int _healthColumns: availableWidth >= 1280 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
@@ -147,10 +149,17 @@ SetupPage {
             const rightSequence = Number.isFinite(rightSequenceValue) ? rightSequenceValue : 0
             return rightSequence - leftSequence
         })
-        return records.slice(0, 4)
+        return records.slice(0, _overviewPriorityEventLimit)
     }
     function _priorityEvents() {
         return _priorityEventsFor(_telemetry ? _telemetry.recentEvents : [])
+    }
+    function _eventScopeText() {
+        const total = _telemetry ? _telemetry.recentEvents.length : 0
+        const priorityCount = Math.min(total, _overviewPriorityEventLimit)
+        const historyCount = Math.min(total, _eventHistoryDisplayLimit)
+        return qsTr("优先摘要 %1 / %2 条 · 历史最近 %3 条")
+                .arg(priorityCount).arg(total).arg(historyCount)
     }
     function _validRcAxisCountText() {
         const state = _familyStatus("rcInputAvailable")
@@ -2611,17 +2620,21 @@ SetupPage {
                             }
                         }
                     }
+                    QGCLabel {
+                        objectName: "flightTelemetry_alarmScopeNote"
+                        visible: root._telemetry && root._telemetry.recentEvents.length > 0
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        text: root._eventScopeText()
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
+                    }
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
                         color: "#0D5560"
                     }
-
-
-
-
-
-
                 }
             }
 
@@ -4389,7 +4402,8 @@ SetupPage {
                         text: qsTr("当前启动周期内暂无事件")
                     }
                     Repeater {
-                        model: root._telemetry ? root._telemetry.recentEvents.slice(0, 8) : []
+                        model: root._telemetry
+                               ? root._telemetry.recentEvents.slice(0, root._eventHistoryDisplayLimit) : []
                         delegate: ColumnLayout {
                             required property var modelData
                             objectName: "flightTelemetry_eventHistoryRow_" + modelData.sequence
