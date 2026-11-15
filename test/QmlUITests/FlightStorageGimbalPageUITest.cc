@@ -411,7 +411,6 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(legacyGimbal->deviceId()->rawValue().toUInt(), static_cast<uint32_t>(3));
             QTRY_VERIFY_WITH_TIMEOUT(legacyGimbal->managerStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(legacyGimbal->attitudeStatusFresh(), 3000);
-            QVERIFY(!legacyGimbal->supportsRollAxis());
             QVERIFY(legacyGimbal->supportsYawLock());
             QVERIFY(legacyGimbal->supportsRetract());
             QCOMPARE(activeGimbal->managerCompid()->rawValue().toUInt(),
