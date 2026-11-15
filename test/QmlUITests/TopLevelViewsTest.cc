@@ -2,6 +2,7 @@
 
 #include <QtCore/QLocale>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStringList>
 #include <QtGui/QColor>
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
@@ -215,7 +216,7 @@ void TopLevelViewsTest::_testChineseFontFallbackSelection()
 #endif
 
     QString expectedFamily = QStringLiteral("Open Sans");
-    for (const QString& candidate : preferredFamilies) {
+    for (const QString &candidate : preferredFamilies) {
         if (installedFamilies.contains(candidate, Qt::CaseInsensitive)) {
             expectedFamily = candidate;
             break;

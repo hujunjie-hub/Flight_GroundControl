@@ -109,8 +109,8 @@ QString ScreenToolsController::normalFontFamily()
         }
     }
 
-    // Open Sans remains the Latin UI face. When a CJK family is not selected,
-    // Qt uses the platform's glyph fallback for mixed-language/user-provided text.
+    // Chinese UI uses one CJK-capable family for consistent Latin and CJK rendering.
+    // Other locales use Open Sans; Qt handles missing glyphs for mixed-language text.
     return QStringLiteral("Open Sans");
 }
 
