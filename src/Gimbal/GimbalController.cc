@@ -689,6 +689,14 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
         return;
     }
 
+    if (!std::isfinite(pitch_rate_deg_s) || !std::isfinite(yaw_rate_deg_s)) {
+        qCWarning(GimbalControllerLog) << "sendGimbalRate: refusing non-finite angular rate";
+        _rateSenderTimer.stop();
+        _activeGimbal->setPitchRate(0.0f);
+        _activeGimbal->setYawRate(0.0f);
+        return;
+    }
+
     const float pitchRate = _activeGimbal->supportsPitchAxis() ? pitch_rate_deg_s : 0.0f;
     const float yawRate = _activeGimbal->supportsYawAxis() ? yaw_rate_deg_s : 0.0f;
     _sendGimbalAttitudeRates(pitchRate, yawRate);
