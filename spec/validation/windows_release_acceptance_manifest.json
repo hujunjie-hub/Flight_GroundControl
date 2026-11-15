@@ -759,7 +759,7 @@
     "flight_config_sidebar_uses_reference_width_without_replacing_real_component_navigation",
     "six_summary_kpis_render_inside_one_continuous_band_with_desktop_dividers",
     "summary_band_and_kpi_content_fit_all_responsive_breakpoints",
-    "four_reference_tabs_use_project_svg_icons_with_stable_20px_geometry_and_no_font_dependent_glyphs",
+    "four_reference_tabs_use_project_svg_icons_with_20px_baseline_geometry_scaled_with_screen_tools_and_no_font_dependent_glyphs",
     "trend_cards_expose_renderable_sample_and_gap_counts_for_ui_regression",
     "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
     "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells",
@@ -931,7 +931,10 @@
     "navigation_time_group_minimum_width_and_two_column_threshold_scale_with_screen_tools_font_width",
     "health_maintenance_sections_render_as_three_dpi_scaled_cards",
     "health_maintenance_card_content_respects_scaled_insets_and_implicit_height",
-    "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths"
+    "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths",
+    "dashboard_header_accent_read_only_badge_padding_and_status_dot_scale_with_screen_tools",
+    "dashboard_tabs_scale_height_icon_radius_and_active_indicator_at_100_150_200_percent_ui_scale",
+    "overview_header_tabs_read_only_badge_and_hero_frame_fit_parent_bounds_at_100_150_200_percent_ui_scale"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
