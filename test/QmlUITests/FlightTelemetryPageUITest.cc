@@ -3858,10 +3858,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     for (QQuickItem* row : navigationTimelineRows) {
                         QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
                     }
+                    const qreal navigationTimeTwoColumnMinimumWidth =
+                        page->property("_navigationTimeTwoColumnMinimumWidth").toReal();
                     const qreal navigationAvailableWidthInset =
                         page->width() - page->property("availableWidth").toReal();
-                    page->setWidth(840 + navigationAvailableWidthInset);
-                    QTRY_VERIFY_WITH_TIMEOUT(qAbs(page->property("availableWidth").toReal() - 840.0) < 1.0, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationTimeTwoColumnMinimumWidth >= 840.0, 3000);
+                    page->setWidth(navigationTimeTwoColumnMinimumWidth + navigationAvailableWidthInset);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(page->property("availableWidth").toReal() - navigationTimeTwoColumnMinimumWidth) < 1.0, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 2, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationClockGroup->y(), navigationUtcGroup->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationClockGroup->x() < navigationUtcGroup->x(), 3000);
@@ -3869,8 +3873,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_VERIFY_WITH_TIMEOUT(navigationTimeGroupFitsInPanel(navigationUtcGroup, navigationPageTime), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(
                         navigationTimeMetricRows[4]->width() >= navigationTimeMetricRows[0]->width() * 1.8, 3000);
-                    page->setWidth(839 + navigationAvailableWidthInset);
-                    QTRY_VERIFY_WITH_TIMEOUT(qAbs(page->property("availableWidth").toReal() - 839.0) < 1.0, 3000);
+                    page->setWidth(navigationTimeTwoColumnMinimumWidth - 1.0 + navigationAvailableWidthInset);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(page->property("availableWidth").toReal() -
+                             (navigationTimeTwoColumnMinimumWidth - 1.0)) < 1.0, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 1, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationUtcGroup->y() > navigationClockGroup->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(
