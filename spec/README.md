@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.11
+- 版本 5.12
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -278,3 +278,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-16 Phase 2.68 总览右侧告警高 DPI 适配：事件计数/优先级提示、五类严重度 chip、无事件空态、首要/后续告警卡与事件历史的间距、内边距、徽标、色条和内容高度统一改为 ScreenTools 字体像素度量；MockLink UI Integration 覆盖 1600/1400/1000/900/700/400 px 六档宽度及告警/历史父子边界。按要求未运行 CI，新增回归 NOT_RUN。
+
+
+- 2026-11-15 飞控配置外壳高 DPI 收口：Flight 配置顶栏高度与 FlyViewToolBar 内容高度同步按 ScreenTools 字体高度缩放，默认仍为 56 px；左侧导航宽度默认 160 px、随 UI Scale 扩展并限制最大 240 px，内边距/导航项间距/按钮 padding 同步缩放。MockLink UI Integration 新增 100%/150%/200% 真实 UI Scale 回归，验证顶栏/侧栏/按钮尺寸并恢复原始设置。本轮未运行 CI，新增验收 NOT_RUN。
