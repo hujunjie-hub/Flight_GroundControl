@@ -871,3 +871,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - RC 链路摘要继续使用 _rcLinkStateText/_rcLinkStateColor，已按 rcInput family freshness 显示状态和颜色；本轮不重复修改。
 - MockLink UI Integration 覆盖导航/时间摘要面板和启动 ID 的等待、接收、超时与恢复；本轮不运行 CI，新增断言为 NOT_RUN。
 - 仅修改 GroundControl QML、UI Integration 与 SPEC/G15，不改变 MAVLink、FactGroup freshness 阈值或飞控控制行为。
+
+
+## 58. Phase 2.15 导航时序页 FCU 单调时间线适配（2026-11-15）
+
+- 导航时序页第四张主视觉面板由重复的能力/UTC 状态校验改为「导航与时间时序」；导航能力仍集中在「导航能力与定位精度」面板，UTC 有效性与 UTC 绝对时间仍集中在「时间同步」面板，避免同一字段在多个主面板重复呈现。
+- 新增 FCU 单调时间线，展示导航状态发布（`navTimeBootUs`）、时间同步发布（`timeStatusTimeBootUs`）和最近事件（`eventTimeBootUs`）三个真实时间标记，并按当前 FCU 启动时间从早到晚排列。
+- 导航与时间标记严格服从各自 family freshness：等待/超时时显示对应状态，不把缓存的旧发布时间作为当前数据；最近事件保留为最近一次已接收事件的历史标记。
+- 时间线统一格式为「FCU +x.xxx s」，仅表达当前 FCU 启动周期内的单调时间先后；不得解释为 UTC、地面站时间、导航与时钟同步偏差或网络延迟。
+- `utc_valid=false` 只使 UTC 绝对时间/不确定度无效，不使 FCU 单调启动时间无效；UTC 时间仍只从 `FCU_TIME_STATUS.unix_time_us` 获取，并保留微秒精度。
+- 保留导航/时间两个独立 freshness 状态单元、四张桌面等宽主视觉面板、现有 KPI/趋势/详情字段和只读边界；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间同步服务或飞控控制行为。
+- MockLink UI Integration 覆盖三个时间标记的真实数值与排序、UTC 无效时单调时间仍有效、time family fresh → stale → recovered，以及 1600/1000/900/700/400 px 下时间线内容不越界。
+- 本轮只更新 GroundControl QML、UI Integration 与 SPEC；按用户要求不运行 CI/Unit/Integration/Windows Release，新增回归状态为 NOT_RUN，等待后续集中验收。

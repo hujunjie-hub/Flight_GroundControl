@@ -36,6 +36,7 @@ SetupPage {
     property string _trendBootId: ""
     property int _trendSampleSequence: 0
     property int _activeDashboardPage: 0
+    readonly property var _navigationTimelineOrder: _navigationTimelineOrderForData()
     readonly property var _dashboardPageInfo: [
         { title: qsTr("飞控诊断总览"), subtitle: "FLIGHT DIAGNOSTICS OVERVIEW", tab: qsTr("总览总控") },
         { title: qsTr("飞行健康"), subtitle: "FLIGHT HEALTH & SAFETY", tab: qsTr("飞行健康") },
@@ -1325,6 +1326,52 @@ SetupPage {
         return qsTr("FCU +%1 s").arg((value / 1000000).toFixed(3))
     }
 
+    function _navigationTimelineOrderForData() {
+        const definitions = [
+            { key: "navigation", available: "navigationAvailable", fact: "navTimeBootUs" },
+            { key: "time", available: "timeAvailable", fact: "timeStatusTimeBootUs" },
+            { key: "event", available: "eventAvailable", fact: "eventTimeBootUs" }
+        ]
+        const items = []
+        for (let index = 0; index < definitions.length; ++index) {
+            const definition = definitions[index]
+            const status = _familyStatus(definition.available)
+            const raw = status === qsTr("已接收") ? _fact(definition.fact) : null
+            const value = Number(raw)
+            const hasTimestamp = status === qsTr("已接收") &&
+                                 raw !== null && raw !== undefined && raw !== "" &&
+                                 Number.isFinite(value) && Number.isInteger(value) &&
+                                 value >= 0 && value <= 9007199254740991
+            items.push({
+                key: definition.key,
+                hasTimestamp: hasTimestamp,
+                timestamp: hasTimestamp ? value : 0,
+                order: index
+            })
+        }
+        items.sort((left, right) => {
+            if (left.hasTimestamp && right.hasTimestamp) return left.timestamp - right.timestamp
+            if (left.hasTimestamp) return -1
+            if (right.hasTimestamp) return 1
+            return left.order - right.order
+        })
+        const result = {}
+        for (let index = 0; index < items.length; ++index) {
+            result[items[index].key] = index
+        }
+        return result
+    }
+
+    function _navigationTimelineValueText(availableFact, factName) {
+        const status = _familyStatus(availableFact)
+        return status === qsTr("已接收") ? _eventBootTimeText(_fact(factName)) : status
+    }
+
+    function _navigationTimelineColor(availableFact, accentColor) {
+        const status = _familyStatus(availableFact)
+        return status === qsTr("已接收") ? accentColor : _familyStatusColor(availableFact)
+    }
+
     function _eventSeverityLabel(severity) {
         const labels = [qsTr("信息"), qsTr("警告"), qsTr("错误"), qsTr("严重")]
         const value = Number(severity)
@@ -2519,10 +2566,10 @@ SetupPage {
                     objectName: "flightTelemetry_navigationChecksPanel"
                     fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
-                    eyebrow: "CONSISTENCY CHECKS"
-                    titleText: qsTr("状态校验")
-                    // This panel spans navigation and time domains; do not let one family badge
-                    // imply that both domains are healthy.
+                    eyebrow: "FCU MONOTONIC TIMELINE"
+                    titleText: qsTr("导航与时间时序")
+                    // Both domain states stay independent. These stamps share the FCU
+                    // monotonic boot-time base and are not a UTC offset measurement.
                     statusFamily: ""
                     GridLayout {
                         objectName: "flightTelemetry_navigationChecksDomains"
@@ -2545,17 +2592,165 @@ SetupPage {
                             availableFact: "timeAvailable"
                         }
                     }
-                    TelemetryRow { labelText: qsTr("水平位置能力"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) }
-                    TelemetryRow { labelText: qsTr("水平速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVelocity) }
-                    TelemetryRow { labelText: qsTr("垂直速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity) }
-                    TelemetryRow { labelText: qsTr("航向能力"); valueText: root._navigationMetricStatus(root._navCapabilityHeading) }
-                    TelemetryRow {
-                        objectName: "flightTelemetry_navigationUtcValidityCheck"
-                        labelText: qsTr("UTC 状态")
-                        valueText: root._utcValidityText() === qsTr("是") ? qsTr("有效")
-                                   : root._utcValidityText() === qsTr("否") ? qsTr("无效")
-                                   : root._utcValidityText()
-                        valueColor: root._utcValidityColor()
+                    Item {
+                        objectName: "flightTelemetry_navigationTimeline"
+                        Layout.fillWidth: true
+                        implicitHeight: 114
+
+                        RowLayout {
+                            objectName: "flightTelemetry_navigationTimeline_row_navigation"
+                            x: 0
+                            y: root._navigationTimelineOrder.navigation * 38
+                            width: parent.width
+                            height: 36
+                            spacing: 8
+                            Item {
+                                Layout.preferredWidth: 10
+                                Layout.fillHeight: true
+                                Rectangle {
+                                    objectName: "flightTelemetry_navigationTimeline_marker_navigation"
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    x: 1
+                                    y: 3
+                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                }
+                                Rectangle {
+                                    visible: root._navigationTimelineOrder.navigation < 2
+                                    width: 2
+                                    height: 22
+                                    x: 4
+                                    y: 12
+                                    color: "#15505A"
+                                }
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_label_navigation"
+                                    Layout.fillWidth: true
+                                    text: qsTr("导航状态发布")
+                                    color: "#B6CDD3"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_value_navigation"
+                                    Layout.fillWidth: true
+                                    text: root._navigationTimelineValueText("navigationAvailable", "navTimeBootUs")
+                                    color: root._navigationTimelineColor("navigationAvailable", "#49C7E7")
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    wrapMode: Text.NoWrap
+                                }
+                            }
+                        }
+                        RowLayout {
+                            objectName: "flightTelemetry_navigationTimeline_row_time"
+                            x: 0
+                            y: root._navigationTimelineOrder.time * 38
+                            width: parent.width
+                            height: 36
+                            spacing: 8
+                            Item {
+                                Layout.preferredWidth: 10
+                                Layout.fillHeight: true
+                                Rectangle {
+                                    objectName: "flightTelemetry_navigationTimeline_marker_time"
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    x: 1
+                                    y: 3
+                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                }
+                                Rectangle {
+                                    visible: root._navigationTimelineOrder.time < 2
+                                    width: 2
+                                    height: 22
+                                    x: 4
+                                    y: 12
+                                    color: "#15505A"
+                                }
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_label_time"
+                                    Layout.fillWidth: true
+                                    text: qsTr("时间同步发布")
+                                    color: "#B6CDD3"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_value_time"
+                                    Layout.fillWidth: true
+                                    text: root._navigationTimelineValueText("timeAvailable", "timeStatusTimeBootUs")
+                                    color: root._navigationTimelineColor("timeAvailable", "#52D5B1")
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    wrapMode: Text.NoWrap
+                                }
+                            }
+                        }
+                        RowLayout {
+                            objectName: "flightTelemetry_navigationTimeline_row_event"
+                            x: 0
+                            y: root._navigationTimelineOrder.event * 38
+                            width: parent.width
+                            height: 36
+                            spacing: 8
+                            Item {
+                                Layout.preferredWidth: 10
+                                Layout.fillHeight: true
+                                Rectangle {
+                                    objectName: "flightTelemetry_navigationTimeline_marker_event"
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    x: 1
+                                    y: 3
+                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                }
+                                Rectangle {
+                                    visible: root._navigationTimelineOrder.event < 2
+                                    width: 2
+                                    height: 22
+                                    x: 4
+                                    y: 12
+                                    color: "#15505A"
+                                }
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_label_event"
+                                    Layout.fillWidth: true
+                                    text: qsTr("最近事件")
+                                    color: "#B6CDD3"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_navigationTimeline_value_event"
+                                    Layout.fillWidth: true
+                                    text: root._navigationTimelineValueText("eventAvailable", "eventTimeBootUs")
+                                    color: root._navigationTimelineColor("eventAvailable", "#A99AF2")
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    wrapMode: Text.NoWrap
+                                }
+                            }
+                        }
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("FCU 单调启动时间 · 非 UTC · 不表示时钟同步偏差")
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
                     }
                 }
             }

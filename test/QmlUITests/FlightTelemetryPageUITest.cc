@@ -200,8 +200,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* timeCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_time"));
             QQuickItem* navigationUtcValidity =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"));
-            QQuickItem* navigationUtcValidityCheck =
-                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidityCheck"));
+            QQuickItem* navigationTimeline =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline"));
+            QQuickItem* navigationTimelineNavigationRow =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"));
+            QQuickItem* navigationTimelineTimeRow =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"));
+            QQuickItem* navigationTimelineEventRow =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"));
+            QQuickItem* navigationTimelineNavigationValue =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_navigation"));
+            QQuickItem* navigationTimelineTimeValue =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"));
+            QQuickItem* navigationTimelineEventValue =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"));
             QQuickItem* navigationUtcTimestamp =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"));
             QQuickItem* timeUtcTimestamp =
@@ -265,7 +277,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(storageCard);
             QVERIFY(timeCard);
             QVERIFY(navigationUtcValidity);
-            QVERIFY(navigationUtcValidityCheck);
+            QVERIFY(navigationTimeline);
+            QVERIFY(navigationTimelineNavigationRow);
+            QVERIFY(navigationTimelineTimeRow);
+            QVERIFY(navigationTimelineEventRow);
+            QVERIFY(navigationTimelineNavigationValue);
+            QVERIFY(navigationTimelineTimeValue);
+            QVERIFY(navigationTimelineEventValue);
             QVERIFY(navigationUtcTimestamp);
             QVERIFY(timeUtcTimestamp);
             QVERIFY(rcCard);
@@ -1173,6 +1191,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       expectedUtcTimestamp, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       expectedUtcTimestamp, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.009 s"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.009 s"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventValue->property("text").toString(),
+                                      QStringLiteral("FCU +1.700 s"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineTimeRow->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineTimeRow->y() < navigationTimelineEventRow->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
@@ -1186,11 +1212,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(navigationSourceMappingEpoch->property("valueText").toString() != waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
                                       translatedTelemetryText("是"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
-                                      translatedTelemetryText("有效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
-                                      QColor(QStringLiteral("#45D39A")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
@@ -1223,11 +1245,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(), invalidText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
                                       translatedTelemetryText("否"), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
-                                      translatedTelemetryText("无效"), 3000);
+            // FCU boot-time remains valid even when UTC discipline reports utc_valid=false.
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.009 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
-                                      QColor(QStringLiteral("#F06464")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 无效"), 3000);
@@ -1243,15 +1264,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("2023-11-14 22:13:29.123456 UTC"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       QStringLiteral("2023-11-14 22:13:29.123456 UTC"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.010 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
-                                      QColor(QStringLiteral("#45D39A")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > invalidTimeTrendSamples, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("lastSampleValid").toBool(), 3000);
             const int timeFreshnessTick = page->property("_ageRefreshTick").toInt();
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > timeFreshnessTick, 1500);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimeQuality->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimeDiscipline->property("valueText").toString(), staleText, 3000);
@@ -1267,6 +1289,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             sendTimeStatus(lastOperationTime + 600, bootId, 1700000010123456ULL, 1);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.010 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
@@ -1865,6 +1889,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimePanel"), 3000);
                     QQuickItem* navigationPageChecks =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000);
+                    QQuickItem* navigationTimeline =
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline"), 3000);
+                    QQuickItem* navigationTimelineRows[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"), 3000)};
                     QQuickItem* navigationChecksDomains =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksDomains"), 3000);
                     QQuickItem* navigationChecksNavigation =
@@ -1879,6 +1909,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(navigationPageCapabilities);
                     QVERIFY(navigationPageTime);
                     QVERIFY(navigationPageChecks);
+                    QVERIFY(navigationTimeline);
+                    for (QQuickItem* row : navigationTimelineRows) QVERIFY(row);
                     QVERIFY(navigationChecksDomains);
                     QVERIFY(navigationChecksNavigation);
                     QVERIFY(navigationChecksTime);
@@ -1886,6 +1918,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(timeSourceMappingEpoch);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomains->property("columns").toInt(), 2, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationChecksBadge->isVisible(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationTimeline->height() >= 114, 3000);
+                    const auto timelineRowFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
+                        const auto topLeft = row->mapToItem(panel, 0, 0);
+                        return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                               topLeft.x() + row->width() <= panel->width() + 1.0 &&
+                               topLeft.y() + row->height() <= panel->height() + 1.0;
+                    };
+                    for (QQuickItem* row : navigationTimelineRows) {
+                        QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
+                    }
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageCapabilities->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageTime->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageChecks->y(), 3000);
@@ -2369,6 +2411,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimePanel"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000)};
                         for (QQuickItem* panel : navigationPanels) QVERIFY(panel);
+                        QQuickItem* timelineRows[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"), 3000)};
+                        for (QQuickItem* row : timelineRows) QVERIFY(row);
+                        const auto timelineRowFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
+                            const auto topLeft = row->mapToItem(panel, 0, 0);
+                            return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                                   topLeft.x() + row->width() <= panel->width() + 1.0 &&
+                                   topLeft.y() + row->height() <= panel->height() + 1.0;
+                        };
+                        for (QQuickItem* row : timelineRows) {
+                            QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPanels[3]), 3000);
+                        }
                         for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
                             QTRY_VERIFY_WITH_TIMEOUT(navigationPanels[panelIndex - 1]->y() < navigationPanels[panelIndex]->y(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
