@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.27
+- 版本 4.28
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -114,7 +114,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
-- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；总览总控、飞行健康、导航时序、遥控与链路四页结构、页面专属 KPI/趋势、原始字段与只读边界均已实现并同步 SPEC/G15。总览包含六域真实 freshness 拓扑、告警严重度排序、同级按地面站本地接收序号排序、FCU_EVENT 启动相对时间、彩色严重度和可换行事件原因；最近事件历史元信息按 520 px 断点在 3/2 列间重排，序号和 FCU 时间不再固定宽度省略。顶部六项 KPI 辅助说明在窄屏最多两行换行，Tile 高度随内容增长；遥控链路 RSSI/质量/丢包格按 3/2/1 列响应式重排，中等宽度丢包格跨整行。健康页完成 13 域矩阵、资源/传感器/预检实例 freshness 门控，以及存储/预检元数据 freshness 和状态颜色语义；导航页完成 capability/UTC/timeQuality freshness 与颜色门控；遥控与链路页完成四面板 3/3/3/3 均衡、逐实例链路有效性和非 RC 数据链路优先级。CI、Windows Release 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
+- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；总览总控、飞行健康、导航时序、遥控与链路四页结构、页面专属 KPI/趋势、原始字段与只读边界均已实现并同步 SPEC/G15。总览包含六域真实 freshness 拓扑、告警严重度排序、同级按地面站本地接收序号排序、FCU_EVENT 启动相对时间、彩色严重度和可换行事件原因；最近事件历史与告警列表的序号、事件 ID、来源 ID、FCU 时间均无省略换行，卡片高度随文本增长。顶部六项 KPI 辅助说明在窄屏最多两行换行，Tile 高度随内容增长；遥控链路 RSSI/质量/丢包格按 3/2/1 列响应式重排，中等宽度丢包格跨整行。健康页完成 13 域矩阵、资源/传感器/预检实例 freshness 门控，以及存储/预检元数据 freshness 和状态颜色语义；导航页完成 capability/UTC/timeQuality freshness 与颜色门控；遥控与链路页完成四面板 3/3/3/3 均衡、逐实例链路有效性和非 RC 数据链路优先级。CI、Windows Release 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
 - FGC-0047（全项目字体体系、中文字体回退与渲染一致性）继续扩展到全仓 QML：旧 default/small/medium/large 字号令牌引用迁移到语义令牌；三维视图固定 pixelSize 改为 pointSize；摇杆遥测等宽字族改用 ScreenTools.fixedFontFamily；新增 body-emphasis、caption-emphasis、section-heading、world-overlay 语义令牌。`qml-typography-check --all` 递归扫描全部 `src/**/*.qml`（当前 459 个文件），覆盖旧字号别名、固定 pixelSize、硬编码字体族和页面局部字号乘数；动态地图罗盘缩放和 DebugWindow 字体预览列为明确例外。新提交的精确 HEAD CI 尚待运行；Windows 100%/125%/150% 实机视觉检查尚未完成，保持 NOT_RUN。
@@ -181,3 +181,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 大屏 SPEC 章节顺序复核：事件历史响应式布局与预检完整覆盖率分别编号为第 50/51 章，所有章节编号唯一且按文档顺序递增。
+
+- 2026-11-15 本轮增量：总览告警列表元信息/FCU 时间取消省略并改为 WordWrap，增加 700/400 px 卡片高度与边界断言。本轮未运行 CI。

@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.14  
+版本：4.15  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -425,3 +425,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - prearmAvailable family stale 时，摘要和覆盖率显示 family stale 与最近缓存项数量，不把缓存结果算作当前检查。
 - 仅 15/15 新鲜且全部通过时使用健康绿色；失败红、警告/逐项超时琥珀、等待/未知/覆盖不完整中性灰。
 - 新增 FlightTelemetryPageUITest 断言；本轮按用户要求不运行 CI，集中验收时执行，不构成 PASS。
+
+
+### G15 告警事件元信息换行与卡片自适应高度（2026-11-15）
+
+- 告警元信息（本地序号、事件 ID、来源 ID）及 FCU 启动相对时间均使用 WordWrap，不允许省略。
+- 告警事件内容列的最小宽度设为 0；卡片高度应跟随换行后的 RowLayout 内容高度增长。
+- 集中验收在 700/400 px 检查文本 wrapMode、卡片内容高度和元信息/时间右下角均在告警面板边界内。
+- 本轮新增 MockLink UI Integration 断言；未运行 CI，不构成 PASS。

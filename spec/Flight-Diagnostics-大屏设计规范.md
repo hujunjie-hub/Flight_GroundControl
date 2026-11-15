@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.23
+- 版本：6.24
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness、链路实例覆盖率、顶部摘要与链路指标窄屏布局已闭环；本轮补齐事件历史序号/FCU 启动时间/严重程度元信息的无省略响应式重排；本轮补齐预检摘要缺失项覆盖表达、family stale 上下文和 15/15 全通过门槛；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史与告警事件元信息均已改为无省略换行并按内容自适应高度；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -793,3 +793,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 只有 15 项全部新鲜且 checkState 全部为通过时，摘要才使用健康绿色；任一失败为红色，警告/逐项超时为琥珀色，等待、未知或覆盖不完整为中性灰。
 - MockLink UI Integration 增加部分覆盖摘要、family stale 摘要、15/15 全通过绿色、单项警告转琥珀色的断言；本轮不运行 CI，新增断言为 NOT_RUN。
 - 仅修改飞行健康页 QML、对应 UI Integration 和 SPEC/G15 验收清单；不修改 FCU_PREARM_STATUS 协议、FactGroup 数据源、检查规则或飞控解锁决策。
+
+
+## 52. Phase 2.11 告警事件元信息无省略布局（2026-11-15）
+
+- 总览告警事件列表的本地接收序号、事件 ID、来源 ID、FCU 启动相对时间与原因详情全部允许换行；不再对序号/ID/来源和 FCU 时间使用 ElideRight。
+- 告警事件内容列与文本项允许收缩到可用宽度，避免长元信息撑破面板；换行后的 RowLayout implicitHeight 驱动告警卡片高度增长。
+- 保留严重度标签、严重度排序、同级本地接收序号排序、FCU 时间语义、原因文本和只读边界，不改变事件数据或缓存。
+- MockLink UI Integration 在 700/400 px 检查元信息和时间 wrapMode、告警卡片内容高度及文本右下边界不超出告警面板。
+- 本轮只调整 FlightTelemetry QML、对应 UI Integration 与 SPEC/G15；未运行 CI，新增回归待集中验收。

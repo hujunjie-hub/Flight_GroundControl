@@ -2078,6 +2078,7 @@ SetupPage {
                         model: root._priorityEvents()
                         delegate: Rectangle {
                             required property var modelData
+                            objectName: "flightTelemetry_alarmEventCard_" + modelData.sequence
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)
                             Layout.fillWidth: true
                             implicitHeight: Math.max(55, eventContent.implicitHeight + 14)
@@ -2087,6 +2088,7 @@ SetupPage {
                             border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.35)
                             RowLayout {
                                 id: eventContent
+                                objectName: "flightTelemetry_alarmEventContent_" + modelData.sequence
                                 anchors.fill: parent
                                 anchors.margins: 7
                                 spacing: 7
@@ -2107,26 +2109,30 @@ SetupPage {
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     spacing: 2
                                     QGCLabel {
                                         objectName: "flightTelemetry_alarmEventMeta_" + modelData.sequence
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: qsTr("本地序号 #%1 · ID %2 · 来源 %3")
                                               .arg(modelData.sequence).arg(modelData.eventId).arg(modelData.sourceId)
                                         color: "#D5E9ED"
                                         font.pointSize: ScreenTools.captionFontPointSize
-                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         objectName: "flightTelemetry_alarmEventTime_" + modelData.sequence
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: root._eventBootTimeText(modelData.timeBootUs)
                                         color: "#8298A2"
                                         font.pointSize: ScreenTools.microFontPointSize
-                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
                                         text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
                                         color: "#8FB1BB"
                                         font.pointSize: ScreenTools.microFontPointSize
