@@ -685,60 +685,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
-            auto sendSensorHealthStatus = [&](uint64_t timeBootUs, uint32_t sensorInstanceId,
-                                               uint16_t healthState, uint32_t reasonCode) {
-                mavlink_fcu_sensor_health_t payload{};
-                payload.time_boot_us = timeBootUs;
-                payload.boot_id = bootId;
-                payload.profile_id = profileId;
-                payload.sensor_instance_id = sensorInstanceId;
-                payload.policy_epoch = 1;
-                payload.health_state = healthState;
-                payload.action = 1;
-                payload.reason_code = reasonCode;
-                payload.gap_count = 2;
-                payload.reject_count = 3;
-                mavlink_message_t message{};
-                mavlink_msg_fcu_sensor_health_encode(systemId, componentId, &message, &payload);
-                mockLink->respondWithMavlinkMessage(message);
-            };
-
-            auto sendResourceStatus = [&](uint64_t timeBootUs, uint16_t taskId, uint16_t validityMask) {
-                mavlink_fcu_resource_status_t payload{};
-                payload.time_boot_us = timeBootUs;
-                payload.boot_id = bootId;
-                payload.profile_id = profileId;
-                payload.task_id = taskId;
-                payload.validity_mask = validityMask;
-                payload.wcet_us = 1500;
-                payload.stack_free_bytes = 4096;
-                payload.deadline_miss_count = 0;
-                payload.axi_free_bytes = 8192;
-                payload.cpu_load_permille = 450;
-                mavlink_message_t message{};
-                mavlink_msg_fcu_resource_status_encode(systemId, componentId, &message, &payload);
-                mockLink->respondWithMavlinkMessage(message);
-            };
-
-            auto sendPrearmStatus = [&](uint64_t timeBootUs, uint32_t checkEpoch, uint16_t checkId,
-                                        uint8_t checkState, uint16_t recoveryCondition) {
-                mavlink_fcu_prearm_status_t payload{};
-                payload.time_boot_us = timeBootUs;
-                payload.boot_id = bootId;
-                payload.profile_id = profileId;
-                payload.check_epoch = checkEpoch;
-                payload.evidence_time_us = timeBootUs;
-                payload.check_id = checkId;
-                payload.check_state = checkState;
-                payload.mode_mask = 0xFFFFFFFFU;
-                payload.reason_namespace = 0;
-                payload.reason_code = 0;
-                payload.recovery_condition = recoveryCondition;
-                mavlink_message_t message{};
-                mavlink_msg_fcu_prearm_status_encode(systemId, componentId, &message, &payload);
-                mockLink->respondWithMavlinkMessage(message);
-            };
-
             auto sendInvalidStorageStatus = [&](uint64_t timeBootUs) {
                 mavlink_fcu_storage_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -1301,6 +1247,65 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
         [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
             QVERIFY(mockLink);
             QVERIFY(vehicle);
+            const uint8_t systemId = static_cast<uint8_t>(vehicle->id());
+            const uint8_t componentId = static_cast<uint8_t>(vehicle->compId());
+            constexpr uint64_t bootId = 0x1122334455667788ULL;
+            constexpr uint32_t profileId = 0x00010001U;
+
+            auto sendSensorHealthStatus = [&](uint64_t timeBootUs, uint32_t sensorInstanceId,
+                                               uint16_t healthState, uint32_t reasonCode) {
+                mavlink_fcu_sensor_health_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.sensor_instance_id = sensorInstanceId;
+                payload.policy_epoch = 1;
+                payload.health_state = healthState;
+                payload.action = 1;
+                payload.reason_code = reasonCode;
+                payload.gap_count = 2;
+                payload.reject_count = 3;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_sensor_health_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
+            auto sendResourceStatus = [&](uint64_t timeBootUs, uint16_t taskId, uint16_t validityMask) {
+                mavlink_fcu_resource_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.task_id = taskId;
+                payload.validity_mask = validityMask;
+                payload.wcet_us = 1500;
+                payload.stack_free_bytes = 4096;
+                payload.deadline_miss_count = 0;
+                payload.axi_free_bytes = 8192;
+                payload.cpu_load_permille = 450;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_resource_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
+            auto sendPrearmStatus = [&](uint64_t timeBootUs, uint32_t checkEpoch, uint16_t checkId,
+                                        uint8_t checkState, uint16_t recoveryCondition) {
+                mavlink_fcu_prearm_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.check_epoch = checkEpoch;
+                payload.evidence_time_us = timeBootUs;
+                payload.check_id = checkId;
+                payload.check_state = checkState;
+                payload.mode_mask = 0xFFFFFFFFU;
+                payload.reason_namespace = 0;
+                payload.reason_code = 0;
+                payload.recovery_condition = recoveryCondition;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_prearm_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             const QString componentButtonName = flightTelemetryComponentButtonName(vehicle);
             QVERIFY2(!componentButtonName.isEmpty(), "FlightTelemetry setup component was not registered");
             navigateToConfigureView();
