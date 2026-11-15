@@ -25,7 +25,7 @@ Item {
     // Flight's parameter-center safe mode routes every write through the guarded tuning controller.
     property bool parameterCenterSafeMode: false
     property string selectedModelProfileId: ""
-    signal parameterWriteConfirmed(int componentId, string parameterName, var confirmedValue)
+    signal parameterWriteConfirmed(int componentId, string parameterName, var previousValue, var confirmedValue)
 
     onSelectedModelProfileIdChanged: {
         if (parameterCenterSafeMode && controller) {
@@ -101,8 +101,8 @@ Item {
 
     Connections {
         target: controller
-        function onParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
-            _root.parameterWriteConfirmed(componentId, parameterName, confirmedValue)
+        function onParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
+            _root.parameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue)
         }
     }
 
