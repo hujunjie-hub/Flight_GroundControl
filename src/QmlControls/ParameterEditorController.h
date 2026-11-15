@@ -7,6 +7,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
+#include "Fact.h"
 #include "QmlObjectListModel.h"
 #include "FactMetaData.h"
 
