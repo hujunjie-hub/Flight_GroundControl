@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.27
+- 版本：6.28
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史与告警事件元信息均已改为无省略换行并按内容自适应高度；本轮补齐资源任务实例计数的 family freshness 门控；本轮将资源任务实例总数升级为新鲜/超时/等待三态覆盖率；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；本轮补齐操作、导航、时间和 RC 动态详情 freshness；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -819,3 +819,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 通过测试注入一段长链路说明，强制产生两行文本，验证 `SummaryTile.implicitHeight` 随 `summaryContent.implicitHeight` 增长，内容容器和辅助说明均不越界、不裁切。
 - 该测试只覆盖真实 QML SummaryTile 的布局行为，不改变 KPI 文本来源、遥测值、链路选择、状态颜色或控制逻辑。
 - 本轮仅新增 MockLink UI Integration 断言和验收条目；按用户要求不运行 CI/Unit/Integration，所有新回归为 NOT_RUN，待集中验收。
+
+
+## 55. Phase 2.13 操作、导航、时间与 RC 动态详情 freshness 收口（2026-11-15）
+
+- 操作详情中的解锁状态、飞行模式、控制权、失效保护、任务状态、启动/配置 ID、代次、输出许可、请求 ID、原因和 FCU 发布时间统一服从 operation family freshness；等待/超时不保留旧值。
+- 导航状态代次、原点 ID、能力掩码、位置/速度/航向标准差、数据年龄、原因和 FCU 发布时间统一服从 navigation family freshness；先检查 family freshness，再检查 capability mask 和字段有效性。
+- 时间质量、本地时钟纪律、事件不确定度、时间代次、时钟源映射代次和 FCU 发布时间统一服从 time family freshness；时间质量强调色同步服从 freshness，UTC 字段继续额外服从 utc_valid。
+- RC 轴值、有效轴掩码、接收机 failsafe、RC 链路状态、输入年龄和 FCU 发布时间统一服从 rcInput family freshness；链路状态在等待/超时时使用 family 状态色，摇杆和 AxisGauge 保留既有 family freshness + axis validity 双门控。
+- MockLink UI Integration 覆盖操作/导航/时间 fresh → stale → recovered，以及 RC 5500 ms 超时与警告色；资源实例新鲜度覆盖已由上一阶段专项覆盖。
+- 仅修改 GroundControl QML、UI Integration 与 SPEC/G15，不改变 MAVLink 协议、FactGroup freshness 阈值、飞控健康判定、控制权限或飞行控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
