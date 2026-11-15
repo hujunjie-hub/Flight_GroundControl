@@ -19,6 +19,7 @@ SetupPage {
                                                 ? _vehicle.vehicleLinkManager.communicationLost : true
     readonly property bool _hasControl: _activeGimbal ? _activeGimbal.gimbalHaveControl : false
     readonly property bool _otherHasControl: _activeGimbal ? _activeGimbal.gimbalOthersHaveControl : false
+    readonly property bool _ownershipStatusValid: _activeGimbal ? _activeGimbal.ownershipStatusValid : false
     property int _freshnessTick: 0
     readonly property int _managerStatusAgeMs: {
         _freshnessTick
@@ -32,7 +33,9 @@ SetupPage {
     readonly property bool _attitudeStatusFresh: _attitudeStatusAgeMs >= 0 && _attitudeStatusAgeMs <= 3500
     readonly property bool _controlReady: !!_activeGimbal && !_communicationLost &&
                                           _managerStatusFresh && _attitudeStatusFresh &&
-                                          _hasControl && !_otherHasControl
+                                          _ownershipStatusValid && _hasControl && !_otherHasControl
+    readonly property bool _pitchControlReady: _controlReady && _activeGimbal.supportsPitchAxis
+    readonly property bool _yawControlReady: _controlReady && _activeGimbal.supportsYawAxis
     readonly property bool controlTimerRunning: controlTimer.running
 
     property real _targetPitch: 0
@@ -59,6 +62,8 @@ SetupPage {
             return qsTr("未发现云台")
         if (!_managerStatusFresh)
             return qsTr("控制权状态超时")
+        if (!_ownershipStatusValid)
+            return qsTr("控制权状态无效")
         if (_hasControl && !_attitudeStatusFresh)
             return qsTr("姿态数据超时")
         if (_hasControl)
@@ -370,14 +375,15 @@ SetupPage {
                                 text: qsTr("获取控制权")
                                 primary: true
                                 enabled: !!root._activeGimbal && !root._communicationLost && root._managerStatusFresh &&
-                                         !root._hasControl && !root._otherHasControl
+                                         root._ownershipStatusValid && !root._hasControl && !root._otherHasControl
                                 onClicked: root._controller.acquireGimbalControl()
                             }
                             QGCButton {
                                 objectName: "flightGimbal_releaseControl"
                                 Layout.fillWidth: true
                                 text: qsTr("释放控制权")
-                                enabled: !!root._activeGimbal && !root._communicationLost && root._hasControl
+                                enabled: !!root._activeGimbal && !root._communicationLost && root._managerStatusFresh &&
+                                         root._ownershipStatusValid && root._hasControl
                                 onClicked: {
                                     root._stopControlTimer(false)
                                     root._controller.releaseGimbalControl()
@@ -402,7 +408,7 @@ SetupPage {
                                 Layout.preferredWidth: Math.max(150, implicitWidth)
                                 model: [qsTr("跟随"), qsTr("锁定")]
                                 currentIndex: root._activeGimbal && root._activeGimbal.yawLock ? 1 : 0
-                                enabled: root._controlReady && root._activeGimbal.supportsYawLock
+                                enabled: root._yawControlReady && root._activeGimbal.supportsYawLock
                                 onActivated: index => {
                                     if (root._controlReady)
                                         root._controller.setGimbalYawLock(index === 1)
@@ -416,7 +422,7 @@ SetupPage {
                                 objectName: "flightGimbal_center"
                                 Layout.fillWidth: true
                                 text: qsTr("云台回中")
-                                enabled: root._controlReady
+                                enabled: root._pitchControlReady && root._yawControlReady
                                 onClicked: root._controller.centerGimbal()
                             }
                             QGCButton {
@@ -468,7 +474,7 @@ SetupPage {
                             value: root._targetPitch
                             displayValue: true
                             showBoundaryValues: true
-                            enabled: root._controlReady
+                            enabled: root._pitchControlReady
                             onPressedChanged: {
                                 root._pitchDragging = pressed
                                 if (pressed) root._startControlTimer()
@@ -492,7 +498,7 @@ SetupPage {
                             value: root._targetYaw
                             displayValue: true
                             showBoundaryValues: true
-                            enabled: root._controlReady
+                            enabled: root._yawControlReady
                             onPressedChanged: {
                                 root._yawDragging = pressed
                                 if (pressed) root._startControlTimer()
