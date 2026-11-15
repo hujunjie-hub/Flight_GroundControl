@@ -40,6 +40,7 @@ Item {
     readonly property var selectedFact: controller.selectedFact
     readonly property string selectedParameterName: controller.selectedParameterName
     readonly property bool tuningBusy: controller.tuningBusy
+    readonly property bool modelProfileBound: controller.modelProfileBound
     readonly property bool canApplySelectedValue: controller.canApplySelectedValue
     readonly property bool canReadbackSelectedValue: controller.canReadbackSelectedValue
     readonly property bool canRestorePreviousValue: controller.canRestorePreviousValue
