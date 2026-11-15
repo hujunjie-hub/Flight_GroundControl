@@ -674,11 +674,10 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!release->property("enabled").toBool());
 
-            // Stop the gimbal status streams while keeping vehicle heartbeats alive.
-            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL,
-                                    false, MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS, -1);
-            vehicle->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_SET_MESSAGE_INTERVAL,
-                                    false, MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
+            // Take only device 154 offline while vehicle heartbeats and device
+            // 155 continue normally. This exercises per-device freshness rather
+            // than stopping the shared manager message stream for every device.
+            QVERIFY(mockLink->setGimbalDeviceOnlineForTesting(MAV_COMP_ID_GIMBAL, false));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("控制权状态超时"), 9000);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 6500, 1000);
@@ -687,29 +686,26 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                       QStringLiteral("数据超时"), 1000);
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!acquire->property("enabled").toBool());
-            // Manager ownership is stale even though the last owner bit may be cached.
-            // Device selection must recover instead of remaining permanently locked.
             QVERIFY(deviceSelector->property("enabled").toBool());
+            QVERIFY(secondGimbal->managerStatusFresh());
+            QVERIFY(secondGimbal->attitudeStatusFresh());
 
-            // Once the first device is no longer locally controlled, the
-            // operator may select the other fully discovered device. Restart
-            // the manager status stream after verifying the first device timeout.
+            // The other device remains live and selectable while device 154 is offline.
             vehicle->gimbalController()->setActiveGimbal(secondGimbal);
-            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL,
-                                    false, MAVLINK_MSG_ID_GIMBAL_MANAGER_STATUS, 1000000);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
             QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 1, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
-                                      QStringLiteral("未取得控制权"), 3000);
+                                      QStringLiteral("未取得控制权"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() !=
                                          QStringLiteral("数据超时"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(!pitchSlider->property("enabled").toBool(), 1000);
 
-            // Restore device 154 attitude telemetry so its live attitude can
-            // be observed while device 155 is independently controlled.
-            vehicle->sendMavCommand(MAV_COMP_ID_GIMBAL, MAV_CMD_SET_MESSAGE_INTERVAL,
-                                    false, MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000);
+            // Rediscover device 154 while device 155 remains active. The device
+            // must return with fresh independent status and no inherited owner.
+            QVERIFY(mockLink->setGimbalDeviceOnlineForTesting(MAV_COMP_ID_GIMBAL, true));
+            QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->managerStatusFresh(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
+            QVERIFY(!activeGimbal->gimbalHaveControl());
 
             // The second device has its own owner pair, capability flags and
             // attitude state. Acquiring and moving it must not affect device 154.
