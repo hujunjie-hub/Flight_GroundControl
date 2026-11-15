@@ -447,6 +447,9 @@ void GimbalController::gimbalPitchStart(int direction)
         qCCritical(GimbalControllerLog) << "gimbalPitchStart: active gimbal is nullptr, returning";
         return;
     }
+    if (!_activeGimbal->supportsPitchAxis()) {
+        return;
+    }
 
     const float speed = SettingsManager::instance()->gimbalControllerSettings()->joystickButtonsSpeed()->rawValue().toInt();
     activeGimbal()->setPitchRate(direction * speed);
@@ -458,6 +461,9 @@ void GimbalController::gimbalYawStart(int direction)
 {
     if (!_activeGimbal) {
         qCCritical(GimbalControllerLog) << "gimbalYawStart: active gimbal is nullptr, returning";
+        return;
+    }
+    if (!_activeGimbal->supportsYawAxis()) {
         return;
     }
 
@@ -643,10 +649,12 @@ void GimbalController::sendRate()
     // We send raw mavlink instead of using MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW because
     // when both pitch and yaw stop simultaneously, Vehicle's duplicate command detection
     // drops the second sendMavCommand call, leaving one axis spinning indefinitely.
-    _sendGimbalAttitudeRates(_activeGimbal->pitchRate(), _activeGimbal->yawRate());
+    const float pitchRate = _activeGimbal->supportsPitchAxis() ? _activeGimbal->pitchRate() : 0.0f;
+    const float yawRate = _activeGimbal->supportsYawAxis() ? _activeGimbal->yawRate() : 0.0f;
+    _sendGimbalAttitudeRates(pitchRate, yawRate);
 
     // Stop timeout if both unset.
-    if ((_activeGimbal->pitchRate() == 0.f) && (_activeGimbal->yawRate() == 0.f)) {
+    if (pitchRate == 0.f && yawRate == 0.f) {
         _rateSenderTimer.stop();
     } else {
         _rateSenderTimer.start();
@@ -659,9 +667,11 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
         return;
     }
 
-    _sendGimbalAttitudeRates(pitch_rate_deg_s, yaw_rate_deg_s);
+    const float pitchRate = _activeGimbal->supportsPitchAxis() ? pitch_rate_deg_s : 0.0f;
+    const float yawRate = _activeGimbal->supportsYawAxis() ? yaw_rate_deg_s : 0.0f;
+    _sendGimbalAttitudeRates(pitchRate, yawRate);
 
-    if (pitch_rate_deg_s == 0.f && yaw_rate_deg_s == 0.f) {
+    if (pitchRate == 0.f && yawRate == 0.f) {
         _rateSenderTimer.stop();
     } else {
         _rateSenderTimer.start();
@@ -671,6 +681,15 @@ void GimbalController::sendGimbalRate(float pitch_rate_deg_s, float yaw_rate_deg
 void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
                                                 float yaw_rate_deg_s)
 {
+    if (!_activeGimbal) {
+        return;
+    }
+    if (!_activeGimbal->supportsPitchAxis()) {
+        pitch_rate_deg_s = 0.0f;
+    }
+    if (!_activeGimbal->supportsYawAxis()) {
+        yaw_rate_deg_s = 0.0f;
+    }
 
     auto sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
