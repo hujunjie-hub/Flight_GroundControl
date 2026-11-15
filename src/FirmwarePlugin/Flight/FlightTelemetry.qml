@@ -436,10 +436,18 @@ SetupPage {
         return date.toISOString().replace("T", " ").replace("Z", "") + fractionText + " UTC"
     }
     function _utcUncertaintyColor() {
-        return _utcValidityText() === qsTr("是") ? "#A8BBC3" : _utcValidityColor()
+        if (_utcValidityText() !== qsTr("是")) return _utcValidityColor()
+        const uncertainty = _utcUncertaintyText()
+        if (uncertainty === qsTr("未上报")) return "#8A9A94"
+        if (uncertainty === qsTr("无效")) return "#F06464"
+        return "#A8BBC3"
     }
     function _utcTimestampColor() {
-        return _utcValidityText() === qsTr("是") ? "#E6F0F4" : _utcValidityColor()
+        if (_utcValidityText() !== qsTr("是")) return _utcValidityColor()
+        const timestamp = _utcTimestampText()
+        if (timestamp === qsTr("未上报")) return "#8A9A94"
+        if (timestamp === qsTr("无效")) return "#F06464"
+        return "#E6F0F4"
     }
     function _resourceTaskZero() {
         for (let index = 0; index < _resourceStatuses.length; ++index) {
