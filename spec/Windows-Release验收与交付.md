@@ -825,3 +825,9 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 840 px 及以上两分组并排，低于 840 px 上下堆叠；时间戳始终跨列。覆盖 1600/1672×941 与 1000/900/840/839/760/759/700/400 px，验证组卡/指标/时间戳完整落在父卡片内。
 - 保留 FCU 单调时间戳有效值排序、无效值置后、相同时间戳确定性排序和 UTC/FCU 时间基准独立性；不得改变 MAVLink/FactGroup/ICD/枚举/freshness/时间精度。
 - 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 100/125/150/200% DPI 实机截图签收。
+
+### G17 FCU 单调时序标记/序号/时间值颜色一致性（2026-11-16）
+
+- 导航状态发布、时间同步发布、最近事件三行的 marker、排序序号和 FCU boot-relative 时间值必须共享相同 QColor；有效/超时/无效/等待状态沿用统一时间线状态映射。
+- 不得因时间质量、UTC 有效性变化而误改 FCU 单调时间戳的独立状态；原有效时间排序、无效值置后、相等时间戳稳定顺序和微秒精度继续通过既有回归。
+- 新增 MockLink UI Integration 三行 marker/order/value 颜色一致性断言；不运行本轮 CI/Build/Unit/Integration/Windows Release，新增验收 NOT_RUN，集中 exact-HEAD 验收时执行。
