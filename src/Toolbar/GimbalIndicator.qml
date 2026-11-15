@@ -31,6 +31,31 @@ Item {
     property var    settingsPanelVisible:       false
 
     property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
+    property int _freshnessTick: 0
+    readonly property bool _linkLost: !activeVehicle || !activeVehicle.vehicleLinkManager ||
+                                      activeVehicle.vehicleLinkManager.communicationLost
+    readonly property bool _managerStatusFresh: {
+        _freshnessTick
+        const age = activeGimbal ? Number(activeGimbal.managerStatusAgeMs) : -1
+        return age >= 0 && age <= 6500
+    }
+    readonly property bool _attitudeStatusFresh: {
+        _freshnessTick
+        const age = activeGimbal ? Number(activeGimbal.attitudeStatusAgeMs) : -1
+        return age >= 0 && age <= 3500
+    }
+    readonly property bool _controlReady: !!activeGimbal && !_linkLost &&
+                                          _managerStatusFresh && _attitudeStatusFresh &&
+                                          activeGimbal.ownershipStatusValid &&
+                                          activeGimbal.gimbalHaveControl &&
+                                          !activeGimbal.gimbalOthersHaveControl
+
+    Timer {
+        interval: 250
+        repeat: true
+        running: control.showIndicator
+        onTriggered: control._freshnessTick++
+    }
 
     /// Names a gimbal as "<manager compid>-<device id>", e.g. "154-1", so that gimbals
     /// belonging to different managers can be told apart.
@@ -172,6 +197,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               activeGimbal.yawLock ? qsTr("Yaw Follow") : qsTr("Yaw Lock")
                     visible:            activeGimbal.supportsYawLock
+                    enabled:            control._controlReady && activeGimbal.supportsYawAxis
                     onClicked: {
                         gimbalController.setGimbalYawLock(!activeGimbal.yawLock)
                         mainWindow.closeIndicatorDrawer()
@@ -181,6 +207,8 @@ Item {
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Center")
+                    enabled:            control._controlReady &&
+                                        (activeGimbal.supportsPitchAxis || activeGimbal.supportsYawAxis)
                     onClicked: {
                         gimbalController.centerGimbal()
                         mainWindow.closeIndicatorDrawer()
@@ -190,6 +218,7 @@ Item {
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Tilt 90")
+                    enabled:            control._controlReady && activeGimbal.supportsPitchAxis
                     onClicked: {
                         gimbalController.sendPitchBodyYaw(-90, 0)
                         mainWindow.closeIndicatorDrawer()
@@ -209,6 +238,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Retract")
                     visible:            activeGimbal.supportsRetract
+                    enabled:            control._controlReady
                     onClicked: {
                         gimbalController.setGimbalRetract(true)
                         mainWindow.closeIndicatorDrawer()
@@ -219,6 +249,9 @@ Item {
                     Layout.fillWidth:   true
                     text:               activeGimbal.gimbalHaveControl ? qsTr("Release Control") : qsTr("Acquire Control")
                     visible:            _gimbalControllerSettings.toolbarIndicatorShowAcquireReleaseControl.rawValue
+                    enabled:            activeGimbal && !control._linkLost && control._managerStatusFresh &&
+                                        activeGimbal.ownershipStatusValid &&
+                                        (activeGimbal.gimbalHaveControl || !activeGimbal.gimbalOthersHaveControl)
                     onClicked: {
                         activeGimbal.gimbalHaveControl ? gimbalController.releaseGimbalControl() : gimbalController.acquireGimbalControl()
                         mainWindow.closeIndicatorDrawer()
