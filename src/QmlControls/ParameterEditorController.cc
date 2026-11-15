@@ -804,11 +804,14 @@ void ParameterEditorController::_parameterWriteSucceeded(int componentId, const 
     const double comparisonScale = confirmedOk && targetOk
         ? std::max(1.0, std::max(std::abs(confirmedValue), std::abs(targetValue)))
         : 1.0;
-    if (!confirmedOk || !targetOk ||
+    if (!confirmedOk || !std::isfinite(confirmedValue) || !targetOk ||
         std::abs(confirmedValue - targetValue) > 1e-6 * comparisonScale) {
         _pendingParameterName.clear();
         _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
         _pendingTargetValue.clear();
+        _readbackPending = false;
+        _writeAckPendingReadback = false;
         _tuningBusy = false;
         _writeFailureNeedsReadback = true;
         _tuningStatus = tr("飞控确认值与目标值不一致");
@@ -817,19 +820,28 @@ void ParameterEditorController::_parameterWriteSucceeded(int componentId, const 
         return;
     }
 
-    _previousValues.insert(_selectedParameterKey(), _pendingOriginalValue);
-    _previousValue = _pendingOriginalValue;
-    _hasPreviousValue = true;
-    _confirmedValue = confirmedValue;
-    _pendingTargetValue.clear();
-    _pendingParameterName.clear();
-    _pendingComponentId = -1;
-    _tuningBusy = false;
-    _writeFailureNeedsReadback = false;
-    _tuningStatus = tr("已应用 · 已收到飞控 PARAM_VALUE 确认");
+    if (!_parameterMgr) {
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
+        _pendingTargetValue.clear();
+        _tuningBusy = false;
+        _writeFailureNeedsReadback = true;
+        _tuningStatus = tr("飞控已确认写入，但无法启动回读验证");
+        _tuningError = tr("参数管理器不可用；请恢复连接后显式回读当前参数。");
+        emit tuningStateChanged();
+        return;
+    }
+
+    // A matching PARAM_VALUE is only the write acknowledgement. Do not report
+    // success or update the restore snapshot until a separate read request
+    // returns the same value.
+    _readbackPending = true;
+    _writeAckPendingReadback = true;
+    _tuningStatus = tr("飞控已确认目标值，正在执行显式回读验证…");
     _tuningError.clear();
     emit tuningStateChanged();
-    emit parameterWriteConfirmed(componentId, paramName, _previousValue, _confirmedValue);
+    _parameterMgr->refreshParameter(componentId, paramName);
 }
 
 void ParameterEditorController::_parameterWriteFailed(int componentId, const QString &paramName)
@@ -841,7 +853,10 @@ void ParameterEditorController::_parameterWriteFailed(int componentId, const QSt
 
     _pendingParameterName.clear();
     _pendingComponentId = -1;
+    _pendingOriginalValue.clear();
     _pendingTargetValue.clear();
+    _readbackPending = false;
+    _writeAckPendingReadback = false;
     _tuningBusy = false;
     _writeFailureNeedsReadback = true;
     _tuningStatus = tr("写入失败 · 飞控未确认目标值");
@@ -857,11 +872,61 @@ void ParameterEditorController::_parameterReadSucceeded(int componentId, const Q
         return;
     }
 
+    bool readbackOk = false;
+    const double readbackValue = _selectedFact->cookedValue().toDouble(&readbackOk);
+    readbackOk = readbackOk && std::isfinite(readbackValue);
+
+    if (_writeAckPendingReadback) {
+        bool targetOk = false;
+        const double targetValue = _pendingTargetValue.toDouble(&targetOk);
+        const double comparisonScale = readbackOk && targetOk
+            ? std::max(1.0, std::max(std::abs(readbackValue), std::abs(targetValue)))
+            : 1.0;
+        const bool matchesTarget = readbackOk && targetOk &&
+            std::abs(readbackValue - targetValue) <= 1e-6 * comparisonScale;
+
+        _readbackPending = false;
+        _writeAckPendingReadback = false;
+        _tuningBusy = false;
+        _writeFailureNeedsReadback = !readbackOk;
+        _confirmedValue = readbackOk ? QVariant(readbackValue) : QVariant();
+
+        if (!matchesTarget) {
+            _pendingParameterName.clear();
+            _pendingComponentId = -1;
+            _pendingOriginalValue.clear();
+            _pendingTargetValue.clear();
+            _tuningStatus = readbackOk
+                ? tr("写入后回读值与目标值不一致")
+                : tr("写入后回读值无效");
+            _tuningError = readbackOk
+                ? tr("已取得飞控实际值，但与目标值不一致；本次修改未记为成功。")
+                : tr("飞控回读值不是有效有限数值，请重新回读后再继续。");
+            emit tuningStateChanged();
+            return;
+        }
+
+        _previousValues.insert(_selectedParameterKey(), _pendingOriginalValue);
+        _previousValue = _pendingOriginalValue;
+        _hasPreviousValue = true;
+        _confirmedValue = readbackValue;
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
+        _pendingTargetValue.clear();
+        _writeFailureNeedsReadback = false;
+        _tuningStatus = tr("已应用 · PARAM_VALUE 确认及独立回读均一致");
+        _tuningError.clear();
+        emit tuningStateChanged();
+        emit parameterWriteConfirmed(componentId, paramName, _previousValue, _confirmedValue);
+        return;
+    }
+
     _readbackPending = false;
     _writeFailureNeedsReadback = false;
-    _confirmedValue = _selectedFact->cookedValue();
-    _tuningStatus = tr("回读验证完成");
-    _tuningError.clear();
+    _confirmedValue = readbackOk ? QVariant(readbackValue) : QVariant();
+    _tuningStatus = readbackOk ? tr("回读验证完成") : tr("回读值无效");
+    _tuningError = readbackOk ? QString() : tr("飞控回读值不是有效有限数值。");
     emit tuningStateChanged();
 }
 
@@ -873,9 +938,22 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
         return;
     }
 
+    const bool writeVerificationFailed = _writeAckPendingReadback;
     _readbackPending = false;
-    _tuningStatus = tr("回读失败");
-    _tuningError = tr("飞控未返回该参数的有效回读值。");
+    if (writeVerificationFailed) {
+        _writeAckPendingReadback = false;
+        _tuningBusy = false;
+        _writeFailureNeedsReadback = true;
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _pendingOriginalValue.clear();
+        _pendingTargetValue.clear();
+        _tuningStatus = tr("飞控已确认写入，但独立回读失败");
+        _tuningError = tr("不能将本次修改标记为成功；请重新回读飞控实际参数。");
+    } else {
+        _tuningStatus = tr("回读失败");
+        _tuningError = tr("飞控未返回该参数的有效回读值。");
+    }
     emit tuningStateChanged();
 }
 
