@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QMap>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -91,7 +92,7 @@ private:
         uint8_t deviceId = 0;
     };
 
-    void _requestGimbalInformation(uint8_t compid);
+    bool _requestGimbalInformation(uint8_t compid);
     static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
     void _handleHeartbeat(const mavlink_message_t &message);
     void _handleGimbalManagerInformation(const mavlink_message_t &message);
@@ -115,6 +116,7 @@ private:
     QMap<uint8_t, PotentialGimbalManager> _potentialGimbalManagers; // key is compid
 
     QMap<GimbalPairId, Gimbal*> _potentialGimbals;
+    QMap<GimbalPairId, qint64> _lastManagerStatusRequestMs;
     QmlObjectListModel *_gimbals = nullptr;
     bool _initialConnectComplete = false;
 
