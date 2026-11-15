@@ -1086,6 +1086,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(leftStick);
             QVERIFY(rightStick);
             QVERIFY(rightStickReadout);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#8A9A94")), 3000);
             QVERIFY(gcsRssiValue);
             QVERIFY(gcsQualityValue);
             QVERIFY(gcsLossValue);
@@ -1213,6 +1215,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStick->property("verticalValue").toDouble() + 0.20) < 0.0001, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rightStick->property("horizontalValue").toDouble() - 0.25) < 0.0001, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rightStick->property("verticalValue").toDouble() + 0.25) < 0.0001, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#9DD9D0")), 3000);
             QQuickItem* overviewTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
