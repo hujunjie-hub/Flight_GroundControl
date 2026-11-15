@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.50
+版本：4.51
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -603,3 +603,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - FlightTelemetryPageUITest 使用 MockLink 覆盖 fresh、capability unavailable、stale、recovered 四种状态，检查 valueColor/statusColor 分离；三项 KPI 共享同一颜色规则。
 - 不增加导航精度阈值，不推断定位等级，不修改 capability mask、family freshness、趋势采样或飞控控制行为。
 - 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
+
+### G15 总览告警空态与实时严重度排序（2026-11-15）
+
+- 无 FCU_EVENT 时告警空态必须显示，标题为当前 event family freshness 状态，说明提示收到 FCU_EVENT 后按严重度排序；首条事件到达后空态隐藏。
+- MockLink UI Integration 通过真实 MAVLink 路径注入严重度 3、1、3 三条事件，验证事件总数、最新同级最高严重度置顶、同严重度按本地接收序号降序，以及严重度 1 的琥珀色语义。
+- 页面优先级提示文案为「最高严重度置顶 · 同级按本地接收序号」，必须与 UI Integration 预期一致。
+- 新增断言覆盖 waiting empty state、首条事件到达后的空态隐藏、实时列表重排；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，状态保持 NOT_RUN。
