@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.98
+- 版本 4.99
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -266,3 +266,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 Phase 2.65 左侧整机状态概览高 DPI 适配：飞行模式/解锁布局间距、解锁胶囊、失效保护状态条和控制权只读行改用 ScreenTools 字体像素度量；两条状态行按内容隐式高度加双侧内边距自适应，说明文字自然换行。MockLink UI Integration 扩展六档宽度父子边界与内容高度断言。按要求未运行 CI，新增回归 NOT_RUN。
+
+
+- 2026-11-15 飞行健康页 Phase 2.66：通过 AppSettings.uiScalePercent 实际切换 150%/200% UI Scale，覆盖 1672×941 与 1280×720 物理视口折算后的双列/单列布局、13 域健康矩阵内容边界、维护横条动态高度和长中文摘要换行；测试恢复原始缩放设置。本轮未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
