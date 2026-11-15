@@ -72,6 +72,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             QQuickItem* dashboardHeader =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardHeader"), 3000);
+            QQuickItem* visualTabs =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTabs"), 3000);
+            QQuickItem* summaryGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000);
+            QQuickItem* topologyCanvas =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyCanvas"), 3000);
+            QQuickItem* alarmList =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmList"), 3000);
+            QQuickItem* diagnosticDetailsTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
+            QQuickItem* summaryLink =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+            QQuickItem* summaryTime =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryTime"), 3000);
             QQuickItem* dashboardTitle =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
             QQuickItem* readOnlyBadge =
@@ -142,6 +156,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_buildInfo"), 3000);
             QQuickItem* failsafeRow = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
+            QVERIFY(visualTabs);
+            QVERIFY(summaryGrid);
+            QVERIFY(topologyCanvas);
+            QVERIFY(alarmList);
+            QVERIFY(diagnosticDetailsTitle);
+            QVERIFY(summaryLink);
+            QVERIFY(summaryTime);
             QVERIFY(dashboardTitle);
             QVERIFY(readOnlyBadge);
             QVERIFY(summaryTelemetry);
@@ -240,6 +261,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
                 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
@@ -249,6 +272,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroRcInput->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->x() < heroNavigation->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->x() < heroRcInput->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(prearmCard->y() < resourcesCard->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmCard->y(), latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(prearmCard->x() < latestEventCard->x(), 3000);
@@ -258,18 +282,24 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(rcCard->x() < eventHistoryCard->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
             page->setWidth(1000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).y() >=
                                         dashboardTitle->mapToItem(dashboardHeader, 0, dashboardTitle->height()).y(),

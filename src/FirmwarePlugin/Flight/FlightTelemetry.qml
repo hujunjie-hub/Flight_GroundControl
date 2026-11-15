@@ -24,7 +24,7 @@ SetupPage {
     readonly property var _resourceStatuses: _ageRefreshTick >= 0 && _telemetry
                                              ? _telemetry.resourceStatuses : []
     readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 760 ? 6 : 1
-    readonly property int _summaryColumns: availableWidth >= 1200 ? 4 : availableWidth >= 600 ? 2 : 1
+    readonly property int _summaryColumns: availableWidth >= 1450 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
     readonly property int _healthColumns: availableWidth >= 1450 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
     readonly property int _trendColumns: availableWidth >= 1450 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
@@ -558,6 +558,16 @@ SetupPage {
                ? labels[value] : qsTr("未知")
     }
 
+    function _eventSeverityColor(severity) {
+        switch (Number(severity)) {
+        case 0: return "#45C6E5"
+        case 1: return "#F0B94B"
+        case 2: return "#F08B45"
+        case 3: return "#F06464"
+        default: return "#8A9A94"
+        }
+    }
+
     function _schemaCompatibilityText() {
         if (!_fact("buildInfoAvailable")) {
             return qsTr("未收到版本")
@@ -689,17 +699,18 @@ SetupPage {
         id: pageComponent
 
         ColumnLayout {
+            objectName: "flightTelemetry_contentRoot"
             width: availableWidth
-            spacing: 12
+            spacing: 10
 
             Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
                 Layout.fillWidth: true
                 implicitHeight: headerRow.implicitHeight + 28
                 radius: 10
-                color: "#14232B"
+                color: "#0A222B"
                 border.width: 1
-                border.color: "#29414B"
+                border.color: "#1B6675"
 
                 GridLayout {
                     id: headerRow
@@ -724,8 +735,8 @@ SetupPage {
                         QGCLabel {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
-                            text: "FLIGHT DIAGNOSTICS"
-                            color: "#57C8DA"
+                            text: "FLIGHT DIAGNOSTICS OVERVIEW"
+                            color: "#45D6E5"
                             font.pointSize: ScreenTools.secondaryFontPointSize
                             font.weight: ScreenTools.strongFontWeight
                         }
@@ -734,7 +745,7 @@ SetupPage {
                             objectName: "flightTelemetry_dashboardTitle"
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
-                            text: qsTr("飞控诊断中心")
+                            text: qsTr("飞控诊断总览")
                             color: "#E7F0F4"
                             typographyRole: "hero"
                         }
@@ -782,9 +793,50 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#344A43"
+                color: "#174D59"
             }
 
+
+            // Static visual strip from the confirmed reference image; no sub-page routing.
+            GridLayout {
+                objectName: "flightTelemetry_visualTabs"
+                Layout.fillWidth: true
+                columns: root.availableWidth >= 900 ? 4 : 2
+                columnSpacing: 8
+                rowSpacing: 7
+                Repeater {
+                    model: [qsTr("总览总控"), qsTr("飞行健康"), qsTr("导航时序"), qsTr("遥控与链路")]
+                    delegate: Rectangle {
+                        required property int index
+                        required property string modelData
+                        objectName: "flightTelemetry_visualTab_" + index
+                        Layout.fillWidth: true
+                        implicitHeight: 42
+                        radius: 5
+                        color: index === 0 ? "#075A63" : "#0B252E"
+                        border.width: 1
+                        border.color: index === 0 ? "#20D7D8" : "#175665"
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 8
+                            QGCLabel {
+                                text: ["◈", "♡", "◷", "⌁"][index]
+                                color: index === 0 ? "#9BFFFF" : "#82B4C0"
+                                font.pointSize: ScreenTools.titleFontPointSize
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: modelData
+                                color: index === 0 ? "#F0FFFF" : "#B8D5DC"
+                                font.weight: ScreenTools.strongFontWeight
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+                    }
+                }
+            }
             GridLayout {
                 objectName: "flightTelemetry_summaryGrid"
                 Layout.fillWidth: true
@@ -846,6 +898,32 @@ SetupPage {
                                 : root._familyStatus("navigationAvailable")
                     accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
                 }
+                SummaryTile {
+                    objectName: "flightTelemetry_summaryLink"
+                    Layout.fillWidth: true
+                    titleText: qsTr("数据链路")
+                    valueText: root._familyStatus("linkAvailable") === qsTr("已接收")
+                               ? qsTr("%1 条链路").arg(root._linkStatuses.length)
+                               : root._familyStatus("linkAvailable")
+                    detailText: qsTr("地面站接收 %1").arg(root._receiveAgeText("link"))
+                    accentColor: root._familyStatusColor("linkAvailable")
+                }
+                SummaryTile {
+                    objectName: "flightTelemetry_summaryTime"
+                    Layout.fillWidth: true
+                    titleText: qsTr("时间同步")
+                    valueText: root._familyStatus("timeAvailable") === qsTr("已接收")
+                               ? root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")])
+                               : root._familyStatus("timeAvailable")
+                    detailText: root._familyStatus("timeAvailable") !== qsTr("已接收")
+                                ? root._familyStatus("timeAvailable")
+                                : root._fact("utcValid") === null ? qsTr("UTC 状态未上报")
+                                  : root._fact("utcValid")
+                                    ? qsTr("UTC 有效 · %1").arg(root._number("utcUncertaintyUs", 0, " μs"))
+                                    : qsTr("UTC 无效")
+                    accentColor: root._familyStatusColor("timeAvailable")
+                }
+
             }
 
             GridLayout {
@@ -857,9 +935,9 @@ SetupPage {
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroFlight"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
-                    eyebrow: "FLIGHT STATUS"
-                    titleText: qsTr("飞行态势")
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 2 : 1
+                    eyebrow: "AIRCRAFT STATUS / TELEMETRY"
+                    titleText: qsTr("整机状态概览")
                     statusFamily: "operationAvailable"
 
                     RowLayout {
@@ -887,8 +965,8 @@ SetupPage {
                         Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
-                            color: "#1D3039"
-                            border.color: "#304C58"
+                            color: "#0B303A"
+                            border.color: "#1C6B7A"
                             implicitWidth: armStateText.implicitWidth + 22
                             implicitHeight: armStateText.implicitHeight + 16
                             QGCLabel {
@@ -907,7 +985,7 @@ SetupPage {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: "#2B414B"
+                        color: "#16424F"
                     }
 
                     GridLayout {
@@ -940,18 +1018,173 @@ SetupPage {
                             }
                         }
                     }
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("关键系统状态")
+                        color: "#73DCE8"
+                        typographyRole: "section-heading"
+                    }
+                    GridLayout {
+                        objectName: "flightTelemetry_primaryHealthGrid"
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 7
+                        rowSpacing: 7
+                        Repeater {
+                            model: [
+                                { label: qsTr("飞控状态"), family: "operation", available: "operationAvailable" },
+                                { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
+                                { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
+                                { label: qsTr("数据链路"), family: "link", available: "linkAvailable" },
+                                { label: qsTr("系统资源"), family: "resource", available: "resourceAvailable" },
+                                { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
+                            ]
+                            delegate: HealthCell {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_primaryHealth_" + modelData.family
+                                labelText: modelData.label
+                                familyName: modelData.family
+                                availableFact: modelData.available
+                            }
+                        }
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("各系统独立显示接收状态，不生成综合健康分")
+                        color: "#83AEB8"
+                        font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
+                    }
+
                 }
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroNavigation"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
-                    eyebrow: "NAVIGATION ESTIMATE"
-                    titleText: qsTr("导航估计")
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 5 : root._dashboardColumns >= 6 ? 2 : 1
+                    eyebrow: "SYSTEM TOPOLOGY & NAVIGATION"
+                    titleText: qsTr("系统拓扑与导航估计")
                     statusFamily: "navigationAvailable"
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("系统连接示意 · 不代表飞行器姿态或空间位置")
+                        color: "#83AEB8"
+                        font.pointSize: ScreenTools.microFontPointSize
+                    }
+                    Canvas {
+                        id: topologyCanvas
+                        objectName: "flightTelemetry_topologyCanvas"
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 158
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            if (!ctx) return
+                            ctx.clearRect(0, 0, width, height)
+                            const cx = width / 2
+                            const cy = height / 2
+                            ctx.strokeStyle = "#174D5B"
+                            ctx.lineWidth = 1
+                            for (let radius = 24; radius <= 76; radius += 26) {
+                                ctx.beginPath()
+                                ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+                                ctx.stroke()
+                            }
+                            ctx.beginPath()
+                            ctx.moveTo(12, cy)
+                            ctx.lineTo(width - 12, cy)
+                            ctx.moveTo(cx, 8)
+                            ctx.lineTo(cx, height - 8)
+                            ctx.stroke()
+                            const rotors = [
+                                [cx - 57, cy - 43], [cx + 57, cy - 43],
+                                [cx - 57, cy + 43], [cx + 57, cy + 43]
+                            ]
+                            ctx.strokeStyle = "#38D5E4"
+                            ctx.lineWidth = 4
+                            ctx.beginPath()
+                            ctx.moveTo(cx, cy)
+                            for (let i = 0; i < rotors.length; i++) {
+                                ctx.lineTo(rotors[i][0], rotors[i][1])
+                                ctx.moveTo(cx, cy)
+                            }
+                            ctx.stroke()
+                            for (let i = 0; i < rotors.length; i++) {
+                                ctx.beginPath()
+                                ctx.arc(rotors[i][0], rotors[i][1], 15, 0, Math.PI * 2)
+                                ctx.fillStyle = "rgba(20, 155, 174, 0.12)"
+                                ctx.fill()
+                                ctx.strokeStyle = "#52E5EC"
+                                ctx.lineWidth = 2
+                                ctx.stroke()
+                            }
+                            ctx.fillStyle = "#0D4652"
+                            ctx.fillRect(cx - 14, cy - 22, 28, 44)
+                            ctx.strokeStyle = "#7BEFF0"
+                            ctx.lineWidth = 2
+                            ctx.strokeRect(cx - 14, cy - 22, 28, 44)
+                            ctx.beginPath()
+                            ctx.arc(cx, cy, 4, 0, Math.PI * 2)
+                            ctx.fillStyle = "#8CFFFF"
+                            ctx.fill()
+                        }
+                    }
+                    GridLayout {
+                        objectName: "flightTelemetry_topologyNodesGrid"
+                        Layout.fillWidth: true
+                        columns: 3
+                        columnSpacing: 7
+                        rowSpacing: 7
+                        Repeater {
+                            model: [
+                                { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
+                                { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
+                                { label: qsTr("数据链路"), family: "link", available: "linkAvailable" },
+                                { label: qsTr("飞控系统"), family: "control", available: "controlAvailable" },
+                                { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
+                                { label: qsTr("时间同步"), family: "time", available: "timeAvailable" }
+                            ]
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property color stateColor: root._familyStatusColor(modelData.available)
+                                Layout.fillWidth: true
+                                implicitHeight: 34
+                                radius: 5
+                                color: "#0B303A"
+                                border.width: 1
+                                border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.42)
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 7
+                                    anchors.rightMargin: 7
+                                    spacing: 5
+                                    Rectangle {
+                                        Layout.preferredWidth: 6
+                                        Layout.preferredHeight: 6
+                                        radius: 3
+                                        color: parent.parent.stateColor
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: modelData.label
+                                        color: "#C7E3E9"
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        elide: Text.ElideRight
+                                    }
+                                    QGCLabel {
+                                        text: root._familyStatus(modelData.available)
+                                        color: parent.parent.stateColor
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     GridLayout {
                         Layout.fillWidth: true
-                        columns: 3
+                        columns: root.availableWidth >= 1450 ? 3 : 1
                         columnSpacing: 8
                         MetricReadout {
                             objectName: "flightTelemetry_metricPosition"
@@ -989,10 +1222,91 @@ SetupPage {
 
                 HeroPanel {
                     objectName: "flightTelemetry_heroRcInput"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
-                    eyebrow: "REMOTE CONTROL INPUT"
-                    titleText: qsTr("遥控输入")
-                    statusFamily: "rcInputAvailable"
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 2 : 1
+                    eyebrow: "ALARM EVENTS / RC INPUT"
+                    titleText: qsTr("告警事件（优先级）")
+                    statusFamily: "eventAvailable"
+
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("当前启动周期内最近事件")
+                        color: "#8EB9C3"
+                        font.pointSize: ScreenTools.captionFontPointSize
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: !root._telemetry || root._telemetry.recentEvents.length === 0
+                        text: root._familyStatus("eventAvailable") === qsTr("已接收")
+                              ? qsTr("当前启动周期暂无事件")
+                              : root._familyStatus("eventAvailable")
+                        color: "#8298A2"
+                        font.pointSize: ScreenTools.secondaryFontPointSize
+                    }
+                    Repeater {
+                        objectName: "flightTelemetry_alarmList"
+                        model: root._telemetry ? root._telemetry.recentEvents.slice(0, 4) : []
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property color severityColor: root._eventSeverityColor(modelData.severity)
+                            Layout.fillWidth: true
+                            implicitHeight: 55
+                            radius: 5
+                            color: "#0B2A33"
+                            border.width: 1
+                            border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.35)
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 7
+                                spacing: 7
+                                Rectangle {
+                                    Layout.preferredWidth: 48
+                                    Layout.preferredHeight: 23
+                                    radius: 4
+                                    color: Qt.rgba(parent.parent.severityColor.r, parent.parent.severityColor.g,
+                                                   parent.parent.severityColor.b, 0.12)
+                                    border.color: parent.parent.severityColor
+                                    QGCLabel {
+                                        anchors.centerIn: parent
+                                        text: root._eventSeverityLabel(modelData.severity)
+                                        color: parent.parent.parent.severityColor
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        font.weight: ScreenTools.strongFontWeight
+                                    }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: qsTr("事件 #%1 · ID %2 · 来源 %3")
+                                              .arg(modelData.sequence).arg(modelData.eventId).arg(modelData.sourceId)
+                                        color: "#D5E9ED"
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                        elide: Text.ElideRight
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                                        color: "#8FB1BB"
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: "#174D59"
+                    }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("遥控输入 · 四轴实时值")
+                        color: "#73DCE8"
+                        font.pointSize: ScreenTools.captionFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
+                    }
 
                     AxisGauge {
                         objectName: "flightTelemetry_rcAxis_roll"
@@ -1030,40 +1344,9 @@ SetupPage {
             }
 
             StatusCard {
-                objectName: "flightTelemetry_healthMatrix"
-                eyebrow: "TELEMETRY DOMAIN STATUS"
-                title: qsTr("遥测域状态矩阵")
-                GridLayout {
-                    objectName: "flightTelemetry_healthMatrixGrid"
-                    Layout.fillWidth: true
-                    columns: root._healthColumns
-                    columnSpacing: 8
-                    rowSpacing: 8
-                    Repeater {
-                        model: root._healthDomains
-                        delegate: HealthCell {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            objectName: "flightTelemetry_health_" + modelData.family
-                            labelText: modelData.label
-                            familyName: modelData.family
-                            availableFact: modelData.available
-                        }
-                    }
-                }
-                QGCLabel {
-                    Layout.fillWidth: true
-                    text: qsTr("各数据域独立判定；矩阵不构成综合健康评分。传感器/链路/资源实例年龄见下方详情。")
-                    color: "#8298A2"
-                    font.pointSize: ScreenTools.captionFontPointSize
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            StatusCard {
                 objectName: "flightTelemetry_trendPanel"
                 eyebrow: "GCS LIVE SAMPLE  /  1 HZ  /  LAST 60 POINTS"
-                title: qsTr("实时遥测趋势")
+                title: qsTr("关键指标趋势")
                 GridLayout {
                     objectName: "flightTelemetry_trendGrid"
                     Layout.fillWidth: true
@@ -1119,6 +1402,37 @@ SetupPage {
                 }
             }
 
+            StatusCard {
+                objectName: "flightTelemetry_healthMatrix"
+                eyebrow: "TELEMETRY DOMAIN STATUS"
+                title: qsTr("遥测域状态矩阵")
+                GridLayout {
+                    objectName: "flightTelemetry_healthMatrixGrid"
+                    Layout.fillWidth: true
+                    columns: root._healthColumns
+                    columnSpacing: 8
+                    rowSpacing: 8
+                    Repeater {
+                        model: root._healthDomains
+                        delegate: HealthCell {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            objectName: "flightTelemetry_health_" + modelData.family
+                            labelText: modelData.label
+                            familyName: modelData.family
+                            availableFact: modelData.available
+                        }
+                    }
+                }
+                QGCLabel {
+                    Layout.fillWidth: true
+                    text: qsTr("各数据域独立判定；矩阵不构成综合健康评分。传感器/链路/资源实例年龄见下方详情。")
+                    color: "#8298A2"
+                    font.pointSize: ScreenTools.captionFontPointSize
+                    wrapMode: Text.WordWrap
+                }
+            }
+
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 5
@@ -1164,6 +1478,23 @@ SetupPage {
                 }
             }
 
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                QGCLabel {
+                    objectName: "flightTelemetry_diagnosticDetailsEyebrow"
+                    text: "FULL DIAGNOSTIC DETAILS"
+                    color: "#45CFE0"
+                    typographyRole: "eyebrow"
+                }
+                QGCLabel {
+                    objectName: "flightTelemetry_diagnosticDetailsTitle"
+                    text: qsTr("完整诊断明细")
+                    color: "#E3F4F7"
+                    typographyRole: "section-heading"
+                }
+            }
             GridLayout {
                 objectName: "flightTelemetry_dashboardGrid"
                 Layout.fillWidth: true
@@ -1656,9 +1987,9 @@ SetupPage {
         implicitWidth: 300
         implicitHeight: heroColumn.implicitHeight + 26
         radius: 10
-        color: "#14232B"
+        color: "#0A222B"
         border.width: 1
-        border.color: "#29414B"
+        border.color: "#1B6675"
 
         Rectangle {
             width: 3
@@ -1685,7 +2016,7 @@ SetupPage {
                     QGCLabel {
                         Layout.fillWidth: true
                         text: hero.eyebrow
-                        color: "#57C8DA"
+                        color: "#45D6E5"
                         font.pointSize: ScreenTools.captionFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
@@ -1717,7 +2048,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#2B414B"
+                color: "#16424F"
             }
 
             ColumnLayout {
@@ -1817,8 +2148,8 @@ SetupPage {
             Layout.fillWidth: true
             Layout.preferredHeight: 9
             radius: 5
-            color: "#243740"
-            border.color: "#304B57"
+            color: "#0A2831"
+            border.color: "#1B6573"
             clip: true
 
             Rectangle {
@@ -1831,7 +2162,7 @@ SetupPage {
                                        : axis.numericValue * axisTrack.width
                 height: parent.height
                 radius: 5
-                color: "#49C7E7"
+                color: "#35D4E5"
             }
             Rectangle {
                 visible: axis.centered
@@ -1857,9 +2188,9 @@ SetupPage {
         implicitWidth: 150
         implicitHeight: 54
         radius: 7
-        color: "#172831"
+        color: "#0C2932"
         border.width: 1
-        border.color: "#29414B"
+        border.color: "#1B6675"
 
         Rectangle {
             width: 3
@@ -1934,9 +2265,9 @@ SetupPage {
         implicitWidth: 230
         implicitHeight: Math.max(126, trendContent.implicitHeight + 16)
         radius: 8
-        color: "#172831"
+        color: "#0C2932"
         border.width: 1
-        border.color: "#29414B"
+        border.color: "#1B6675"
 
         ColumnLayout {
             id: trendContent
@@ -2056,9 +2387,9 @@ SetupPage {
         implicitWidth: 230
         implicitHeight: 76
         radius: 10
-        color: "#14232B"
+        color: "#0A222B"
         border.width: 1
-        border.color: "#29414B"
+        border.color: "#1B6675"
 
         RowLayout {
             anchors.fill: parent
@@ -2116,9 +2447,9 @@ SetupPage {
         implicitWidth: 300
         implicitHeight: cardColumn.implicitHeight + 28
         radius: 8
-        color: "#14232B"
+        color: "#0A222B"
         border.width: 1
-        border.color: "#29414B"
+        border.color: "#1B6675"
 
         Rectangle {
             width: 3
@@ -2147,7 +2478,7 @@ SetupPage {
                     QGCLabel {
                         Layout.fillWidth: true
                         text: card.eyebrow
-                        color: "#57C8DA"
+                        color: "#45D6E5"
                         font.pointSize: ScreenTools.captionFontPointSize
                         font.weight: ScreenTools.strongFontWeight
                     }
@@ -2197,7 +2528,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#2B414B"
+                color: "#16424F"
             }
 
             ColumnLayout {
