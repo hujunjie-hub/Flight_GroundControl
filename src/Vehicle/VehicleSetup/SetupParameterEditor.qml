@@ -23,11 +23,11 @@ Item {
                                                 ? _selectedModelProfile.parameterNames.length : 0
 
     function _syncModelProfileSelection(resetSelection) {
-        if (_modelProfiles.length === 0) {
+        // A profile is a tuning authorization context, not a cosmetic model label.
+        // Require an explicit operator choice after startup or active-vehicle changes.
+        if (_modelProfiles.length === 0 || resetSelection ||
+            _selectedModelProfileIndex >= _modelProfiles.length) {
             _selectedModelProfileIndex = -1
-        } else if (resetSelection || _selectedModelProfileIndex < 0 ||
-                   _selectedModelProfileIndex >= _modelProfiles.length) {
-            _selectedModelProfileIndex = 0
         }
     }
 
@@ -228,7 +228,7 @@ Item {
                                         anchors.fill: parent
                                         anchors.leftMargin: 8
                                         anchors.rightMargin: 26
-                                        text: root._selectedModelProfile ? modelProfileSelector.currentText : qsTr("未登记可调机型")
+                                        text: root._selectedModelProfile ? modelProfileSelector.currentText : (root._modelProfiles.length > 0 ? qsTr("请选择机型配置") : qsTr("未登记可调机型"))
                                         color: root._selectedModelProfile ? root.cyan : root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                         verticalAlignment: Text.AlignVCenter
