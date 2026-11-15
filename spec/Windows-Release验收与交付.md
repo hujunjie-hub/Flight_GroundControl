@@ -774,3 +774,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MetricReadout 的内容间距必须与共享 ScreenTools token 一致；导航估计与能力指标的标签/状态文本均启用 WordWrap 且允许收缩到最小宽度，不得因中窄屏或高 DPI 溢出面板。
 - MockLink FlightTelemetryPageUITest 在 1280/1279/760/759 px 检查子网格 spacing、指标间距与换行属性；同时保留 1672×941 时间线动态行高/排序、UTC 六位微秒全宽显示和原有数据 freshness/validity 门控。
 - 不运行 CI、Unit、Integration 或 Windows Release；新增验收状态 NOT_RUN，集中验收时执行 exact-HEAD 回归并完成 100/125/150% DPI 实机截图签收。
+
+
+### G15 导航估计指标与能力状态分级徽标（2026-11-15）
+
+- 三项导航估计标准差以中性数值为主，单位与数值同行；family freshness/能力状态使用独立 FamilyStatusBadge，徽标文案和颜色必须与原状态函数一致。
+- 四项导航能力状态使用紧凑徽标，不再以大号 metric 数值展示；未知、等待、未具备、超时、已接收等状态仍须保留原文案和颜色语义。
+- 1280/1279/760/759 px 断点与 1600/1672×941 视口均验证所有估计/能力徽标可见且完整落在所属 MetricReadout 内；原数值门控、能力位和 freshness 回归继续有效。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归并完成 Windows 100/125/150% DPI 实机截图签收。
