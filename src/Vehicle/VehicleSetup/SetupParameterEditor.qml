@@ -92,6 +92,7 @@ Item {
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
             readonly property var confirmedValue: parameterEditorLoader.item ? parameterEditorLoader.item.confirmedValue : undefined
             readonly property bool tuningBusy: parameterEditorLoader.item ? parameterEditorLoader.item.tuningBusy : false
+            readonly property bool modelProfileBound: parameterEditorLoader.item ? parameterEditorLoader.item.modelProfileBound : false
             readonly property string tuningStatus: parameterEditorLoader.item ? parameterEditorLoader.item.tuningStatus : qsTr("请选择参数")
             readonly property string tuningError: parameterEditorLoader.item ? parameterEditorLoader.item.tuningError : ""
             readonly property bool canApplySelectedValue: parameterEditorLoader.item ? parameterEditorLoader.item.canApplySelectedValue : false
@@ -131,6 +132,10 @@ Item {
             function syncParameterDomain() {
                 parameterDomainAvailable = false
                 if (parameterEditorLoader.item) {
+                    if (!parameterEditorLoader.item.modelProfileBound) {
+                        parameterEditorLoader.item.selectCategoryByName("__NO_PARAMETER_DOMAIN__")
+                        return
+                    }
                     const categoryName = domainCategoryName(root.activeDomain)
                     const hasCategory = categoryName !== "" && parameterEditorLoader.item.hasCategory(categoryName)
                     parameterEditorLoader.item.selectCategoryByName(categoryName)
@@ -215,7 +220,7 @@ Item {
                                     textRole: "displayName"
                                     currentIndex: root._selectedModelProfileIndex
                                     // Selects one registered parameter-tuning profile; does not change the Vehicle hardware type.
-                                    enabled: root._modelProfiles.length > 0
+                                    enabled: root._modelProfiles.length > 0 && !dashboardRoot.tuningBusy
                                     onActivated: index => {
                                         root._selectedModelProfileIndex = index
                                         if (dashboardLoader.item &&
@@ -765,6 +770,13 @@ Item {
                                     }
                                 }
 
+                                Connections {
+                                    target: parameterEditorLoader.item
+                                    function onModelProfileBoundChanged() {
+                                        dashboardRoot.syncParameterDomain()
+                                    }
+                                }
+
                                 Rectangle {
                                     anchors.fill: parent
                                     visible: root._parametersReady && root._linkHealthy &&
@@ -787,7 +799,9 @@ Item {
                                                     ? (root._modelProfiles.length > 0
                                                        ? qsTr("请先选择机型配置")
                                                        : qsTr("未匹配到已注册机型"))
-                                                    : qsTr("当前参数域暂无参数")
+                                                    : !dashboardRoot.modelProfileBound
+                                                      ? qsTr("机型参数清单校验失败")
+                                                      : qsTr("当前参数域暂无参数")
                                             color: root.mainText
                                             font.pointSize: ScreenTools.subtitleFontPointSize
                                             font.weight: ScreenTools.strongFontWeight
@@ -801,7 +815,11 @@ Item {
                                                     ? (root._modelProfiles.length > 0
                                                        ? qsTr("检测到已登记的调参配置，请先由操作者明确选择。未选择前参数编辑保持锁定。")
                                                        : qsTr("当前 Flight 固件未匹配到已登记的机型配置。参数编辑保持锁定，避免将仿真参数用于实机。"))
-                                                    : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他域参数或示例数据填充。")
+                                                    : !dashboardRoot.modelProfileBound
+                                                      ? (dashboardRoot.tuningError !== ""
+                                                         ? dashboardRoot.tuningError
+                                                         : qsTr("注册参数清单与飞控实际下载的参数列表不一致。参数编辑保持锁定，请检查固件和元数据版本。"))
+                                                      : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他域参数或示例数据填充。")
                                             color: root.mutedText
                                             font.pointSize: ScreenTools.captionFontPointSize
                                             wrapMode: Text.WordWrap
