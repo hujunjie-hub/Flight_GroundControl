@@ -532,7 +532,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 解锁状态独立显示 FCU arm state；状态胶囊只表达 freshness，不把 armed/disarmed 本身解释为故障。
 - 失效保护等级必须使用全宽优先状态条，正常/降级/需要动作/终止分别沿用 _failsafeColor() 的绿/琥珀/橙/红映射；operation 等待或超时时只显示 freshness 状态，不显示旧 failsafe 等级。
 - 控制权作为次级信息行，严格显示 FCU authority 枚举。
-- 六域 HealthCell 独立显示状态和接收年龄，不合成综合健康分。
+- 六域 freshness 仅在中栏拓扑节点/连线独立显示状态和接收年龄；左栏不重复展示六域 HealthCell 矩阵，不合成综合健康分。
 - FlightTelemetryPageUITest 通过 MockLink 验证初始 WAIT、fresh 的「定点/解锁中/飞手/正常」、stale 后全部业务字段门控及安全条颜色，并检查 1600/1000/400 px 内容边界。本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
 
 
