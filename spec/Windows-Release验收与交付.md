@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.40      
+版本：4.41        
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -562,3 +562,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 900/700/400 px 主视觉单列堆叠，不强制面板等高；各面板内部内容必须位于自身边界内。
 - FlightTelemetryPageUITest 通过 overviewHeroPanelsSameHeight 验证 1600/1400/1000 px 等高，并保留原有顺序、宽度和 900/700/400 px 堆叠断言。本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
 
+
+
+### G15 RC 轴读数 freshness 与有效性颜色（2026-11-15）
+
+- AxisGauge fresh/valid 数值使用 `#E6F0F4`，validity bit 清零/越界/非有限使用 `#F0B94B`，未上报使用 `#8298A2`；family WAIT 使用 `#8A9A94`，family stale 沿用琥珀 freshness 色。
+- StickVisualizer 两轴均有效时读数为 `#9DD9D0`；任一轴无效或 stale 为 `#F0B94B`；等待/未上报为 `#8A9A94`。Marker 只在两轴都有效时显示。
+- FlightTelemetryPageUITest 通过 MockLink 断言 WAIT、有效、无效三种颜色及摇杆 marker 行为；既有三种手型映射与真实通道驱动断言必须继续通过。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
