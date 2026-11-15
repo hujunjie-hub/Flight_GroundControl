@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.11
+- 版本：6.12
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI 辅助说明 freshness 已闭环；本轮补齐 timeQuality 枚举状态与 UTC 有效性的独立颜色门控；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -693,7 +693,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本轮未运行 Unit、Integration、Windows Release 或 CI；相关回归状态均为 NOT_RUN，待集中验收。
 
 
-## 41. Phase 2.9 KPI 辅助值 freshness 与状态颜色一致性（2026-11-15）
+## 42. Phase 2.9 KPI 辅助值 freshness 与状态颜色一致性（2026-11-15）
 
 - 六项 KPI 的主值、辅助说明和强调色共享同一数据有效性语义；任何 family 未收到/超时、字段未上报或 UTC 无效时，辅助说明不得继续显示缓存的旧状态。
 - 飞行健康页的传感器覆盖率复用逐实例 freshness 计数，显示有效、超时和等待实例数；不再把缓存实例总数当作当前有效数量。
@@ -706,7 +706,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅调整地面站 KPI 呈现和 UI Integration；不修改 FlightTelemetry 协议、FactGroup 解码、飞控健康判定、控制权限或任何飞行控制行为。本阶段按用户要求不运行 CI，所有新增回归待集中验收。
 
 
-## 42. Phase 2.9 时间质量枚举与 UTC 有效性分色（2026-11-15）
+## 43. Phase 2.9 时间质量枚举与 UTC 有效性分色（2026-11-15）
 
 - 「时间质量」强调色由 time family freshness 与 timeQuality 枚举共同决定：仅本地时钟为中性灰、同步中为琥珀色、锁定为绿色、保持/降级为琥珀色、无效为红色。
 - time family 等待/超时时优先显示 family 状态颜色，不允许旧的 timeQuality 枚举覆盖等待/超时状态。
