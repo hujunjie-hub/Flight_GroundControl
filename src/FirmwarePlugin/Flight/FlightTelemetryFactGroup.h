@@ -58,6 +58,7 @@ signals:
     void linkStatusesChanged();
     void resourceStatusesChanged();
     void familyReceiveAgeMsChanged();
+    /// Emitted after an accepted FCU_CONTROL_STATUS frame has updated all control Facts.
     void controlStatusUpdated();
 
 private:
