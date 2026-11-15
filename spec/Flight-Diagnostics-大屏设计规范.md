@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.57
+- 版本：6.58
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -71,7 +71,7 @@
 | 导航时序 | 导航状态、水平位置 σ、速度 σ、航向 σ、时间质量、UTC 不确定度 | 位置/速度/航向分别服从 capability bit3、bit5+bit6、bit2；UTC 不确定度仅在 UTC 有效时显示 |
 | 遥控与链路 | 遥控输入、有效输入轴、RC 链路状态、数据链路、链路实例、遥控接收年龄 | 有效轴由 rcValidAxesMask 决定；链路指标只显示 validityMask 标记有效的字段 |
 
-KPI 是信息索引，不是综合健康评分。任何 family 未收到、超时、无效或能力位缺失时，必须显示对应状态，不能用 0、绿色或上一次有效值伪装为当前值。KPI 主值、辅助说明和强调色必须服从同一 family freshness、实例 receiveAgeMs 与字段 validity/capability 规则；不得出现主值已超时但辅助文字仍显示旧的有效/健康/未触发状态。KPI 只显示当前页有意义的指标，禁止为了对齐参考图而伪造电池、卫星、HDOP、振动、温度、SNR、RTT、吞吐量或不存在的原始 RC 通道。
+KPI 是信息索引，不是综合健康评分。任何 family 未收到、超时、无效或能力位缺失时，必须显示对应状态，不能用 0、绿色或上一次有效值伪装为当前值。 导航标准差 KPI 的数值是测量值而非健康结论：新鲜且能力具备时数值使用中性前景色 #E6F0F4，freshness/capability 状态文字独立使用对应状态色；超时、等待或能力缺失时不得展示旧数值。KPI 主值、辅助说明和强调色必须服从同一 family freshness、实例 receiveAgeMs 与字段 validity/capability 规则；不得出现主值已超时但辅助文字仍显示旧的有效/健康/未触发状态。KPI 只显示当前页有意义的指标，禁止为了对齐参考图而伪造电池、卫星、HDOP、振动、温度、SNR、RTT、吞吐量或不存在的原始 RC 通道。
 
 ### 2.4 三栏主视觉区
 
@@ -1112,3 +1112,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink `FlightTelemetryPageUITest` 在 1600/1000/900/700/400 px 下断言主输入面板徽标可见、逻辑轴与遥控详情卡徽标隐藏；两个次级面板仍绑定 `rcInputAvailable`，避免为了去重丢失 freshness 状态语义。
 - 仅修改 `FlightTelemetry.qml`、`FlightTelemetryPageUITest.cc`、本 SPEC、Windows Release 验收指南、G15 manifest 与项目 SPEC 索引；不修改 MAVLink、FlightTelemetryFactGroup、FlightRadio、Flight ICD 或飞控控制行为。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待集中验收。
+
+## 81. Phase 2.35 总览导航 KPI 数值与状态颜色分离（2026-11-15）
+
+- 总览顶部水平位置 σ、速度 σ、航向 σ 三项 KPI 与导航时序页使用同一颜色语义：新鲜且能力具备时，标准差数值使用中性前景色 #E6F0F4，状态文字独立使用 freshness 绿 #45D39A。
+- family 超时时，数值不显示缓存值，状态与不可用提示使用琥珀色 #F0B94B；能力未具备/等待时，数值占位保持中性灰，状态文字按对应 capability/freshness 语义显示。
+- 不新增导航精度阈值、不推断定位等级，不修改导航标准差原值、capability mask、family freshness 或趋势采样准入规则。
+- FlightTelemetryPageUITest 增加总览 KPI fresh、capability unavailable、stale、recovered 四种状态的 valueColor/statusColor 断言；三项指标均使用同一颜色规则。
+- 本阶段只修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、设计 SPEC、项目 SPEC 索引、Windows Release 验收指南和 G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增断言状态为 NOT_RUN，等待后续集中验收。
