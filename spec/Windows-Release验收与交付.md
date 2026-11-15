@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.61
+版本：4.62
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -652,3 +652,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MockLink UI Integration 验证初始 0/0/6、三域收到有效状态后 3/0/3，并在导航 family freshness 超时和恢复时同步更新统计。
 - 现有 1600/1400/1000/900/700/400 px 响应式检查覆盖统计文字不越界；统计复用原图例行，不增加拓扑卡片高度。
 - 按用户要求本轮不运行 CI、Unit、Integration、Windows Release；新增断言保持 NOT_RUN。
+
+
+### G15 导航页面响应式断点精确验收（2026-11-15）
+
+- 在 1280、1279、760、759 px 四个边界点验证导航页主网格列数分别为 12、6、6、1。
+- 验证 1280 px 桌面布局的 4/8 + 8/4 列宽比例和同行等高；1279/760/759 px 四个主面板按顺序纵向堆叠、等宽对齐。
+- 验证能力、时间和域状态子网格在 760 px 处由双列切换为单列。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 回归与 DPI 视觉检查。
