@@ -405,6 +405,12 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
     return true;
 }
 
+bool ParameterEditorController::tuningBusy() const
+{
+    return _tuningBusy || _readbackPending || _writeFailureNeedsReadback ||
+           (_parameterMgr && _parameterMgr->pendingWrites());
+}
+
 bool ParameterEditorController::modelProfileBound() const
 {
     return !_flightParameterCenterSafeMode() ||
