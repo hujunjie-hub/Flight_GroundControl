@@ -232,7 +232,8 @@ signals:
     void favoritesChanged               (void);
     void selectedFactChanged             (void);
     void tuningStateChanged              (void);
-    void parameterWriteConfirmed(int componentId, const QString &parameterName, const QVariant &previousValue, const QVariant &confirmedValue);
+    void parameterWriteConfirmed(int componentId, const QString &parameterName,
+                                  const QVariant &previousValue, const QVariant &confirmedValue);
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
     void diffParsedCountChanged         (int diffParsedCount);
