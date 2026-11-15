@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.69
+- 版本 4.70
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -203,6 +203,8 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 导航时序页增量：第四主面板改为 FCU 单调时间线，按导航/时间/最近事件的真实 time_boot_us 排序；导航与时间标记服从 family freshness，UTC 无效不影响 FCU 单调时间。删除重复的能力/UTC 校验行，原字段仍保留在对应专属面板。新增 MockLink 排序、UTC 独立性、fresh/stale/recovered 和 1600/1000/900/700/400 px 边界断言；本轮未运行 CI，新增回归为 NOT_RUN。
 
 - 2026-11-15 导航时序页第二轮语义收口：LocalTimebaseDisciplineState 六态独立分色，未知/缺失枚举保持中性灰，family waiting/stale 优先覆盖；FCU 时间线无效/越过 JS 安全整数范围的时间戳改为红色并置于有效点之后，缺失/未上报中性灰。同步修正导航页面规范中的过时 3/3/3/3 布局描述。新增 MockLink 六态与 2^53 边界断言；本轮按要求不运行 CI/Unit/Integration，新增回归 NOT_RUN。
+
+- 2026-11-15 导航时序页第三轮收口：相同 FCU time_boot_us 固定按 navigation → time → event 排序，不依赖 JS sort 稳定性；新增 MockLink 同时间戳回归。按要求不运行 CI/Unit/Integration，新增回归 NOT_RUN。
 
 - 2026-11-15 固件构建快照采用「最近已知」显示；Profile 匹配要求 operation fresh，并使用当前启动周期已接收的 BUILD_INFO 快照；构建快照 age stale 不会单独使静态 Profile 失效，新 boot epoch 清空快照。增加 fresh/stale/recovery/new-boot MockLink 断言。本轮未运行 CI，待集中验收。
 
