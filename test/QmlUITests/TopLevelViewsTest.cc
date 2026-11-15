@@ -192,8 +192,7 @@ void TopLevelViewsTest::_testChineseFontFallbackSelection()
     language->setRawValue(static_cast<int>(QLocale::Chinese));
 
     const QString selectedFamily = ScreenToolsController::normalFontFamily();
-    QFontDatabase fontDatabase;
-    const QStringList installedFamilies = fontDatabase.families();
+    const QStringList installedFamilies = QFontDatabase::families();
     QVERIFY(installedFamilies.contains(selectedFamily, Qt::CaseInsensitive));
 
     QStringList preferredFamilies;

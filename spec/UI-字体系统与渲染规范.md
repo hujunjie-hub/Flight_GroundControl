@@ -128,3 +128,10 @@ Windows DPI 视觉检查在本地完成并登记 RUN_ID；没有截图和环境�
 - FGC-0047：全项目字体体系、中文字体回退与渲染一致性。
 
 本规范是后续全项目 UI 字体审查、修改和验收的唯一基线。
+
+
+## 10. Qt 6.11 字体数据库 API 兼容性
+
+- Qt 6.11 中 `QFontDatabase` 的字体族查询通过静态 API `QFontDatabase::families()` 完成。
+- 禁止实例化 `QFontDatabase`；生产代码、字体回退单元测试和静态审计规则必须保持一致。
+- Windows x64 MSVC Release 编译和 `TopLevelViewsTest::_testChineseFontFallbackSelection` 是该约束的回归门禁。

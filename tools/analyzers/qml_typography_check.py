@@ -146,7 +146,8 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
         require("QLocale::system().language()" in content, "System language selection must follow the system locale")
         require("Microsoft YaHei UI" in content, "Windows CJK font preference is missing")
         require("Noto Sans CJK SC" in content, "Linux/Android CJK font preference is missing")
-        require("fontDatabase.families()" in content, "CJK font selection must check installed families")
+        require("QFontDatabase::families()" in content, "CJK font selection must use the Qt 6.11 static font database API")
+        require(not re.search(r"\\bQFontDatabase\\s+\\w+\\s*;", content), "QFontDatabase must not be instantiated; its API is static in Qt 6.11")
 
     return issues
 

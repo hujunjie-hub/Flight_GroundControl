@@ -100,8 +100,7 @@ QString ScreenToolsController::normalFontFamily()
             QStringLiteral("WenQuanYi Micro Hei")
         };
 #endif
-        const QFontDatabase fontDatabase;
-        const QStringList installedFamilies = fontDatabase.families();
+        const QStringList installedFamilies = QFontDatabase::families();
         for (const QString &family : preferredCjkFamilies) {
             if (installedFamilies.contains(family, Qt::CaseInsensitive)) {
                 return family;
