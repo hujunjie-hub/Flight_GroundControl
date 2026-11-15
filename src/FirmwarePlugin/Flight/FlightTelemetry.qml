@@ -2358,7 +2358,13 @@ SetupPage {
                         spacing: 3
                         QGCLabel { text: qsTr("维护与可靠性"); color: "#E2ECEF"; typographyRole: "title" }
                         QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
-                        QGCLabel { text: qsTr("启动 ID：%1").arg(String(root._fact("opBootIdHex") || qsTr("未上报"))); color: "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
+                        QGCLabel {
+                            objectName: "flightTelemetry_healthMaintenanceBootId"
+                            text: qsTr("启动 ID：%1").arg(root._familyFreshValue("operationAvailable",
+                                String(root._fact("opBootIdHex") || qsTr("未上报"))))
+                            color: "#A8BBC3"
+                            font.pointSize: ScreenTools.captionFontPointSize
+                        }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
@@ -2431,11 +2437,31 @@ SetupPage {
                         MetricReadout { labelText: qsTr("水平速度"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalVelocity) }
                         MetricReadout { labelText: qsTr("垂直速度"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityVerticalVelocity) }
                     }
-                    TelemetryRow { labelText: qsTr("导航状态代次"); valueText: root._integer("navStateEpoch") }
-                    TelemetryRow { labelText: qsTr("原点 ID"); valueText: root._integer("originId") }
-                    TelemetryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
-                    TelemetryRow { labelText: qsTr("数据年龄"); valueText: root._ageUsFact("navigationAgeUs") }
-                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelStateEpoch"
+                        labelText: qsTr("导航状态代次")
+                        valueText: root._familyFreshValue("navigationAvailable", root._integer("navStateEpoch"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelOriginId"
+                        labelText: qsTr("原点 ID")
+                        valueText: root._familyFreshValue("navigationAvailable", root._integer("originId"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelCapabilities"
+                        labelText: qsTr("能力掩码")
+                        valueText: root._familyFreshValue("navigationAvailable", root._mask("navigationCapabilities"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelAge"
+                        labelText: qsTr("数据年龄")
+                        valueText: root._familyFreshValue("navigationAvailable", root._ageUsFact("navigationAgeUs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationPanelReason"
+                        labelText: qsTr("原因")
+                        valueText: root._familyFreshValue("navigationAvailable", root._reasonText(0, root._fact("navigationReasonCode")))
+                    }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationTimePanel"
@@ -2444,8 +2470,17 @@ SetupPage {
                     eyebrow: "TIME SYNCHRONIZATION"
                     titleText: qsTr("时间同步")
                     statusFamily: "timeAvailable"
-                    TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
-                    TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationTimeQuality"
+                        labelText: qsTr("时间质量")
+                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                        valueColor: root._timeQualityColor()
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationTimeDiscipline"
+                        labelText: qsTr("本地时钟纪律")
+                        valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_navigationUtcValidity"
                         labelText: qsTr("UTC 有效")
@@ -2463,9 +2498,21 @@ SetupPage {
                         valueText: root._utcUncertaintyText()
                         valueColor: root._utcValidityColor()
                     }
-                    TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
-                    TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
-                    TelemetryRow { labelText: qsTr("时钟源映射代次"); valueText: root._integer("sourceMappingEpoch") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationEventUncertainty"
+                        labelText: qsTr("事件时间不确定度")
+                        valueText: root._familyFreshValue("timeAvailable", root._number("eventUncertaintyUs", 0, " μs"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationTimeEpoch"
+                        labelText: qsTr("时间代次")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("timeEpoch"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationSourceMappingEpoch"
+                        labelText: qsTr("时钟源映射代次")
+                        valueText: root._familyFreshValue("timeAvailable", root._integer("sourceMappingEpoch"))
+                    }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                 }
                 HeroPanel {
