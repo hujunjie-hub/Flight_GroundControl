@@ -5759,6 +5759,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 dashboardReadOnlyBadge->property("horizontalInset").toReal();
             const qreal baseReadOnlyVerticalInset =
                 dashboardReadOnlyBadge->property("verticalInset").toReal();
+            const qreal baseReadOnlyDotSize = page->property("_dashboardReadOnlyDotSize").toReal();
             const qreal baseDashboardTabHeight = page->property("_dashboardTabHeight").toReal();
             const qreal baseDashboardTabIconSize = page->property("_dashboardTabIconSize").toReal();
             const qreal baseDashboardTabIndicatorHeight =
@@ -5770,16 +5771,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(baseDashboardHeaderAccentWidth > 0.0);
             QVERIFY(baseReadOnlyHorizontalInset > 0.0);
             QVERIFY(baseReadOnlyVerticalInset > 0.0);
+            QVERIFY(baseReadOnlyDotSize > 0.0);
             QVERIFY(baseDashboardTabHeight > 0.0);
             QVERIFY(baseDashboardTabIconSize > 0.0);
             QVERIFY(baseDashboardTabIndicatorHeight > 0.0);
             QVERIFY(baseDashboardPanelRadius > 0.0);
             QVERIFY(baseDashboardPanelAccentWidth > 0.0);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(baseDashboardTabHeight - 42.0) < 1.0 &&
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(baseDashboardHeaderInset - 3.0) < 1.0 &&
+                                         qAbs(baseDashboardHeaderAccentWidth - 5.0) < 1.0 &&
+                                         qAbs(baseReadOnlyHorizontalInset - 10.0) < 1.0 &&
+                                         qAbs(baseReadOnlyVerticalInset - 6.0) < 1.0 &&
+                                         qAbs(baseReadOnlyDotSize - 7.0) < 1.0 &&
+                                         qAbs(baseDashboardTabHeight - 42.0) < 1.0 &&
                                          qAbs(baseDashboardTabIconSize - 20.0) < 1.0 &&
                                          qAbs(baseDashboardTabIndicatorHeight - 3.0) < 1.0 &&
-                                         qAbs(baseReadOnlyHorizontalInset - 10.0) < 1.0 &&
-                                         qAbs(baseReadOnlyVerticalInset - 6.0) < 1.0, 3000);
+                                         qAbs(baseDashboardPanelRadius - 8.0) < 1.0 &&
+                                         qAbs(baseDashboardPanelAccentWidth - 3.0) < 1.0, 3000);
             QVERIFY(_clickItemAt(dashboardOverviewTab, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
