@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.23
+- 版本 4.24
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -171,3 +171,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 FGC-0049 收尾增量：stale 传感器行保留最近一次 Normal/Error/Disabled 作为历史上下文，仍以 Stale 前缀和琥珀色明确标识过期；新增多传感器排序和 ToolbarIndicator 抽屉颜色回归。本轮未运行 CI，待集中验证。
 
 - 2026-11-15 本轮增量：遥控链路每实例 RSSI/质量/丢包指标格新增 3/2/1 列自适应，中等宽度丢包率格跨两列；补充 700/400 px MockLink UI Integration 宽度与边界断言。本轮未运行 CI。
+
+
+- 2026-11-15 RC 窄屏验收补强：FlightTelemetryPageUITest 在 1000/900/700/400 px 下检查遥控输入、逻辑通道、链路质量、失效保护四面板的垂直顺序、等宽与边界；左右摇杆需完整位于输入面板内并保持并排。新增断言 NOT_RUN，待集中验收。
