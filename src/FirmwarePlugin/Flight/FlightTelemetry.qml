@@ -2309,17 +2309,17 @@ SetupPage {
                             const families = topologyCanvas.familyConnectionStates
                             const nodes = [
                                 { x: cx - nodeX, y: cy - nodeY, state: families[0],
-                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: -13 },
+                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: -9 },
                                 { x: cx, y: cy - height * 0.40, state: families[1],
                                   labelAlign: "center", labelOffsetX: 0, labelOffsetY: 20 },
                                 { x: cx + nodeX, y: cy - nodeY, state: families[2],
-                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: -13 },
+                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: -9 },
                                 { x: cx - nodeX, y: cy + nodeY, state: families[3],
-                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: 15 },
+                                  labelAlign: "left", labelOffsetX: 14, labelOffsetY: 9 },
                                 { x: cx, y: cy + height * 0.40, state: families[4],
                                   labelAlign: "center", labelOffsetX: 0, labelOffsetY: -18 },
                                 { x: cx + nodeX, y: cy + nodeY, state: families[5],
-                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: 15 }
+                                  labelAlign: "right", labelOffsetX: -14, labelOffsetY: 9 }
                             ]
 
                             const hubGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, ringRadius * 1.28)
