@@ -3058,13 +3058,6 @@ SetupPage {
                                 valueText: root._linkInstanceAgeText(modelData)
                                 valueColor: root._linkInstanceAgeColor(modelData)
                             }
-                            QGCLabel {
-                                objectName: "flightTelemetry_linkInstanceReason_" + modelData.linkInstanceId
-                                Layout.fillWidth: true
-                                wrapMode: Text.WordWrap
-                                text: root._linkInstanceReasonText(modelData)
-                                color: "#8298A2"
-                            }
                             Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#104B55" }
                         }
                     }
