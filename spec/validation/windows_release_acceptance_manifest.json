@@ -652,7 +652,8 @@
         "mocklink_manager_scoped_offline_for_duplicate_device_id_3_only_stales_manager_2_pair",
         "mocklink_manager_scoped_recovery_rediscovers_manager_2_device_id_3_without_restoring_old_owner",
         "mocklink_gimbal_manager_set_attitude_rate_commands_route_to_manager_2_device_id_3",
-        "manager_2_device_id_3_zero_rate_stops_only_its_own_attitude_motion"
+        "manager_2_device_id_3_zero_rate_stops_only_its_own_attitude_motion",
+        "manager_2_duplicate_device_id_3_retract_control_is_hidden_when_capability_is_not_advertised"
       ]
     }
   ],
