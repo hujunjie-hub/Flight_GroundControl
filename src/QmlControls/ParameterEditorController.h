@@ -263,6 +263,7 @@ private:
     bool _profileAllowsSelectedParameter() const;
     QString _tuningBlockReason() const;
     QString _selectedValueValidationError(double targetValue) const;
+    void _invalidatePendingTuningOperation(const QString &reason);
     QString _selectedParameterKey() const;
     bool _flightParameterCenterSafeMode() const;
     bool _shouldShow(Fact *fact) const;
