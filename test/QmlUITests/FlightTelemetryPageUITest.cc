@@ -1760,8 +1760,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             sendResourceStatus(2100, 0, 0x0F);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").toString(),
-                                      QStringLiteral("#F06464"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceCpu->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#49C7E7")), 3000);
             QQuickItem* resourceCpu = findVisibleItem(
@@ -1803,8 +1803,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmTimestamp->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").toString(),
-                                      QStringLiteral("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthMatrixPanel->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthSafety->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthOverview->x() < healthMatrixPanel->x(), 3000);
