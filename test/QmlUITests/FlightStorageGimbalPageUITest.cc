@@ -313,8 +313,23 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
             QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
 
+            // Occupy the secondary slot with this GCS, then verify that a partial clear is rejected.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -1.0f, -1.0f, -2.0f, -2.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
+
             vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
                                     false, -1.0f, -1.0f, 0.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
+
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -1.0f, -1.0f, -3.0f, -3.0f,
                                     NAN, NAN, MAV_COMP_ID_GIMBAL);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
