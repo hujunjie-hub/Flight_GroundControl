@@ -3310,6 +3310,28 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity"), 3000);
                     QQuickItem* navigationCapabilityVerticalVelocity =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity"), 3000);
+                    QQuickItem* navigationEstimateValueLabels[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_value"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity_value"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading_value"), 3000)};
+                    QQuickItem* navigationEstimateStatusBadges[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_statusBadge"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity_statusBadge"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading_statusBadge"), 3000)};
+                    QQuickItem* navigationEstimateStatusLabels[] = {
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_status")),
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity_status")),
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateHeading_status"))};
+                    QQuickItem* navigationCapabilityValueLabels[] = {
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_value")),
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPosition_value")),
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity_value")),
+                        findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity_value"))};
+                    QQuickItem* navigationCapabilityValueBadges[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_valueBadge"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPosition_valueBadge"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHorizontalVelocity_valueBadge"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityVerticalVelocity_valueBadge"), 3000)};
                     QQuickItem* navigationCapabilityBadge =
                         findItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPanel_statusBadge"));
                     QQuickItem* navigationTimeline =
@@ -3344,6 +3366,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(navigationCapabilityPosition);
                     QVERIFY(navigationCapabilityHorizontalVelocity);
                     QVERIFY(navigationCapabilityVerticalVelocity);
+                    for (QQuickItem* item : navigationEstimateValueLabels) QVERIFY(item);
+                    for (QQuickItem* item : navigationEstimateStatusBadges) QVERIFY(item);
+                    for (QQuickItem* item : navigationEstimateStatusLabels) QVERIFY(item);
+                    for (QQuickItem* item : navigationCapabilityValueLabels) QVERIFY(item);
+                    for (QQuickItem* item : navigationCapabilityValueBadges) QVERIFY(item);
                     QVERIFY(navigationCapabilityBadge);
                     QVERIFY(navigationTimeline);
                     for (QQuickItem* row : navigationTimelineRows) QVERIFY(row);
@@ -3421,6 +3448,27 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         navigationCapabilityHorizontalVelocity, navigationCapabilityVerticalVelocity};
                     for (QQuickItem* metric : navigationCapabilityMetrics) {
                         QTRY_VERIFY_WITH_TIMEOUT(!metric->property("showStatusText").toBool(), 3000);
+                    }
+                    for (int metricIndex = 0; metricIndex < 3; ++metricIndex) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateValueLabels[metricIndex]->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatusBadges[metricIndex]->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(!navigationEstimateStatusLabels[metricIndex]->isVisible(), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(
+                            navigationEstimateStatusBadges[metricIndex]->property("statusText").toString(),
+                            navigationEstimateMetrics[metricIndex]->property("statusText").toString(), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(
+                            navigationEstimateStatusBadges[metricIndex]->property("statusColor").value<QColor>(),
+                            navigationEstimateMetrics[metricIndex]->property("statusColor").value<QColor>(), 3000);
+                    }
+                    for (int metricIndex = 0; metricIndex < 4; ++metricIndex) {
+                        QTRY_VERIFY_WITH_TIMEOUT(!navigationCapabilityValueLabels[metricIndex]->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityValueBadges[metricIndex]->isVisible(), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(
+                            navigationCapabilityValueBadges[metricIndex]->property("statusText").toString(),
+                            navigationCapabilityMetrics[metricIndex]->property("valueText").toString(), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(
+                            navigationCapabilityValueBadges[metricIndex]->property("statusColor").value<QColor>(),
+                            navigationCapabilityMetrics[metricIndex]->property("accentColor").value<QColor>(), 3000);
                     }
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationStateOriginDetail->isVisible(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationPositionStdDetail->isVisible(), 3000);
