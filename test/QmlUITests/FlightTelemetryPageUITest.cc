@@ -187,6 +187,17 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_heading"), 3000);
             QQuickItem* trendControl =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_control"), 3000);
+            QQuickItem* trendCards[] = {trendPosition, trendVelocity, trendHeading, trendControl};
+            QQuickItem* trendGapLabels[] = {
+                trendPositionGaps,
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_velocity_gaps"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_heading_gaps"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_control_gaps"), 3000)};
+            QQuickItem* trendSampleStateLabels[] = {
+                trendPositionSampleState,
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_velocity_sampleState"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_heading_sampleState"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_control_sampleState"), 3000)};
             QQuickItem* healthOperation =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_healthPage_operation"));
             QQuickItem* healthNavigation =
@@ -436,13 +447,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             };
 
             const auto trendFooterItemsFit = [&]() {
-                for (QQuickItem* item : {trendPositionGaps, trendPositionSampleState}) {
-                    if (!item || !item->isVisible()) return false;
-                    const QPointF topLeft = item->mapToItem(trendPosition, 0, 0);
-                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
-                        topLeft.x() + item->width() > trendPosition->width() + 1.0 ||
-                        topLeft.y() + item->height() > trendPosition->height() + 1.0) {
-                        return false;
+                for (int index = 0; index < 4; ++index) {
+                    for (QQuickItem* item : {trendGapLabels[index], trendSampleStateLabels[index]}) {
+                        if (!item || !item->isVisible()) return false;
+                        const QPointF topLeft = item->mapToItem(trendCards[index], 0, 0);
+                        if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                            topLeft.x() + item->width() > trendCards[index]->width() + 1.0 ||
+                            topLeft.y() + item->height() > trendCards[index]->height() + 1.0) {
+                            return false;
+                        }
                     }
                 }
                 return true;
@@ -719,11 +732,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
             QVERIFY(trendPositionCanvas);
             QVERIFY(trendPositionTimeAxis);
-            QVERIFY(trendPositionGaps);
-            QVERIFY(trendPositionSampleState);
-            QCOMPARE(trendPositionGaps->property("text").toString(), translatedTelemetryText("断点 %1").arg(0));
-            QCOMPARE(trendPositionGaps->property("color").value<QColor>(), QColor(QStringLiteral("#688A94")));
-            QCOMPARE(trendPositionSampleState->property("text").toString(), QStringLiteral("WAIT"));
+            for (int index = 0; index < 4; ++index) {
+                QVERIFY(trendCards[index]);
+                QVERIFY(trendGapLabels[index]);
+                QVERIFY(trendSampleStateLabels[index]);
+                QCOMPARE(trendGapLabels[index]->property("text").toString(),
+                         translatedTelemetryText("断点 %1").arg(0));
+                QCOMPARE(trendGapLabels[index]->property("color").value<QColor>(), QColor(QStringLiteral("#688A94")));
+                QCOMPARE(trendSampleStateLabels[index]->property("text").toString(), QStringLiteral("WAIT"));
+            }
             QQuickItem* trendPositionScale =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_scale"));
             QVERIFY(trendPositionScale);
