@@ -376,6 +376,30 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
     unknownDependencyMetadata.insert(QStringLiteral("parameters"), unknownDependencyParameters);
     QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, unknownDependencyMetadata).isEmpty());
 
+    QJsonArray invalidTuningPolicyParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject invalidTuningPolicyGain = invalidTuningPolicyParameters.at(1).toObject();
+    invalidTuningPolicyGain.insert(QStringLiteral("tuningPolicy"), QStringLiteral("UNRECOGNIZED"));
+    invalidTuningPolicyParameters.replace(1, invalidTuningPolicyGain);
+    QJsonObject invalidTuningPolicyMetadata = metadata;
+    invalidTuningPolicyMetadata.insert(QStringLiteral("parameters"), invalidTuningPolicyParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, invalidTuningPolicyMetadata).isEmpty());
+
+    QJsonArray mismatchedVariantParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject mismatchedVariantGain = mismatchedVariantParameters.at(1).toObject();
+    mismatchedVariantGain.insert(QStringLiteral("modelVariants"), QJsonArray{QStringLiteral("HEX_X6")});
+    mismatchedVariantParameters.replace(1, mismatchedVariantGain);
+    QJsonObject mismatchedVariantMetadata = metadata;
+    mismatchedVariantMetadata.insert(QStringLiteral("parameters"), mismatchedVariantParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, mismatchedVariantMetadata).isEmpty());
+
+    QJsonArray selfDependencyParameters = metadata.value(QStringLiteral("parameters")).toArray();
+    QJsonObject selfDependentGain = selfDependencyParameters.at(1).toObject();
+    selfDependentGain.insert(QStringLiteral("dependencies"), QJsonArray{QStringLiteral("CTL_RATE_KP_X")});
+    selfDependencyParameters.replace(1, selfDependentGain);
+    QJsonObject selfDependencyMetadata = metadata;
+    selfDependencyMetadata.insert(QStringLiteral("parameters"), selfDependencyParameters);
+    QVERIFY(FlightFirmwarePlugin::_validatedVehicleModelProfiles(catalog, selfDependencyMetadata).isEmpty());
+
     // Ambiguous parameter identities and malformed hardware eligibility fail closed.
     QJsonArray duplicateParameters = metadata.value(QStringLiteral("parameters")).toArray();
     duplicateParameters.append(vehicleMass);
