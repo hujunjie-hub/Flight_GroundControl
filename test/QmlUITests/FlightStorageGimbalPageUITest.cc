@@ -282,6 +282,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_VERIFY_WITH_TIMEOUT(yawValue->property("text").toString() != QStringLiteral("—"), 3000);
 
             QTRY_VERIFY_WITH_TIMEOUT(acquire->property("enabled").toBool(), 3000);
+            QVERIFY(!pitchSlider->property("enabled").toBool());
+            QVERIFY(!yawSlider->property("enabled").toBool());
+            QVERIFY(!center->property("enabled").toBool());
+
+            // Sending a target before explicit acquisition must not claim the primary slot.
+            vehicle->gimbalController()->sendPitchBodyYaw(15.0f, 20.0f, false);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("未取得控制权"));
+
             QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("本机控制中"), 6000);
