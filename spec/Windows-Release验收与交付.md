@@ -483,4 +483,4 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 下方详情卡保留 family 状态、实例新鲜/超时/等待覆盖、当前/最近状态、当前/最近原因、指标字段有效性摘要和地面站接收年龄。
 - FCU ageUs 标记为「FCU 数据年龄」并显示在上方实例面板；receiveAgeMs 标记为「地面站接收年龄」并保留在详情上下文，两种年龄必须独立门控、不得混淆。
 - 字段有效性摘要需分别验证 3/3 有效、0/3 无效、部分无效/未上报以及实例 stale；stale 时不能把最近缓存指标显示为当前有效。
-- FlightTelemetryPageUITest 通过 MockLink 原始 MAVLink wire path 验证主视觉数值、FCU 年龄、详情有效性摘要和 stale 颜色；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN，集中验收时执行。
+- FlightTelemetryPageUITest 通过 MockLink 原始 MAVLink wire path 验证主视觉数值、FCU 年龄、详情有效性摘要和 stale 颜色；同时验证主视觉实例原因与详情原因、地面站接收年龄的 objectName 独立且稳定；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN，集中验收时执行。
