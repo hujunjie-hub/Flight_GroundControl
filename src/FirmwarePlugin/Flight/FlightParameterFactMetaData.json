@@ -30,7 +30,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "vehicle_model.yaml",
+      "sourcePath": "mass_kg",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_ACT_DLY",
@@ -56,7 +59,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.actuation_preview_delay_s",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_FB_KD_X",
@@ -82,7 +88,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kd_per_s[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_FB_KD_Y",
@@ -108,7 +117,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kd_per_s[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_FB_KD_Z",
@@ -134,7 +146,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kd_per_s[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_FB_KP_X",
@@ -160,7 +175,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kp_per_s2[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_FB_KP_Y",
@@ -186,7 +204,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kp_per_s2[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_FB_KP_Z",
@@ -212,7 +233,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.fallback_kp_per_s2[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_HOVER_THR",
@@ -238,7 +262,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.manual_hover_throttle_norm",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_MPC_Q0",
@@ -264,7 +291,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_Q1",
@@ -290,7 +320,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_Q2",
@@ -316,7 +349,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_Q3",
@@ -342,7 +378,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[3]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_Q4",
@@ -368,7 +407,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[4]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_Q5",
@@ -394,7 +436,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_q_diag[5]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF0",
@@ -420,7 +465,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF1",
@@ -446,7 +494,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF2",
@@ -472,7 +523,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF3",
@@ -498,7 +552,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[3]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF4",
@@ -524,7 +581,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[4]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_QF5",
@@ -550,7 +610,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_qf_diag[5]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_R0",
@@ -576,7 +639,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_r_diag[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_R1",
@@ -602,7 +668,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_r_diag[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_R2",
@@ -628,7 +697,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_r_diag[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_S0",
@@ -654,7 +726,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_s_diag[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_S1",
@@ -680,7 +755,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_s_diag[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_MPC_S2",
@@ -706,7 +784,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_s_diag[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_SEED_POS",
@@ -732,7 +813,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_seed_position_error_limit_m",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_SEED_VEL",
@@ -758,7 +842,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "outer_loop.mpc_seed_velocity_error_limit_mps",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_RATE_DCUT",
@@ -784,7 +871,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_d_cutoff_hz",
+      "sourceKind": "scalar"
     },
     {
       "name": "CTL_RATE_ILIM_X",
@@ -810,7 +900,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_integral_limit_nm[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_ILIM_Y",
@@ -836,7 +929,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_integral_limit_nm[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_ILIM_Z",
@@ -862,7 +958,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_integral_limit_nm[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KAW_X",
@@ -888,7 +987,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kaw_per_s[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KAW_Y",
@@ -914,7 +1016,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kaw_per_s[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KAW_Z",
@@ -940,7 +1045,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kaw_per_s[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KD_X",
@@ -966,7 +1074,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kd_nm_per_radps2[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KD_Y",
@@ -992,7 +1103,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kd_nm_per_radps2[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KD_Z",
@@ -1018,7 +1132,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kd_nm_per_radps2[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KI_X",
@@ -1044,7 +1161,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_ki_nm_per_rad[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KI_Y",
@@ -1070,7 +1190,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_ki_nm_per_rad[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KI_Z",
@@ -1096,7 +1219,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_ki_nm_per_rad[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KP_X",
@@ -1122,7 +1248,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kp_nm_per_radps[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KP_Y",
@@ -1148,7 +1277,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kp_nm_per_radps[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_RATE_KP_Z",
@@ -1174,7 +1306,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.rate_kp_nm_per_radps[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_SO3_X",
@@ -1200,7 +1335,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.so3_gain_per_s[0]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_SO3_Y",
@@ -1226,7 +1364,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.so3_gain_per_s[1]",
+      "sourceKind": "vector"
     },
     {
       "name": "CTL_SO3_Z",
@@ -1252,7 +1393,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "controller_tuning.yaml",
+      "sourcePath": "inner_loop.so3_gain_per_s[2]",
+      "sourceKind": "vector"
     },
     {
       "name": "SIM_TLM_HZ",
@@ -1278,7 +1422,10 @@
       "updatePolicy": "FIRMWARE_CONFIRMATION",
       "dependencies": [],
       "validationRules": [],
-      "readOnly": false
+      "readOnly": false,
+      "sourceFile": "SIL runtime",
+      "sourcePath": "simulation.telemetry_hz",
+      "sourceKind": "scalar"
     }
   ]
 }
