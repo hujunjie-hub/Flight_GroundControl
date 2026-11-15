@@ -4663,13 +4663,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(resourcesDetail);
             const auto healthMatrixCellsFit = [&]() {
                 const qreal expectedInset = page->property("_healthCellInset").toReal();
+                const qreal expectedRadius = page->property("_healthCellRadius").toReal();
+                const qreal expectedBorderWidth = page->property("_healthCellBorderWidth").toReal();
+                const qreal expectedStripeRadius = page->property("_healthCellAccentStripeRadius").toReal();
                 for (int index = 0; index < 13; ++index) {
                     QQuickItem* cell = healthCells[index];
                     QQuickItem* content = healthCellContents[index];
                     QQuickItem* stripe = healthCellAccentStripes[index];
                     if (!cell || !content || !stripe) return false;
                     const qreal inset = cell->property("contentInset").toReal();
-                    if (qAbs(inset - expectedInset) > 0.5) return false;
+                    if (qAbs(inset - expectedInset) > 0.5 ||
+                        qAbs(cell->property("radius").toReal() - expectedRadius) > 0.5 ||
+                        qAbs(cell->property("borderWidth").toReal() - expectedBorderWidth) > 0.5) return false;
                     const QPointF cellTopLeft = cell->mapToItem(healthMatrix, 0, 0);
                     if (cellTopLeft.x() < -1.0 || cellTopLeft.y() < -1.0 ||
                         cellTopLeft.x() + cell->width() > healthMatrix->width() + 1.0 ||
@@ -4680,6 +4685,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     const QPointF stripeTopLeft = stripe->mapToItem(cell, 0, 0);
                     const qreal stripeInset = page->property("_healthCellAccentStripeInset").toReal();
                     if (qAbs(stripe->width() - page->property("_healthCellAccentStripeWidth").toReal()) > 0.5 ||
+                        qAbs(stripe->property("radius").toReal() - expectedStripeRadius) > 0.5 ||
                         stripeTopLeft.x() < stripeInset - 1.0 || stripeTopLeft.y() < stripeInset - 1.0 ||
                         stripeTopLeft.x() + stripe->width() > cell->width() - stripeInset + 1.0 ||
                         stripeTopLeft.y() + stripe->height() > cell->height() - stripeInset + 1.0) return false;
@@ -4760,16 +4766,35 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const auto maintenanceCardsFit = [&]() {
                 QQuickItem* cards[] = {maintenanceIdentityCard, maintenanceEventCard, maintenanceResourceCard};
                 QQuickItem* contents[] = {maintenanceIdentityColumn, maintenanceEventColumn, maintenanceResourceColumn};
+                QQuickItem* stripes[] = {maintenanceIdentityStripe, maintenanceEventStripe, maintenanceResourceStripe};
                 const qreal expectedInset = page->property("_healthMaintenanceCardInset").toReal();
                 const qreal expectedRadius = page->property("_healthMaintenanceCardRadius").toReal();
                 const qreal expectedBorderWidth = page->property("_healthMaintenanceBorderWidth").toReal();
+                const qreal expectedStripeWidth = page->property("_healthMaintenanceAccentStripeWidth").toReal();
+                const qreal expectedStripeInset = page->property("_healthMaintenanceAccentStripeInset").toReal();
+                const qreal expectedStripeRadius = page->property("_healthMaintenanceAccentStripeRadius").toReal();
+                if (!maintenancePanel ||
+                    qAbs(maintenancePanel->property("radius").toReal() -
+                         page->property("_healthMaintenanceFrameRadius").toReal()) > 0.5 ||
+                    qAbs(maintenancePanel->property("frameBorderWidth").toReal() - expectedBorderWidth) > 0.5) {
+                    return false;
+                }
                 for (int index = 0; index < 3; ++index) {
                     QQuickItem* card = cards[index];
                     QQuickItem* content = contents[index];
-                    if (!card || !content || qAbs(card->property("radius").toReal() - expectedRadius) > 0.5 ||
+                    QQuickItem* stripe = stripes[index];
+                    if (!card || !content || !stripe ||
+                        qAbs(card->property("radius").toReal() - expectedRadius) > 0.5 ||
                         qAbs(card->property("frameBorderWidth").toReal() - expectedBorderWidth) > 0.5 ||
                         card->height() + 0.5 < card->property("implicitHeight").toReal() ||
                         !itemFitsInPanel(card, maintenanceContent)) return false;
+                    const QPointF stripeTopLeft = stripe->mapToItem(card, 0, 0);
+                    if (qAbs(stripe->width() - expectedStripeWidth) > 0.5 ||
+                        qAbs(stripe->property("radius").toReal() - expectedStripeRadius) > 0.5 ||
+                        stripeTopLeft.x() < expectedStripeInset - 1.0 ||
+                        stripeTopLeft.y() < expectedStripeInset - 1.0 ||
+                        stripeTopLeft.x() + stripe->width() > card->width() - expectedStripeInset + 1.0 ||
+                        stripeTopLeft.y() + stripe->height() > card->height() - expectedStripeInset + 1.0) return false;
                     const QPointF contentTopLeft = content->mapToItem(card, 0, 0);
                     const qreal inset = expectedInset;
                     if (contentTopLeft.x() < inset - 1.0 || contentTopLeft.y() < inset - 1.0 ||
@@ -4782,12 +4807,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const auto healthPrimaryCellsFit = [&]() {
                 if (!healthPrimaryGrid) return false;
                 const qreal expectedInset = page->property("_healthCellInset").toReal();
+                const qreal expectedRadius = page->property("_healthCellRadius").toReal();
+                const qreal expectedBorderWidth = page->property("_healthCellBorderWidth").toReal();
+                const qreal expectedStripeRadius = page->property("_healthCellAccentStripeRadius").toReal();
                 for (int index = 0; index < 6; ++index) {
                     QQuickItem* cell = primaryHealthCells[index];
                     QQuickItem* content = primaryHealthCellContents[index];
                     QQuickItem* stripe = primaryHealthCellAccentStripes[index];
                     if (!cell || !content || !stripe ||
-                        qAbs(cell->property("contentInset").toReal() - expectedInset) > 0.5) return false;
+                        qAbs(cell->property("contentInset").toReal() - expectedInset) > 0.5 ||
+                        qAbs(cell->property("radius").toReal() - expectedRadius) > 0.5 ||
+                        qAbs(cell->property("borderWidth").toReal() - expectedBorderWidth) > 0.5) return false;
                     const QPointF cellTopLeft = cell->mapToItem(healthPrimaryGrid, 0, 0);
                     if (cellTopLeft.x() < -1.0 || cellTopLeft.y() < -1.0 ||
                         cellTopLeft.x() + cell->width() > healthPrimaryGrid->width() + 1.0 ||
@@ -4796,6 +4826,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     const QPointF stripeTopLeft = stripe->mapToItem(cell, 0, 0);
                     const qreal stripeInset = page->property("_healthCellAccentStripeInset").toReal();
                     if (qAbs(stripe->width() - page->property("_healthCellAccentStripeWidth").toReal()) > 0.5 ||
+                        qAbs(stripe->property("radius").toReal() - expectedStripeRadius) > 0.5 ||
                         stripeTopLeft.x() < stripeInset - 1.0 || stripeTopLeft.y() < stripeInset - 1.0 ||
                         stripeTopLeft.x() + stripe->width() > cell->width() - stripeInset + 1.0 ||
                         stripeTopLeft.y() + stripe->height() > cell->height() - stripeInset + 1.0) return false;

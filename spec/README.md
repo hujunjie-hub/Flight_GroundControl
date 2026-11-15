@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.24
+- 版本 5.25
 - 日期 2026-11-16
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -306,4 +306,4 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-16 Phase 2.78 总览趋势卡片、Canvas 与顶部三项导航 KPI 完成 ScreenTools 高 DPI 适配：趋势网格/卡片间距/内边距/最小高度缩放，Canvas 绘图区保持 64 px 基准并在 150%/200% 放大到 96/128 px，绘图内缩/网格线/曲线/标记/glow 同步缩放；MockLink UI Integration 扩展 KPI MetricReadout spacing、overviewKpisFit、100%/150%/200% 父子边界和 footer 检查，G15 manifest/Windows Release 指南同步。按要求未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
 
 
-- 2026-11-16 飞行健康页 Phase 2.79：健康矩阵单元、维护外框/三卡/资源 tile 的圆角、边框与 freshness/强调色条几何改为 ScreenTools 高 DPI 缩放，100% 基准不变；新增真实 100%/150%/200% UI Scale 与 3:6:3 / 3:3:6 / 单列主视觉边界回归。按要求未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。
+- 2026-11-16 飞行健康页 Phase 2.79：健康矩阵单元、维护外框/三卡/资源 tile 的圆角、边框与 freshness/强调色条几何改为 ScreenTools 高 DPI 缩放，100% 基准不变；新增真实 100%/150%/200% UI Scale、健康矩阵全部状态色条和维护三卡强调色条边界，以及 3:6:3 / 3:3:6 / 单列主视觉边界回归。按要求未运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN。

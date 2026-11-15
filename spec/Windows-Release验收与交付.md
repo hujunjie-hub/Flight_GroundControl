@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.98
+版本：4.99
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -891,5 +891,5 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 13 域矩阵与六个重点域 HealthCell 的圆角、边框宽度、左侧 freshness 色条宽度/内缩/圆角必须使用 ScreenTools token；100% 基准分别为 6/1/3/1/2 px，150%/200% 随 UI Scale 增长，且色条完整位于单元内部。
 - 维护与可靠性外框、启动身份/最近异常/预检资源三卡、CPU/WCET/系统栈/存储 tile 的圆角和边框宽度必须按 ScreenTools 密度缩放；100% 圆角基准分别为 8/6/4 px，内容和现有 freshness/validity/状态色保持不变。
 - 真实 AppSettings.uiScalePercent 100%/150%/200% 回归检查健康页装饰 token 和实际控件尺寸增长；桌面 3:6:3、中屏 3:3:6、窄屏单列三种主视觉布局均须完整位于 flightTelemetry_healthPageGrid 内。
-- MockLink UI Integration 检查 13 个矩阵单元与六个重点域单元的 freshness 色条父子边界、维护三卡色条和资源 tile 外框；测试结束恢复原始 UI Scale。
+- MockLink UI Integration 检查 13 个矩阵单元与六个重点域单元的 freshness 色条圆角/宽度/父子边界、维护三卡全部强调色条的圆角/宽度/内缩/父子边界和资源 tile 外框；测试结束恢复原始 UI Scale。
 - 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中 exact-HEAD 验收时执行。

@@ -962,7 +962,8 @@
     "health_cell_radius_border_and_freshness_stripe_scale_with_screen_tools_at_100_150_200_percent_ui_scale",
     "health_maintenance_frame_card_and_metric_tile_shapes_scale_without_changing_100_percent_baseline",
     "health_primary_panels_preserve_3_6_3_desktop_3_3_6_medium_and_single_column_narrow_layout_at_100_150_200_percent_ui_scale",
-    "health_primary_panels_and_all_health_cell_stripes_remain_inside_parent_bounds_at_high_dpi"
+    "health_primary_panels_and_all_health_cell_stripes_remain_inside_parent_bounds_at_high_dpi",
+    "health_maintenance_all_three_accent_stripes_fit_parent_cards_at_high_dpi"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
