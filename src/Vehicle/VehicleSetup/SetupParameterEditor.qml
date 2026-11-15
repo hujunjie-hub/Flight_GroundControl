@@ -151,7 +151,31 @@ Item {
                                     font.pointSize: ScreenTools.bodyFontPointSize
                                     elide: Text.ElideRight
                                 }
-                                QGCLabel { text: root._flightSilModelAvailable ? qsTr("SIM_ONLY") : qsTr("MODEL N/A"); color: root._flightSilModelAvailable ? root.amber : root.mutedText; font.pointSize: ScreenTools.microFontPointSize }
+                                ComboBox {
+                                id: modelProfileSelector
+                                Layout.preferredWidth: 178
+                                Layout.preferredHeight: 30
+                                model: root._flightSilModelAvailable ? [qsTr("QUAD_X4 · 仿真专用")] : []
+                                currentIndex: root._flightSilModelAvailable ? 0 : -1
+                                enabled: root._flightSilModelAvailable
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                contentItem: QGCLabel {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 26
+                                    text: root._flightSilModelAvailable ? modelProfileSelector.currentText : qsTr("实机模型未登记")
+                                    color: root._flightSilModelAvailable ? root.cyan : root.mutedText
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+                                background: Rectangle {
+                                    radius: 5
+                                    color: "#06202A"
+                                    border.width: 1
+                                    border.color: root._flightSilModelAvailable ? root.cyan : "#16424C"
+                                }
+                            }
                             }
                         }
                     }
