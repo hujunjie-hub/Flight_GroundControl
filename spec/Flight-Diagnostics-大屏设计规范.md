@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.63
+- 版本：6.64
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；接收机失效保护按触发/未触发及 RC family freshness 独立着色；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -165,6 +165,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 链路质量逐实例显示 linkKind、linkState、RSSI、质量、丢包、原因和接收年龄；RSSI、质量、丢包分别成格，并分别满足 link family 新鲜、实例 receiveAgeMs 未超时、validityMask 对应位有效。
 - 链路趋势优先使用新鲜 GCS（kind 2）、伴随计算机（kind 3）或其他数据链路（kind 4）；存在非 RC 实例但均超时时保留超时/断点，不以健康 RC 接收机冒充数据链路；仅无非 RC 实例时回退 RC（kind 1）。趋势标题标明当前选中链路类型。
 - 失控保护与多实例链路质量面板不使用单一 operation/link family 徽标代表整张面板；各域和各实例状态独立表达。
+- 接收机失效保护颜色独立服从 `rcInputAvailable` freshness：新鲜且触发为红色、未触发为绿色；RC family 超时为琥珀色，等待/未上报/未知为中性灰；不得借用 RC 链路状态或飞控 failsafe 等级颜色。
 - 「失控保护」主视觉只呈现 operation failsafe、接收机 failsafe、RC 链路和 RC 输入年龄；`linkAvailable` 是链路状态消息 family freshness，不是链路健康结论，只在下方「通信链路」详情卡的「消息」行显示，并与逐实例状态/覆盖率并列。
 - 桌面（≥1280 px）采用两行不等宽布局：第一行双摇杆/逻辑轴为 6/6，第二行链路质量/失控保护为 8/4；中屏（760–1279 px）使用 6 列网格，分别按 3/3、4/2 两行排列；低于 760 px 四块主面板单列堆叠。
 - 底部四张趋势图按页切换为优先数据链路 RSSI、链路质量、丢包率和 RC 接收年龄；无效/过期样本形成断点。
@@ -1154,3 +1155,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 保留原有预检摘要 objectName flightTelemetry_healthMaintenancePrearmSummary 以兼容现有 UI 选择器，但其语义改为覆盖摘要；安全结论唯一显示在 flightTelemetry_healthSafetyPrearmSummary。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、设计 SPEC、项目 SPEC 入口、Windows Release G15 和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager、预检判定、资源统计或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归为 NOT_RUN，等待集中验收。
+
+
+## 86. Phase 2.40 接收机失效保护严重度颜色与 freshness 分离（2026-11-15）
+
+- 新增 `_rcReceiverFailsafeColor()`，只在 `rcInputAvailable` family 新鲜时解释 `rcReceiverFailsafe`：触发红色 `#F06464`、未触发绿色 `#45D39A`。
+- RC family 等待/未上报/未知采用中性灰；RC family 超时沿用 freshness 琥珀色 `#F0B94B`，不再将缓存的触发/未触发布尔值显示成当前状态。
+- 飞行健康「安全监测」、遥控链路「失控保护」主卡与「遥控输入」详情卡统一使用该颜色映射；不改变接收机 failsafe 事实、RC linkState、operation failsafe 等级或飞控控制逻辑。
+- MockLink `FlightTelemetryPageUITest` 覆盖未触发绿色、触发红色、恢复绿色及 family 超时琥珀色，并同时断言主视觉与详情行颜色一致。
+- 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待集中验收。
