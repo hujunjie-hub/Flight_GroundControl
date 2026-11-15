@@ -1336,20 +1336,14 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: !dashboardRoot.selectedFact
-                                              ? qsTr("适用范围：—")
-                                              : qsTr("适用范围：%1 · %2")
+                                              ? qsTr("适用范围 / 控制架构：—")
+                                              : qsTr("适用：%1 · %2 · %3")
                                                 .arg(dashboardRoot.selectedFact.vehicleFamily)
                                                 .arg(dashboardRoot.selectedFact.modelVariants.join(", "))
+                                                .arg(dashboardRoot.selectedFact.controlLaw)
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("控制架构：—")
-                                              : qsTr("控制架构：%1").arg(dashboardRoot.selectedFact.controlLaw)
-                                        color: root.mutedText
-                                        font.pointSize: ScreenTools.captionFontPointSize
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
@@ -1368,37 +1362,22 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: !dashboardRoot.selectedFact
-                                              ? qsTr("调参策略：—")
-                                              : dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
-                                                ? qsTr("调参策略：只读")
-                                                : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
-                                                  ? qsTr("调参策略：地面可调 · 仅解除锁定后")
-                                                  : dashboardRoot.selectedFact.tuningPolicy === "ONLINE_ADJUSTABLE"
-                                                    ? qsTr("调参策略：在线可调 · 需固件授权")
-                                                    : dashboardRoot.selectedFact.tuningPolicy === "FLIGHT_RESTRICTED"
-                                                      ? qsTr("调参策略：飞行中受限")
-                                                      : qsTr("调参策略：未声明")
+                                              ? qsTr("调参 / 更新策略：—")
+                                              : qsTr("策略：%1 · %2")
+                                                .arg(dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY" ? qsTr("只读")
+                                                     : dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE" ? qsTr("地面可调")
+                                                       : dashboardRoot.selectedFact.tuningPolicy === "ONLINE_ADJUSTABLE" ? qsTr("在线可调")
+                                                         : dashboardRoot.selectedFact.tuningPolicy === "FLIGHT_RESTRICTED" ? qsTr("飞行受限")
+                                                           : qsTr("未声明"))
+                                                .arg(dashboardRoot.selectedFact.updatePolicy === "IMMEDIATE" ? qsTr("即时生效")
+                                                     : dashboardRoot.selectedFact.updatePolicy === "FIRMWARE_CONFIRMATION" ? qsTr("飞控确认")
+                                                       : dashboardRoot.selectedFact.updatePolicy === "REBOOT_REQUIRED" ? qsTr("需重启")
+                                                         : dashboardRoot.selectedFact.updatePolicy === "OFFLINE_ONLY" ? qsTr("仅离线")
+                                                           : qsTr("更新方式未声明"))
                                         color: dashboardRoot.selectedFact &&
-                                               dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE"
+                                               dashboardRoot.selectedFact.tuningPolicy === "GROUND_ADJUSTABLE" &&
+                                               dashboardRoot.selectedFact.updatePolicy !== "OFFLINE_ONLY"
                                                ? root.green : root.amber
-                                        font.pointSize: ScreenTools.captionFontPointSize
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        text: !dashboardRoot.selectedFact
-                                              ? qsTr("更新策略：—")
-                                              : dashboardRoot.selectedFact.updatePolicy === "IMMEDIATE"
-                                                ? qsTr("更新策略：即时生效")
-                                                : dashboardRoot.selectedFact.updatePolicy === "FIRMWARE_CONFIRMATION"
-                                                  ? qsTr("更新策略：等待飞控确认")
-                                                  : dashboardRoot.selectedFact.updatePolicy === "REBOOT_REQUIRED"
-                                                    ? qsTr("更新策略：飞控确认后需重启")
-                                                    : dashboardRoot.selectedFact.updatePolicy === "OFFLINE_ONLY"
-                                                      ? qsTr("更新策略：仅离线修改")
-                                                      : qsTr("更新策略：未声明")
-                                        color: dashboardRoot.selectedFact &&
-                                               dashboardRoot.selectedFact.updatePolicy !== "FIRMWARE_CONFIRMATION"
-                                               ? root.amber : root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
                                     QGCLabel {
