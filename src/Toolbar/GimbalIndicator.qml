@@ -208,7 +208,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Center")
                     enabled:            control._controlReady &&
-                                        (activeGimbal.supportsPitchAxis || activeGimbal.supportsYawAxis)
+                                        activeGimbal.supportsPitchAxis && activeGimbal.supportsYawAxis
                     onClicked: {
                         gimbalController.centerGimbal()
                         mainWindow.closeIndicatorDrawer()
