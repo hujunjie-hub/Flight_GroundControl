@@ -40,7 +40,7 @@ Item {
 
     Connections {
         target: root._activeVehicle
-        function onVehicleModelProfilesChanged() { root._syncModelProfileSelection(false) }
+        function onVehicleModelProfilesChanged() { root._syncModelProfileSelection(true) }
     }
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
@@ -63,6 +63,9 @@ Item {
     readonly property color green: "#37DF8A"
     readonly property color amber: "#E9B34F"
     readonly property color red: "#EF6D78"
+    // Preserve the reference layout on wide displays and progressively reflow below 1280/900 px.
+    readonly property bool _mediumLayout: width < 1280
+    readonly property bool _narrowLayout: width < 900
     readonly property real gap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.6)
     property int activeDomain: 0
 
@@ -97,6 +100,22 @@ Item {
             property string lastControlTimestamp: ""
             property string lastControlBootId: ""
             property string lastControlProfileId: ""
+            property bool parameterApplyConfirmed: false
+            readonly property int activeWorkflowStep: {
+                if (!root._activeVehicle || !root._flightModelAvailable || !modelProfileBound) {
+                    return 0
+                }
+                if (parameterApplyConfirmed) {
+                    return 4
+                }
+                if (root.activeDomain === 7) {
+                    return 3
+                }
+                if (root.activeDomain === 6 || selectedFact) {
+                    return 2
+                }
+                return 1
+            }
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
             readonly property bool controlTelemetryAvailable: {
                 const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
@@ -145,7 +164,10 @@ Item {
             readonly property bool canReadbackSelectedValue: parameterEditorLoader.item ? parameterEditorLoader.item.canReadbackSelectedValue : false
             readonly property bool canRestorePreviousValue: parameterEditorLoader.item ? parameterEditorLoader.item.canRestorePreviousValue : false
 
-            onSelectedFactChanged: targetValueText = selectedFact ? selectedFact.valueString : ""
+            onSelectedFactChanged: {
+                targetValueText = selectedFact ? selectedFact.valueString : ""
+                parameterApplyConfirmed = false
+            }
 
             function applySelectedValue() {
                 return parameterEditorLoader.item
@@ -170,6 +192,7 @@ Item {
             }
 
             function recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
+                parameterApplyConfirmed = true
                 if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
                     parameterChangeSummary =
                         qsTr("参数 %1：%2 → %3 已收到 PARAM_VALUE 确认；当前没有同一启动会话与控制配置的遥测基线，未标记曲线")
@@ -336,19 +359,44 @@ Item {
 
             Rectangle { anchors.fill: parent; color: root.bg }
 
-            ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: root.gap
-        spacing: root.gap
+            Flickable {
+                id: dashboardScroll
+                anchors.fill: parent
+                clip: true
+                contentWidth: width
+                contentHeight: dashboardLayout.height + root.gap * 2
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: contentHeight > height
+                ScrollBar.vertical: ScrollBar {
+                    policy: dashboardScroll.contentHeight > dashboardScroll.height
+                            ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+                }
+
+                ColumnLayout {
+                    id: dashboardLayout
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: root.gap
+                    height: root._mediumLayout
+                            ? implicitHeight
+                            : Math.max(dashboardScroll.height - root.gap * 2, 680)
+                    spacing: root.gap
 
         // Single active aircraft binding and five-step flow.
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(66, ScreenTools.defaultFontPixelHeight * 6.2)
-            spacing: root.gap
+            columns: root._narrowLayout ? 1 : 2
+            columnSpacing: root.gap
+            rowSpacing: root.gap
+            Layout.preferredHeight: root._narrowLayout
+                                  ? Math.max(156, ScreenTools.defaultFontPixelHeight * 12.5)
+                                  : Math.max(66, ScreenTools.defaultFontPixelHeight * 6.2)
 
             Rectangle {
-                Layout.preferredWidth: Math.max(290, root.width * 0.31)
+                Layout.fillWidth: true
+                Layout.preferredWidth: root._narrowLayout ? -1 : Math.max(290, root.width * 0.31)
+                Layout.preferredHeight: root._narrowLayout ? 76 : -1
                 Layout.fillHeight: true
                 radius: 7
                 color: root.panel
@@ -405,7 +453,7 @@ Item {
                                 }
                                 ComboBox {
                                     id: modelProfileSelector
-                                    Layout.preferredWidth: 178
+                                    Layout.preferredWidth: Math.min(178, Math.max(120, root.width * 0.32))
                                     Layout.preferredHeight: 30
                                     model: root._modelProfiles
                                     textRole: "displayName"
@@ -415,6 +463,7 @@ Item {
                                              !dashboardRoot.tuningBusy
                                     onActivated: index => {
                                         root._selectedModelProfileIndex = index
+                                        dashboardRoot.parameterApplyConfirmed = false
                                         if (dashboardLoader.item &&
                                             typeof dashboardLoader.item.resetResponseHistory === "function") {
                                             dashboardLoader.item.resetResponseHistory(
@@ -451,6 +500,7 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
+                Layout.preferredHeight: root._narrowLayout ? 76 : -1
                 Layout.fillHeight: true
                 radius: 7
                 color: root.panel
@@ -474,9 +524,13 @@ Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 5
-                            color: index === 1 ? "#0A4652" : "#071F29"
-                            border.width: index === 1 ? 1.5 : 1
-                            border.color: index === 1 ? root.cyan : "#16424C"
+                            color: index === dashboardRoot.activeWorkflowStep
+                                   ? "#0A4652"
+                                   : index < dashboardRoot.activeWorkflowStep ? "#082F31" : "#071F29"
+                            border.width: index === dashboardRoot.activeWorkflowStep ? 1.5 : 1
+                            border.color: index === dashboardRoot.activeWorkflowStep
+                                          ? root.cyan
+                                          : index < dashboardRoot.activeWorkflowStep ? root.green : "#16424C"
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 5
@@ -485,11 +539,13 @@ Item {
                                     Layout.preferredWidth: 25
                                     Layout.preferredHeight: 25
                                     radius: 13
-                                    color: index === 0 && root._activeVehicle ? root.green : index === 1 ? root.cyan : "#24424D"
+                                    color: index < dashboardRoot.activeWorkflowStep
+                                           ? root.green
+                                           : index === dashboardRoot.activeWorkflowStep ? root.cyan : "#24424D"
                                     QGCLabel {
                                         anchors.centerIn: parent
                                         text: modelData.n
-                                        color: index <= 1 ? "#04232A" : "#B6C9CE"
+                                        color: index <= dashboardRoot.activeWorkflowStep ? "#04232A" : "#B6C9CE"
                                         font.pointSize: ScreenTools.bodyFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
                                     }
@@ -500,17 +556,35 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: modelData.title
-                                        color: index === 1 ? root.mainText : root.mutedText
+                                        color: index === dashboardRoot.activeWorkflowStep
+                                               ? root.mainText
+                                               : index < dashboardRoot.activeWorkflowStep ? root.green : root.mutedText
                                         font.pointSize: ScreenTools.bodyEmphasisFontPointSize
-                                        font.weight: index === 1 ? ScreenTools.strongFontWeight : ScreenTools.emphasisFontWeight
+                                        font.weight: index === dashboardRoot.activeWorkflowStep
+                                                      ? ScreenTools.strongFontWeight : ScreenTools.emphasisFontWeight
                                         elide: Text.ElideRight
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: modelData.sub
+                                        visible: !root._narrowLayout
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.microFontPointSize
                                         elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (index === 0) {
+                                        root.activeDomain = 0
+                                    } else if (index === 1) {
+                                        root.activeDomain = 2
+                                    } else if (index === 2 || index === 4) {
+                                        root.activeDomain = 6
+                                    } else {
+                                        root.activeDomain = 7
                                     }
                                 }
                             }
@@ -520,14 +594,18 @@ Item {
             }
         }
 
-        RowLayout {
+        GridLayout {
             id: workArea
+            columns: root._narrowLayout ? 1 : 2
+            columnSpacing: root.gap
+            rowSpacing: root.gap
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: root.gap
+            Layout.fillHeight: !root._mediumLayout
+            Layout.preferredHeight: root._mediumLayout ? dashboardContent.implicitHeight : -1
 
             // Eight parameter domains.
             Rectangle {
+                visible: !root._narrowLayout
                 Layout.preferredWidth: Math.max(150, Math.min(190, root.width * 0.12))
                 Layout.fillHeight: true
                 radius: 7
@@ -609,7 +687,13 @@ Item {
                     Item { Layout.fillHeight: true }
                     QGCLabel {
                         Layout.fillWidth: true
-                        text: qsTr("动态参数域映射将在 Phase 2 接入")
+                        text: !root._activeVehicle ? qsTr("等待飞行器连接")
+                              : root._modelProfiles.length === 0 ? qsTr("当前固件未登记可调机型")
+                              : !root._flightModelAvailable ? qsTr("等待操作者选择机型配置")
+                              : !root._parametersReady ? qsTr("等待参数列表完整下载")
+                              : parameterEditorLoader.status !== Loader.Ready ? qsTr("正在校验参数清单")
+                              : dashboardRoot.modelProfileBound ? qsTr("已按机型白名单过滤")
+                              : qsTr("参数映射校验失败，编辑已锁定")
                         color: root.mutedText
                         font.pointSize: ScreenTools.microFontPointSize
                         wrapMode: Text.WordWrap
@@ -618,19 +702,52 @@ Item {
             }
 
             ColumnLayout {
+                id: dashboardContent
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.fillHeight: !root._mediumLayout
+                Layout.preferredHeight: root._mediumLayout ? implicitHeight : -1
                 spacing: root.gap
 
-                // Upper dashboard row.
-                RowLayout {
+                ComboBox {
+                    id: compactDomainSelector
+                    visible: root._narrowLayout
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.max(200, workArea.height * 0.36)
-                    spacing: root.gap
+                    Layout.preferredHeight: 36
+                    model: [
+                        qsTr("飞行器与模型"),
+                        qsTr("FMS 任务参数"),
+                        qsTr("CONTROL 控制器"),
+                        qsTr("INS 导航参数"),
+                        qsTr("Plant 动力学模型"),
+                        qsTr("执行器配置"),
+                        qsTr("在线调参"),
+                        qsTr("仿真与验证")
+                    ]
+                    currentIndex: root.activeDomain
+                    onActivated: index => root.activeDomain = index
+                    background: Rectangle {
+                        radius: 5
+                        color: root.panel
+                        border.color: root.cyan
+                    }
+                }
+
+                // Upper dashboard row.
+                GridLayout {
+                    columns: root._narrowLayout ? 1 : root._mediumLayout ? 2 : 3
+                    columnSpacing: root.gap
+                    rowSpacing: root.gap
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: root._narrowLayout ? 650
+                                           : root._mediumLayout ? 430
+                                           : Math.max(200, workArea.height * 0.36)
 
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.34
+                        Layout.preferredHeight: root._narrowLayout ? 220
+                                                : root._mediumLayout ? 210
+                                                : Math.max(200, workArea.height * 0.36)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -723,6 +840,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.37
+                        Layout.preferredHeight: root._narrowLayout ? 220
+                                                : root._mediumLayout ? 210
+                                                : Math.max(200, workArea.height * 0.36)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -841,6 +961,10 @@ Item {
 
                     Rectangle {
                         Layout.preferredWidth: Math.max(225, root.width * 0.22)
+                        Layout.columnSpan: root._mediumLayout && !root._narrowLayout ? 2 : 1
+                        Layout.preferredHeight: root._narrowLayout ? 190
+                                                : root._mediumLayout ? 180
+                                                : Math.max(200, workArea.height * 0.36)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -908,14 +1032,22 @@ Item {
                 }
 
                 // Lower row: native Fact editor, guarded SIL single-parameter tuning, and data-gated response analysis.
-                RowLayout {
+                GridLayout {
+                    columns: root._narrowLayout ? 1 : root._mediumLayout ? 2 : 3
+                    columnSpacing: root.gap
+                    rowSpacing: root.gap
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: root.gap
+                    Layout.fillHeight: !root._mediumLayout
+                    Layout.preferredHeight: root._narrowLayout ? 1240
+                                           : root._mediumLayout ? 810 : -1
 
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.42
+                        Layout.columnSpan: root._mediumLayout && !root._narrowLayout ? 2 : 1
+                        Layout.preferredHeight: root._narrowLayout ? 430
+                                                : root._mediumLayout ? 400
+                                                : Math.max(320, workArea.height * 0.64)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -966,6 +1098,7 @@ Item {
                                     target: QGroundControl.multiVehicleManager
                                     function onActiveVehicleChanged(vehicle) {
                                         root._syncModelProfileSelection(true)
+                                        dashboardRoot.parameterApplyConfirmed = false
                                         // ParameterEditorController captures activeVehicle at construction.
                                         dashboardRoot.parameterDomainAvailable = false
                                         dashboardRoot.resetResponseHistory(
@@ -978,7 +1111,8 @@ Item {
                                 Connections {
                                     target: root._activeVehicle
                                     function onVehicleModelProfilesChanged() {
-                                        root._syncModelProfileSelection(false)
+                                        root._syncModelProfileSelection(true)
+                                        dashboardRoot.parameterApplyConfirmed = false
                                         dashboardRoot.resetResponseHistory(
                                             qsTr("机型配置注册表已更新，已清空遥测与参数确认标记"))
                                         dashboardRoot.syncParameterDomain()
@@ -1096,6 +1230,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.29
+                        Layout.preferredHeight: root._narrowLayout ? 360
+                                                : root._mediumLayout ? 360
+                                                : Math.max(320, workArea.height * 0.64)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -1293,6 +1430,9 @@ Item {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredWidth: root.width * 0.29
+                        Layout.preferredHeight: root._narrowLayout ? 430
+                                                : root._mediumLayout ? 390
+                                                : Math.max(320, workArea.height * 0.64)
                         Layout.fillHeight: true
                         radius: 7
                         color: root.panel
@@ -1501,49 +1641,65 @@ Item {
         // Live status footer.
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.max(42, ScreenTools.defaultFontPixelHeight * 4.2)
+            Layout.preferredHeight: root._narrowLayout ? 82 : Math.max(42, ScreenTools.defaultFontPixelHeight * 4.2)
             radius: 7
             color: "#061C26"
             border.color: "#0B5964"
-            RowLayout {
+            GridLayout {
                 anchors.fill: parent
-                anchors.leftMargin: root.gap
-                anchors.rightMargin: root.gap
-                spacing: root.gap
-                Rectangle {
-                    Layout.preferredWidth: 9
-                    Layout.preferredHeight: 9
-                    radius: 5
-                    color: root._linkHealthy ? root.green : root.red
+                anchors.margins: root.gap
+                columns: root._narrowLayout ? 2 : 5
+                columnSpacing: root.gap
+                rowSpacing: 2
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Rectangle {
+                        Layout.preferredWidth: 9
+                        Layout.preferredHeight: 9
+                        radius: 5
+                        color: root._linkHealthy ? root.green : root.red
+                    }
+                    QGCLabel {
+                        text: root._linkHealthy ? qsTr("已连接") : qsTr("未连接 / 通信丢失")
+                        color: root._linkHealthy ? root.green : root.red
+                        font.pointSize: ScreenTools.bodyFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
+                    }
                 }
                 QGCLabel {
-                    text: root._linkHealthy ? qsTr("已连接") : qsTr("未连接 / 通信丢失")
-                    color: root._linkHealthy ? root.green : root.red
-                    font.pointSize: ScreenTools.bodyFontPointSize
-                    font.weight: ScreenTools.strongFontWeight
-                }
-                QGCLabel {
+                    Layout.fillWidth: true
                     text: qsTr("当前飞行器：%1").arg(root._activeVehicle ? root._vehicleName : qsTr("无"))
                     color: root.mainText
                     font.pointSize: ScreenTools.captionFontPointSize
                     elide: Text.ElideRight
                 }
-                Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 24; color: "#14505B" }
                 QGCLabel {
+                    Layout.fillWidth: true
                     text: root._parametersReady ? qsTr("参数：已就绪") : qsTr("参数：未就绪")
                     color: root._parametersReady ? root.green : root.amber
                     font.pointSize: ScreenTools.captionFontPointSize
                 }
-                QGCLabel { text: root._flightModelAvailable ? qsTr("Flight 参数元数据：%1 项").arg(root._modelParameterCount) : qsTr("Flight 参数元数据：未登记"); color: root.mutedText; font.pointSize: ScreenTools.captionFontPointSize }
-                Item { Layout.fillWidth: true }
                 QGCLabel {
+                    Layout.fillWidth: true
+                    text: root._flightModelAvailable
+                          ? qsTr("Flight 参数元数据：%1 项").arg(root._modelParameterCount)
+                          : qsTr("Flight 参数元数据：未登记")
+                    color: root.mutedText
+                    font.pointSize: ScreenTools.captionFontPointSize
+                    elide: Text.ElideRight
+                }
+                QGCLabel {
+                    Layout.fillWidth: true
                     text: root._pendingWrites ? qsTr("同步状态：等待写入确认") : qsTr("同步状态：无待写入")
                     color: root._pendingWrites ? root.amber : root.green
                     font.pointSize: ScreenTools.captionFontPointSize
+                    elide: Text.ElideRight
                 }
             }
         }
-    }
+                }
+            }
         }
     }
 }
