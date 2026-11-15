@@ -492,7 +492,11 @@
         "overview_topology_canvas_vector_geometry_and_height_follow_screen_tools_density_scale",
         "overview_topology_node_cards_use_scaled_spacing_insets_and_content_driven_height_at_all_six_widths",
         "overview_left_flight_mode_and_arm_badge_use_screen_tools_scaled_spacing_and_text_insets",
-        "overview_left_failsafe_and_authority_rows_use_content_driven_screen_tools_heights_and_fit_at_1600_1400_1000_900_700_400_px"
+        "overview_left_failsafe_and_authority_rows_use_content_driven_screen_tools_heights_and_fit_at_1600_1400_1000_900_700_400_px",
+        "health_page_ui_scale_150_percent_preserves_two_column_content_bounds",
+        "health_page_ui_scale_200_percent_reflows_single_column_without_clipping",
+        "health_page_ui_scale_200_percent_wraps_long_diagnostics_and_expands_maintenance_panel",
+        "health_page_ui_scale_preference_is_restored_after_mocklink_test"
       ]
     },
     {
@@ -884,7 +888,11 @@
     "navigation_page_four_panel_grid_remains_balanced_at_1672x941_compact_height",
     "navigation_uncertainty_metrics_keep_neutral_numeric_values_and_render_matching_status_badges",
     "navigation_capability_states_use_compact_badges_instead_of_large_metric_text",
-    "navigation_metric_status_badges_fit_their_metric_items_at_1280_1279_760_759_and_compact_viewports"
+    "navigation_metric_status_badges_fit_their_metric_items_at_1280_1279_760_759_and_compact_viewports",
+    "health_page_ui_scale_150_percent_preserves_two_column_content_bounds",
+    "health_page_ui_scale_200_percent_reflows_single_column_without_clipping",
+    "health_page_ui_scale_200_percent_wraps_long_diagnostics_and_expands_maintenance_panel",
+    "health_page_ui_scale_preference_is_restored_after_mocklink_test"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
