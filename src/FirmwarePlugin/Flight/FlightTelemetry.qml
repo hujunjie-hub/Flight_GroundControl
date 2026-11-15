@@ -429,6 +429,12 @@ SetupPage {
                              : String(microsecondRemainder)
         return date.toISOString().replace("T", " ").replace("Z", "") + fractionText + " UTC"
     }
+    function _utcUncertaintyColor() {
+        return _utcValidityText() === qsTr("是") ? "#A8BBC3" : _utcValidityColor()
+    }
+    function _utcTimestampColor() {
+        return _utcValidityText() === qsTr("是") ? "#E6F0F4" : _utcValidityColor()
+    }
     function _resourceTaskZero() {
         for (let index = 0; index < _resourceStatuses.length; ++index) {
             const item = _resourceStatuses[index]
@@ -3573,44 +3579,73 @@ SetupPage {
                     GridLayout {
                         objectName: "flightTelemetry_navigationTimeMetricsGrid"
                         Layout.fillWidth: true
-                        columns: root.availableWidth >= 760 ? 2 : 1
+                        columns: root.availableWidth >= 840 ? 2 : 1
                         columnSpacing: root._navigationTimeColumnSpacing
                         rowSpacing: root._navigationTimeRowSpacing
-                        TelemetryRow {
-                            Layout.fillWidth: true
-                            objectName: "flightTelemetry_navigationTimeQuality"
-                            labelText: qsTr("时间质量")
-                            valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
-                            valueColor: root._timeQualityColor()
+                        TelemetryGroup {
+                            objectName: "flightTelemetry_navigationClockGroup"
+                            titleText: qsTr("时钟纪律")
+                            accentColor: "#49C7E7"
+                            MetricReadout {
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_navigationTimeQuality"
+                                valueAsStatusBadge: true
+                                labelText: qsTr("时间质量")
+                                valueText: root._familyFreshValue("timeAvailable", root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                                unitText: ""
+                                statusText: ""
+                                showStatusText: false
+                                accentColor: root._timeQualityColor()
+                                valueColor: root._timeQualityColor()
+                            }
+                            MetricReadout {
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_navigationTimeDiscipline"
+                                valueAsStatusBadge: true
+                                labelText: qsTr("本地时钟纪律")
+                                valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
+                                unitText: ""
+                                statusText: ""
+                                showStatusText: false
+                                accentColor: root._timeDisciplineColor()
+                                valueColor: root._timeDisciplineColor()
+                            }
                         }
-                        TelemetryRow {
-                            Layout.fillWidth: true
-                            objectName: "flightTelemetry_navigationTimeDiscipline"
-                            labelText: qsTr("本地时钟纪律")
-                            valueText: root._familyFreshValue("timeAvailable", root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]))
-                            valueColor: root._timeDisciplineColor()
-                        }
-                        TelemetryRow {
-                            Layout.fillWidth: true
-                            objectName: "flightTelemetry_navigationUtcValidity"
-                            labelText: qsTr("UTC 有效")
-                            valueText: root._utcValidityText()
-                            valueColor: root._utcValidityColor()
-                        }
-                        TelemetryRow {
-                            Layout.fillWidth: true
-                            objectName: "flightTelemetry_navigationUtcUncertainty"
-                            labelText: qsTr("UTC 不确定度")
-                            valueText: root._utcUncertaintyText()
-                            valueColor: root._utcValidityColor()
+                        TelemetryGroup {
+                            objectName: "flightTelemetry_navigationUtcGroup"
+                            titleText: qsTr("UTC 参考")
+                            accentColor: "#52D5B1"
+                            MetricReadout {
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_navigationUtcValidity"
+                                valueAsStatusBadge: true
+                                labelText: qsTr("UTC 有效")
+                                valueText: root._utcValidityText()
+                                unitText: ""
+                                statusText: ""
+                                showStatusText: false
+                                accentColor: root._utcValidityColor()
+                                valueColor: root._utcValidityColor()
+                            }
+                            MetricReadout {
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_navigationUtcUncertainty"
+                                labelText: qsTr("UTC 不确定度")
+                                valueText: root._utcUncertaintyText()
+                                unitText: ""
+                                statusText: ""
+                                showStatusText: false
+                                accentColor: root._utcUncertaintyColor()
+                                valueColor: root._utcUncertaintyColor()
+                            }
                         }
                         TelemetryTimestampRow {
                             Layout.fillWidth: true
-                            Layout.columnSpan: root.availableWidth >= 760 ? 2 : 1
+                            Layout.columnSpan: root.availableWidth >= 840 ? 2 : 1
                             objectName: "flightTelemetry_navigationUtcTimestamp"
                             labelText: qsTr("FCU UTC 时间")
                             valueText: root._utcTimestampText()
-                            valueColor: root._utcValidityColor()
+                            valueColor: root._utcTimestampColor()
                         }
                     }
                 }
@@ -3632,6 +3667,7 @@ SetupPage {
                         HealthCell {
                             objectName: "flightTelemetry_navigationChecksNavigation"
                             Layout.fillWidth: true
+                            statusAsBadge: true
                             labelText: qsTr("导航数据")
                             familyName: "navigation"
                             availableFact: "navigationAvailable"
@@ -3639,6 +3675,7 @@ SetupPage {
                         HealthCell {
                             objectName: "flightTelemetry_navigationChecksTime"
                             Layout.fillWidth: true
+                            statusAsBadge: true
                             labelText: qsTr("时间同步")
                             familyName: "time"
                             availableFact: "timeAvailable"
@@ -5677,6 +5714,7 @@ SetupPage {
         required property string labelText
         required property string familyName
         required property string availableFact
+        property bool statusAsBadge: false
 
         readonly property string statusText: root._familyStatus(availableFact)
         readonly property color statusColor: root._familyStatusColor(availableFact)
@@ -5719,11 +5757,20 @@ SetupPage {
                     wrapMode: Text.WordWrap
                 }
                 QGCLabel {
+                    objectName: healthCell.objectName + "_status"
+                    visible: !healthCell.statusAsBadge
                     Layout.minimumWidth: 0
                     text: healthCell.statusText
                     color: healthCell.statusColor
                     font.pointSize: ScreenTools.microFontPointSize
                     wrapMode: Text.WordWrap
+                }
+                FamilyStatusBadge {
+                    objectName: healthCell.objectName + "_statusBadge"
+                    visible: healthCell.statusAsBadge
+                    Layout.alignment: Qt.AlignVCenter
+                    statusText: healthCell.statusText
+                    statusColor: healthCell.statusColor
                 }
             }
             QGCLabel {
@@ -5998,6 +6045,58 @@ SetupPage {
     component TelemetryRow: VehicleSummaryRow {
         id: telemetryRow
         valueColor: root._diagnosticValueColor(valueText)
+    }
+
+    component TelemetryGroup: Rectangle {
+        id: telemetryGroup
+        required property string titleText
+        property color accentColor: "#49C7E7"
+        readonly property real contentInset: Math.max(7, ScreenTools.defaultFontPixelHeight * 0.65)
+        default property alias contentData: groupContent.data
+
+        Layout.fillWidth: true
+        implicitWidth: 180
+        implicitHeight: groupColumn.implicitHeight + contentInset * 2
+        radius: 6
+        color: "#082B33"
+        border.width: 1
+        border.color: "#14515D"
+
+        ColumnLayout {
+            id: groupColumn
+            anchors.fill: parent
+            anchors.margins: telemetryGroup.contentInset
+            spacing: root._navigationTimeRowSpacing
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: root._dashboardPanelHeaderSpacing * 0.5
+                Rectangle {
+                    Layout.preferredWidth: 3
+                    Layout.preferredHeight: Math.max(12, ScreenTools.defaultFontPixelHeight)
+                    radius: 2
+                    color: telemetryGroup.accentColor
+                }
+                QGCLabel {
+                    objectName: telemetryGroup.objectName + "_title"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    text: telemetryGroup.titleText
+                    color: "#91A8B2"
+                    font.pointSize: ScreenTools.captionFontPointSize
+                    font.weight: ScreenTools.strongFontWeight
+                    elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
+                }
+            }
+
+            ColumnLayout {
+                id: groupContent
+                objectName: telemetryGroup.objectName + "_content"
+                Layout.fillWidth: true
+                spacing: root._navigationTimeRowSpacing
+            }
+        }
     }
 
     component TelemetryTimestampRow: ColumnLayout {
