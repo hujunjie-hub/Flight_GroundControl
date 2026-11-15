@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.60
+版本：4.61
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -645,3 +645,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 无效、缺失、超时项均置于有效项之后；无效仍红色、超时琥珀、等待/未上报中性灰。
 - MockLink UI Integration 验证三个域同时间戳时的固定排序，以及后续无效时间戳的置后规则。
 - 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 完整回归和视觉检查。
+
+### G15 六域拓扑实时 freshness 数量统计（2026-11-15）
+
+- 中央拓扑状态统计应显示六域中已接收、数据超时、等待遥测的独立数量；计数必须与六个拓扑节点和连线使用相同的 family freshness 状态，不得推导或展示合成整机健康等级。
+- MockLink UI Integration 验证初始 0/0/6、三域收到有效状态后 3/0/3，并在导航 family freshness 超时和恢复时同步更新统计。
+- 现有 1600/1400/1000/900/700/400 px 响应式检查覆盖统计文字不越界；统计复用原图例行，不增加拓扑卡片高度。
+- 按用户要求本轮不运行 CI、Unit、Integration、Windows Release；新增断言保持 NOT_RUN。
