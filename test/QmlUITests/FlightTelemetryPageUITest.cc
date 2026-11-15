@@ -4471,6 +4471,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_healthCellInset").toReal() <
                     page->property("_dashboardPanelPadding").toReal(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_healthCellGridSpacing").toReal() <
+                    page->property("_dashboardPanelBodySpacing").toReal() &&
+                page->property("_healthPrimaryRowSpacing").toReal() <
+                    page->property("_dashboardPanelBodySpacing").toReal() &&
+                page->property("_healthCellContentSpacing").toReal() <
+                    page->property("_dashboardPanelBodySpacing").toReal() * 0.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthPrimaryCellsFit() && healthMatrixCellsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthSafety->height()) < 1.0, 3000);
