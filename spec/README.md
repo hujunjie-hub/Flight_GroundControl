@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.91
+- 版本 4.92
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -245,3 +245,6 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 Phase 2.59 导航时序页高 DPI 收口：FCU 单调时间线行高/行距/编号/轨道/时间值列宽改由 ScreenTools 字体度量驱动；补充 1672×941 紧凑模式及 1600/1000/900/700/400 px 的行几何、时间戳完整性和面板边界回归。未运行 CI/Unit/Integration/Windows Release，新增回归 NOT_RUN，待集中验收。
+
+
+- 2026-11-15 总览拓扑文字高 DPI 统一：Canvas 中心 FCU 与六域端点标签改为 `ScreenTools.normalFontFamily` + `microFontPointSize`（point），移除硬编码 sans-serif/px；MockLink UI Integration 使用相同字体族和点字号计算 QFontMetricsF，覆盖 1600/1400/1000/900/700/400 px 越界与重叠检查。新增静态字体契约；按要求未运行 CI/Unit/Integration，新增回归 NOT_RUN。
