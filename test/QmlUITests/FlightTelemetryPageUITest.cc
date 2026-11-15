@@ -5030,8 +5030,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             page->setHeight(941.0 / 1.5);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit() &&
-                                         maintenancePanelProvidesContentHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
+                                         maintenanceResourceMetricsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceResourceColumn, maintenancePanel), 3000);
@@ -5044,8 +5044,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             page->setHeight(720.0 / 2.0);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit() &&
-                                         maintenancePanelProvidesContentHeight(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
+                                         maintenanceResourceMetricsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceResourceColumn, maintenancePanel) &&
