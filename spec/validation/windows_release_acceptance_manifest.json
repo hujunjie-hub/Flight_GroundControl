@@ -406,7 +406,13 @@
         "navigation_time_utc_uncertainty_spans_final_row_in_two_column_layout_and_all_time_metrics_fit_panel",
         "rc_axis_and_stick_readout_colors_distinguish_waiting_valid_and_invalid_states",
         "dashboard_primary_and_detail_panels_share_typography_padding_spacing_and_family_status_badge_style",
-        "dashboard_panel_padding_and_badge_geometry_follow_screen_tools_font_metrics"
+        "dashboard_panel_padding_and_badge_geometry_follow_screen_tools_font_metrics",
+        "overview_page_zero_summary_contains_only_position_velocity_heading_uncertainty_kpis",
+        "overview_navigation_kpis_use_existing_freshness_capability_and_validity_gates",
+        "overview_top_kpis_are_not_repeated_in_system_topology_panel",
+        "overview_left_panel_does_not_repeat_six_domain_topology_health_matrix",
+        "overview_summary_tiles_are_hidden_on_page_zero_and_restored_on_pages_one_to_three",
+        "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px"
       ]
     },
     {
@@ -704,7 +710,13 @@
     "overview_alarm_unknown_severity_is_not_mislabeled_as_highest_priority",
     "overview_alarm_empty_state_does_not_create_synthetic_events",
     "overview_alarm_primary_reason_metadata_time_and_priority_tag_fit_700_and_400_px",
-    "overview_hero_panels_share_equal_height_on_desktop_and_medium_layouts"
+    "overview_hero_panels_share_equal_height_on_desktop_and_medium_layouts",
+    "overview_page_zero_summary_contains_only_position_velocity_heading_uncertainty_kpis",
+    "overview_navigation_kpis_use_existing_freshness_capability_and_validity_gates",
+    "overview_top_kpis_are_not_repeated_in_system_topology_panel",
+    "overview_left_panel_does_not_repeat_six_domain_topology_health_matrix",
+    "overview_summary_tiles_are_hidden_on_page_zero_and_restored_on_pages_one_to_three",
+    "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
