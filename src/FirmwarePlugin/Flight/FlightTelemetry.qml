@@ -178,6 +178,10 @@ SetupPage {
         if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
         return _telemetry ? String(_telemetry.recentEvents.length) : qsTr("未上报")
     }
+    function _eventSeveritySummaryVisibleFor(status, eventCount) {
+        const count = Number(eventCount)
+        return status === qsTr("已接收") && Number.isFinite(count) && count > 0
+    }
     function _eventSeverityCountsFor(events) {
         const counts = { critical: 0, error: 0, warning: 0, info: 0, unknown: 0 }
         const records = events && typeof events.length === "number" ? events : []
@@ -2681,8 +2685,9 @@ SetupPage {
                     }
                     GridLayout {
                         objectName: "flightTelemetry_alarmSeverityGrid"
-                        visible: root._familyStatus("eventAvailable") === qsTr("已接收") &&
-                                 root._telemetry && root._telemetry.recentEvents.length > 0
+                        visible: root._eventSeveritySummaryVisibleFor(
+                                     root._familyStatus("eventAvailable"),
+                                     root._telemetry ? root._telemetry.recentEvents.length : 0)
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 1000 ? 5 : 3
                         columnSpacing: 5
