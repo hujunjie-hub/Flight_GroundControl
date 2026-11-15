@@ -134,6 +134,7 @@ MockLink Gimbal Manager 必须遵守 Configure 参数的所有权语义：
 - 云台验证半 owner pair 显示无效并 fail-closed、pitch/yaw 轴 capability 门控、未知设备 ID 和非有限目标值拒绝、`GIMBAL_MANAGER_SET_ATTITUDE` 角速度控制与停止回读，以及 yaw-lock / retract 的遥测回读。
 - 云台在角速度周期发送期间释放控制权时，验证零速帧先于 owner release 命令发送，且释放后姿态不再继续漂移。
 - 活动设备切换验证：拒绝未发现/未完成的 Gimbal 实例；本机仍持有有效控制权时拒绝切换；释放后允许选择列表中的完整设备。
+- 设备选择器的禁用条件必须基于新鲜且有效的本机 primary owner 状态；manager status 超时后不得因缓存的 `gimbalHaveControl` 位而永久锁定设备选择。
 - 拖动结束后的最终目标角度必须由 MockLink 姿态回读确认，不能只验证本地滑块值。
 - 链路丢失清除缓存所有权，恢复后等待新状态确认。
 - 拖动期间控制 Timer 运行，松开后停止；MockLink 姿态回读与最终目标角度一致。
