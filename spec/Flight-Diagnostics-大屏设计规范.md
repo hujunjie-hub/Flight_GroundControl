@@ -1465,3 +1465,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 静态字体检查新增告警密度 token 与内容驱动高度契约；Windows Release G15 新增告警 chip/空态与告警卡/历史行 ScreenTools 自适应验收条件。
 - 仅调整 FlightTelemetry.qml 展示层、FlightTelemetryPageUITest、静态字体检查及对应 SPEC/G15；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、事件数据、排序、freshness、时间语义、状态色含义或飞控控制行为。
 - 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中 exact-HEAD 验收。
+
+
+## 115. Phase 2.69 导航时间同步层级与独立时序状态（2026-11-16）
+
+- 导航时间同步卡拆分为「时钟纪律」与「UTC 参考」两个独立分组：前者呈现时间质量、本地时钟纪律；后者呈现 UTC 有效性和 UTC 不确定度。FCU UTC 时间戳继续作为跨分组全宽只读基准行。
+- 时间质量、本地时钟纪律、UTC 有效性使用 FamilyStatusBadge 展示离散状态；UTC 不确定度在有效时使用中性数值色，UTC 时间戳在有效时使用中性正文色，只有无效/超时/未上报等状态继续沿用原状态色。不得把有效性颜色误用于有效数值。
+- FCU 单调时序卡中的导航数据与时间同步状态分别使用独立 FamilyStatusBadge；各自保留原 family freshness、接收年龄和状态颜色，不合成为单一导航/时间总状态。
+- 时间分组在可用宽度 >= 840 px 时并排显示，窄于 840 px 时上下堆叠；UTC 时间戳始终跨越全部分组列。分组内边距、标题、指标间距和状态徽标使用 ScreenTools 字体像素度量。
+- MockLink UI Integration 新增时间分组标题/父子边界、并排/堆叠重排、时间戳跨列、UTC 有效/无效时数值颜色、时间质量/纪律状态徽标动态一致性，以及导航/时间 family 独立徽标检查；覆盖 1600/1672×941 与 1000/900/760/759/700/400 px。
+- FCU 单调时间戳仍按有效值早到晚排序，无效/未上报/超时置后；导航、时间、事件继续共享 FCU 启动时间基准，不解释为 UTC 偏移，不修改相等时间戳的确定性排序规则。
+- 仅调整 FlightTelemetry.qml 展示层、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G16 与机器可读 Manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间质量/纪律枚举、UTC 有效性计算、时间戳精度、family freshness 阈值或飞控行为。
+- 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中 exact-HEAD 验收。
