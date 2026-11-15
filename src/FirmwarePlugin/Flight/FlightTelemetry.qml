@@ -726,9 +726,7 @@ SetupPage {
         const link = _primaryDataLinkStatus()
         if (!link) return qsTr("未上报")
         if (!_linkInstanceFresh(link.receiveAgeMs)) return qsTr("数据超时")
-        if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
-        if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
-        return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
+        return _linkInstanceMetricText(link, fieldName, bit, decimals, suffix)
     }
     function _timeTrendSampleValue() {
         if (_familyStatus("timeAvailable") !== qsTr("已接收") || !_fact("utcValid")) return null
@@ -738,8 +736,16 @@ SetupPage {
     function _linkTrendSampleValue(fieldName, bit, divisor, allowNegative) {
         if (_familyStatus("linkAvailable") !== qsTr("已接收")) return null
         const link = _primaryDataLinkStatus()
-        if (!link || !_linkInstanceFresh(link.receiveAgeMs) || _rawMaskState(link.validityMask, bit) !== 1) return null
-        const value = Number(link[fieldName])
+        if (!link || !_linkInstanceFresh(link.receiveAgeMs)) return null
+        if (bit === 9) {
+            const quality = _linkInstanceQualityPermille(link)
+            return quality === null ? null : quality / divisor
+        }
+        if (_rawMaskState(link.validityMask, bit) !== 1) return null
+        const raw = link[fieldName]
+        if (raw === null || raw === undefined ||
+                (typeof raw === "string" && raw.trim().length === 0)) return null
+        const value = Number(raw)
         if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
         return value / divisor
     }
