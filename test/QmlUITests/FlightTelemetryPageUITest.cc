@@ -3378,6 +3378,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+            sendPrearmStatus(2321, 1, 14, 2, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenancePrearm->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthSafetyPrearm->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
             page->setWidth(1600);
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcTab);
