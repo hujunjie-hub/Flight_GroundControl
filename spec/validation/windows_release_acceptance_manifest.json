@@ -634,7 +634,17 @@
         "gimbal_manager_configure_param7_and_pitchyaw_param7_route_control_to_legacy_device_id_3",
         "position_control_on_legacy_device_id_3_round_trips_through_manager_component_1",
         "controlling_legacy_device_id_3_does_not_change_device_154_or_device_155_owner_pairs",
-        "position_control_on_legacy_device_id_3_does_not_change_peer_device_154_or_155_attitudes"
+        "position_control_on_legacy_device_id_3_does_not_change_peer_device_154_or_155_attitudes",
+        "mocklink_multi_manager_emits_independent_component_heartbeats_and_information_responses",
+        "gimbal_manager_information_retries_are_consumed_only_when_serialized_request_slot_is_acquired",
+        "gimbal_manager_status_request_throttle_is_independent_per_manager_device_pair",
+        "mocklink_discovers_four_manager_device_pairs_including_duplicate_legacy_device_id_3",
+        "gimbal_pair_identity_uses_manager_component_and_device_id_when_legacy_ids_repeat",
+        "mocklink_configure_and_pitchyaw_commands_route_to_manager_component_2_device_id_3",
+        "manager_2_device_id_3_position_control_does_not_mutate_any_manager_1_gimbal",
+        "mocklink_broadcast_manager_and_attitude_intervals_fan_out_across_all_managers_with_one_primary_ack",
+        "mocklink_manager_scoped_offline_for_duplicate_device_id_3_only_stales_manager_2_pair",
+        "mocklink_manager_scoped_recovery_rediscovers_manager_2_device_id_3_without_restoring_old_owner"
       ]
     }
   ],
