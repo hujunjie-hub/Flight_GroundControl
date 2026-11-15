@@ -544,7 +544,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 
 
-### G19 Flight 存储与云台配置页（2026-11-15）
+### G19 Flight 存储与云台配置页（2026-11-16）
 
 - 设计与实现规范：[Flight 存储与云台配置页规范](Flight-存储与云台功能设计规范.md)。
 - 存储页从 `vehicle.flightTelemetry` 读取真实 FCU_STORAGE_STATUS Facts；SD/NOR/free-space 分别按 validity bit 0/1/2 门控；通信丢失立即隐藏缓存值，恢复链路后必须等待新的 storageTimeBootUs 帧才恢复展示，storage receive age 超过 5500 ms 时显示 stale。
