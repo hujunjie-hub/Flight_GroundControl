@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.66
+版本：4.67
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -680,3 +680,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 新 OPERATION_STATUS 到达前，趋势保持 GAP；导航域显示新会话时间戳，时间同步和事件域仍显示等待遥测，不得显示旧会话时间戳。
 - 新会话各域恢复后继续验证原有 FCU 时间线排序、无效时间戳颜色和数据 freshness 门控。
 - 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 完整回归。
+
+### G15 六域拓扑遥测流向与节点标签（2026-11-15）
+
+- 中央拓扑六个端点分别显示传感器系统、导航定位、数据链路、飞控系统、执行器、时间同步；下方节点卡名称必须与端点一一对应。
+- 六条连线箭头统一指向 FCU 中心，语义为各域遥测上报；不得将箭头解释为控制指令方向，保留示意不代表飞行器姿态/空间位置说明。
+- MockLink UI Integration 验证六个 family 的 label、节点卡文本和 toFcu 方向元数据完全匹配；各 family freshness 颜色保持独立。
+- 通过 QFontMetricsF 检查 1600/1400/1000/900/700/400 px 六个页面宽度下标签均在 Canvas 内且不相互重叠；同时验证节点卡和统计图例不越界。
+- 本轮按用户要求不运行 CI、Unit、Integration、Windows Release；新增断言为 NOT_RUN，集中验收时执行 exact-HEAD 完整回归。
