@@ -3931,12 +3931,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                            "link",      "storage",    "resource",     "time",    "event",
                                            "prearm",    "rcInput",    "buildInfo"};
             QQuickItem* healthCells[13]{};
+            QQuickItem* healthCellContents[13]{};
             for (int index = 0; index < 13; ++index) {
                 const QString objectName =
                     QStringLiteral("flightTelemetry_healthPage_") + QString::fromLatin1(healthDomains[index]);
                 healthCells[index] = findVisibleItem(_rootItem, objectName, 3000);
                 QVERIFY2(healthCells[index], qPrintable(objectName));
                 QTRY_COMPARE_WITH_TIMEOUT(healthCells[index]->property("radius").toInt(), 6, 3000);
+                const QString contentObjectName = objectName + QStringLiteral("_content");
+                healthCellContents[index] = findVisibleItem(_rootItem, contentObjectName, 3000);
+                QVERIFY2(healthCellContents[index], qPrintable(contentObjectName));
             }
             sensorCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_sensors"), 3000);
             sensorInstanceCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
@@ -3992,12 +3996,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(prearmDetails);
             QVERIFY(resourcesDetail);
             const auto healthMatrixCellsFit = [&]() {
-                for (QQuickItem* cell : healthCells) {
-                    if (!cell) return false;
-                    const QPointF topLeft = cell->mapToItem(healthMatrix, 0, 0);
-                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
-                        topLeft.x() + cell->width() > healthMatrix->width() + 1.0 ||
-                        topLeft.y() + cell->height() > healthMatrix->height() + 1.0) {
+                const qreal inset = page->property("_dashboardPanelPadding").toReal();
+                for (int index = 0; index < 13; ++index) {
+                    QQuickItem* cell = healthCells[index];
+                    QQuickItem* content = healthCellContents[index];
+                    if (!cell || !content) return false;
+                    const QPointF cellTopLeft = cell->mapToItem(healthMatrix, 0, 0);
+                    if (cellTopLeft.x() < -1.0 || cellTopLeft.y() < -1.0 ||
+                        cellTopLeft.x() + cell->width() > healthMatrix->width() + 1.0 ||
+                        cellTopLeft.y() + cell->height() > healthMatrix->height() + 1.0) {
+                        return false;
+                    }
+                    const QPointF contentTopLeft = content->mapToItem(cell, 0, 0);
+                    if (contentTopLeft.x() < inset - 1.0 || contentTopLeft.y() < inset - 1.0 ||
+                        content->height() + 0.5 < content->implicitHeight() ||
+                        contentTopLeft.x() + content->width() > cell->width() - inset + 1.0 ||
+                        contentTopLeft.y() + content->height() > cell->height() - inset + 1.0) {
                         return false;
                     }
                 }
@@ -4054,7 +4068,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        contentTopLeft.y() + content->height() <= card->height() - metricTileInset + 1.0;
             };
             const auto healthDetailCardsFit = [&]() {
-                if (!healthCellContentProvidesHeight() ||
+                if (!healthMatrixCellsFit() ||
                     !maintenancePanelProvidesContentHeight() ||
                     !detailCardProvidesContentHeight(sensorInstanceCard, sensorInstanceContent) ||
                     !detailCardProvidesContentHeight(prearmCheckCard, prearmRow) ||
