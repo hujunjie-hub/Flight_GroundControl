@@ -2893,6 +2893,7 @@ SetupPage {
                         }
                         TelemetryRow {
                             Layout.fillWidth: true
+                            Layout.columnSpan: root.availableWidth >= 760 ? 2 : 1
                             objectName: "flightTelemetry_navigationUtcUncertainty"
                             labelText: qsTr("UTC 不确定度")
                             valueText: root._utcUncertaintyText()
