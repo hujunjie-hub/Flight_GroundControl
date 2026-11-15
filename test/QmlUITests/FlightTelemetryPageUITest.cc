@@ -945,6 +945,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
             QQuickItem* rcLinkPanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
+            QQuickItem* linkDetailCard = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_card_links"), 3000);
             QQuickItem* linkDetailCoverage = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailCoverage"));
             QQuickItem* linkDetailState = findItem(
@@ -981,6 +983,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(invalidOtherLossValue);
             QVERIFY(rcFailsafePanel);
             QVERIFY(rcLinkPanel);
+            QVERIFY(linkDetailCard);
             QVERIFY(linkDetailCoverage);
             QVERIFY(linkDetailState);
             QVERIFY(linkDetailReason);
@@ -1084,8 +1087,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
                                          QStringLiteral("GCS 地面站")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcFailsafePanel->property("statusFamily").toString().isEmpty(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString(),
-                                      QStringLiteral("linkAvailable"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString().isEmpty(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailCard->property("statusFamily").toString().isEmpty(), 3000);
             QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
             QVERIFY(mode2Button);
             QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
