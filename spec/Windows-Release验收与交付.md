@@ -737,7 +737,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 左右摇杆卡在 Mode 1/2/3 切换后，分别显示正确的横向/纵向 CH 编号；标签必须来自页面当前共享手型映射，不得硬编码固定模式。
 - 质量条仅在 link family fresh、实例 fresh、validity bit 9 有效且 `linkQualityPermille` 位于 0–1000 时显示；填充宽度 / 轨道宽度必须等于原始 permille / 1000。
 - 以 700 permille 验证 70% 填充；以 validity bit 清零、等待/超时、null/空值、非有限或 1200 permille 越界验证不显示填充。1200 permille 与 validity bit 置位但值缺失的情况必须显示无效/琥珀色；恢复到 700 后数字、颜色、条形同步恢复。
-- 质量条只表达 FCU 上报的链路质量字段，不按 RSSI、linkState 或其他实例推导；不得修改链路趋势选源、RC 输入、协议或飞控控制行为。
+- 质量条与链路质量趋势卡当前值/采样共用同一 0–1000 范围门控；超范围或缺失值不得进入趋势序列，形成既有 GAP。质量条只表达 FCU 上报的链路质量字段，不按 RSSI、linkState 或其他实例推导；不得修改链路趋势选源、RC 输入、协议或飞控控制行为。
 - MockLink UI Integration 覆盖三种手型标签和质量条 70% → 越界无效 → 70% 恢复；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
 
 
