@@ -5823,6 +5823,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                          itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceResourceColumn, maintenancePanel), 3000);
 
+            QQuickItem* navigationTabAt150Dpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
+            QVERIFY(navigationTabAt150Dpi);
+            QVERIFY(_clickItemAt(navigationTabAt150Dpi, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(2, 1.15, 1.25, 1.2, 1.3), 3000);
+            QVERIFY(_clickItemAt(healthTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+
             // A 1280x720 physical viewport at 200% UI scale becomes a 640x360 logical layout.
             uiScaleFact->setRawValue(200);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -5875,6 +5885,16 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                          itemFitsInPanel(maintenanceEvent, maintenanceEventColumn) &&
                                          itemFitsInPanel(maintenancePrearm, maintenanceResourceColumn) &&
                                          itemFitsInPanel(maintenanceResourceGrid, maintenanceResourceColumn), 3000);
+
+            QQuickItem* navigationTabAt200Dpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
+            QVERIFY(navigationTabAt200Dpi);
+            QVERIFY(_clickItemAt(navigationTabAt200Dpi, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(1, 1.5, 1.6, 1.6, 1.7), 3000);
+            QVERIFY(_clickItemAt(healthTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
 
             // Long diagnostics must still expand the maintenance strip at the largest UI scale.
             const qreal highDpiEventHeight = maintenanceEvent->height();
