@@ -219,7 +219,8 @@
         "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
         "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns",
         "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates",
-        "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards"
+        "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards",
+        "navigation_subgrid_and_metric_readout_spacing_scale_with_screen_tools"
       ]
     },
     {
@@ -865,7 +866,8 @@
     "health_maintenance_panel_reserves_two_scaled_insets_and_tracks_wrapped_text_height",
     "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px",
     "link_quality_trend_value_and_samples_share_the_same_range_validity_gate",
-    "navigation_utc_timestamp_uses_full_width_stacked_row_and_preserves_microseconds_at_all_breakpoints"
+    "navigation_utc_timestamp_uses_full_width_stacked_row_and_preserves_microseconds_at_all_breakpoints",
+    "navigation_subgrid_and_metric_readout_spacing_scale_with_screen_tools"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
