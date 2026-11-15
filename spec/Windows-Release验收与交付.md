@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.91
+版本：4.92
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -835,6 +835,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 
 ### G15 飞行健康页紧凑密度与主视觉比例（2026-11-16）
+- 维护资源快照 CPU、WCET、系统栈剩余、存储剩余必须使用统一两列指标 tile；tile 的 `contentInset` 与页面公开的 `_healthMaintenanceMetricInset` 一致，圆角为 4，数值标签完整落在 tile 内且高度不小于 implicitHeight。
+- 保留四项指标的原始文本、单位、精度、对象名、resource freshness 和颜色映射；无效/超时/等待状态必须继续按原规则显示，不得使用静态绿/蓝色伪装正常。
+- 新增四项 tile 的对象存在、圆角、ScreenTools 缩放内边距、父子边界和多视口布局检查；本轮不运行 CI/Build/Unit/Integration/Windows Release，新增断言 NOT_RUN。
+
 - 维护与可靠性区域必须包含启动身份、最近异常、预检/资源三张独立卡片；三卡使用统一圆角/背景/边框与左侧强调色，事件卡色条和事件摘要共享原有严重度颜色。
 - 卡片 contentInset 必须等于页面公开的 `_healthMaintenanceCardInset`；卡片内容完整落在父卡内且高度不小于 implicitHeight；卡片间距和内部间距必须使用独立 ScreenTools 缩放 token。
 - 1280 px 及以上三列、760–1279 px 两列、低于 760 px 单列；桌面同一行卡片等高，中屏第三卡换行，窄屏纵向堆叠。保留启动 ID、事件摘要/接收年龄、预检覆盖和四项资源数值。
