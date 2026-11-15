@@ -1276,6 +1276,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const QString waitingText = translatedTelemetryText("等待遥测");
             const QString receivedText = translatedTelemetryText("已接收");
             const QString staleText = translatedTelemetryText("数据超时");
+            const QString invalidText = translatedTelemetryText("无效");
 
             auto sendSensorHealthStatus = [&](uint64_t timeBootUs, uint32_t sensorInstanceId,
                                                uint16_t healthState, uint32_t reasonCode) {
@@ -1328,6 +1329,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 payload.recovery_condition = recoveryCondition;
                 mavlink_message_t message{};
                 mavlink_msg_fcu_prearm_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
+            auto sendStorageStatus = [&](uint64_t timeBootUs) {
+                mavlink_fcu_storage_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.validity_mask = 0;
+                payload.free_kib = 8192;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_storage_status_encode(systemId, componentId, &message, &payload);
                 mockLink->respondWithMavlinkMessage(message);
             };
 
@@ -1559,6 +1572,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             }
             sendSensorHealthStatus(1700, 1, 2, 0);
             sendResourceStatus(1750, 0, 0x0F);
+            sendStorageStatus(1760);
+            QTRY_COMPARE_WITH_TIMEOUT(storageFreeRow->property("valueText").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(storageSdState->property("valueText").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(storageNorState->property("valueText").toString(), invalidText, 3000);
             sendPrearmStatus(1800, 1, 1, 1, 0);
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
