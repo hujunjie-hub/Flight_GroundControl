@@ -2182,13 +2182,15 @@ SetupPage {
                 spacing: 2
                 QGCLabel {
                     objectName: "flightTelemetry_diagnosticDetailsEyebrow"
-                    text: "FULL DIAGNOSTIC DETAILS"
+                    text: [ "FLIGHT / OPERATION DETAILS", "HEALTH & SAFETY DETAILS",
+                            "NAVIGATION & TIMING DETAILS", "RC INPUT & DATA LINK DETAILS" ][root._activeDashboardPage]
                     color: "#45CFE0"
                     typographyRole: "eyebrow"
                 }
                 QGCLabel {
                     objectName: "flightTelemetry_diagnosticDetailsTitle"
-                    text: qsTr("完整诊断明细")
+                    text: [ qsTr("飞行操作与事件详情"), qsTr("健康与安全详情"),
+                            qsTr("导航与时间详情"), qsTr("遥控与通信详情") ][root._activeDashboardPage]
                     color: "#E3F4F7"
                     typographyRole: "section-heading"
                 }
@@ -2202,6 +2204,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_operation"
+                    visible: root._activeDashboardPage === 0
                     eyebrow: "FLIGHT / OPERATION"
                     statusFamily: "operationAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2241,6 +2244,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_navigation"
+                    visible: root._activeDashboardPage === 2
                     eyebrow: "NAVIGATION"
                     statusFamily: "navigationAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2271,6 +2275,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_sensors"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "SENSOR HEALTH"
                     statusFamily: "sensorHealthAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2324,6 +2329,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_control"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "CONTROL SYSTEM"
                     statusFamily: "controlAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2341,6 +2347,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_actuator"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "ACTUATOR OUTPUT"
                     statusFamily: "actuatorAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2359,6 +2366,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_links"
+                    visible: root._activeDashboardPage === 3
                     eyebrow: "COMMUNICATION"
                     statusFamily: "linkAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2415,6 +2423,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_prearm"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "PRE-ARM CHECKS"
                     statusFamily: "prearmAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 8 : root._dashboardColumns >= 6 ? 6 : 1
@@ -2462,6 +2471,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_latestEvent"
+                    visible: root._activeDashboardPage === 0
                     eyebrow: "LATEST EVENT"
                     statusFamily: "eventAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 6 : 1
@@ -2479,6 +2489,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_resources"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "REAL-TIME RESOURCES"
                     statusFamily: "resourceAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2532,6 +2543,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_storage"
+                    visible: root._activeDashboardPage === 1
                     eyebrow: "STORAGE"
                     statusFamily: "storageAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2560,6 +2572,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_time"
+                    visible: root._activeDashboardPage === 2
                     eyebrow: "TIME SYNCHRONIZATION"
                     statusFamily: "timeAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2582,6 +2595,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_rcInput"
+                    visible: root._activeDashboardPage === 3
                     eyebrow: "REMOTE CONTROL"
                     statusFamily: "rcInputAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
@@ -2613,6 +2627,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_eventHistory"
+                    visible: root._activeDashboardPage === 0
                     eyebrow: "EVENT HISTORY"
                     statusFamily: "eventAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 8 : root._dashboardColumns >= 6 ? 6 : 1
@@ -2649,6 +2664,7 @@ SetupPage {
 
                 StatusCard {
                     objectName: "flightTelemetry_card_buildInfo"
+                    visible: root._activeDashboardPage === 0
                     eyebrow: "FIRMWARE / BUILD"
                     statusFamily: "buildInfoAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 12 : root._dashboardColumns >= 6 ? 6 : 1

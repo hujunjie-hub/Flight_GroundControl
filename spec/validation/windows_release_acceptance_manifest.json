@@ -282,7 +282,8 @@
         "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
         "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells",
         "dashboard_tabs_provide_hover_feedback_and_preserve_active_state_priority",
-        "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints"
+        "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints",
+        "dashboard_detail_cards_are_partitioned_by_page_as_4_6_2_2_without_losing_diagnostic_fields"
       ]
     },
     {
@@ -430,7 +431,8 @@
     "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
     "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells",
     "dashboard_tabs_provide_hover_feedback_and_preserve_active_state_priority",
-    "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints"
+    "dashboard_header_subtitle_uses_desktop_inline_medium_stacked_and_small_hidden_breakpoints",
+    "dashboard_detail_cards_are_partitioned_by_page_as_4_6_2_2_without_losing_diagnostic_fields"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

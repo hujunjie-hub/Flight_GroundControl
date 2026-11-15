@@ -173,19 +173,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* axisYaw = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_yaw"));
             QQuickItem* axisThrottle = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_throttle"));
             QQuickItem* operationCard =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_operation"), 3000);
-            QQuickItem* prearmCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_card_operation"));
+            QQuickItem* prearmCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"));
             QQuickItem* latestEventCard =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_latestEvent"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_card_latestEvent"));
             QQuickItem* resourcesCard =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
-            QQuickItem* storageCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
-            QQuickItem* timeCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_time"), 3000);
-            QQuickItem* rcCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_rcInput"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"));
+            QQuickItem* storageCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"));
+            QQuickItem* timeCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_time"));
+            QQuickItem* rcCard = findItem(_rootItem, QStringLiteral("flightTelemetry_card_rcInput"));
             QQuickItem* eventHistoryCard =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_eventHistory"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_card_eventHistory"));
             QQuickItem* buildInfoCard =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_buildInfo"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_card_buildInfo"));
             QQuickItem* failsafeRow = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
             QVERIFY(visualTabs);
@@ -283,8 +283,20 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 "flightTelemetry_card_storage",     "flightTelemetry_card_resources",    "flightTelemetry_card_time",
                 "flightTelemetry_card_latestEvent", "flightTelemetry_card_eventHistory", "flightTelemetry_card_prearm",
                 "flightTelemetry_card_rcInput",     "flightTelemetry_card_buildInfo"};
-            for (const char* cardName : diagnosticCards) {
-                QVERIFY2(findVisibleItem(_rootItem, QString::fromLatin1(cardName), 3000), cardName);
+            QQuickItem* diagnosticCardItems[14]{};
+            for (int index = 0; index < 14; ++index) {
+                diagnosticCardItems[index] = findItem(_rootItem, QString::fromLatin1(diagnosticCards[index]));
+                QVERIFY2(diagnosticCardItems[index], diagnosticCards[index]);
+            }
+            const bool expectedDetailVisibility[4][14] = {
+                {true,  false, false, false, false, false, false, false, false, true,  true,  false, false, true },
+                {false, false, true,  true,  true,  false, true,  true,  false, false, false, true,  false, false},
+                {false, true,  false, false, false, false, false, false, true,  false, false, false, false, false},
+                {false, false, false, false, false, true,  false, false, false, false, false, false, true,  false}
+            };
+            for (int index = 0; index < 14; ++index) {
+                QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[index]->isVisible(),
+                                          expectedDetailVisibility[0][index], 3000);
             }
 
             // The responsive grid is based on the actual page content width.
@@ -309,13 +321,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->x() < heroNavigation->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->x() < heroRcInput->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(prearmCard->y() < resourcesCard->y(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(prearmCard->y(), latestEventCard->y(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(prearmCard->x() < latestEventCard->x(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(resourcesCard->y(), storageCard->y(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(resourcesCard->y(), timeCard->y(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(rcCard->y(), eventHistoryCard->y(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcCard->x() < eventHistoryCard->x(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationCard->y(), latestEventCard->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(operationCard->x() < latestEventCard->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(eventHistoryCard->y() > latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
             page->setWidth(1400);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
@@ -862,6 +870,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[index], 3000);
                 QVERIFY2(grid, qPrintable(QStringLiteral("Missing active dashboard page %1").arg(index)));
                 if (index > 0) QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), 12, 3000);
+                const QString detailTitles[] = {
+                    translatedTelemetryText("飞行操作与事件详情"),
+                    translatedTelemetryText("健康与安全详情"),
+                    translatedTelemetryText("导航与时间详情"),
+                    translatedTelemetryText("遥控与通信详情")
+                };
+                QTRY_COMPARE_WITH_TIMEOUT(diagnosticDetailsTitle->property("text").toString(),
+                                          detailTitles[index], 3000);
+                for (int cardIndex = 0; cardIndex < 14; ++cardIndex) {
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[cardIndex]->isVisible(),
+                                              expectedDetailVisibility[index][cardIndex], 3000);
+                }
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000));
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000));
                 const QString trendNames[] = {
