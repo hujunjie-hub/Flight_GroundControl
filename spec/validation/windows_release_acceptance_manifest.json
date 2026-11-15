@@ -417,7 +417,8 @@
         "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px",
         "four_dashboard_pages_and_detail_grid_share_screen_tools_scaled_spacing_across_responsive_widths",
         "overview_topology_freshness_legend_maps_received_stale_waiting_colors_and_fits_all_responsive_widths",
-        "health_page_global_communication_loss_is_red_without_overriding_independent_family_freshness"
+        "health_page_global_communication_loss_is_red_without_overriding_independent_family_freshness",
+        "overview_navigation_kpi_measurement_values_use_neutral_color_and_status_color_tracks_freshness_capability"
       ]
     },
     {
