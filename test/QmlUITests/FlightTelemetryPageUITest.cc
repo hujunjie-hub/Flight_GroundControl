@@ -4070,6 +4070,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceEventCard"), 3000);
             QQuickItem* maintenanceResourceCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceResourceCard"), 3000);
+            QQuickItem* maintenanceIdentityStripe = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceIdentityStripe"), 3000);
+            QQuickItem* maintenanceEventStripe = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceEventStripe"), 3000);
+            QQuickItem* maintenanceResourceStripe = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceResourceStripe"), 3000);
             QQuickItem* maintenanceIdentityColumn = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenanceIdentityColumn"), 3000);
             QQuickItem* maintenanceEventColumn = findVisibleItem(
@@ -4176,6 +4182,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(maintenanceIdentityCard);
             QVERIFY(maintenanceEventCard);
             QVERIFY(maintenanceResourceCard);
+            QVERIFY(maintenanceIdentityStripe);
+            QVERIFY(maintenanceEventStripe);
+            QVERIFY(maintenanceResourceStripe);
             QVERIFY(maintenanceIdentityColumn);
             QVERIFY(maintenanceEventColumn);
             QVERIFY(maintenanceResourceColumn);
@@ -4567,6 +4576,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                            "prearm",    "rcInput",    "buildInfo"};
             QQuickItem* healthCells[13]{};
             QQuickItem* healthCellContents[13]{};
+            QQuickItem* healthCellAccentStripes[13]{};
             for (int index = 0; index < 13; ++index) {
                 const QString objectName =
                     QStringLiteral("flightTelemetry_healthPage_") + QString::fromLatin1(healthDomains[index]);
@@ -4576,11 +4586,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 const QString contentObjectName = objectName + QStringLiteral("_content");
                 healthCellContents[index] = findVisibleItem(_rootItem, contentObjectName, 3000);
                 QVERIFY2(healthCellContents[index], qPrintable(contentObjectName));
+                const QString stripeObjectName = objectName + QStringLiteral("_accentStripe");
+                healthCellAccentStripes[index] = findVisibleItem(_rootItem, stripeObjectName, 3000);
+                QVERIFY2(healthCellAccentStripes[index], qPrintable(stripeObjectName));
             }
             const char* primaryHealthDomains[] = {
                 "operation", "sensorHealth", "navigation", "control", "actuator", "link"};
             QQuickItem* primaryHealthCells[6]{};
             QQuickItem* primaryHealthCellContents[6]{};
+            QQuickItem* primaryHealthCellAccentStripes[6]{};
             for (int index = 0; index < 6; ++index) {
                 const QString objectName =
                     QStringLiteral("flightTelemetry_healthPrimary_") +
@@ -4590,6 +4604,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 primaryHealthCellContents[index] =
                     findVisibleItem(_rootItem, objectName + QStringLiteral("_content"), 3000);
                 QVERIFY2(primaryHealthCellContents[index], qPrintable(objectName + QStringLiteral("_content")));
+                const QString stripeObjectName = objectName + QStringLiteral("_accentStripe");
+                primaryHealthCellAccentStripes[index] = findVisibleItem(_rootItem, stripeObjectName, 3000);
+                QVERIFY2(primaryHealthCellAccentStripes[index], qPrintable(stripeObjectName));
             }
             sensorCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_sensors"), 3000);
             sensorInstanceCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
@@ -4649,7 +4666,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 for (int index = 0; index < 13; ++index) {
                     QQuickItem* cell = healthCells[index];
                     QQuickItem* content = healthCellContents[index];
-                    if (!cell || !content) return false;
+                    QQuickItem* stripe = healthCellAccentStripes[index];
+                    if (!cell || !content || !stripe) return false;
                     const qreal inset = cell->property("contentInset").toReal();
                     if (qAbs(inset - expectedInset) > 0.5) return false;
                     const QPointF cellTopLeft = cell->mapToItem(healthMatrix, 0, 0);
@@ -4659,6 +4677,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         cell->height() + 0.5 < cell->property("implicitHeight").toReal()) {
                         return false;
                     }
+                    const QPointF stripeTopLeft = stripe->mapToItem(cell, 0, 0);
+                    const qreal stripeInset = page->property("_healthCellAccentStripeInset").toReal();
+                    if (qAbs(stripe->width() - page->property("_healthCellAccentStripeWidth").toReal()) > 0.5 ||
+                        stripeTopLeft.x() < stripeInset - 1.0 || stripeTopLeft.y() < stripeInset - 1.0 ||
+                        stripeTopLeft.x() + stripe->width() > cell->width() - stripeInset + 1.0 ||
+                        stripeTopLeft.y() + stripe->height() > cell->height() - stripeInset + 1.0) return false;
                     const QPointF contentTopLeft = content->mapToItem(cell, 0, 0);
                     if (contentTopLeft.x() < inset - 1.0 || contentTopLeft.y() < inset - 1.0 ||
                         content->height() + 0.5 < content->implicitHeight() ||
@@ -4674,11 +4698,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QQuickItem* tiles[] = {
                     maintenanceCpuTile, maintenanceWcetTile, maintenanceStackFreeTile, maintenanceStorageFreeTile};
                 const qreal expectedInset = page->property("_healthMaintenanceMetricInset").toReal();
+                const qreal expectedRadius = page->property("_healthMaintenanceMetricRadius").toReal();
+                const qreal expectedBorderWidth = page->property("_healthMaintenanceBorderWidth").toReal();
                 for (int index = 0; index < 4; ++index) {
                     QQuickItem* metric = metrics[index];
                     QQuickItem* tile = tiles[index];
                     if (!metric || !tile || qAbs(tile->property("contentInset").toReal() - expectedInset) > 0.5 ||
-                        qAbs(tile->property("radius").toReal() - 4.0) > 0.5 ||
+                        qAbs(tile->property("radius").toReal() - expectedRadius) > 0.5 ||
+                        qAbs(tile->property("borderWidth").toReal() - expectedBorderWidth) > 0.5 ||
                         tile->height() + 0.5 < tile->property("implicitHeight").toReal()) return false;
                     const QPointF tileTopLeft = tile->mapToItem(maintenanceResourceGrid, 0, 0);
                     if (tileTopLeft.x() < -1.0 || tileTopLeft.y() < -1.0 ||
@@ -4699,14 +4726,48 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        topLeft.x() + item->width() <= panel->width() + 1.0 &&
                        topLeft.y() + item->height() <= panel->height() + 1.0;
             };
+            const auto healthPagePanelsFit = [&]() {
+                if (!healthGrid || !healthOverview || !healthMatrixPanel || !healthSafety ||
+                    !itemFitsInPanel(healthOverview, healthGrid) ||
+                    !itemFitsInPanel(healthMatrixPanel, healthGrid) ||
+                    !itemFitsInPanel(healthSafety, healthGrid)) return false;
+                const int columns = healthGrid->property("columns").toInt();
+                const qreal gridWidth = healthGrid->width();
+                if (columns >= 12) {
+                    return qAbs(healthOverview->y() - healthMatrixPanel->y()) < 1.0 &&
+                           qAbs(healthOverview->y() - healthSafety->y()) < 1.0 &&
+                           healthOverview->x() < healthMatrixPanel->x() &&
+                           healthMatrixPanel->x() < healthSafety->x() &&
+                           qAbs(healthOverview->width() / healthMatrixPanel->width() - 0.5) < 0.12 &&
+                           qAbs(healthSafety->width() / healthMatrixPanel->width() - 0.5) < 0.12 &&
+                           qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0 &&
+                           qAbs(healthOverview->height() - healthSafety->height()) < 1.0;
+                }
+                if (columns >= 6) {
+                    return qAbs(healthOverview->y() - healthMatrixPanel->y()) < 1.0 &&
+                           healthOverview->x() < healthMatrixPanel->x() &&
+                           qAbs(healthOverview->width() - healthMatrixPanel->width()) < 1.0 &&
+                           healthSafety->y() > healthOverview->y() &&
+                           healthSafety->width() >= gridWidth * 0.90 &&
+                           qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0;
+                }
+                return healthOverview->y() < healthMatrixPanel->y() &&
+                       healthMatrixPanel->y() < healthSafety->y() &&
+                       healthOverview->width() >= gridWidth * 0.90 &&
+                       healthMatrixPanel->width() >= gridWidth * 0.90 &&
+                       healthSafety->width() >= gridWidth * 0.90;
+            };
             const auto maintenanceCardsFit = [&]() {
                 QQuickItem* cards[] = {maintenanceIdentityCard, maintenanceEventCard, maintenanceResourceCard};
                 QQuickItem* contents[] = {maintenanceIdentityColumn, maintenanceEventColumn, maintenanceResourceColumn};
                 const qreal expectedInset = page->property("_healthMaintenanceCardInset").toReal();
+                const qreal expectedRadius = page->property("_healthMaintenanceCardRadius").toReal();
+                const qreal expectedBorderWidth = page->property("_healthMaintenanceBorderWidth").toReal();
                 for (int index = 0; index < 3; ++index) {
                     QQuickItem* card = cards[index];
                     QQuickItem* content = contents[index];
-                    if (!card || !content || qAbs(card->property("radius").toReal() - 6.0) > 0.5 ||
+                    if (!card || !content || qAbs(card->property("radius").toReal() - expectedRadius) > 0.5 ||
+                        qAbs(card->property("frameBorderWidth").toReal() - expectedBorderWidth) > 0.5 ||
                         card->height() + 0.5 < card->property("implicitHeight").toReal() ||
                         !itemFitsInPanel(card, maintenanceContent)) return false;
                     const QPointF contentTopLeft = content->mapToItem(card, 0, 0);
@@ -4724,13 +4785,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 for (int index = 0; index < 6; ++index) {
                     QQuickItem* cell = primaryHealthCells[index];
                     QQuickItem* content = primaryHealthCellContents[index];
-                    if (!cell || !content ||
+                    QQuickItem* stripe = primaryHealthCellAccentStripes[index];
+                    if (!cell || !content || !stripe ||
                         qAbs(cell->property("contentInset").toReal() - expectedInset) > 0.5) return false;
                     const QPointF cellTopLeft = cell->mapToItem(healthPrimaryGrid, 0, 0);
                     if (cellTopLeft.x() < -1.0 || cellTopLeft.y() < -1.0 ||
                         cellTopLeft.x() + cell->width() > healthPrimaryGrid->width() + 1.0 ||
                         cellTopLeft.y() + cell->height() > healthPrimaryGrid->height() + 1.0 ||
                         cell->height() + 0.5 < cell->property("implicitHeight").toReal()) return false;
+                    const QPointF stripeTopLeft = stripe->mapToItem(cell, 0, 0);
+                    const qreal stripeInset = page->property("_healthCellAccentStripeInset").toReal();
+                    if (qAbs(stripe->width() - page->property("_healthCellAccentStripeWidth").toReal()) > 0.5 ||
+                        stripeTopLeft.x() < stripeInset - 1.0 || stripeTopLeft.y() < stripeInset - 1.0 ||
+                        stripeTopLeft.x() + stripe->width() > cell->width() - stripeInset + 1.0 ||
+                        stripeTopLeft.y() + stripe->height() > cell->height() - stripeInset + 1.0) return false;
                     const QPointF contentTopLeft = content->mapToItem(cell, 0, 0);
                     const qreal inset = cell->property("contentInset").toReal();
                     if (contentTopLeft.x() < inset - 1.0 || contentTopLeft.y() < inset - 1.0 ||
@@ -4817,6 +4885,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(maintenancePanelProvidesContentHeight(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(maintenanceCardsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(healthCells[0]->property("radius").toReal() - 6.0) < 0.5 &&
+                qAbs(healthCellAccentStripes[0]->width() - 3.0) < 0.5 &&
+                qAbs(maintenancePanel->property("radius").toReal() - 8.0) < 0.5 &&
+                qAbs(maintenanceIdentityCard->property("radius").toReal() - 6.0) < 0.5 &&
+                qAbs(maintenanceCpuTile->property("radius").toReal() - 4.0) < 0.5 &&
+                qAbs(maintenanceIdentityStripe->width() - 3.0) < 0.5, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
                 page->property("_healthMaintenanceCardInset").toReal() <
                     page->property("_dashboardPanelPadding").toReal() &&
                 page->property("_healthMaintenanceSectionSpacing").toReal() <
@@ -4828,6 +4903,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthPagePanelsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmRow->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmId->y(), prearmState->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmState->y(), prearmDetails->y(), 3000);
@@ -4842,6 +4918,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(healthPagePanelsFit(), 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(healthGrid), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), expectedDetailColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
@@ -5826,7 +5903,67 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const qreal baseFlightSidebarWidth = flightSidebar->width();
             const qreal baseFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
             const qreal basePanelPadding = page->property("_dashboardPanelPadding").toReal();
+            const qreal baseHealthCellInset = page->property("_healthCellInset").toReal();
+            const qreal baseHealthCellMinimumHeight = page->property("_healthCellMinimumHeight").toReal();
+            const qreal baseHealthCellContentSpacing = page->property("_healthCellContentSpacing").toReal();
+            const qreal baseHealthCellGridSpacing = page->property("_healthCellGridSpacing").toReal();
+            const qreal baseHealthPrimaryRowSpacing = page->property("_healthPrimaryRowSpacing").toReal();
+            const qreal baseHealthCellRadius = page->property("_healthCellRadius").toReal();
+            const qreal baseHealthCellBorderWidth = page->property("_healthCellBorderWidth").toReal();
+            const qreal baseHealthCellStripeWidth = page->property("_healthCellAccentStripeWidth").toReal();
+            const qreal baseHealthCellStripeInset = page->property("_healthCellAccentStripeInset").toReal();
+            const qreal baseHealthCellStripeRadius = page->property("_healthCellAccentStripeRadius").toReal();
+            const qreal baseHealthMaintenanceCardInset = page->property("_healthMaintenanceCardInset").toReal();
+            const qreal baseHealthMaintenanceSectionSpacing = page->property("_healthMaintenanceSectionSpacing").toReal();
+            const qreal baseHealthMaintenanceCardGap = page->property("_healthMaintenanceCardGap").toReal();
+            const qreal baseHealthMaintenanceMetricInset = page->property("_healthMaintenanceMetricInset").toReal();
+            const qreal baseHealthMaintenanceFrameRadius = page->property("_healthMaintenanceFrameRadius").toReal();
+            const qreal baseHealthMaintenanceCardRadius = page->property("_healthMaintenanceCardRadius").toReal();
+            const qreal baseHealthMaintenanceMetricRadius = page->property("_healthMaintenanceMetricRadius").toReal();
+            const qreal baseHealthMaintenanceBorderWidth = page->property("_healthMaintenanceBorderWidth").toReal();
+            const qreal baseHealthMaintenanceStripeWidth = page->property("_healthMaintenanceAccentStripeWidth").toReal();
+            const qreal baseHealthMaintenanceStripeInset = page->property("_healthMaintenanceAccentStripeInset").toReal();
+            const qreal baseHealthMaintenanceStripeRadius = page->property("_healthMaintenanceAccentStripeRadius").toReal();
             QVERIFY(basePanelPadding > 0.0);
+            QVERIFY(baseHealthCellInset > 0.0);
+            QVERIFY(baseHealthMaintenanceCardInset > 0.0);
+            const auto healthPageDensityScales = [&](qreal contentScale, qreal shapeScale) {
+                const auto grows = [](qreal value, qreal baseline, qreal scale) {
+                    return value + 0.5 >= baseline * scale;
+                };
+                return grows(page->property("_healthCellInset").toReal(), baseHealthCellInset, contentScale) &&
+                       grows(page->property("_healthCellMinimumHeight").toReal(), baseHealthCellMinimumHeight, contentScale) &&
+                       grows(page->property("_healthCellContentSpacing").toReal(), baseHealthCellContentSpacing, contentScale) &&
+                       grows(page->property("_healthCellGridSpacing").toReal(), baseHealthCellGridSpacing, contentScale) &&
+                       grows(page->property("_healthPrimaryRowSpacing").toReal(), baseHealthPrimaryRowSpacing, contentScale) &&
+                       grows(page->property("_healthMaintenanceCardInset").toReal(), baseHealthMaintenanceCardInset, contentScale) &&
+                       grows(page->property("_healthMaintenanceSectionSpacing").toReal(), baseHealthMaintenanceSectionSpacing, contentScale) &&
+                       grows(page->property("_healthMaintenanceCardGap").toReal(), baseHealthMaintenanceCardGap, contentScale) &&
+                       grows(page->property("_healthMaintenanceMetricInset").toReal(), baseHealthMaintenanceMetricInset, contentScale) &&
+                       grows(page->property("_healthCellRadius").toReal(), baseHealthCellRadius, shapeScale) &&
+                       grows(page->property("_healthCellBorderWidth").toReal(), baseHealthCellBorderWidth, shapeScale) &&
+                       grows(page->property("_healthCellAccentStripeWidth").toReal(), baseHealthCellStripeWidth, shapeScale) &&
+                       grows(page->property("_healthCellAccentStripeInset").toReal(), baseHealthCellStripeInset, shapeScale) &&
+                       grows(page->property("_healthCellAccentStripeRadius").toReal(), baseHealthCellStripeRadius, shapeScale) &&
+                       grows(page->property("_healthMaintenanceFrameRadius").toReal(), baseHealthMaintenanceFrameRadius, shapeScale) &&
+                       grows(page->property("_healthMaintenanceCardRadius").toReal(), baseHealthMaintenanceCardRadius, shapeScale) &&
+                       grows(page->property("_healthMaintenanceMetricRadius").toReal(), baseHealthMaintenanceMetricRadius, shapeScale) &&
+                       grows(page->property("_healthMaintenanceBorderWidth").toReal(), baseHealthMaintenanceBorderWidth, shapeScale) &&
+                       grows(page->property("_healthMaintenanceAccentStripeWidth").toReal(), baseHealthMaintenanceStripeWidth, shapeScale) &&
+                       grows(page->property("_healthMaintenanceAccentStripeInset").toReal(), baseHealthMaintenanceStripeInset, shapeScale) &&
+                       grows(page->property("_healthMaintenanceAccentStripeRadius").toReal(), baseHealthMaintenanceStripeRadius, shapeScale) &&
+                       grows(healthCells[0]->property("radius").toReal(), baseHealthCellRadius, shapeScale) &&
+                       grows(healthCells[0]->property("borderWidth").toReal(), baseHealthCellBorderWidth, shapeScale) &&
+                       grows(healthCellAccentStripes[0]->width(), baseHealthCellStripeWidth, shapeScale) &&
+                       grows(maintenancePanel->property("radius").toReal(), baseHealthMaintenanceFrameRadius, shapeScale) &&
+                       grows(maintenancePanel->property("frameBorderWidth").toReal(), baseHealthMaintenanceBorderWidth, shapeScale) &&
+                       grows(maintenanceIdentityCard->property("radius").toReal(), baseHealthMaintenanceCardRadius, shapeScale) &&
+                       grows(maintenanceIdentityCard->property("frameBorderWidth").toReal(), baseHealthMaintenanceBorderWidth, shapeScale) &&
+                       grows(maintenanceCpuTile->property("radius").toReal(), baseHealthMaintenanceMetricRadius, shapeScale) &&
+                       grows(maintenanceCpuTile->property("borderWidth").toReal(), baseHealthMaintenanceBorderWidth, shapeScale) &&
+                       grows(maintenanceIdentityStripe->width(), baseHealthMaintenanceStripeWidth, shapeScale) &&
+                       healthPagePanelsFit() && healthDetailCardsFit();
+            };
             const qreal baseDashboardHeaderInset = page->property("_dashboardHeaderInset").toReal();
             const qreal baseDashboardHeaderAccentWidth =
                 page->property("_dashboardHeaderAccentWidth").toReal();
@@ -5960,9 +6097,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(dashboardHealthTab, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_1")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
+            QTRY_VERIFY_WITH_TIMEOUT(healthPageDensityScales(1.25, 1.35) &&
                                          maintenanceResourceMetricsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&
@@ -6032,9 +6170,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(dashboardHealthTab, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_1")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
+            QTRY_VERIFY_WITH_TIMEOUT(healthPageDensityScales(1.6, 1.8) &&
                                          maintenanceResourceMetricsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(itemFitsInPanel(maintenanceIdentityColumn, maintenancePanel) &&
                                          itemFitsInPanel(maintenanceEventColumn, maintenancePanel) &&

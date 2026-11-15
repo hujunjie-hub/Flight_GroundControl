@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：7.22
+- 版本：7.23
 - 日期：2026-11-16
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；拓扑状态图例同步显示六域实时已接收/超时/等待数量，不合成整机健康分；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；接收机失效保护按触发/未触发及 RC family freshness 独立着色；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量、严重度分布实时计数和明确空态；动态标注优先摘要 4 条与事件历史最近 8 条的展示范围；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，Canvas 端点文字统一继承 ScreenTools 字体族与 micro 点字号，拓扑矢量几何按 ScreenTools 密度缩放；左侧整机安全状态条与控制权行按 ScreenTools 内容高度自适应，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色；导航时序页补齐本地时钟纪律六态分色与 FCU 时间戳安全整数有效性，时间线标记颜色与排序状态一致；Phase 2.75 总览页标题区/只读徽标/四页页签与共享 HeroPanel/StatusCard 外框按 ScreenTools 密度缩放，保留 100% 基准尺寸并覆盖 150%/200% UI Scale。；飞行健康页传感器实例、预检逐项结果与任务资源详情完成卡片化和指标分格，保留原始字段与 freshness/validity 语义；Phase 2.53 飞行健康页传感器实例头部、资源指标卡片与预检排版按 ScreenTools 字体度量适配高 DPI 和窄屏，所有诊断值保持换行完整；Phase 2.55 传感器、预检与资源详情卡片高度严格跟随 ScreenTools 缩放内边距和内容隐式高度，避免高 DPI 下内容裁切；Phase 2.61 健康矩阵单元与维护横条统一使用 ScreenTools 缩放内边距、内容驱动高度和长诊断文本换行；Phase 2.63 导航时序页能力/时间/域状态子网格间距及 MetricReadout 内部间距统一按 ScreenTools 字体度量缩放，指标标签与状态文字支持窄宽度换行；Phase 2.66 遥控手型切换、双摇杆、逻辑轴刻度与多链路指标卡片按 ScreenTools 字体度量缩放，摇杆/指标卡片内容驱动高度并保留窄屏换行；Phase 2.68 飞控配置顶栏、品牌分隔线与左侧导航宽度/间距/按钮内边距按 ScreenTools 字体度量缩放，100% 保持 56 px 顶栏与 160 px 侧栏基线；Phase 2.71 飞行健康页 13 域矩阵与六个重点域状态使用独立 ScreenTools 缩放密度 token，减少非必要内边距和行间距，保持桌面 3:6:3 主视觉比例；Phase 2.73 维护与可靠性下半区拆分为启动身份、最近异常、预检/资源三张独立 DPI 自适应卡片；Phase 2.76 导航时序页真实 UI Scale 回归补齐页面网格、四个面板、UTC 时间戳和时间线标签/序号/标记/值的完整边界及防重叠检查；Phase 2.77 FCU 单调时间值列按实际文本 implicitWidth 自适应扩展，避免较长有效启动时间在高 DPI 下裁切；Phase 2.78 总览趋势卡片/Canvas 与顶部三项导航 KPI 的间距和绘图几何按 ScreenTools 密度缩放，64 px 绘图区保持 100% 基准并覆盖 150%/200% UI Scale；Phase 2.78 总览趋势卡片网格/卡片内容间距与 Canvas 绘图几何按 ScreenTools 密度缩放，64 px 绘图区保持 100% 基准并覆盖 150%/200% UI Scale
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -1554,3 +1554,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink FlightTelemetryPageUITest 将顶部三项导航 KPI、趋势网格、趋势卡、Canvas、时间轴和页脚边界纳入总览页 100%/150%/200% UI Scale 检查；验证 KPI MetricReadout spacing 比例与 overviewKpisFit、趋势网格行列间距、卡片内边距/行距、64/96/128 px 绘图区、footer 标签与父容器边界，测试结束恢复原始 UI Scale。
 - 静态字体契约新增 KPI MetricReadout、趋势网格/卡片/Canvas 绘图几何的密度 token 检查；G15 manifest 增加导航 KPI、趋势绘图区基准、绘图元素缩放和高 DPI 父子边界验收项。
 - 不修改 1 Hz/60 点采样、有效样本范围、断点计数、WAIT/NOW/GAP 状态、Vehicle/boot reset、navigation capability、family freshness 或趋势数据来源；按用户要求不运行 CI/Build/Unit/Integration/Windows Release，新增回归 NOT_RUN，等待集中 exact-HEAD 验收。
+
+
+## 124. Phase 2.79 飞行健康页外框与强调色条高 DPI 适配（2026-11-16）
+
+- 健康矩阵 HealthCell 的圆角、边框宽度、左侧 freshness 色条宽度/内缩/圆角统一使用 ScreenTools 字体像素密度 token；100% 基准保持 6 px 圆角、1 px 边框、3 px 色条、1 px 色条内缩和 2 px 色条圆角。
+- 维护与可靠性区域的外框、三张维护卡、四项资源指标 tile 的圆角与边框宽度，以及三张维护卡的左侧强调色条几何同步随 UI Scale 放大；100% 基准分别保持外框/卡片/tile 圆角 8/6/4 px。
+- 不改变 13 域矩阵、六个重点域、维护三卡、资源指标的字段/文案/单位/精度/对象名、freshness/validity、状态色或卡片响应式断点；不改变遥测、MAVLink、FactGroup、飞控行为和只读安全边界。
+- MockLink FlightTelemetryPageUITest 在真实 100%/150%/200% UI Scale 下验证健康单元和维护卡片装饰几何按比例增长且 100% 基准不变；同时检查 3:6:3 桌面、3:3:6 中屏、单列窄屏的三张主视觉卡片位置/比例/父容器边界，以及 13 域矩阵和六个重点域所有 freshness 色条的父子边界。
+- 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待后续集中 exact-HEAD 验收。

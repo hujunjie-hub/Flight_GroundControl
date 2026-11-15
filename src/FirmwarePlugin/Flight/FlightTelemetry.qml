@@ -144,6 +144,19 @@ SetupPage {
     readonly property real _healthMaintenanceMetricInset: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.24)
     readonly property real _dashboardVerticalDensityScale: ScreenTools.defaultFontPixelHeight / 16.0
     readonly property real _dashboardHorizontalDensityScale: ScreenTools.defaultFontPixelWidth / 8.0
+    // Health-page framing keeps the 100% reference geometry and scales its decorative edges at high DPI.
+    readonly property real _healthCellRadius: 6 * _dashboardVerticalDensityScale
+    readonly property real _healthCellBorderWidth: Math.max(1, _dashboardVerticalDensityScale)
+    readonly property real _healthCellAccentStripeWidth: 3 * _dashboardHorizontalDensityScale
+    readonly property real _healthCellAccentStripeInset: 1 * _dashboardVerticalDensityScale
+    readonly property real _healthCellAccentStripeRadius: 2 * _dashboardVerticalDensityScale
+    readonly property real _healthMaintenanceFrameRadius: 8 * _dashboardVerticalDensityScale
+    readonly property real _healthMaintenanceCardRadius: 6 * _dashboardVerticalDensityScale
+    readonly property real _healthMaintenanceMetricRadius: 4 * _dashboardVerticalDensityScale
+    readonly property real _healthMaintenanceBorderWidth: Math.max(1, _dashboardVerticalDensityScale)
+    readonly property real _healthMaintenanceAccentStripeWidth: 3 * _dashboardHorizontalDensityScale
+    readonly property real _healthMaintenanceAccentStripeInset: 1 * _dashboardVerticalDensityScale
+    readonly property real _healthMaintenanceAccentStripeRadius: 2 * _dashboardVerticalDensityScale
     readonly property real _dashboardOuterSpacing: (_compactDashboardVertical ? 8 : 12) * _dashboardVerticalDensityScale
     readonly property real _dashboardHeaderInset: (_compactDashboardVertical ? 3 : 5) * _dashboardVerticalDensityScale
     readonly property real _dashboardHeaderExtraHeight: (_compactDashboardVertical ? 6 : 10) * _dashboardVerticalDensityScale
@@ -3399,9 +3412,10 @@ SetupPage {
                 visible: root._activeDashboardPage === 1
                 Layout.fillWidth: true
                 implicitHeight: maintenanceRow.implicitHeight + root._dashboardPanelPadding * 2
-                radius: 8
+                radius: root._healthMaintenanceFrameRadius
                 color: "#06232B"
-                border.width: 1
+                readonly property real frameBorderWidth: root._healthMaintenanceBorderWidth
+                border.width: frameBorderWidth
                 border.color: "#0B6873"
                 GridLayout {
                     id: maintenanceRow
@@ -3417,17 +3431,19 @@ SetupPage {
                         Layout.fillHeight: true
                         Layout.minimumWidth: 0
                         implicitHeight: maintenanceIdentityContent.implicitHeight + root._healthMaintenanceCardInset * 2
-                        radius: 6
+                        radius: root._healthMaintenanceCardRadius
                         color: "#082B33"
-                        border.width: 1
+                        readonly property real frameBorderWidth: root._healthMaintenanceBorderWidth
+                        border.width: frameBorderWidth
                         border.color: "#14515D"
                         Rectangle {
-                            width: 3
+                            objectName: "flightTelemetry_healthMaintenanceIdentityStripe"
+                            width: root._healthMaintenanceAccentStripeWidth
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            radius: 2
+                            anchors.margins: root._healthMaintenanceAccentStripeInset
+                            radius: root._healthMaintenanceAccentStripeRadius
                             color: "#49C7E7"
                         }
                         ColumnLayout {
@@ -3456,17 +3472,19 @@ SetupPage {
                         Layout.fillHeight: true
                         Layout.minimumWidth: 0
                         implicitHeight: maintenanceEventContent.implicitHeight + root._healthMaintenanceCardInset * 2
-                        radius: 6
+                        radius: root._healthMaintenanceCardRadius
                         color: "#082B33"
-                        border.width: 1
+                        readonly property real frameBorderWidth: root._healthMaintenanceBorderWidth
+                        border.width: frameBorderWidth
                         border.color: "#14515D"
                         Rectangle {
-                            width: 3
+                            objectName: "flightTelemetry_healthMaintenanceEventStripe"
+                            width: root._healthMaintenanceAccentStripeWidth
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            radius: 2
+                            anchors.margins: root._healthMaintenanceAccentStripeInset
+                            radius: root._healthMaintenanceAccentStripeRadius
                             color: root._latestEventSummaryColor()
                         }
                         ColumnLayout {
@@ -3497,17 +3515,19 @@ SetupPage {
                         Layout.fillHeight: true
                         Layout.minimumWidth: 0
                         implicitHeight: maintenanceResourceContent.implicitHeight + root._healthMaintenanceCardInset * 2
-                        radius: 6
+                        radius: root._healthMaintenanceCardRadius
                         color: "#082B33"
-                        border.width: 1
+                        readonly property real frameBorderWidth: root._healthMaintenanceBorderWidth
+                        border.width: frameBorderWidth
                         border.color: "#14515D"
                         Rectangle {
-                            width: 3
+                            objectName: "flightTelemetry_healthMaintenanceResourceStripe"
+                            width: root._healthMaintenanceAccentStripeWidth
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            radius: 2
+                            anchors.margins: root._healthMaintenanceAccentStripeInset
+                            radius: root._healthMaintenanceAccentStripeRadius
                             color: "#45D39A"
                         }
                         ColumnLayout {
@@ -5831,22 +5851,27 @@ SetupPage {
         readonly property string statusText: root._familyStatus(availableFact)
         readonly property color statusColor: root._familyStatusColor(availableFact)
         readonly property real contentInset: root._healthCellInset
+        readonly property real borderWidth: root._healthCellBorderWidth
+        readonly property real accentStripeWidth: root._healthCellAccentStripeWidth
+        readonly property real accentStripeInset: root._healthCellAccentStripeInset
+        readonly property real accentStripeRadius: root._healthCellAccentStripeRadius
 
         implicitWidth: 150
         implicitHeight: Math.max(root._healthCellMinimumHeight,
                                  healthCellContent.implicitHeight + contentInset * 2)
-        radius: 6
+        radius: root._healthCellRadius
         color: "#082B33"
-        border.width: 1
+        border.width: healthCell.borderWidth
         border.color: root._dashboardPanelBorder
 
         Rectangle {
-            width: 3
+            objectName: healthCell.objectName + "_accentStripe"
+            width: healthCell.accentStripeWidth
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            anchors.margins: 1
-            radius: 2
+            anchors.margins: healthCell.accentStripeInset
+            radius: healthCell.accentStripeRadius
             color: healthCell.statusColor
         }
 
@@ -6172,13 +6197,14 @@ SetupPage {
         required property string valueText
         required property color valueColor
         readonly property real contentInset: root._healthMaintenanceMetricInset
+        readonly property real borderWidth: root._healthMaintenanceBorderWidth
 
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         implicitHeight: metricValue.implicitHeight + contentInset * 2
-        radius: 4
+        radius: root._healthMaintenanceMetricRadius
         color: "#06232B"
-        border.width: 1
+        border.width: healthMaintenanceMetricTile.borderWidth
         border.color: "#14515D"
 
         QGCLabel {
