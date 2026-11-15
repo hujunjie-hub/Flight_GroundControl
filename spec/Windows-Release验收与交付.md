@@ -825,7 +825,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - FCU 单调时序卡的导航数据与时间同步状态必须分别呈现 family 状态徽标，文案、颜色与接收年龄各自独立，不得以单一聚合状态替代。
 - 默认 840 px 及以上两分组并排，低于该阈值上下堆叠；阈值与分组最小宽度必须随 ScreenTools 字体宽度放大，避免高 DPI 徽标挤压；时间戳始终跨列。覆盖 1600/1672×941 与 1000/900/840/839/760/759/700/400 px，验证组卡/指标/时间戳完整落在父卡片内。
 - 保留 FCU 单调时间戳有效值排序、无效值置后、相同时间戳确定性排序和 UTC/FCU 时间基准独立性；不得改变 MAVLink/FactGroup/ICD/枚举/freshness/时间精度。
-- 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 100/125/150/200% DPI 实机截图签收。
+- MockLink UI Integration 通过真实 uiScalePercent 100/150/200% 检查分组阈值、分组最小宽度、状态徽标、时间戳和 FCU 单调时间线行高；本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release，新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 100/125/150/200% DPI 实机截图签收。
 
 ### G17 FCU 单调时序标记/序号/时间值颜色一致性（2026-11-16）
 
