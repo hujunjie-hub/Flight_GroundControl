@@ -1039,3 +1039,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本阶段只补充布局回归断言和文档，不修改三栏现有 3/5/4、2/2/2 布局比例、HeroPanel 默认高度策略或飞控遥测语义。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增等高断言为 NOT_RUN，等待集中验收。
 
+
+
+## 75. Phase 2.29 时间同步指标末行完整占宽与内容边界回归（2026-11-15）
+
+- 时间同步主状态保持 2 列（宽度 ≥760 px）/1 列（窄屏）响应式结构；第五项「UTC 不确定度」在 2 列布局下横跨两列，形成完整的底部信息行，避免最后一项孤立在左侧。
+- UTC 不确定度仍独立服从 UTC validity 与 time family freshness 门控；本次只改变布局，不改变数值、颜色、有效性判定和时间质量枚举语义。
+- MockLink UI Integration 增加 1600 px 桌面和 1000/900/700/400 px 响应式断言：双列时末行宽度至少为普通指标行的 1.8 倍，单列时与普通指标行等宽；末行位于 UTC 时间戳之后，五项时间指标均完整落在时间同步主视觉卡片边界内。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、spec/README.md 与 Windows Release G15 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间同步服务、freshness 阈值、VehicleLinkManager 或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
