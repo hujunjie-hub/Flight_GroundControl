@@ -3606,6 +3606,90 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             }
+
+            // Exercise both sides of the navigation page's exact desktop/medium/narrow breakpoints.
+            QQuickItem* navigationBoundaryTab =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
+            QVERIFY(navigationBoundaryTab);
+            QVERIFY(_clickItemAt(navigationBoundaryTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
+            QQuickItem* navigationBoundaryGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationPageGrid"), 3000);
+            QQuickItem* navigationBoundaryPanels[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationOverview"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilityPanel"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimePanel"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000)};
+            QQuickItem* navigationBoundaryCapabilities =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
+            QQuickItem* navigationBoundaryTime =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
+            QQuickItem* navigationBoundaryDomains =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksDomains"), 3000);
+            QVERIFY(navigationBoundaryGrid);
+            for (QQuickItem* panel : navigationBoundaryPanels) QVERIFY(panel);
+            QVERIFY(navigationBoundaryCapabilities);
+            QVERIFY(navigationBoundaryTime);
+            QVERIFY(navigationBoundaryDomains);
+            const int navigationBoundaryWidths[] = {1280, 1279, 760, 759};
+            const int navigationExpectedColumns[] = {12, 6, 6, 1};
+            for (int boundaryIndex = 0; boundaryIndex < 4; ++boundaryIndex) {
+                page->setWidth(navigationBoundaryWidths[boundaryIndex]);
+                const int width = navigationBoundaryWidths[boundaryIndex];
+                QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryGrid->property("columns").toInt(),
+                                          navigationExpectedColumns[boundaryIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryCapabilities->property("columns").toInt(),
+                                          width >= 1280 ? 4 : width >= 760 ? 2 : 1, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryTime->property("columns").toInt(),
+                                          width >= 760 ? 2 : 1, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryDomains->property("columns").toInt(),
+                                          width >= 760 ? 2 : 1, 3000);
+                if (width >= 1280) {
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryPanels[0]->y(),
+                                              navigationBoundaryPanels[1]->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(navigationBoundaryPanels[2]->y(),
+                                              navigationBoundaryPanels[3]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationBoundaryPanels[2]->y() >
+                                                 navigationBoundaryPanels[0]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationBoundaryPanels[0]->x() <
+                                                 navigationBoundaryPanels[1]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationBoundaryPanels[2]->x() <
+                                                 navigationBoundaryPanels[3]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationBoundaryPanels[1]->width() /
+                                 navigationBoundaryPanels[0]->width() - 2.0) < 0.05, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationBoundaryPanels[2]->width() /
+                                 navigationBoundaryPanels[3]->width() - 2.0) < 0.05, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationBoundaryPanels[0]->height() -
+                             navigationBoundaryPanels[1]->height()) < 1.0, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        qAbs(navigationBoundaryPanels[2]->height() -
+                             navigationBoundaryPanels[3]->height()) < 1.0, 3000);
+                } else {
+                    for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationBoundaryPanels[panelIndex - 1]->y() <
+                                navigationBoundaryPanels[panelIndex]->y(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            qAbs(navigationBoundaryPanels[panelIndex - 1]->x() -
+                                 navigationBoundaryPanels[panelIndex]->x()) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            qAbs(navigationBoundaryPanels[panelIndex - 1]->width() -
+                                 navigationBoundaryPanels[panelIndex]->width()) < 1.0, 3000);
+                    }
+                }
+            }
+            page->setWidth(1600);
+            QQuickItem* restoreHealthTab =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
+            QVERIFY(restoreHealthTab);
+            QVERIFY(_clickItemAt(restoreHealthTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+
             maintenancePrearm = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthMaintenancePrearmSummary"), 3000);
             QVERIFY(maintenancePrearm);
