@@ -832,6 +832,41 @@ bool Fact::vehicleRebootRequiredKnown() const
     return _metaData && _metaData->vehicleRebootRequiredKnown();
 }
 
+QString Fact::vehicleFamily() const
+{
+    return _metaData ? _metaData->vehicleFamily() : QString();
+}
+
+QStringList Fact::modelVariants() const
+{
+    return _metaData ? _metaData->modelVariants() : QStringList();
+}
+
+QString Fact::controlLaw() const
+{
+    return _metaData ? _metaData->controlLaw() : QString();
+}
+
+QString Fact::tuningPolicy() const
+{
+    return _metaData ? _metaData->tuningPolicy() : QString();
+}
+
+QString Fact::updatePolicy() const
+{
+    return _metaData ? _metaData->updatePolicy() : QString();
+}
+
+QVariantList Fact::dependencies() const
+{
+    return _metaData ? _metaData->dependencies() : QVariantList();
+}
+
+QVariantList Fact::validationRules() const
+{
+    return _metaData ? _metaData->validationRules() : QVariantList();
+}
+
 bool Fact::qgcRebootRequired() const
 {
     if (_metaData) {
