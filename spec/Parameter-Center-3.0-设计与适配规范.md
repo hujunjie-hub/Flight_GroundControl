@@ -233,6 +233,12 @@
 
 当前元数据已包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces、rebootRequired。Phase 2 首轮已增加 domain 分类，但尚未提供完整的机型适用性、控制律和在线调参策略；不能仅根据参数名前缀或 domain 猜测所有机型兼容性。
 
+跨仓库模型资料核查（2026-11-15）：
+- Flight 仓库当前 config/vehicle_model.yaml 仅登记 profile=QUAD_X4，status=SIM_ONLY；文件明确说明这是 synthetic X4 fixture，电机编号和偏航力矩符号没有硬件证据，hardware_thrust_curve 仍为 TBD。
+- FlightFirmwarePlugin 当前只把 gitHash=FLTSIL01 且固件版本不低于 1.9.2 的 Vehicle 识别为 SIL。
+- Flight_GroundControl 当前没有独立 vehicle model catalog / registry。因而 QUAD_X4 不能被当作已验证的实机模型供用户选择，也不能将 SIM_ONLY 参数映射直接开放给硬件飞行。
+- 后续模型下拉框必须来自正式注册的 profile；SIL 专用 profile 只有在 Flight SIL 身份校验通过时才可显示。实机 profile 必须补齐硬件证据、构型/电机映射、推力曲线和兼容性审查后才能开放。
+
 ### 6.2 元数据扩展目标
 
 保留现有字段，向后兼容地增加以下字段（仅在源码/固件真实支持并完成审查后启用）：
@@ -463,7 +469,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
-- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态；由于尚无独立机型注册目录，本轮不显示伪造的模型下拉选项。模型注册、兼容性阻断和真实模型切换仍是 Phase 2 未完成项。
+- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态；由于 GroundControl 尚无独立机型注册目录，本轮不显示伪造的模型下拉选项。跨仓库核查发现 Flight/config/vehicle_model.yaml 只有 QUAD_X4 / SIM_ONLY 合成模型，尚无实机证据；该 profile 不得用于实机模型绑定。模型注册、兼容性阻断和真实模型切换仍是 Phase 2 未完成项。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
