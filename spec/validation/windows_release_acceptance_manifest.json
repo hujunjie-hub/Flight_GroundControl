@@ -523,7 +523,17 @@
         "gimbal_link_recovery_invalidates_both_cached_manager_and_attitude_status_until_new_frames",
         "mocklink_gimbal_configure_zero_clears_minus_one_preserves_minus_two_sets_sender",
         "mocklink_gimbal_configure_partial_or_foreign_minus_three_release_is_denied",
-        "mocklink_gimbal_pitch_yaw_commands_require_primary_or_secondary_owner"
+        "mocklink_gimbal_pitch_yaw_commands_require_primary_or_secondary_owner",
+        "storage_page_exposes_profile_id_reason_code_and_fcu_uptime",
+        "storage_metadata_is_hidden_after_link_loss_and_storage_staleness",
+        "gimbal_owner_sysid_compid_pairs_must_be_both_zero_or_both_nonzero",
+        "mocklink_gimbal_configure_rejects_half_cleared_primary_and_secondary_pairs",
+        "gimbal_page_requires_explicit_acquire_before_attitude_control",
+        "gimbal_pitch_yaw_center_and_joystick_controls_follow_axis_capabilities",
+        "gimbal_manager_set_attitude_rate_control_moves_and_zero_rate_stops",
+        "gimbal_rate_commands_mask_unsupported_axes",
+        "mocklink_gimbal_rejects_unknown_device_ids_nonfinite_targets_and_unknown_flags",
+        "mocklink_gimbal_yaw_lock_and_retract_round_trip_in_attitude_status"
       ]
     }
   ],
