@@ -5762,6 +5762,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                                navigationTimeBadgeMetricsForDpi[index])) return false;
                     if (!navigationDpiItemFits(navigationTimelineRowsForDpi[index],
                                                navigationChecksPanelForDpi) ||
+                        !navigationDpiItemFits(navigationTimelineRowsForDpi[index],
+                                               navigationTimelineForDpi) ||
                         !navigationDpiItemFits(navigationTimelineValuesForDpi[index],
                                                navigationTimelineRowsForDpi[index]) ||
                         navigationTimelineRowsForDpi[index]->height() + 1.0 <
