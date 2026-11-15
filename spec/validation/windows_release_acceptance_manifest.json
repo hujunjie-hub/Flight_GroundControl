@@ -596,7 +596,8 @@
         "gimbal_device_155_has_independent_pitch_yaw_capabilities_without_yaw_lock_or_retract",
         "acquiring_and_moving_device_155_does_not_change_device_154_attitude_or_owner_pair",
         "unknown_gimbal_device_id_is_denied_without_mutating_any_device",
-        "gimbal_device_155_release_clears_only_device_155_owner_pair"
+        "gimbal_device_155_release_clears_only_device_155_owner_pair",
+        "gimbal_rate_control_on_device_155_changes_only_device_155_attitude_and_zero_rate_stops_only_device_155"
       ]
     }
   ],
