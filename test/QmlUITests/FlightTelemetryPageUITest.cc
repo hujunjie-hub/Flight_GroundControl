@@ -779,6 +779,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(tabs);
             QVERIFY(title);
             page->setWidth(1600);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("spacing").toInt(), 12, 3000);
+            QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
+            QQuickItem* overviewFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
+            QVERIFY(summaryBand);
+            QVERIFY(overviewFlight);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryBand->property("radius").toInt(), 8, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("radius").toInt(), 8, 3000);
             const QString pageGrids[] = {
                 QStringLiteral("flightTelemetry_heroGrid"),
                 QStringLiteral("flightTelemetry_healthPageGrid"),
