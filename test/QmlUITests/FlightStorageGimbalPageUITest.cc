@@ -87,7 +87,9 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             QQuickItem *reasonCode = findVisibleItem(_rootItem, QStringLiteral("flightStorage_reasonCode"), 3000);
             QQuickItem *fcuUptime = findVisibleItem(_rootItem, QStringLiteral("flightStorage_fcuUptime"), 3000);
             QQuickItem *eventDrops = findVisibleItem(_rootItem, QStringLiteral("flightStorage_eventDrops"), 3000);
+            QQuickItem *eventDropsDelta = findVisibleItem(_rootItem, QStringLiteral("flightStorage_eventDropsDelta"), 3000);
             QQuickItem *logDrops = findVisibleItem(_rootItem, QStringLiteral("flightStorage_logDrops"), 3000);
+            QQuickItem *logDropsDelta = findVisibleItem(_rootItem, QStringLiteral("flightStorage_logDropsDelta"), 3000);
             QQuickItem *logNotice = findVisibleItem(_rootItem, QStringLiteral("flightStorage_logNotice"), 3000);
             QVERIFY(page);
             QVERIFY(connection);
@@ -98,7 +100,9 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             QVERIFY(reasonCode);
             QVERIFY(fcuUptime);
             QVERIFY(eventDrops);
+            QVERIFY(eventDropsDelta);
             QVERIFY(logDrops);
+            QVERIFY(logDropsDelta);
             QVERIFY(logNotice);
             QTRY_COMPARE_WITH_TIMEOUT(connection->property("text").toString(), QStringLiteral("等待遥测"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(sdState->property("text").toString(), QStringLiteral("等待遥测"), 3000);
@@ -108,6 +112,8 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             const uint8_t componentId = static_cast<uint8_t>(vehicle->compId());
             const uint64_t bootId = 0x123456789ABCDEF0ULL;
             const uint32_t profileIdValue = 7;
+            uint32_t eventDropsValue = 2;
+            uint32_t logDropsValue = 3;
             auto sendStorageStatus = [&](uint64_t timeBootUs, uint32_t validityMask,
                                          uint16_t sdStateValue, uint16_t norStateValue,
                                          uint32_t freeKib) {
@@ -117,8 +123,8 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
                 payload.profile_id = profileIdValue;
                 payload.validity_mask = validityMask;
                 payload.settings_generation = 7;
-                payload.critical_event_drops = 2;
-                payload.log_drops = 3;
+                payload.critical_event_drops = eventDropsValue;
+                payload.log_drops = logDropsValue;
                 payload.reason_code = 23;
                 payload.free_kib = freeKib;
                 payload.sd_state = sdStateValue;
@@ -140,6 +146,10 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             QTRY_COMPARE_WITH_TIMEOUT(fcuUptime->property("text").toString(), QStringLiteral("01:02:03"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(eventDrops->property("text").toString(), QStringLiteral("2"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(logDrops->property("text").toString(), QStringLiteral("3"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(eventDropsDelta->property("text").toString(),
+                                      QStringLiteral("基线已建立"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(logDropsDelta->property("text").toString(),
+                                      QStringLiteral("基线已建立"), 3000);
 
             // Communication loss must override a still-young cached storage frame.
             mockLink->setCommLost(true);
@@ -188,6 +198,32 @@ void FlightStorageGimbalPageUITest::_testStoragePageUsesFreshValidityGatedTeleme
             // Refresh once more, then verify the independent 5.5 s freshness timeout.
             sendStorageStatus(3725400000ULL, 0x07, 1, 2, 1048576);
             QTRY_COMPARE_WITH_TIMEOUT(freeSpace->property("text").toString(), QStringLiteral("1.00 GiB"), 3000);
+
+            // Drop counters are cumulative: show only the increment since the
+            // preceding storage frame, then return to zero when no new drops occur.
+            eventDropsValue = 5;
+            logDropsValue = 7;
+            sendStorageStatus(3725500000ULL, 0x07, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(eventDropsDelta->property("text").toString(),
+                                      QStringLiteral("本帧新增 +3"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(logDropsDelta->property("text").toString(),
+                                      QStringLiteral("本帧新增 +4"), 3000);
+
+            sendStorageStatus(3725600000ULL, 0x07, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(eventDropsDelta->property("text").toString(),
+                                      QStringLiteral("本帧无新增"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(logDropsDelta->property("text").toString(),
+                                      QStringLiteral("本帧无新增"), 3000);
+
+            // A counter rollback is surfaced as a reset, never as a negative delta.
+            eventDropsValue = 1;
+            logDropsValue = 2;
+            sendStorageStatus(3725700000ULL, 0x07, 1, 2, 1048576);
+            QTRY_COMPARE_WITH_TIMEOUT(eventDropsDelta->property("text").toString(),
+                                      QStringLiteral("计数重置 / 回退"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(logDropsDelta->property("text").toString(),
+                                      QStringLiteral("计数重置 / 回退"), 3000);
+
             // Storage freshness is stricter than the generic telemetry-family cache:
             // cached values disappear after 5.5 s without another storage frame.
             QTRY_COMPARE_WITH_TIMEOUT(connection->property("text").toString(), QStringLiteral("数据超时"), 7000);
