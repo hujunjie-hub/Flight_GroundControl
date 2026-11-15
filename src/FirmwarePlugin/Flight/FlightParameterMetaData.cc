@@ -99,6 +99,10 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             !validNumericField(entry, QStringLiteral("default")) ||
             (entry.contains(QStringLiteral("rebootRequired")) &&
              !entry.value(QStringLiteral("rebootRequired")).isBool()) ||
+            (entry.contains(QStringLiteral("readOnly")) &&
+             !entry.value(QStringLiteral("readOnly")).isBool()) ||
+            (entry.contains(QStringLiteral("writeOnly")) &&
+             !entry.value(QStringLiteral("writeOnly")).isBool()) ||
             (entry.contains(QStringLiteral("decimalPlaces")) &&
              (!entry.value(QStringLiteral("decimalPlaces")).isDouble() ||
               entry.value(QStringLiteral("decimalPlaces")).toInt(-1) < 0 ||
@@ -151,7 +155,8 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             metaData->setDecimalPlaces(entry.value(QStringLiteral("decimalPlaces")).toInt());
         }
         metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool(false));
-        metaData->setReadOnly(false);
+        metaData->setReadOnly(entry.value(QStringLiteral("readOnly")).toBool(false));
+        metaData->setWriteOnly(entry.value(QStringLiteral("writeOnly")).toBool(false));
         _cachedMetaData.insert(name, metaData);
     }
 }
