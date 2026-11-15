@@ -814,9 +814,29 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* page = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_page"), 3000);
             QQuickItem* tabs = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTabs"), 3000);
             QQuickItem* title = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
+            QQuickItem* dashboardGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
             QVERIFY(page);
             QVERIFY(tabs);
             QVERIFY(title);
+            QVERIFY(dashboardGrid);
+            const char* diagnosticCards[] = {
+                "flightTelemetry_card_operation",   "flightTelemetry_card_navigation",   "flightTelemetry_card_sensors",
+                "flightTelemetry_card_control",     "flightTelemetry_card_actuator",     "flightTelemetry_card_links",
+                "flightTelemetry_card_storage",     "flightTelemetry_card_resources",    "flightTelemetry_card_time",
+                "flightTelemetry_card_latestEvent", "flightTelemetry_card_eventHistory", "flightTelemetry_card_prearm",
+                "flightTelemetry_card_rcInput",     "flightTelemetry_card_buildInfo"};
+            QQuickItem* diagnosticCardItems[14]{};
+            for (int cardIndex = 0; cardIndex < 14; ++cardIndex) {
+                diagnosticCardItems[cardIndex] = findItem(_rootItem, QString::fromLatin1(diagnosticCards[cardIndex]));
+                QVERIFY2(diagnosticCardItems[cardIndex], diagnosticCards[cardIndex]);
+            }
+            const bool expectedDetailVisibility[4][14] = {
+                {true,  false, false, false, false, false, false, false, false, true,  true,  false, false, true },
+                {false, false, true,  true,  true,  false, true,  true,  false, false, false, true,  false, false},
+                {false, true,  false, false, false, false, false, false, true,  false, false, false, false, false},
+                {false, false, false, false, false, true,  false, false, false, false, false, false, true,  false}
+            };
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("spacing").toInt(), 12, 3000);
             QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
