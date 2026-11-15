@@ -422,7 +422,9 @@
         "overview_navigation_kpi_measurement_values_use_neutral_color_and_status_color_tracks_freshness_capability",
         "overview_alarm_empty_state_exposes_waiting_text_and_disappears_after_first_fcu_event",
         "overview_alarm_live_priority_reorders_new_highest_severity_and_breaks_ties_by_local_receive_sequence",
-        "overview_alarm_priority_hint_matches_severity_then_local_sequence_ordering_contract"
+        "overview_alarm_priority_hint_matches_severity_then_local_sequence_ordering_contract",
+        "health_maintenance_prearm_coverage_is_separated_from_safety_outcome_summary",
+        "health_maintenance_resource_snapshot_shows_cpu_wcet_stack_and_storage_with_validity_gating"
       ]
     },
     {
@@ -733,7 +735,8 @@
     "overview_left_panel_does_not_repeat_six_domain_topology_health_matrix",
     "overview_summary_tiles_are_hidden_on_page_zero_and_restored_on_pages_one_to_three",
     "overview_navigation_kpi_grid_fits_1600_1400_1000_900_700_and_400_px",
-    "health_page_global_communication_loss_headline_note_and_recovery_follow_vehicle_link_state"
+    "health_page_global_communication_loss_headline_note_and_recovery_follow_vehicle_link_state",
+    "health_maintenance_resource_snapshot_grid_keeps_four_metric_cells_inside_parent_at_1600_1000_900_700_400_px"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
