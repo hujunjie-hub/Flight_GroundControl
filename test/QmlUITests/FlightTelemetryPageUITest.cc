@@ -1152,6 +1152,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!metricPosition->isVisible() && !metricVelocity->isVisible() &&
                                      !metricHeading->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryLink->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("titleText").toString(),
+                                      translatedTelemetryText("链路消息"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), receivedText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryNavigation->property("detailText").toString().contains(
+                                         translatedTelemetryText("链路状态消息接收年龄")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(),
                                       translatedTelemetryText("接收机失效保护未触发"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
