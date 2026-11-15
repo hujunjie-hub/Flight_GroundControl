@@ -739,3 +739,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 以 700 permille 验证 70% 填充；以 validity bit 清零、等待/超时、null/空值、非有限或 1200 permille 越界验证不显示填充。1200 permille 与 validity bit 置位但值缺失的情况必须显示无效/琥珀色；恢复到 700 后数字、颜色、条形同步恢复。
 - 质量条只表达 FCU 上报的链路质量字段，不按 RSSI、linkState 或其他实例推导；不得修改链路趋势选源、RC 输入、协议或飞控控制行为。
 - MockLink UI Integration 覆盖三种手型标签和质量条 70% → 越界无效 → 70% 恢复；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
+
+
+### G15 导航时序时间线字体度量与紧凑大屏适配（2026-11-15）
+
+- FCU 单调时间线三条记录的行高、行距、序号/标记/连接线几何、时间值列宽和横向间距必须随 ScreenTools 字体像素宽高缩放；默认密度保持原视觉基线，不允许固定像素值在高 DPI 下裁切文本。
+- 时间戳完整显示优先于消息标签；标签允许省略，时间值不允许省略/换行；排序序号与实际 row y 位置使用同一动态 row pitch。
+- FlightTelemetryPageUITest 验证 1672×941 紧凑大屏及 1600/1000/900/700/400 px 宽度下的行高、排序位置、时间值完整宽度、文本列不重叠和面板边界。
+- Windows 实机仍需提供 100%/125%/150% DPI 截图；UI Integration 通过不替代像素级视觉签收。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归。
