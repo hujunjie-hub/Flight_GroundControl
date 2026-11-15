@@ -51,12 +51,18 @@ void MockLinkGimbal::run1HzTasks()
     if (_deviceAttitudeStatusIntervalUs > 0) {
         const qint64 intervalMs = _deviceAttitudeStatusIntervalUs / 1000;
         if ((nowMs - _deviceAttitudeStatusLastSentMs) >= intervalMs) {
-            // Only simulate automatic movement if not under manual control
-            if (!_manualControl) {
-                // Simulate simple gimbal movement (slow sine wave)
+            if (_rateControl) {
+                if (_hasPitchAxis) {
+                    _pitch = qBound(-45.0f, _pitch + _pitchRateDegS, 45.0f);
+                }
+                if (_hasYawAxis) {
+                    _yaw = qBound(-180.0f, _yaw + _yawRateDegS, 180.0f);
+                }
+            } else if (!_manualControl) {
+                // Simulate simple gimbal movement (slow sine wave).
                 const qint64 secondsSinceEpoch = nowMs / 1000;
-                _pitch = 10.0f * qSin(secondsSinceEpoch * 0.1);  // ±10° pitch oscillation
-                _yaw = 15.0f * qCos(secondsSinceEpoch * 0.15);   // ±15° yaw oscillation
+                _pitch = 10.0f * qSin(secondsSinceEpoch * 0.1);
+                _yaw = 15.0f * qCos(secondsSinceEpoch * 0.15);
             }
 
             _sendGimbalDeviceAttitudeStatus();
@@ -67,6 +73,12 @@ void MockLinkGimbal::run1HzTasks()
 
 bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
 {
+    if (msg.msgid == MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE) {
+        mavlink_gimbal_manager_set_attitude_t request{};
+        mavlink_msg_gimbal_manager_set_attitude_decode(&msg, &request);
+        return _handleGimbalManagerSetAttitude(request, msg.sysid, msg.compid);
+    }
+
     if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) {
         return false;
     }
@@ -109,6 +121,63 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     default:
         return false;
     }
+}
+
+bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
+    const mavlink_gimbal_manager_set_attitude_t &request, uint8_t sourceSysid, uint8_t sourceCompid)
+{
+    if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
+        (request.target_component != 0 && request.target_component != MAV_COMP_ID_AUTOPILOT1) ||
+        (request.gimbal_device_id != 0 && request.gimbal_device_id != kGimbalCompId)) {
+        return false;
+    }
+
+    // This MockLink path models rate control. The controller sends an all-NaN
+    // quaternion and expresses pitch/yaw rates in angular_velocity_y/z.
+    if (!qIsNaN(request.q[0]) || !qIsNaN(request.q[1]) ||
+        !qIsNaN(request.q[2]) || !qIsNaN(request.q[3]) ||
+        (!qIsNaN(request.angular_velocity_x) && !qIsFinite(request.angular_velocity_x)) ||
+        (!qIsNaN(request.angular_velocity_y) && !qIsFinite(request.angular_velocity_y)) ||
+        (!qIsNaN(request.angular_velocity_z) && !qIsFinite(request.angular_velocity_z))) {
+        return false;
+    }
+
+    const bool updatePitchRate = qIsFinite(request.angular_velocity_y);
+    const bool updateYawRate = qIsFinite(request.angular_velocity_z);
+    const float pitchRateDegS = updatePitchRate ? qRadiansToDegrees(request.angular_velocity_y) : 0.0f;
+    const float yawRateDegS = updateYawRate ? qRadiansToDegrees(request.angular_velocity_z) : 0.0f;
+    const bool yawLockRequested = (request.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) != 0;
+    if ((updatePitchRate && !_hasPitchAxis && !qFuzzyIsNull(pitchRateDegS)) ||
+        (updateYawRate && !_hasYawAxis && !qFuzzyIsNull(yawRateDegS)) ||
+        (updateYawRate && _hasYawAxis && yawLockRequested && !_hasYawLock) ||
+        (updateYawRate && _hasYawAxis && !yawLockRequested && !_hasYawFollow)) {
+        return false;
+    }
+
+    QMutexLocker locker(&_stateMutex);
+    const bool validSource = sourceSysid != 0 && sourceCompid != 0;
+    const bool isPrimaryController = validSource &&
+                                     _gimbalManagerSysidPrimary == sourceSysid &&
+                                     _gimbalManagerCompidPrimary == sourceCompid;
+    const bool isSecondaryController = validSource &&
+                                       _gimbalManagerSysidSecondary == sourceSysid &&
+                                       _gimbalManagerCompidSecondary == sourceCompid;
+    if (!isPrimaryController && !isSecondaryController) {
+        qCDebug(MockLinkGimbalLog) << "GIMBAL_MANAGER_SET_ATTITUDE denied for non-owner"
+                                   << sourceSysid << "/" << sourceCompid;
+        return false;
+    }
+
+    if (updatePitchRate && _hasPitchAxis) {
+        _pitchRateDegS = pitchRateDegS;
+    }
+    if (updateYawRate && _hasYawAxis) {
+        _yawRateDegS = yawRateDegS;
+        _yawLock = yawLockRequested;
+    }
+    _rateControl = !qFuzzyIsNull(_pitchRateDegS) || !qFuzzyIsNull(_yawRateDegS);
+    _manualControl = true;
+    return true;
 }
 
 void MockLinkGimbal::_sendCommandAck(uint16_t command, uint8_t result, uint8_t sourceCompId)
@@ -249,6 +318,11 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
                                    << sourceSysid << "/" << sourceCompid;
         return false;
     }
+
+    // A position command supersedes any active rate command.
+    _rateControl = false;
+    _pitchRateDegS = 0.0f;
+    _yawRateDegS = 0.0f;
 
     // Apply limits based on gimbal capabilities
     if (updatePitch && _hasPitchAxis) {
