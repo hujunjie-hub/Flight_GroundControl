@@ -1002,7 +1002,7 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
 {
     Q_UNUSED(paramIndex);
     if (!_selectedFact || componentId != _selectedFact->componentId() ||
-        paramName != _selectedFact->name() || (!_readbackPending && !_writeFailureNeedsReadback)) {
+        paramName != _selectedFact->name() || !_readbackPending) {
         return;
     }
 
