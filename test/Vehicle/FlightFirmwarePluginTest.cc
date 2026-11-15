@@ -146,6 +146,11 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     invalidDependenciesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_DEPENDENCIES"));
     invalidDependenciesEntry.insert(QStringLiteral("dependencies"), QJsonArray{QStringLiteral(""), QStringLiteral("CTL_RATE_KP_X")});
 
+    QJsonObject unknownDependencyEntry = validEntry;
+    unknownDependencyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_DEPENDENCY"));
+    unknownDependencyEntry.insert(QStringLiteral("dependencies"), QJsonArray{QStringLiteral("MISSING_PARAMETER")});
+    unknownDependencyEntry.insert(QStringLiteral("validationRules"), QJsonArray{});
+
     QJsonObject invalidValidationRulesEntry = validEntry;
     invalidValidationRulesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_VALIDATION_RULES"));
     invalidValidationRulesEntry.insert(QStringLiteral("validationRules"), QJsonArray{QJsonObject{}});
@@ -210,6 +215,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     parameters.append(invalidUpdatePolicyEntry);
     parameters.append(invalidApplicabilityEntry);
     parameters.append(invalidDependenciesEntry);
+    parameters.append(unknownDependencyEntry);
     parameters.append(invalidValidationRulesEntry);
     parameters.append(unsupportedValidationRuleEntry);
     parameters.append(undeclaredRuleDependencyEntry);
@@ -283,6 +289,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         QStringLiteral("TEST_INVALID_UPDATE_POLICY"),
         QStringLiteral("TEST_INVALID_APPLICABILITY"),
         QStringLiteral("TEST_INVALID_DEPENDENCIES"),
+        QStringLiteral("TEST_UNKNOWN_DEPENDENCY"),
         QStringLiteral("TEST_INVALID_VALIDATION_RULES"),
         QStringLiteral("TEST_UNSUPPORTED_VALIDATION_RULE"),
         QStringLiteral("TEST_UNDECLARED_RULE_DEPENDENCY"),
