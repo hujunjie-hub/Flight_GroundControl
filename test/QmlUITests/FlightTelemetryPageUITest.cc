@@ -1986,6 +1986,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("丢失 %1").arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
                                       QStringLiteral("#F06464"), 3000);
+            // Message freshness and instance freshness remain healthy even when every
+            // reported link instance is currently lost.
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMessage->property("valueText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
 
             // Recovery is distinct from both lost and healthy.
             sendLinkStatus(lastOperationTime + 1000, bootId, 1, -42, 900, 10000, 0x700, 5);
@@ -1995,6 +2004,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("恢复中 %1").arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
                                       QStringLiteral("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("恢复中"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("color").value<QColor>(),
