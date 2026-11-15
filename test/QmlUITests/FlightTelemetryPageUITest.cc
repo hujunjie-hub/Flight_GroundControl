@@ -1185,6 +1185,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
             QQuickItem* linkDetailCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_card_links"), 3000);
+            QQuickItem* linkDetailMessage = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailMessage"));
             QQuickItem* linkDetailCoverage = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailCoverage"));
             QQuickItem* linkDetailState = findItem(
@@ -1224,6 +1226,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rcFailsafePanel);
             QVERIFY(rcLinkPanel);
             QVERIFY(linkDetailCard);
+            QVERIFY(linkDetailMessage);
             QVERIFY(linkDetailCoverage);
             QVERIFY(linkDetailState);
             QVERIFY(linkDetailReason);
@@ -1254,6 +1257,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("原因：")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailReceiveAge->property("text").toString().contains(
                                          translatedTelemetryText("地面站接收年龄：")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMessage->property("labelText").toString(),
+                                      translatedTelemetryText("消息"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMessage->property("valueText").toString(),
+                                      translatedTelemetryText("已接收"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailFamilyReceiveAge->property("labelText").toString(),
                                       translatedTelemetryText("链路状态消息接收年龄"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsFcuAge->property("labelText").toString(),
