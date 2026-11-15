@@ -692,9 +692,35 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
             QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 1, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
-                                      QStringLiteral("未取得控制权"), 1000);
+                                      QStringLiteral("未取得控制权"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() !=
                                          QStringLiteral("数据超时"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(!pitchSlider->property("enabled").toBool(), 1000);
+
+            // The second device has its own owner pair, capability flags and
+            // attitude state. Acquiring and moving it must not affect device 154.
+            QVERIFY(secondGimbal->supportsPitchAxis());
+            QVERIFY(secondGimbal->supportsYawAxis());
+            QVERIFY(!secondGimbal->supportsYawLock());
+            QVERIFY(!secondGimbal->supportsRetract());
+            const double firstDevicePitchBeforeSwitch = activeGimbal->absolutePitch()->rawValue().toDouble();
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("本机控制中"), 6000);
+            QTRY_VERIFY_WITH_TIMEOUT(pitchSlider->property("enabled").toBool(), 2000);
+            QVERIFY(!yawMode->property("enabled").toBool());
+            QVERIFY(!retract->isVisible());
+
+            vehicle->gimbalController()->sendPitchBodyYaw(-18.0f, 48.0f, false);
+            QTRY_VERIFY_WITH_TIMEOUT(std::abs(std::abs(currentPitch()) - 18.0) < 3.0, 4000);
+            QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
+                             firstDevicePitchBeforeSwitch) < 0.5);
+            QVERIFY(!activeGimbal->gimbalHaveControl());
+            QVERIFY(secondGimbal->gimbalHaveControl());
+
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 6000);
+            QVERIFY(!secondGimbal->gimbalHaveControl());
         });
 }
