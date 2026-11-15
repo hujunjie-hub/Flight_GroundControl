@@ -74,7 +74,7 @@ Item {
     readonly property real bodyEmphasisFontPointSize:       defaultFontPointSize * 1.1
     readonly property real captionEmphasisFontPointSize:    captionFontPointSize * 1.1
     readonly property real sectionHeadingFontPointSize:     defaultFontPointSize + 1
-    readonly property real worldOverlayFontPointSize:       heroFontPointSize * 1.25
+    readonly property real worldOverlayFontPointSize:       titleFontPointSize * 1.25
 
     readonly property int regularFontWeight:          Font.Normal
     readonly property int emphasisFontWeight:         Font.DemiBold
