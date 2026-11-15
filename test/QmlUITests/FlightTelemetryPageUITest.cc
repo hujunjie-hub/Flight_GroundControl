@@ -2715,8 +2715,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(compactTrendCanvas->height() >= 64, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), 4, 3000);
 
-            page->setHeight(originalPageHeight);
+            // Keep the reference-height viewport active while exercising all four pages below.
             page->setWidth(1600);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(contentRoot->property("spacing").toReal(),
                                       page->property("_dashboardOuterSpacing").toReal(), 3000);
             QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
@@ -4289,5 +4290,6 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(!healthLossNote->isVisible(), commLossTimeoutMs);
             QTRY_COMPARE_WITH_TIMEOUT(healthLossHeadline->property("color").value<QColor>(),
                                       QColor("#E2ECEF"), commLossTimeoutMs);
+            page->setHeight(originalPageHeight);
         });
 }
