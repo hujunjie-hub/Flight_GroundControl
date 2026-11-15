@@ -137,6 +137,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 summaryTileContents[index] = findVisibleItem(_rootItem, objectName, 3000);
                 QVERIFY2(summaryTileContents[index], qPrintable(objectName));
             }
+            QQuickItem* summaryTileDetails[6]{};
+            const char* summaryDetailNames[] = {
+                "flightTelemetry_summaryTelemetry_detail", "flightTelemetry_summaryOperation_detail",
+                "flightTelemetry_summaryFailsafe_detail", "flightTelemetry_summaryNavigation_detail",
+                "flightTelemetry_summaryLink_detail", "flightTelemetry_summaryTime_detail"};
+            for (int index = 0; index < 6; ++index) {
+                const QString objectName = QString::fromLatin1(summaryDetailNames[index]);
+                summaryTileDetails[index] = findItem(_rootItem, objectName);
+                QVERIFY2(summaryTileDetails[index], qPrintable(objectName));
+            }
             QQuickItem* metricPosition =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_metricPosition"), 3000);
             QQuickItem* metricVelocity =
@@ -368,7 +378,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 for (int index = 0; index < 6; ++index) {
                     QQuickItem* tile = summaryTiles[index];
                     QQuickItem* content = summaryTileContents[index];
-                    if (!tile || !content || content->height() + 1.0 < content->implicitHeight()) {
+                    QQuickItem* detail = summaryTileDetails[index];
+                    if (!tile || !content || !detail || content->height() + 1.0 < content->implicitHeight()) {
                         return false;
                     }
                     const QPointF topLeft = content->mapToItem(tile, 0, 0);
@@ -376,6 +387,19 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                         topLeft.x() + content->width() > tile->width() + 1.0 ||
                         topLeft.y() + content->height() > tile->height() + 1.0) {
                         return false;
+                    }
+                    if (detail->isVisible()) {
+                        const int lineCount = detail->property("lineCount").toInt();
+                        const QPointF detailTopLeft = detail->mapToItem(tile, 0, 0);
+                        if (detail->property("text").toString().isEmpty() ||
+                            detail->property("wrapMode").toInt() != 1 || // Text.WordWrap
+                            detail->property("maximumLineCount").toInt() != 2 ||
+                            lineCount < 1 || lineCount > 2 || detail->height() <= 0 ||
+                            detailTopLeft.x() < -1.0 || detailTopLeft.y() < -1.0 ||
+                            detailTopLeft.x() + detail->width() > tile->width() + 1.0 ||
+                            detailTopLeft.y() + detail->height() > tile->height() + 1.0) {
+                            return false;
+                        }
                     }
                 }
                 return true;
@@ -475,7 +499,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->property("wrapMode").isValid(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryLinkDetail->property("wrapMode").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryLinkDetail->height() > 0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
@@ -1291,6 +1315,42 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(
                 replacementTrendPosition->property("sampleCount").toInt() < previousVehicleTrendSampleCount, 5000);
             QTRY_COMPARE_WITH_TIMEOUT(replacementTrendPosition->property("validSampleCount").toInt(), 0, 3000);
+
+            // Force a long detail string through the real SummaryTile layout at
+            // the narrowest breakpoint. This proves WordWrap, the two-line cap,
+            // and implicit-height growth instead of only checking property presence.
+            QQuickItem* const compactSummaryGrid =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000);
+            QQuickItem* const compactSummaryLink =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+            QQuickItem* const compactSummaryLinkContent =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink_content"), 3000);
+            QQuickItem* const compactSummaryLinkDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink_detail"));
+            QVERIFY(compactSummaryGrid);
+            QVERIFY(compactSummaryLink);
+            QVERIFY(compactSummaryLinkContent);
+            QVERIFY(compactSummaryLinkDetail);
+            replacementPage->setWidth(400);
+            QTRY_COMPARE_WITH_TIMEOUT(compactSummaryGrid->property("columns").toInt(), 1, 3000);
+            const QString longDetailText = QStringLiteral(
+                "新鲜实例 1/3 · 超时实例 2 · 等待实例 0 · 当前主数据链路为 GCS 地面站，RC 仅作为遥控链路；"
+                "过期链路不计入新鲜覆盖率，所有链路指标均按实例接收年龄和字段有效位独立判断，"
+                "断链后不回退到遥控链路伪装数据链路健康。");
+            QVERIFY(compactSummaryLink->setProperty("detailText", longDetailText));
+            QTRY_VERIFY_WITH_TIMEOUT(compactSummaryLinkDetail->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(compactSummaryLinkDetail->property("wrapMode").toInt(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(compactSummaryLinkDetail->property("maximumLineCount").toInt(), 2, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(compactSummaryLinkDetail->property("lineCount").toInt(), 2, 3000);
+            const auto compactSummaryLinkDetailFits = [&]() {
+                const QPointF topLeft = compactSummaryLinkDetail->mapToItem(compactSummaryLink, 0, 0);
+                return compactSummaryLinkContent->height() + 1.0 >= compactSummaryLinkContent->implicitHeight() &&
+                       compactSummaryLink->height() + 1.0 >= compactSummaryLinkContent->implicitHeight() + 20.0 &&
+                       topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                       topLeft.x() + compactSummaryLinkDetail->width() <= compactSummaryLink->width() + 1.0 &&
+                       topLeft.y() + compactSummaryLinkDetail->height() <= compactSummaryLink->height() + 1.0;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(compactSummaryLinkDetailFits(), 3000);
             disconnectMockLink(replacementMockLink);
         });
 }

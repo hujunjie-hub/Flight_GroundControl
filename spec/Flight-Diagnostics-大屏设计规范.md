@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.25
+- 版本：6.26
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史与告警事件元信息均已改为无省略换行并按内容自适应高度；本轮补齐资源任务实例计数的 family freshness 门控；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -810,3 +810,11 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 资源任务实例明细仍保留最近缓存行，但每个实例的 CPU/WCET/栈/截止期/AXI 数值继续按实例 receiveAgeMs 与 validityMask 独立门控。
 - MockLink UI Integration 验证资源消息新鲜时显示真实任务实例数，超过资源 family freshness 窗口后计数切换为「数据超时」。
 - 仅修改飞行健康页 QML、对应 UI Integration 与 SPEC/G15；不修改资源消息协议、FactGroup 数据缓存或飞控资源统计。本轮不运行 CI，新增断言为 NOT_RUN。
+
+
+## 54. Phase 2.11 六项 KPI 辅助说明逐项布局与强制双行回归（2026-11-15）
+
+- 六项顶部 KPI 辅助说明均使用稳定的 `_detail` objectName；700 px 双列与 400 px 单列断点逐项验证可见性、WordWrap、最多两行、实际 lineCount 和 Tile 内边界。
+- 通过测试注入一段长链路说明，强制产生两行文本，验证 `SummaryTile.implicitHeight` 随 `summaryContent.implicitHeight` 增长，内容容器和辅助说明均不越界、不裁切。
+- 该测试只覆盖真实 QML SummaryTile 的布局行为，不改变 KPI 文本来源、遥测值、链路选择、状态颜色或控制逻辑。
+- 本轮仅新增 MockLink UI Integration 断言和验收条目；按用户要求不运行 CI/Unit/Integration，所有新回归为 NOT_RUN，待集中验收。
