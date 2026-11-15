@@ -278,6 +278,9 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
         { QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION") },
         { QStringLiteral("dependencies"), QJsonArray{} },
         { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("sourceFile"), QStringLiteral("vehicle_model.yaml") },
+        { QStringLiteral("sourcePath"), QStringLiteral("mass_kg") },
+        { QStringLiteral("sourceKind"), QStringLiteral("scalar") },
         { QStringLiteral("readOnly"), false }
     };
     const QJsonObject rateGain {
@@ -292,6 +295,9 @@ void FlightFirmwarePluginTest::_flightModelCatalogRequiresMatchingParameterMetad
         { QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION") },
         { QStringLiteral("dependencies"), QJsonArray{} },
         { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("sourceFile"), QStringLiteral("controller_tuning.yaml") },
+        { QStringLiteral("sourcePath"), QStringLiteral("outer_loop.rate_kp_nm_per_radps[0]") },
+        { QStringLiteral("sourceKind"), QStringLiteral("vector") },
         { QStringLiteral("readOnly"), false }
     };
     const QJsonObject metadata {
