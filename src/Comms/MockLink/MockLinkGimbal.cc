@@ -164,7 +164,8 @@ void MockLinkGimbal::run1HzTasks()
             } else if (!_manualControl) {
                 // Simulate simple gimbal movement (slow sine wave).
                 const qint64 secondsSinceEpoch = nowMs / 1000;
-                const float devicePhase = (static_cast<int>(_gimbalDeviceId) - static_cast<int>(kDefaultGimbalDeviceId)) * 0.5f;
+                const float devicePhase =
+                    (static_cast<int>(_gimbalDeviceId) - static_cast<int>(kDefaultGimbalDeviceId)) * 0.5f;
                 _pitch = 10.0f * qSin(secondsSinceEpoch * 0.1 + devicePhase);
                 _yaw = 15.0f * qCos(secondsSinceEpoch * 0.15 + devicePhase);
             }
