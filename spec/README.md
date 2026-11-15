@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.18
+- 版本 4.19
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -118,6 +118,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
 - FGC-0047（全项目字体体系、中文字体回退与渲染一致性）继续扩展到全仓 QML：旧 default/small/medium/large 字号令牌引用迁移到语义令牌；三维视图固定 pixelSize 改为 pointSize；摇杆遥测等宽字族改用 ScreenTools.fixedFontFamily；新增 body-emphasis、caption-emphasis、section-heading、world-overlay 语义令牌。`qml-typography-check --all` 递归扫描全部 `src/**/*.qml`（当前 459 个文件），覆盖旧字号别名、固定 pixelSize、硬编码字体族和页面局部字号乘数；动态地图罗盘缩放和 DebugWindow 字体预览列为明确例外。新提交的精确 HEAD CI 尚待运行；Windows 100%/125%/150% 实机视觉检查尚未完成，保持 NOT_RUN。
+- FGC-0049（旧版 SYS_STATUS 传感器状态断链后仍显示正常）保持 FIXED_WAITING_RETEST / S0-CRITICAL；`9806980` 已实现 5500 ms freshness watchdog、断链立即失效和新 SYS_STATUS 恢复门控；补充单元、VehicleLinkManager MockLink 与 ToolbarIndicator 抽屉 UI 回归。当前所有新增测试均 NOT_RUN，必须在 exact-HEAD 集中验收通过后才能 VERIFIED/CLOSED。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 
 动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节只记录有明确 HEAD 和 run ID 的验收快照。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。

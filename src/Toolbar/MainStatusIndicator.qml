@@ -295,6 +295,7 @@ RowLayout {
                 visible:            parametersReady && !_healthAndArmingChecksSupported
 
                 QGCLabel {
+                    objectName: "mainStatusSensorStaleNotice"
                     Layout.fillWidth: true
                     visible: _activeVehicle && (_communicationLost || !_activeVehicle.sysStatusSensorInfo.statusFresh)
                     text: _communicationLost

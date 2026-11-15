@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.14
+- 版本：6.15
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配已完成；KPI freshness 与时间质量/UTC 颜色语义已收敛；总览与遥控页链路 KPI 均按逐实例 fresh/total 数量和状态颜色呈现；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -690,6 +690,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 回归覆盖：
 - SysStatusSensorInfoTest 使用短注入超时验证正常 → Stale，并验证通信丢失立即失效、通信恢复后等待新 SYS_STATUS 才恢复。
 - VehicleLinkManagerTest::_simpleCommLossTest 通过真实 MockLink/VehicleLinkManager 信号路径验证断链时立即 stale，重连后由新 SYS_STATUS 恢复 fresh。
+- ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss 验证主状态抽屉在 fresh 时隐藏提示、全链路断开时显示通信丢失提示、重连并收到新 SYS_STATUS 后再次隐藏提示。
 - 本轮未运行 Unit、Integration、Windows Release 或 CI；相关回归状态均为 NOT_RUN，待集中验收。
 
 

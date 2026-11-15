@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.6  
+版本：4.7  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -362,3 +362,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 全部实例健康且新鲜时绿色；存在 stale/degraded/recovering 时琥珀色；任一新鲜实例明确 lost 时红色；未知/等待为中性灰。
 - 总览与遥控链路专页对同一组实例必须使用一致的主值与聚合颜色；两页主值均显示新鲜实例数/总数，验证三实例全新鲜与 RC 新鲜但 GCS/其他过期两种场景。
 - 本轮新增 MockLink UI Integration 断言，CI 未运行，集中验收时执行。
+
+
+### G18 FGC-0049 旧版 SYS_STATUS 传感器状态 freshness（2026-11-15）
+
+- 运行 `SysStatusSensorInfoTest::_statusFreshnessExpires_test` 与 `_communicationLostInvalidatesStatusUntilNewSysStatus_test`。
+- 运行 `VehicleLinkManagerTest::_simpleCommLossTest`，验证真实 MockLink 链路断开时立即失效，重连后由新 SYS_STATUS 恢复。
+- 运行 `ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss`：Generic MockLink fresh 时提示隐藏；通信丢失后提示可见且明确说明通信丢失；收到新 SYS_STATUS 并恢复 fresh 后提示再次隐藏。
+- 通信恢复信号本身不得恢复缓存传感器状态；必须由新 SYS_STATUS 驱动恢复。
+- 本轮按用户要求不运行 CI/Unit/Integration；以上状态均为 NOT_RUN，FGC-0049 保持 FIXED_WAITING_RETEST。

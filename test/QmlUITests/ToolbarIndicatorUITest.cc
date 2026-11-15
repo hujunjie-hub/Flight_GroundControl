@@ -6,7 +6,11 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "HealthAndArmingCheckReport.h"
 #include "MockLink.h"
+#include "SysStatusSensorInfo.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 UT_REGISTER_TEST(ToolbarIndicatorUITest, TestLabel::Integration)
 
@@ -198,4 +202,70 @@ void ToolbarIndicatorUITest::_testAPMCopterIndicators()
 
     _runIndicatorTest([] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
                       QStringLiteral("APMCopter"));
+}
+
+
+void ToolbarIndicatorUITest::_testLegacySensorStatusStaleOnCommLoss()
+{
+    runWithMockLink(
+        [] { return MockLink::startGenericMockLink(); },
+        [this](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+            QVERIFY(mockLink);
+            QVERIFY(vehicle);
+            QVERIFY(vehicle->healthAndArmingCheckReport());
+            QVERIFY(!vehicle->healthAndArmingCheckReport()->supported());
+
+            auto* const sensorInfo = qobject_cast<SysStatusSensorInfo*>(vehicle->sysStatusSensorInfo());
+            QVERIFY(sensorInfo);
+            QVERIFY_TRUE_WAIT(sensorInfo->statusFresh(), TestTimeout::mediumMs());
+
+            QQuickItem* const mainStatus = findVisibleItem(
+                _rootItem, QStringLiteral("toolbar_mainStatusIndicator"), 3000);
+            QVERIFY(mainStatus);
+
+            // The legacy sensor section is visible for this generic vehicle, but
+            // its stale notice must stay hidden while the latest SYS_STATUS is fresh.
+            QVERIFY(_clickItemAt(mainStatus, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+            QQuickItem* drawerLoader = findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 2000);
+            QVERIFY(drawerLoader);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() != nullptr, 2000);
+            QQuickItem* staleNotice = findItem(_rootItem, QStringLiteral("mainStatusSensorStaleNotice"));
+            QVERIFY(staleNotice);
+            QVERIFY(!staleNotice->isVisible());
+
+            QTest::keyClick(_window, Qt::Key_Escape);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() == nullptr, 2000);
+
+            mockLink->setCommLost(true);
+            QVERIFY_TRUE_WAIT(vehicle->vehicleLinkManager()->communicationLost(),
+                              VehicleLinkManager::kTestCommLostDetectionTimeoutMs);
+            QVERIFY(!sensorInfo->statusFresh());
+
+            QVERIFY(_clickItemAt(mainStatus, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+            drawerLoader = findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 2000);
+            QVERIFY(drawerLoader);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() != nullptr, 2000);
+            staleNotice = findVisibleItem(_rootItem, QStringLiteral("mainStatusSensorStaleNotice"), 2000);
+            QVERIFY(staleNotice);
+            QVERIFY(staleNotice->property("text").toString().contains(QStringLiteral("Communication lost")));
+
+            QTest::keyClick(_window, Qt::Key_Escape);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() == nullptr, 2000);
+
+            mockLink->setCommLost(false);
+            QVERIFY_TRUE_WAIT(!vehicle->vehicleLinkManager()->communicationLost(),
+                              VehicleLinkManager::kTestCommLostDetectionTimeoutMs);
+            QVERIFY_TRUE_WAIT(sensorInfo->statusFresh(), TestTimeout::mediumMs());
+
+            QVERIFY(_clickItemAt(mainStatus, 0.5, 0.5, QStringLiteral("toolbar_mainStatusIndicator")));
+            drawerLoader = findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 2000);
+            QVERIFY(drawerLoader);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() != nullptr, 2000);
+            staleNotice = findItem(_rootItem, QStringLiteral("mainStatusSensorStaleNotice"));
+            QVERIFY(staleNotice);
+            QVERIFY(!staleNotice->isVisible());
+
+            QTest::keyClick(_window, Qt::Key_Escape);
+            QTRY_VERIFY_WITH_TIMEOUT(drawerLoader->property("item").value<QObject*>() == nullptr, 2000);
+        });
 }
