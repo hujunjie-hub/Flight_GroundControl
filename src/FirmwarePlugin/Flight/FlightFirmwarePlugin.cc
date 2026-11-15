@@ -207,8 +207,6 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
     QHash<QString, QString> parameterDomainsByName;
     QHash<QString, QString> parameterFamiliesByName;
     QHash<QString, QString> parameterControlLawsByName;
-    QHash<QString, QString> parameterTuningPoliciesByName;
-    QHash<QString, QString> parameterUpdatePoliciesByName;
     QHash<QString, QSet<QString>> parameterVariantsByName;
     QHash<QString, QSet<QString>> parameterProfilesByName;
     QHash<QString, QSet<QString>> parameterDependenciesByName;
@@ -264,8 +262,6 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         parameterDomainsByName.insert(name, domain);
         parameterFamiliesByName.insert(name, vehicleFamily);
         parameterControlLawsByName.insert(name, controlLaw);
-        parameterTuningPoliciesByName.insert(name, tuningPolicy);
-        parameterUpdatePoliciesByName.insert(name, updatePolicy);
         parameterVariantsByName.insert(name, parameterVariants);
         parameterProfilesByName.insert(name, parameterProfiles);
         parameterDependenciesByName.insert(name, parameterDependencies);
@@ -333,7 +329,7 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
                 return {};
             }
             for (const QString &dependency : parameterDependenciesByName.value(it.key())) {
-                if (!parameterDomainsByName.contains(dependency) ||
+                if (dependency == it.key() || !parameterDomainsByName.contains(dependency) ||
                     !parameterProfilesByName.value(dependency).contains(profileId)) {
                     return {};
                 }
