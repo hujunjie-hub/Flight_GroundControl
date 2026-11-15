@@ -137,6 +137,10 @@ SetupPage {
     readonly property real _healthCellContentSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.12 : 0.15)
     readonly property real _healthCellGridSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28)
     readonly property real _healthPrimaryRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.20 : 0.24)
+    // Maintenance cards form a distinct lower-page diagnostic band without changing its data or breakpoints.
+    readonly property real _healthMaintenanceCardInset: Math.max(6, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.34 : 0.42))
+    readonly property real _healthMaintenanceSectionSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28))
+    readonly property real _healthMaintenanceCardGap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.65)
     readonly property real _dashboardOuterSpacing: _compactDashboardVertical ? 8 : 12
     readonly property real _dashboardHeaderInset: _compactDashboardVertical ? 3 : 5
     readonly property real _dashboardHeaderExtraHeight: _compactDashboardVertical ? 6 : 10
@@ -3376,108 +3380,174 @@ SetupPage {
                     anchors.fill: parent
                     anchors.margins: root._dashboardPanelPadding
                     columns: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 2 : 1
-                    columnSpacing: root._dashboardGridSpacing
-                    rowSpacing: root._dashboardPanelBodySpacing
-                    ColumnLayout {
-                        objectName: "flightTelemetry_healthMaintenanceIdentityColumn"
+                    columnSpacing: root._healthMaintenanceCardGap
+                    rowSpacing: root._healthMaintenanceCardGap
+                    Rectangle {
+                        objectName: "flightTelemetry_healthMaintenanceIdentityCard"
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         Layout.minimumWidth: 0
-                        spacing: root._dashboardPanelBodySpacing
-                        QGCLabel { text: qsTr("维护与可靠性"); color: "#E2ECEF"; typographyRole: "title" }
-                        QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
-                        QGCLabel {
-                            objectName: "flightTelemetry_healthMaintenanceBootId"
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: qsTr("启动 ID：%1").arg(root._familyFreshValue("operationAvailable",
-                                String(root._fact("opBootIdHex") || qsTr("未上报"))))
-                            color: "#A8BBC3"
-                            font.pointSize: ScreenTools.captionFontPointSize
-                            wrapMode: Text.WrapAnywhere
+                        implicitHeight: maintenanceIdentityContent.implicitHeight + root._healthMaintenanceCardInset * 2
+                        radius: 6
+                        color: "#082B33"
+                        border.width: 1
+                        border.color: "#14515D"
+                        Rectangle {
+                            width: 3
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            radius: 2
+                            color: "#49C7E7"
+                        }
+                        ColumnLayout {
+                            id: maintenanceIdentityContent
+                            objectName: "flightTelemetry_healthMaintenanceIdentityColumn"
+                            anchors.fill: parent
+                            anchors.margins: root._healthMaintenanceCardInset
+                            spacing: root._healthMaintenanceSectionSpacing
+                            QGCLabel { text: qsTr("维护与可靠性"); color: "#E2ECEF"; typographyRole: "title" }
+                            QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceBootId"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: qsTr("启动 ID：%1").arg(root._familyFreshValue("operationAvailable",
+                                    String(root._fact("opBootIdHex") || qsTr("未上报"))))
+                                color: "#A8BBC3"
+                                font.pointSize: ScreenTools.captionFontPointSize
+                                wrapMode: Text.WrapAnywhere
+                            }
                         }
                     }
-                    ColumnLayout {
-                        objectName: "flightTelemetry_healthMaintenanceEventColumn"
+                    Rectangle {
+                        objectName: "flightTelemetry_healthMaintenanceEventCard"
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         Layout.minimumWidth: 0
-                        spacing: root._dashboardPanelBodySpacing
-                        QGCLabel { text: qsTr("最近异常"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
-                        QGCLabel {
-                            objectName: "flightTelemetry_healthMaintenanceEventSummary"
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: root._latestEventSummaryText()
+                        implicitHeight: maintenanceEventContent.implicitHeight + root._healthMaintenanceCardInset * 2
+                        radius: 6
+                        color: "#082B33"
+                        border.width: 1
+                        border.color: "#14515D"
+                        Rectangle {
+                            width: 3
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            radius: 2
                             color: root._latestEventSummaryColor()
-                            wrapMode: Text.WordWrap
                         }
-                        QGCLabel { text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event")); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                        ColumnLayout {
+                            id: maintenanceEventContent
+                            objectName: "flightTelemetry_healthMaintenanceEventColumn"
+                            anchors.fill: parent
+                            anchors.margins: root._healthMaintenanceCardInset
+                            spacing: root._healthMaintenanceSectionSpacing
+                            QGCLabel { text: qsTr("最近异常"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
+                            QGCLabel {
+                                objectName: "flightTelemetry_healthMaintenanceEventSummary"
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: root._latestEventSummaryText()
+                                color: root._latestEventSummaryColor()
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event"))
+                                color: "#8298A2"
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                        }
                     }
-                    ColumnLayout {
-                        objectName: "flightTelemetry_healthMaintenanceResourceColumn"
+                    Rectangle {
+                        objectName: "flightTelemetry_healthMaintenanceResourceCard"
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         Layout.minimumWidth: 0
-                        spacing: root._dashboardPanelBodySpacing
-                        QGCLabel { text: qsTr("预检覆盖与资源快照"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
-                        QGCLabel {
-                            text: qsTr("预检覆盖")
-                            color: "#A8BBC3"
-                            font.pointSize: ScreenTools.microFontPointSize
+                        implicitHeight: maintenanceResourceContent.implicitHeight + root._healthMaintenanceCardInset * 2
+                        radius: 6
+                        color: "#082B33"
+                        border.width: 1
+                        border.color: "#14515D"
+                        Rectangle {
+                            width: 3
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            radius: 2
+                            color: "#45D39A"
                         }
-                        QGCLabel {
-                            objectName: "flightTelemetry_healthMaintenancePrearmSummary"
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: root._prearmCheckCoverageText()
-                            color: root._prearmCheckCoverageColor()
-                            wrapMode: Text.WordWrap
-                        }
-                        GridLayout {
-                            objectName: "flightTelemetry_healthMaintenanceResourceGrid"
-                            Layout.fillWidth: true
-                            columns: 2
-                            columnSpacing: root._dashboardMetricTileGap
-                            rowSpacing: root._dashboardMetricTileGap
+                        ColumnLayout {
+                            id: maintenanceResourceContent
+                            objectName: "flightTelemetry_healthMaintenanceResourceColumn"
+                            anchors.fill: parent
+                            anchors.margins: root._healthMaintenanceCardInset
+                            spacing: root._healthMaintenanceSectionSpacing
+                            QGCLabel { text: qsTr("预检覆盖与资源快照"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
                             QGCLabel {
-                                objectName: "flightTelemetry_healthMaintenanceCpuLoad"
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                text: qsTr("CPU：%1").arg(root._resourceCpuLoadText())
-                                color: root._resourceMetricColor("cpuLoadPermille", 2)
-                                font.pointSize: ScreenTools.captionFontPointSize
-                                wrapMode: Text.WordWrap
+                                text: qsTr("预检覆盖")
+                                color: "#A8BBC3"
+                                font.pointSize: ScreenTools.microFontPointSize
                             }
                             QGCLabel {
-                                objectName: "flightTelemetry_healthMaintenanceWcet"
+                                objectName: "flightTelemetry_healthMaintenancePrearmSummary"
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                text: qsTr("任务 WCET：%1").arg(root._resourceMetricText("wcetUs", 0, 0, " μs"))
-                                color: root._resourceMetricColor("wcetUs", 0)
-                                font.pointSize: ScreenTools.captionFontPointSize
+                                text: root._prearmCheckCoverageText()
+                                color: root._prearmCheckCoverageColor()
                                 wrapMode: Text.WordWrap
                             }
-                            QGCLabel {
-                                objectName: "flightTelemetry_healthMaintenanceStackFree"
+                            GridLayout {
+                                objectName: "flightTelemetry_healthMaintenanceResourceGrid"
                                 Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                text: qsTr("系统栈剩余：%1").arg(root._resourceMetricText("stackFreeBytes", 1, 0, " B"))
-                                color: root._resourceMetricColor("stackFreeBytes", 1)
-                                font.pointSize: ScreenTools.captionFontPointSize
-                                wrapMode: Text.WordWrap
-                            }
-                            QGCLabel {
-                                objectName: "flightTelemetry_healthMaintenanceStorageFree"
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                text: qsTr("存储剩余：%1").arg(root._storageFreeText())
-                                color: root._storageFreeColor()
-                                font.pointSize: ScreenTools.captionFontPointSize
-                                wrapMode: Text.WordWrap
+                                columns: 2
+                                columnSpacing: root._dashboardMetricTileGap
+                                rowSpacing: root._dashboardMetricTileGap
+                                QGCLabel {
+                                    objectName: "flightTelemetry_healthMaintenanceCpuLoad"
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    text: qsTr("CPU：%1").arg(root._resourceCpuLoadText())
+                                    color: root._resourceMetricColor("cpuLoadPermille", 2)
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    wrapMode: Text.WordWrap
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_healthMaintenanceWcet"
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    text: qsTr("任务 WCET：%1").arg(root._resourceMetricText("wcetUs", 0, 0, " μs"))
+                                    color: root._resourceMetricColor("wcetUs", 0)
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    wrapMode: Text.WordWrap
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_healthMaintenanceStackFree"
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    text: qsTr("系统栈剩余：%1").arg(root._resourceMetricText("stackFreeBytes", 1, 0, " B"))
+                                    color: root._resourceMetricColor("stackFreeBytes", 1)
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    wrapMode: Text.WordWrap
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_healthMaintenanceStorageFree"
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    text: qsTr("存储剩余：%1").arg(root._storageFreeText())
+                                    color: root._storageFreeColor()
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    wrapMode: Text.WordWrap
+                                }
                             }
                         }
                     }
                 }
             }
-
 
             GridLayout {
                 objectName: "flightTelemetry_navigationPageGrid"
