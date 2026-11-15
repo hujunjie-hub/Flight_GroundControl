@@ -409,8 +409,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 曲线横轴按 FCU 启动时间戳等比例绘制，不按样本序号压缩时间；相邻有效样本间隔超过 3 秒时断开连线，并保留间隔两侧的真实采样点。实时可用状态同时要求 controlAvailable=true、链路正常且 familyStale.control=false。
 - 曲线从当前有效样本计算最小值、平均值、峰值和实际时间窗；没有样本时显示等待态，不生成示例值。
 - FlightTelemetryDispatchTest 增加 controlStatusUpdated 信号回归：合法新帧触发一次，重复时间戳和非法 solver_status 不触发，后续合法新帧继续触发。
-- ParameterEditorController 仅在匹配的 PARAM_VALUE 写入确认成功后发出 parameterWriteConfirmed(componentId, parameterName, confirmedValue)；失败、超时或未授权写入不产生确认事件。
-- 参数确认事件先记录当前 FCU boot ID、controlProfileId 与最后一个已接收控制时间戳，随后只在同一 boot ID / controlProfileId 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话/同控制配置遥测基线时只显示未关联说明，不伪造曲线标记。
+- ParameterEditorController 仅在匹配的 PARAM_VALUE 写入确认成功后发出 parameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue)，保留飞控确认前后值；失败、超时或未授权写入不产生确认事件。
+- 参数确认事件保留参数写入前值与飞控确认值，先记录当前 FCU boot ID、controlProfileId 与最后一个已接收控制时间戳，随后只在同一 boot ID / controlProfileId 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话/同控制配置遥测基线时只显示未关联说明，不伪造曲线标记。
 - 参数标记与曲线样本在 boot ID 变化、时间戳回退或 activeVehicle 切换时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
 - 仿真接口盘点：当前仓库的 `tools/simulation/mock_vehicle.py` 明确不模拟飞行动力学；`run-arducopter-sitl.sh` 启动的是 ArduCopter，不是 Flight SIL；`Flight-UDP-SIL-20261114.md` 记录的是外部 Flight Host SIL 经临时本地转发补丁接入的遥测验证，未提供 GroundControl 可调用的 Flight SIL 启停或参数注入 API。因此参数中心只读已连接 FCU 的真实遥测，不启动/控制仿真进程，也不将 ArduCopter SITL 冒充 Flight 模型仿真。
 - 影响关系盘点：当前 `FlightParameterFactMetaData.json` 提供 name/type/domain/group/范围/默认值/modelProfiles 等字段，未声明 dependencies 或 validationRules；`FlightVehicleModelCatalog.json` 提供机型、域和参数白名单，不包含参数影响图。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
