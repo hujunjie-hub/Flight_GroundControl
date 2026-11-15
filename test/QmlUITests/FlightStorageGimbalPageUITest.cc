@@ -958,6 +958,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondManagerGimbal);
             QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(),
                                       secondManagerGimbalIndex, 1000);
+            QVERIFY(!retract->isVisible());
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 5000);
             QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
