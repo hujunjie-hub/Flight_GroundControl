@@ -96,7 +96,7 @@ Item {
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
             readonly property bool controlTelemetryAvailable: {
                 const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
-                return telemetry && telemetry.factExists("controlAvailable") &&
+                return root._linkHealthy && telemetry && telemetry.factExists("controlAvailable") &&
                        telemetry.getFact("controlAvailable").value
             }
             readonly property var lastResponseSample: responseSamples.length > 0
