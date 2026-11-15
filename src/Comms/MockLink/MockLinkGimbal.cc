@@ -349,10 +349,17 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
             }
         } else if (messageId == MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) {
             if (request.target_component == 0) {
-                // A broadcast interval applies to every device component managed here.
+                // A broadcast interval applies to every device component in
+                // every manager, with a single ACK from the primary manager.
                 handled = _handleSetMessageInterval(request);
                 for (MockLinkGimbal *device : std::as_const(_additionalDevices)) {
                     handled = device->_handleSetMessageInterval(request) || handled;
+                }
+                for (MockLinkGimbal *manager : std::as_const(_additionalManagers)) {
+                    handled = manager->_handleSetMessageInterval(request) || handled;
+                    for (MockLinkGimbal *device : std::as_const(manager->_additionalDevices)) {
+                        handled = device->_handleSetMessageInterval(request) || handled;
+                    }
                 }
             } else if (request.target_component == _managerCompId) {
                 // Device IDs 1-6 publish attitude status through the manager component.
