@@ -2653,11 +2653,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(tabs);
             QVERIFY(title);
             QVERIFY(dashboardGrid);
-            const qreal expectedDashboardGridSpacing = page->property("_dashboardGridSpacing").toReal();
-            const auto dashboardGridSpacingMatches = [expectedDashboardGridSpacing](QQuickItem* grid) {
+            const auto dashboardGridSpacingMatches = [page](QQuickItem* grid) {
+                const qreal expectedSpacing = page->property("_dashboardGridSpacing").toReal();
                 return grid &&
-                       qAbs(grid->property("columnSpacing").toReal() - expectedDashboardGridSpacing) < 0.01 &&
-                       qAbs(grid->property("rowSpacing").toReal() - expectedDashboardGridSpacing) < 0.01;
+                       qAbs(grid->property("columnSpacing").toReal() - expectedSpacing) < 0.01 &&
+                       qAbs(grid->property("rowSpacing").toReal() - expectedSpacing) < 0.01;
             };
             const qreal originalPageWidth = page->width();
             QVERIFY(originalPageWidth > 0);
@@ -2750,6 +2750,48 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_VERIFY_WITH_TIMEOUT(compactDetailsTitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(compactTrendCanvas->height() >= 64, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), 4, 3000);
+
+            const QString compactPageGridNames[] = {
+                QStringLiteral("flightTelemetry_heroGrid"),
+                QStringLiteral("flightTelemetry_healthPageGrid"),
+                QStringLiteral("flightTelemetry_navigationPageGrid"),
+                QStringLiteral("flightTelemetry_rcLinkPageGrid")
+            };
+            for (int pageIndex = 0; pageIndex < 4; ++pageIndex) {
+                const QString tabName = QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex);
+                QQuickItem* pageTab = findVisibleItem(_rootItem, tabName, 3000);
+                QVERIFY(pageTab);
+                QVERIFY(_clickItemAt(pageTab, 0.5, 0.5, tabName));
+                QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), pageIndex, 3000);
+
+                QQuickItem* primaryGrid = findVisibleItem(
+                    _rootItem, compactPageGridNames[pageIndex], 3000);
+                QQuickItem* detailGrid = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
+                QQuickItem* compactTrendGrid = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_trendGrid"), 3000);
+                QQuickItem* pageDetailTitle = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
+                QQuickItem* pageTrendCanvas = findVisibleItem(
+                    _rootItem, QStringLiteral("flightTelemetry_trend_position_canvas"), 3000);
+                QVERIFY(primaryGrid);
+                QVERIFY(detailGrid);
+                QVERIFY(compactTrendGrid);
+                QVERIFY(pageDetailTitle);
+                QVERIFY(pageTrendCanvas);
+                QTRY_COMPARE_WITH_TIMEOUT(primaryGrid->property("columns").toInt(), 12, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(detailGrid->property("columns").toInt(), 12, 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(compactTrendGrid->property("columns").toInt(), 4, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(primaryGrid), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(detailGrid), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(pageTrendCanvas->height() >= 64, 3000);
+            }
+            QQuickItem* compactOverviewTab = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
+            QVERIFY(compactOverviewTab);
+            QVERIFY(_clickItemAt(compactOverviewTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
             // Keep the reference-height viewport active while exercising all four pages below.
             page->setWidth(1600);
