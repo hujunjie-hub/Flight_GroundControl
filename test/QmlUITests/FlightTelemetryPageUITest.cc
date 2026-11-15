@@ -802,6 +802,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
             QQuickItem* rcLinkPanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
+            QQuickItem* linkDetailCoverage = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailCoverage"));
+            QQuickItem* linkDetailState = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailState_2"));
+            QQuickItem* linkDetailMetrics = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
             QQuickItem* gcsLinkMetricsGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
             QQuickItem* gcsRssiMetricCell = findVisibleItem(
@@ -822,6 +828,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(invalidOtherLossValue);
             QVERIFY(rcFailsafePanel);
             QVERIFY(rcLinkPanel);
+            QVERIFY(linkDetailCoverage);
+            QVERIFY(linkDetailState);
+            QVERIFY(linkDetailMetrics);
             QVERIFY(gcsLinkMetricsGrid);
             QVERIFY(gcsRssiMetricCell);
             QVERIFY(gcsQualityMetricCell);
@@ -835,6 +844,44 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
+                                      translatedTelemetryText("健康"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
+                                         QStringLiteral("RSSI -68 dBm")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(
+                                         QStringLiteral("70.0 %")), 3000);
+            const QVariantMap staleLinkSample{
+                {QStringLiteral("linkState"), 2}, {QStringLiteral("receiveAgeMs"), 6000},
+                {QStringLiteral("reasonCode"), 0}, {QStringLiteral("validityMask"), 0x700},
+                {QStringLiteral("rssiDbm"), -68}, {QStringLiteral("linkQualityPermille"), 700},
+                {QStringLiteral("packetLossPpm"), 30000}, {QStringLiteral("ageUs"), 2500}};
+            QVariant staleLinkStateText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceStateText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleLinkStateText),
+                                              Q_ARG(QVariant, QVariant::fromValue(staleLinkSample))));
+            QCOMPARE(staleLinkStateText.toString(),
+                     translatedTelemetryText("数据超时 · 最近状态：健康"));
+            QVariant staleLinkMetricText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceMetricText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleLinkMetricText),
+                                              Q_ARG(QVariant, QVariant::fromValue(staleLinkSample)),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral("rssiDbm"))),
+                                              Q_ARG(QVariant, QVariant(8)),
+                                              Q_ARG(QVariant, QVariant(0)),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral(" dBm")))));
+            QCOMPARE(staleLinkMetricText.toString(), translatedTelemetryText("数据超时"));
+            QVariant staleLinkAgeText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceAgeText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleLinkAgeText),
+                                              Q_ARG(QVariant, QVariant::fromValue(staleLinkSample))));
+            QCOMPARE(staleLinkAgeText.toString(), translatedTelemetryText("数据超时"));
+            QVariant staleLinkReasonText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceReasonText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleLinkReasonText),
+                                              Q_ARG(QVariant, QVariant::fromValue(staleLinkSample))));
+            QVERIFY(staleLinkReasonText.toString().contains(translatedTelemetryText("最近原因")));
             const qreal originalLinkMetricsPageWidth = page->width();
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(gcsLinkMetricsGrid->property("columns").toInt(), 2, 3000);
@@ -856,7 +903,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("titleText").toString().contains(
                                          QStringLiteral("GCS 地面站")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcFailsafePanel->property("statusFamily").toString().isEmpty(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString().isEmpty(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkPanel->property("statusFamily").toString(),
+                                      QStringLiteral("linkAvailable"), 3000);
             QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
             QVERIFY(mode2Button);
             QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
@@ -2024,6 +2072,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(prearmReason->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmTimestamp->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceCoverageRow->property("valueText").toString(), staleText, 7000);
+            QVariant staleRcAgeText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_rcAgeDisplayText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleRcAgeText)));
+            QCOMPARE(staleRcAgeText.toString(), staleText);
+            QVariant staleFamilyLinkStateText;
+            const QVariantMap recentlyReceivedLinkSample{
+                {QStringLiteral("linkState"), 2}, {QStringLiteral("receiveAgeMs"), 100}};
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkInstanceStateText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleFamilyLinkStateText),
+                                              Q_ARG(QVariant, QVariant::fromValue(recentlyReceivedLinkSample))));
+            QCOMPARE(staleFamilyLinkStateText.toString(),
+                     translatedTelemetryText("数据超时 · 最近状态：健康"));
             QVariant stalePrearmSummary;
             QVERIFY(QMetaObject::invokeMethod(page, "_prearmSummaryText", Qt::DirectConnection,
                                               Q_RETURN_ARG(QVariant, stalePrearmSummary)));
@@ -2313,6 +2373,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rightMarker);
             QVERIFY(!leftMarker->isVisible());
             QVERIFY(!rightMarker->isVisible());
+            QQuickItem* rcAgeRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcFailsafeRcAge"), 3000);
+            QVERIFY(rcAgeRow);
+            QTRY_COMPARE_WITH_TIMEOUT(rcAgeRow->property("valueText").toString(), staleText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailState->property("text").toString().contains(staleText), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailState->property("text").toString().contains(
+                                         translatedTelemetryText("最近状态")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkDetailMetrics->property("text").toString().contains(staleText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(), staleText, 3000);
             const QString modeNames[] = {
                 QStringLiteral("flightTelemetry_rcMode_1"),
                 QStringLiteral("flightTelemetry_rcMode_2"),
