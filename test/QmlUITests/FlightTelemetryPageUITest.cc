@@ -782,9 +782,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       expectedUtcTimestamp, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
-                                      QStringLiteral("是"), 3000);
+                                      translatedTelemetryText("是"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
-                                      QStringLiteral("有效"), 3000);
+                                      translatedTelemetryText("有效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
@@ -797,9 +797,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcTimestamp->property("valueText").toString(), invalidText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(), invalidText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
-                                      QStringLiteral("否"), 3000);
+                                      translatedTelemetryText("否"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
-                                      QStringLiteral("无效"), 3000);
+                                      translatedTelemetryText("无效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueColor").value<QColor>(),
