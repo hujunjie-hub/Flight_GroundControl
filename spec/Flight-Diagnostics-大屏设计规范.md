@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.70
+- 版本：6.71
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；接收机失效保护按触发/未触发及 RC family freshness 独立着色；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；动态标注优先摘要 4 条与事件历史最近 8 条的展示范围；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色；导航时序页补齐本地时钟纪律六态分色与 FCU 时间戳安全整数有效性，时间线标记颜色与排序状态一致。
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -163,6 +163,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 双摇杆手型直接读取 FlightRadio 的持久化 Mode 1/2/3 设置，按其 channel-to-axis 映射绑定横滚/俯仰/偏航/油门；marker 仅在对应两个轴均新鲜且 validity bit 有效时显示。轴读数分别保留等待、超时、未上报和无效语义，不把无效输入折算为 0。
 - 当前协议只提供四个归一化逻辑轴，不提供 CH1–CH8 原始 PWM；页面明确显示四个逻辑轴，不虚构额外通道。
 - 链路质量逐实例显示 linkKind、linkState、RSSI、质量、丢包、原因和接收年龄；RSSI、质量、丢包分别成格，并分别满足 link family 新鲜、实例 receiveAgeMs 未超时、validityMask 对应位有效。
+- 链路质量主视觉增加「链路状态分布」摘要：只统计 linkAvailable family 与实例 freshness 均新鲜的当前状态，分别计数健康、降级、丢失、恢复中、初始化和未知；超时/等待实例不冒充当前断链，并单独保留超时/等待计数。状态颜色优先级为丢失红色、降级/恢复中或部分超时琥珀色、未知/无新鲜实例中性灰、全部健康绿色；链路实例新鲜度覆盖仍独立显示。
 - 链路趋势优先使用新鲜 GCS（kind 2）、伴随计算机（kind 3）或其他数据链路（kind 4）；存在非 RC 实例但均超时时保留超时/断点，不以健康 RC 接收机冒充数据链路；仅无非 RC 实例时回退 RC（kind 1）。趋势标题标明当前选中链路类型。
 - 失控保护与多实例链路质量面板不使用单一 operation/link family 徽标代表整张面板；各域和各实例状态独立表达。
 - 接收机失效保护颜色独立服从 `rcInputAvailable` freshness：新鲜且触发为红色、未触发为绿色；RC family 超时为琥珀色，等待/未上报/未知为中性灰；不得借用 RC 链路状态或飞控 failsafe 等级颜色。
@@ -1200,3 +1201,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink UI Integration 在新 boot epoch 中注入三个完全相同的 FCU 时间戳，断言显示顺序为 navigation 01、time 02、event 03；随后继续验证超出 JS 安全整数范围的事件时间戳被标红并置后。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、SPEC 入口、Windows Release 验收指南和 G15 manifest；不改变协议、FactGroup 数据源、freshness 阈值或飞控控制行为。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待集中验收。
+
+
+## 91. Phase 2.45 多链路状态分布与断链恢复闭环（2026-11-15）
+
+- 链路质量 HeroPanel 新增 `flightTelemetry_linkInstanceStateSummary`，对新鲜实例的当前 `linkState` 汇总健康、降级、丢失、恢复中、初始化和未知数量。
+- 超时/等待实例不计入当前 linkState 分布，但在摘要中保留 freshness 计数；避免把最后一次缓存的「健康」误判为当前在线，也避免把数据超时直接推断为链路丢失。
+- 颜色优先级：任一新鲜实例丢失为红色；降级/恢复中或存在超时实例为琥珀色；全部健康为绿色；未知或无新鲜实例为中性灰。linkAvailable family 本身等待/超时时继续服从 family freshness。
+- MockLink `FlightTelemetryPageUITest` 覆盖三实例同时健康、单实例丢失、全部丢失、全部恢复中、全部恢复健康，以及一条新鲜/两条超时的混合状态；同时验证逐实例状态文字与颜色。
+- 不修改 MAVLink 字段、链路实例 ID、freshness 阈值、主数据链路选择策略或飞控行为；按用户要求不运行 CI、Unit、Integration 或 Windows Release，新增断言保持 NOT_RUN。
