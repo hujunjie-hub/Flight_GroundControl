@@ -277,7 +277,10 @@
         "flight_config_sidebar_uses_160_px_reference_width_and_dark_teal_selection_style_without_dead_navigation_entries",
         "six_summary_kpis_render_in_one_continuous_bordered_band_with_responsive_6_3_2_1_columns",
         "summary_band_grid_and_all_six_kpi_contents_fit_at_1600_1000_700_400_px",
-        "four_reference_tabs_use_project_svg_icons_with_stable_20px_geometry_and_no_font_dependent_glyphs"
+        "four_reference_tabs_use_project_svg_icons_with_stable_20px_geometry_and_no_font_dependent_glyphs",
+        "trend_cards_expose_renderable_sample_and_gap_counts_for_ui_regression",
+        "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
+        "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells"
       ]
     },
     {
@@ -420,7 +423,10 @@
     "flight_config_sidebar_uses_reference_width_without_replacing_real_component_navigation",
     "six_summary_kpis_render_inside_one_continuous_band_with_desktop_dividers",
     "summary_band_and_kpi_content_fit_all_responsive_breakpoints",
-    "four_reference_tabs_use_project_svg_icons_with_stable_20px_geometry_and_no_font_dependent_glyphs"
+    "four_reference_tabs_use_project_svg_icons_with_stable_20px_geometry_and_no_font_dependent_glyphs",
+    "trend_cards_expose_renderable_sample_and_gap_counts_for_ui_regression",
+    "trend_canvases_use_64px_plot_area_with_earlier_latest_time_axis",
+    "trend_and_status_panels_use_eight_px_radius_with_six_px_health_cells"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

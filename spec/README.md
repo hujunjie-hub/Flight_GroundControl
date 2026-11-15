@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 3.6
+- 版本 3.7
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -138,4 +138,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 设计基准：四张 1672×941 参考图；当前实现位于 `FlightTelemetry.qml`、`FlyViewToolBar.qml`、`VehicleConfigView.qml` 和 `SettingsButton.qml`。
 - 2026-11-15 本轮增量：Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带、深青蓝卡片令牌；导航仍使用真实组件，不添加死链。
 - 2026-11-15 本轮增量：四个诊断页签改用资源内 SVG 图标和统一 20×20 布局盒，避免 Unicode 字符受字体回退/DPI 影响；G15 增加图标资源与尺寸回归断言。
+- 2026-11-15 本轮增量：趋势图采用 gap-aware 面积折线、最新有效点高亮和 64 px 绘图区；主面板圆角统一 8 px、健康矩阵单元 6 px。按用户要求，本轮 UI 迭代不逐次触发 CI，后续集中验收。
 - 视觉验收仍须使用精确 main HEAD 的 Windows Release 二进制，完成 1672×941 截图叠加和 100/125/150% DPI 检查。

@@ -149,6 +149,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* trendGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendGrid"), 3000);
             QQuickItem* trendPosition =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
+            QQuickItem* trendPositionCanvas =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_canvas"), 3000);
+            QQuickItem* trendPositionTimeAxis =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_timeAxis"), 3000);
             QQuickItem* trendVelocity =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_velocity"), 3000);
             QQuickItem* trendHeading =
@@ -372,6 +376,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(healthNavigation->property("statusText").toString(), waitingText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
+            QVERIFY(!trendPosition->property("hasRenderableSeries").toBool());
+            QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
+            QVERIFY(trendPositionCanvas);
+            QVERIFY(trendPositionTimeAxis);
             QQuickItem* trendPositionScale =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_trend_position_scale"));
             QVERIFY(trendPositionScale);
@@ -552,6 +560,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(trendVelocity->property("validSampleCount").toInt() >= 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendHeading->property("validSampleCount").toInt() >= 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("validSampleCount").toInt() >= 2, 3000);
+            QVERIFY(trendPosition->property("hasRenderableSeries").toBool());
+            QTRY_VERIFY_WITH_TIMEOUT(trendPositionCanvas->width() >= 100 && trendPositionCanvas->height() >= 60, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("radius").toInt(), 8, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationCard->property("radius").toInt(), 8, 3000);
             QVERIFY(trendPosition->property("sampleCount").toInt() <= 60);
             QVERIFY(page->property("_trendSamples").toList().size() <= 60);
             QVERIFY(!findItem(_rootItem, QStringLiteral("flightTelemetry_attitudeIndicator")));
@@ -629,6 +641,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             if (QTest::currentTestFailed())
                 return;
             QVERIFY(!trendVelocity->property("lastSampleValid").toBool());
+            QVERIFY(trendVelocity->property("gapCount").toInt() >= 1);
+            QVERIFY(trendVelocity->property("hasRenderableSeries").toBool());
             QVERIFY(trendPosition->property("lastSampleValid").toBool());
             QVERIFY(trendHeading->property("lastSampleValid").toBool());
 
@@ -807,6 +821,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             for (int index = 0; index < 4; ++index) {
                 QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(index), 3000);
                 QVERIFY2(tab, qPrintable(QStringLiteral("Missing dashboard tab %1").arg(index)));
+                QTRY_COMPARE_WITH_TIMEOUT(tab->property("radius").toInt(), 8, 3000);
                 QQuickItem* tabIcon = findVisibleItem(
                     _rootItem, QStringLiteral("flightTelemetry_visualTabIcon_%1").arg(index), 3000);
                 QVERIFY2(tabIcon, qPrintable(QStringLiteral("Missing dashboard SVG icon %1").arg(index)));
@@ -836,6 +851,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 for (int trendIndex = 0; trendIndex < 4; ++trendIndex) {
                     QQuickItem* trend = findVisibleItem(_rootItem, trendNames[trendIndex], 3000);
                     QVERIFY(trend);
+                    QQuickItem* trendCanvas = findVisibleItem(
+                        _rootItem, trendNames[trendIndex] + QStringLiteral("_canvas"), 3000);
+                    QQuickItem* trendTimeAxis = findVisibleItem(
+                        _rootItem, trendNames[trendIndex] + QStringLiteral("_timeAxis"), 3000);
+                    QVERIFY(trendCanvas);
+                    QVERIFY(trendTimeAxis);
+                    QTRY_COMPARE_WITH_TIMEOUT(trend->property("radius").toInt(), 8, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(trendCanvas->width() >= 100 && trendCanvas->height() >= 60, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(trend->property("valueKey").toString(), trendKeys[index][trendIndex], 3000);
                 }
             }
@@ -857,6 +880,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QStringLiteral("flightTelemetry_healthPage_") + QString::fromLatin1(healthDomains[index]);
                 healthCells[index] = findVisibleItem(_rootItem, objectName, 3000);
                 QVERIFY2(healthCells[index], qPrintable(objectName));
+                QTRY_COMPARE_WITH_TIMEOUT(healthCells[index]->property("radius").toInt(), 6, 3000);
             }
             const auto healthMatrixCellsFit = [&]() {
                 for (QQuickItem* cell : healthCells) {
@@ -904,8 +928,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcTab);
             QVERIFY(_clickItemAt(rcTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QQuickItem* leftStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
+            QQuickItem* rightStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
             QQuickItem* leftMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
             QQuickItem* rightMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick_marker"));
+            QVERIFY(leftStick);
+            QVERIFY(rightStick);
+            QTRY_COMPARE_WITH_TIMEOUT(leftStick->property("radius").toInt(), 8, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStick->property("radius").toInt(), 8, 3000);
             QVERIFY(leftMarker);
             QVERIFY(rightMarker);
             QVERIFY(!leftMarker->isVisible());

@@ -1175,7 +1175,7 @@ SetupPage {
                         objectName: "flightTelemetry_visualTab_" + index
                         Layout.fillWidth: true
                         implicitHeight: 46
-                        radius: 5
+                        radius: 8
                         color: root._activeDashboardPage === index ? "#07545E" : "#0B252E"
                         border.width: 1
                         border.color: root._activeDashboardPage === index ? "#18DAD4" : "#0D5964"
@@ -2863,7 +2863,7 @@ SetupPage {
         Layout.fillWidth: true
         implicitWidth: 140
         implicitHeight: 174
-        radius: 6
+        radius: 8
         color: "#082E36"
         border.width: 1
         border.color: "#0B6873"
@@ -2929,7 +2929,7 @@ SetupPage {
 
         implicitWidth: 150
         implicitHeight: 54
-        radius: 5
+        radius: 6
         color: "#082B33"
         border.width: 1
         border.color: "#0B6873"
@@ -2989,6 +2989,8 @@ SetupPage {
         readonly property var validValues: plotValues.filter(value => Number.isFinite(value))
         readonly property int sampleCount: plotValues.length
         readonly property int validSampleCount: validValues.length
+        readonly property int gapCount: plotValues.filter(value => !Number.isFinite(value)).length
+        readonly property bool hasRenderableSeries: validSampleCount > 0
         readonly property bool lastSampleValid: Number.isFinite(plotValues[sampleCount - 1])
         readonly property var plotScale: {
             if (validSampleCount < 2) {
@@ -3005,8 +3007,8 @@ SetupPage {
 
         Layout.fillWidth: true
         implicitWidth: 230
-        implicitHeight: Math.max(126, trendContent.implicitHeight + 16)
-        radius: 6
+        implicitHeight: Math.max(134, trendContent.implicitHeight + 16)
+        radius: 8
         color: "#082B33"
         border.width: 1
         border.color: "#0B6873"
@@ -3037,7 +3039,7 @@ SetupPage {
                 objectName: plotCard.objectName + "_canvas"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredHeight: 56
+                Layout.preferredHeight: 64
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
                 Connections {
@@ -3047,45 +3049,151 @@ SetupPage {
                 onPaint: {
                     const ctx = getContext("2d")
                     if (!ctx) return
+                    ctx.save()
                     ctx.clearRect(0, 0, width, height)
+
                     const left = 5
                     const right = Math.max(left + 1, width - 5)
                     const top = 5
                     const bottom = Math.max(top + 1, height - 5)
+                    const values = plotCard.plotValues
+                    const lineColor = plotCard.lineColor.toString()
 
-                    ctx.strokeStyle = "#2B414B"
+                    // Low-contrast HUD grid: five time divisions and three value guides.
+                    ctx.strokeStyle = "#24434C"
                     ctx.lineWidth = 1
-                    for (let line = 0; line < 3; line++) {
-                        const y = top + (bottom - top) * line / 2
+                    ctx.globalAlpha = 0.72
+                    for (let row = 0; row < 3; ++row) {
+                        const y = top + (bottom - top) * row / 2
                         ctx.beginPath()
                         ctx.moveTo(left, y)
                         ctx.lineTo(right, y)
                         ctx.stroke()
                     }
+                    for (let column = 0; column < 5; ++column) {
+                        const x = left + (right - left) * column / 4
+                        ctx.beginPath()
+                        ctx.moveTo(x, top)
+                        ctx.lineTo(x, bottom)
+                        ctx.stroke()
+                    }
+                    ctx.globalAlpha = 1
 
+                    const xForIndex = function(index) {
+                        return values.length <= 1
+                               ? (left + right) / 2
+                               : left + (right - left) * index / (values.length - 1)
+                    }
                     const scale = plotCard.plotScale
                     if (!scale) {
+                        // Show the first real sample immediately; do not fabricate a line or range.
+                        for (let index = 0; index < values.length; ++index) {
+                            if (!Number.isFinite(values[index])) continue
+                            const x = xForIndex(index)
+                            const y = (top + bottom) / 2
+                            ctx.beginPath()
+                            ctx.arc(x, y, 3, 0, Math.PI * 2)
+                            ctx.fillStyle = lineColor
+                            ctx.fill()
+                        }
+                        ctx.restore()
                         return
                     }
-                    const values = plotCard.plotValues
+
                     const range = scale.upper - scale.lower
-                    ctx.beginPath()
-                    ctx.strokeStyle = plotCard.lineColor.toString()
-                    ctx.lineWidth = 2
-                    let penDown = false
-                    for (let i = 0; i < values.length; i++) {
-                        const value = values[i]
-                        if (!Number.isFinite(value)) {
-                            penDown = false
-                            continue
-                        }
-                        const x = left + (right - left) * i / (values.length - 1)
-                        const y = bottom - (value - scale.lower) / range * (bottom - top)
-                        if (penDown) ctx.lineTo(x, y)
-                        else ctx.moveTo(x, y)
-                        penDown = true
+                    const yForValue = function(value) {
+                        return bottom - (value - scale.lower) / range * (bottom - top)
                     }
-                    ctx.stroke()
+                    const drawSegment = function(startIndex, endIndex) {
+                        if (startIndex < 0 || endIndex < startIndex) return
+                        const firstX = xForIndex(startIndex)
+                        const lastX = xForIndex(endIndex)
+                        if (startIndex === endIndex) {
+                            ctx.beginPath()
+                            ctx.arc(firstX, yForValue(values[startIndex]), 2.6, 0, Math.PI * 2)
+                            ctx.fillStyle = lineColor
+                            ctx.fill()
+                            return
+                        }
+
+                        // Fill each contiguous valid segment separately; invalid samples remain visible gaps.
+                        ctx.beginPath()
+                        for (let index = startIndex; index <= endIndex; ++index) {
+                            const x = xForIndex(index)
+                            const y = yForValue(values[index])
+                            if (index === startIndex) ctx.moveTo(x, y)
+                            else ctx.lineTo(x, y)
+                        }
+                        ctx.lineTo(lastX, bottom)
+                        ctx.lineTo(firstX, bottom)
+                        ctx.closePath()
+                        const fillGradient = ctx.createLinearGradient(0, top, 0, bottom)
+                        fillGradient.addColorStop(0, lineColor)
+                        fillGradient.addColorStop(1, "rgba(3, 26, 32, 0)")
+                        ctx.globalAlpha = 0.22
+                        ctx.fillStyle = fillGradient
+                        ctx.fill()
+                        ctx.globalAlpha = 1
+
+                        ctx.beginPath()
+                        for (let index = startIndex; index <= endIndex; ++index) {
+                            const x = xForIndex(index)
+                            const y = yForValue(values[index])
+                            if (index === startIndex) ctx.moveTo(x, y)
+                            else ctx.lineTo(x, y)
+                        }
+                        ctx.strokeStyle = lineColor
+                        ctx.lineWidth = 2
+                        ctx.lineCap = "round"
+                        ctx.lineJoin = "round"
+                        ctx.shadowColor = lineColor
+                        ctx.shadowBlur = 6
+                        ctx.stroke()
+                        ctx.shadowBlur = 0
+                    }
+
+                    let segmentStart = -1
+                    for (let index = 0; index < values.length; ++index) {
+                        if (Number.isFinite(values[index])) {
+                            if (segmentStart < 0) segmentStart = index
+                        } else if (segmentStart >= 0) {
+                            drawSegment(segmentStart, index - 1)
+                            segmentStart = -1
+                        }
+                    }
+                    if (segmentStart >= 0) drawSegment(segmentStart, values.length - 1)
+
+                    // A bright endpoint is shown only when the newest sample is valid.
+                    if (plotCard.lastSampleValid) {
+                        const currentX = xForIndex(values.length - 1)
+                        const currentY = yForValue(values[values.length - 1])
+                        ctx.beginPath()
+                        ctx.arc(currentX, currentY, 5, 0, Math.PI * 2)
+                        ctx.globalAlpha = 0.28
+                        ctx.fillStyle = lineColor
+                        ctx.fill()
+                        ctx.globalAlpha = 1
+                        ctx.beginPath()
+                        ctx.arc(currentX, currentY, 2.4, 0, Math.PI * 2)
+                        ctx.fillStyle = "#E8FFFF"
+                        ctx.fill()
+                    }
+                    ctx.restore()
+                }
+            }
+            RowLayout {
+                objectName: plotCard.objectName + "_timeAxis"
+                Layout.fillWidth: true
+                QGCLabel {
+                    text: qsTr("较早")
+                    color: "#688A94"
+                    font.pointSize: ScreenTools.microFontPointSize
+                }
+                Item { Layout.fillWidth: true }
+                QGCLabel {
+                    text: qsTr("最新")
+                    color: "#688A94"
+                    font.pointSize: ScreenTools.microFontPointSize
                 }
             }
             RowLayout {
@@ -3211,7 +3319,7 @@ SetupPage {
         Layout.alignment: Qt.AlignTop
         implicitWidth: 300
         implicitHeight: cardColumn.implicitHeight + 24
-        radius: 6
+        radius: 8
         color: "#06232B"
         border.width: 1
         border.color: "#0B6873"
