@@ -201,7 +201,10 @@ SetupPage {
                                        Number.isFinite(currentBootTime) &&
                                        currentBootTime < previousBootTime
 
-                const currentEventDrops = Number(root._factValue("storageCriticalEventDrops"))
+                const rawCurrentEventDrops = root._factValue("storageCriticalEventDrops")
+                const currentEventDrops = rawCurrentEventDrops !== null &&
+                                          rawCurrentEventDrops !== undefined
+                                          ? Number(rawCurrentEventDrops) : NaN
                 const previousEventDrops = Number(root._lastCriticalEventDrops)
                 const hasPreviousEventDrops = root._lastCriticalEventDrops !== null &&
                                               Number.isFinite(previousEventDrops)
@@ -218,7 +221,10 @@ SetupPage {
                     root._criticalEventDropsReset = false
                 }
 
-                const currentLogDrops = Number(root._factValue("storageLogDrops"))
+                const rawCurrentLogDrops = root._factValue("storageLogDrops")
+                const currentLogDrops = rawCurrentLogDrops !== null &&
+                                        rawCurrentLogDrops !== undefined
+                                        ? Number(rawCurrentLogDrops) : NaN
                 const previousLogDrops = Number(root._lastLogDrops)
                 const hasPreviousLogDrops = root._lastLogDrops !== null &&
                                             Number.isFinite(previousLogDrops)
