@@ -18,6 +18,12 @@ SetupPage {
     property int _communicationEpoch: 0
     property int _storageEpoch: -1
     property var _lastStorageTimeBootUs: null
+    property var _lastCriticalEventDrops: null
+    property var _lastLogDrops: null
+    property var _criticalEventDropDelta: null
+    property var _logDropDelta: null
+    property bool _criticalEventDropsReset: false
+    property bool _logDropsReset: false
 
     readonly property bool _storageAvailable: Boolean(_factValue("storageAvailable"))
     readonly property bool _hasPreviousStorageSample: {
@@ -109,6 +115,24 @@ SetupPage {
         return value === null || value === undefined ? "—" : String(value)
     }
 
+    function _dropDeltaText(delta, reset) {
+        if (!_storageFresh)
+            return _statusText()
+        if (reset)
+            return qsTr("计数重置 / 回退")
+        if (delta === null || delta === undefined)
+            return qsTr("基线已建立")
+        const amount = Number(delta)
+        if (!Number.isFinite(amount))
+            return qsTr("无有效增量")
+        return amount > 0 ? qsTr("本帧新增 +%1").arg(amount) : qsTr("本帧无新增")
+    }
+
+    function _dropDeltaColor(delta, reset) {
+        return !_storageFresh || reset || Number(delta) > 0
+               ? qgcPal.warningText : qgcPal.text
+    }
+
     function _fcuUptimeText() {
         if (!_storageFresh)
             return _statusText()
@@ -142,7 +166,12 @@ SetupPage {
     }
 
     Component.onCompleted: {
-        root._lastStorageTimeBootUs = root._factValue("storageTimeBootUs")
+        root._lastStorageTimeBootUs = root._storageAvailable
+                                      ? root._factValue("storageTimeBootUs") : null
+        root._lastCriticalEventDrops = root._storageAvailable
+                                       ? root._factValue("storageCriticalEventDrops") : null
+        root._lastLogDrops = root._storageAvailable
+                             ? root._factValue("storageLogDrops") : null
         if (!root._communicationLost && root._storageAvailable)
             root._storageEpoch = root._communicationEpoch
     }
@@ -164,7 +193,52 @@ SetupPage {
             const sampleTime = root._factValue("storageTimeBootUs")
             if (sampleTime !== null && sampleTime !== undefined &&
                 sampleTime !== root._lastStorageTimeBootUs) {
+                const currentBootTime = Number(sampleTime)
+                const previousBootTime = Number(root._lastStorageTimeBootUs)
+                const hasPreviousSample = root._lastStorageTimeBootUs !== null &&
+                                          Number.isFinite(previousBootTime)
+                const deviceRebooted = hasPreviousSample &&
+                                       Number.isFinite(currentBootTime) &&
+                                       currentBootTime < previousBootTime
+
+                const currentEventDrops = Number(root._factValue("storageCriticalEventDrops"))
+                const previousEventDrops = Number(root._lastCriticalEventDrops)
+                const hasPreviousEventDrops = root._lastCriticalEventDrops !== null &&
+                                              Number.isFinite(previousEventDrops)
+                if (deviceRebooted || (hasPreviousEventDrops &&
+                                       Number.isFinite(currentEventDrops) &&
+                                       currentEventDrops < previousEventDrops)) {
+                    root._criticalEventDropDelta = null
+                    root._criticalEventDropsReset = true
+                } else if (hasPreviousEventDrops && Number.isFinite(currentEventDrops)) {
+                    root._criticalEventDropDelta = currentEventDrops - previousEventDrops
+                    root._criticalEventDropsReset = false
+                } else {
+                    root._criticalEventDropDelta = null
+                    root._criticalEventDropsReset = false
+                }
+
+                const currentLogDrops = Number(root._factValue("storageLogDrops"))
+                const previousLogDrops = Number(root._lastLogDrops)
+                const hasPreviousLogDrops = root._lastLogDrops !== null &&
+                                            Number.isFinite(previousLogDrops)
+                if (deviceRebooted || (hasPreviousLogDrops &&
+                                       Number.isFinite(currentLogDrops) &&
+                                       currentLogDrops < previousLogDrops)) {
+                    root._logDropDelta = null
+                    root._logDropsReset = true
+                } else if (hasPreviousLogDrops && Number.isFinite(currentLogDrops)) {
+                    root._logDropDelta = currentLogDrops - previousLogDrops
+                    root._logDropsReset = false
+                } else {
+                    root._logDropDelta = null
+                    root._logDropsReset = false
+                }
+
                 root._lastStorageTimeBootUs = sampleTime
+                root._lastCriticalEventDrops = Number.isFinite(currentEventDrops)
+                                               ? currentEventDrops : null
+                root._lastLogDrops = Number.isFinite(currentLogDrops) ? currentLogDrops : null
                 if (!root._communicationLost)
                     root._storageEpoch = root._communicationEpoch
             }
@@ -362,6 +436,14 @@ SetupPage {
                                 text: root._metricText("storageCriticalEventDrops")
                                 font.pointSize: ScreenTools.subtitleFontPointSize
                             }
+                            QGCLabel {
+                                objectName: "flightStorage_eventDropsDelta"
+                                text: root._dropDeltaText(root._criticalEventDropDelta,
+                                                          root._criticalEventDropsReset)
+                                color: root._dropDeltaColor(root._criticalEventDropDelta,
+                                                            root._criticalEventDropsReset)
+                                font.pointSize: ScreenTools.captionFontPointSize
+                            }
                         }
                         ColumnLayout {
                             Layout.fillWidth: true
@@ -370,6 +452,12 @@ SetupPage {
                                 objectName: "flightStorage_logDrops"
                                 text: root._metricText("storageLogDrops")
                                 font.pointSize: ScreenTools.subtitleFontPointSize
+                            }
+                            QGCLabel {
+                                objectName: "flightStorage_logDropsDelta"
+                                text: root._dropDeltaText(root._logDropDelta, root._logDropsReset)
+                                color: root._dropDeltaColor(root._logDropDelta, root._logDropsReset)
+                                font.pointSize: ScreenTools.captionFontPointSize
                             }
                         }
                         ColumnLayout {
