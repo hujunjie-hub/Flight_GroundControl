@@ -2944,7 +2944,8 @@ SetupPage {
                     Layout.columnSpan: root.availableWidth >= 1280 ? 8 : root.availableWidth >= 760 ? 4 : 1
                     eyebrow: "DATA LINK QUALITY"
                     titleText: qsTr("链路质量")
-                    statusFamily: "linkAvailable"
+                    // Link instances expose independent freshness/state; do not imply one aggregate health state.
+                    statusFamily: ""
                     QGCLabel {
                         Layout.fillWidth: true
                         visible: root._linkStatuses.length === 0
@@ -3501,7 +3502,8 @@ SetupPage {
                     objectName: "flightTelemetry_card_links"
                     visible: root._activeDashboardPage === 3
                     eyebrow: "COMMUNICATION"
-                    statusFamily: "linkAvailable"
+                    // Per-instance state and coverage are rendered below; avoid a family-wide status badge.
+                    statusFamily: ""
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("通信链路")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
