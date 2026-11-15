@@ -104,8 +104,14 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("controlLaw"), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID") },
         { QStringLiteral("tuningPolicy"), QStringLiteral("GROUND_ADJUSTABLE") },
         { QStringLiteral("updatePolicy"), QStringLiteral("REBOOT_REQUIRED") },
-        { QStringLiteral("dependencies"), QJsonArray{} },
-        { QStringLiteral("validationRules"), QJsonArray{} },
+        { QStringLiteral("dependencies"), QJsonArray{QStringLiteral("TEST_DEPENDENCY")} },
+        { QStringLiteral("validationRules"), QJsonArray{
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("GREATER_THAN")},
+                          {QStringLiteral("value"), 0.5}},
+              QJsonObject{{QStringLiteral("type"), QStringLiteral("REQUIRES_PARAMETER_VALUE")},
+                          {QStringLiteral("parameter"), QStringLiteral("TEST_DEPENDENCY")},
+                          {QStringLiteral("value"), 1.0}}
+          } },
         { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
         { QStringLiteral("sourceFile"), QStringLiteral("controller_tuning.yaml") },
         { QStringLiteral("sourcePath"), QStringLiteral("outer_loop.rate_kp_nm_per_radps[0]") },
@@ -113,6 +119,11 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("readOnly"), false },
         { QStringLiteral("writeOnly"), false }
     };
+
+    QJsonObject dependencyEntry = validEntry;
+    dependencyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_DEPENDENCY"));
+    dependencyEntry.insert(QStringLiteral("dependencies"), QJsonArray{});
+    dependencyEntry.insert(QStringLiteral("validationRules"), QJsonArray{});
 
     QJsonObject unknownRebootEntry = validEntry;
     unknownRebootEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_REBOOT"));
@@ -138,6 +149,18 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject invalidValidationRulesEntry = validEntry;
     invalidValidationRulesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_VALIDATION_RULES"));
     invalidValidationRulesEntry.insert(QStringLiteral("validationRules"), QJsonArray{QJsonObject{}});
+
+    QJsonObject unsupportedValidationRuleEntry = validEntry;
+    unsupportedValidationRuleEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNSUPPORTED_VALIDATION_RULE"));
+    unsupportedValidationRuleEntry.insert(QStringLiteral("dependencies"), QJsonArray{});
+    unsupportedValidationRuleEntry.insert(QStringLiteral("validationRules"), QJsonArray{
+        QJsonObject{{QStringLiteral("type"), QStringLiteral("EXECUTE_SCRIPT")},
+                    {QStringLiteral("value"), 1.0}}
+    });
+
+    QJsonObject undeclaredRuleDependencyEntry = validEntry;
+    undeclaredRuleDependencyEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNDECLARED_RULE_DEPENDENCY"));
+    undeclaredRuleDependencyEntry.insert(QStringLiteral("dependencies"), QJsonArray{});
 
     QJsonObject invalidSourceEntry = validEntry;
     invalidSourceEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_SOURCE"));
@@ -181,12 +204,15 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
 
     QJsonArray parameters;
     parameters.append(validEntry);
+    parameters.append(dependencyEntry);
     parameters.append(unknownRebootEntry);
     parameters.append(invalidTuningPolicyEntry);
     parameters.append(invalidUpdatePolicyEntry);
     parameters.append(invalidApplicabilityEntry);
     parameters.append(invalidDependenciesEntry);
     parameters.append(invalidValidationRulesEntry);
+    parameters.append(unsupportedValidationRuleEntry);
+    parameters.append(undeclaredRuleDependencyEntry);
     parameters.append(invalidSourceEntry);
     parameters.append(unknownDomainEntry);
     parameters.append(invalidRangeEntry);
@@ -217,8 +243,14 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QCOMPARE(valid->controlLaw(), QStringLiteral("MPC_OUTER_SO3_ATTITUDE_RATE_PID"));
     QCOMPARE(valid->tuningPolicy(), QStringLiteral("GROUND_ADJUSTABLE"));
     QCOMPARE(valid->updatePolicy(), QStringLiteral("REBOOT_REQUIRED"));
-    QVERIFY(valid->dependencies().isEmpty());
-    QVERIFY(valid->validationRules().isEmpty());
+    QCOMPARE(valid->dependencies(), QVariantList{QStringLiteral("TEST_DEPENDENCY")});
+    QCOMPARE(valid->validationRules().size(), 2);
+    const QVariantMap thresholdRule = valid->validationRules().at(0).toMap();
+    QCOMPARE(thresholdRule.value(QStringLiteral("type")).toString(), QStringLiteral("GREATER_THAN"));
+    QCOMPARE(thresholdRule.value(QStringLiteral("value")).toDouble(), 0.5);
+    const QVariantMap dependencyRule = valid->validationRules().at(1).toMap();
+    QCOMPARE(dependencyRule.value(QStringLiteral("type")).toString(), QStringLiteral("REQUIRES_PARAMETER_VALUE"));
+    QCOMPARE(dependencyRule.value(QStringLiteral("parameter")).toString(), QStringLiteral("TEST_DEPENDENCY"));
     QCOMPARE(valid->sourceFile(), QStringLiteral("controller_tuning.yaml"));
     QCOMPARE(valid->sourcePath(), QStringLiteral("outer_loop.rate_kp_nm_per_radps[0]"));
     QCOMPARE(valid->sourceKind(), QStringLiteral("vector"));
@@ -252,6 +284,8 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         QStringLiteral("TEST_INVALID_APPLICABILITY"),
         QStringLiteral("TEST_INVALID_DEPENDENCIES"),
         QStringLiteral("TEST_INVALID_VALIDATION_RULES"),
+        QStringLiteral("TEST_UNSUPPORTED_VALIDATION_RULE"),
+        QStringLiteral("TEST_UNDECLARED_RULE_DEPENDENCY"),
         QStringLiteral("TEST_INVALID_SOURCE"),
         QStringLiteral("TEST_DUPLICATE")
     };
