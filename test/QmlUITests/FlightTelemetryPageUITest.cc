@@ -281,6 +281,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(rcCard->y(), eventHistoryCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcCard->x() < eventHistoryCard->x(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
+            page->setWidth(1400);
+            QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
             page->setWidth(1000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
@@ -293,7 +300,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);

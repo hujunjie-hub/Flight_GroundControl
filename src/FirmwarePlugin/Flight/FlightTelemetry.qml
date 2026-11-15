@@ -23,10 +23,10 @@ SetupPage {
                                          ? _telemetry.linkStatuses : []
     readonly property var _resourceStatuses: _ageRefreshTick >= 0 && _telemetry
                                              ? _telemetry.resourceStatuses : []
-    readonly property int _dashboardColumns: availableWidth >= 1450 ? 12 : availableWidth >= 1000 ? 6 : 1
-    readonly property int _summaryColumns: availableWidth >= 1450 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
-    readonly property int _healthColumns: availableWidth >= 1450 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
-    readonly property int _trendColumns: availableWidth >= 1450 ? 4 : availableWidth >= 760 ? 2 : 1
+    readonly property int _dashboardColumns: availableWidth >= 1280 ? 12 : availableWidth >= 1000 ? 6 : 1
+    readonly property int _summaryColumns: availableWidth >= 1280 ? 6 : availableWidth >= 760 ? 3 : availableWidth >= 420 ? 2 : 1
+    readonly property int _healthColumns: availableWidth >= 1280 ? 7 : availableWidth >= 760 ? 4 : availableWidth >= 420 ? 2 : 1
+    readonly property int _trendColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
     readonly property int _trendSampleLimit: 60
     property var _trendSamples: []
     property var _trendVehicle: null
@@ -801,7 +801,7 @@ SetupPage {
             GridLayout {
                 objectName: "flightTelemetry_visualTabs"
                 Layout.fillWidth: true
-                columns: root.availableWidth >= 900 ? 4 : 2
+                columns: root.availableWidth >= 1000 ? 4 : 2
                 columnSpacing: 8
                 rowSpacing: 7
                 Repeater {
@@ -1187,7 +1187,7 @@ SetupPage {
 
                     GridLayout {
                         Layout.fillWidth: true
-                        columns: root.availableWidth >= 1450 ? 3 : 1
+                        columns: root.availableWidth >= 1280 ? 3 : 1
                         columnSpacing: 8
                         MetricReadout {
                             objectName: "flightTelemetry_metricPosition"
