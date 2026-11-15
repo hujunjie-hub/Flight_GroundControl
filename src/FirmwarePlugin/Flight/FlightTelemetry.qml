@@ -1,3 +1,4 @@
+import QtCore
 import QtQuick
 import QtQuick.Layouts
 
@@ -32,6 +33,21 @@ SetupPage {
     property var _trendVehicle: null
     property string _trendBootId: ""
     property int _trendSampleSequence: 0
+    property int _activeDashboardPage: 0
+    readonly property var _dashboardPageInfo: [
+        { title: qsTr("飞控诊断总览"), subtitle: "FLIGHT DIAGNOSTICS OVERVIEW", tab: qsTr("总览总控") },
+        { title: qsTr("飞行健康"), subtitle: "FLIGHT HEALTH & SAFETY", tab: qsTr("飞行健康") },
+        { title: qsTr("导航时序"), subtitle: "NAVIGATION & TIMING", tab: qsTr("导航时序") },
+        { title: qsTr("遥控与链路"), subtitle: "RC INPUT & DATA LINK", tab: qsTr("遥控与链路") }
+    ]
+    readonly property int _healthPageColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
+    Settings {
+        id: stickSettings
+        category: "FlightRadio"
+        property int mode: 2
+    }
+    readonly property var _stickChannels: stickSettings.mode === 1 ? [3, 1, 0, 2] :
+                                          stickSettings.mode === 3 ? [0, 1, 3, 2] : [3, 2, 0, 1]
     readonly property int _navCapabilityHeading: 0x04
     readonly property int _navCapabilityHorizontalPosition: 0x08
     readonly property int _navCapabilityHorizontalVelocity: 0x20
@@ -55,6 +71,266 @@ SetupPage {
     readonly property string _telemetryHeadline: !_vehicle ? qsTr("未连接")
                                                 : _telemetry && _telemetry.telemetryAvailable
                                                   ? qsTr("已收到 FCU 遥测") : qsTr("等待 FCU 遥测")
+
+
+    function _healthStatusCount(statusText) {
+        let count = 0
+        for (let index = 0; index < _healthDomains.length; ++index)
+            if (_familyStatus(_healthDomains[index].available) === statusText) ++count
+        return count
+    }
+    function _healthHeadline() {
+        if (!_vehicle) return qsTr("未连接")
+        if (!_telemetry || !_telemetry.telemetryAvailable) return qsTr("等待 FCU 遥测")
+        const stale = _healthStatusCount(qsTr("数据超时"))
+        const waiting = _healthStatusCount(qsTr("等待遥测"))
+        if (stale > 0) return qsTr("%1 个遥测域超时").arg(stale)
+        if (waiting > 0) return qsTr("%1 个遥测域等待").arg(waiting)
+        return qsTr("遥测域状态已接收")
+    }
+    function _eventCountText() {
+        if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
+        return _telemetry ? String(_telemetry.recentEvents.length) : qsTr("未上报")
+    }
+    function _validRcAxisCountText() {
+        const state = _familyStatus("rcInputAvailable")
+        if (state !== qsTr("已接收")) return state
+        const mask = _fact("rcValidAxesMask")
+        if (mask === null || mask === undefined) return qsTr("未上报")
+        let count = 0
+        for (let bit = 0; bit < 4; ++bit) if ((Number(mask) & (1 << bit)) !== 0) ++count
+        return qsTr("%1 / 4").arg(count)
+    }
+    function _rcLinkStateText() {
+        return _familyStatus("rcInputAvailable") === qsTr("已接收")
+               ? _enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
+               : _familyStatus("rcInputAvailable")
+    }
+    function _utcUncertaintyText() {
+        if (_familyStatus("timeAvailable") !== qsTr("已接收")) return _familyStatus("timeAvailable")
+        if (_fact("utcValid") === null) return qsTr("未上报")
+        return _fact("utcValid") ? _number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
+    }
+    function _resourceCpuLoadText() {
+        if (_familyStatus("resourceAvailable") !== qsTr("已接收")) return _familyStatus("resourceAvailable")
+        for (let index = 0; index < _resourceStatuses.length; ++index) {
+            const item = _resourceStatuses[index]
+            if (Number(item.taskId) === 0)
+                return _rawValidPermillePercent(item.cpuLoadPermille, item.validityMask, 2)
+        }
+        return qsTr("未上报")
+    }
+    function _prearmSummaryText() {
+        if (_familyStatus("prearmAvailable") !== qsTr("已接收")) return _familyStatus("prearmAvailable")
+        const checks = _telemetry ? _telemetry.prearmChecks : []
+        let passed = 0, warnings = 0, failed = 0, unknown = 0
+        for (let index = 0; index < checks.length; ++index) {
+            switch (Number(checks[index].checkState)) {
+            case 1: ++passed; break
+            case 2: ++failed; break
+            case 3: ++warnings; break
+            default: ++unknown; break
+            }
+        }
+        return qsTr("%1 通过 · %2 警告 · %3 失败 · %4 未知").arg(passed).arg(warnings).arg(failed).arg(unknown)
+    }
+    function _latestEventSummaryText() {
+        if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
+        if (!_telemetry || _telemetry.recentEvents.length === 0) return qsTr("当前启动周期暂无事件")
+        const event = _telemetry.recentEvents[0]
+        return qsTr("%1 · %2").arg(_eventSeverityLabel(event.severity)).arg(_reasonText(event.reasonNamespace, event.reasonCode))
+    }
+    function _summaryTileTitle(index) {
+        const titles = [
+            [qsTr("FCU 遥测接收"), qsTr("飞行状态"), qsTr("失效保护等级"), qsTr("导航估计"), qsTr("数据链路"), qsTr("时间同步")],
+            [qsTr("飞控操作"), qsTr("传感器健康"), qsTr("控制器状态"), qsTr("执行器状态"), qsTr("系统资源"), qsTr("事件记录")],
+            [qsTr("导航状态"), qsTr("水平位置 σ"), qsTr("速度 σ"), qsTr("航向 σ"), qsTr("时间质量"), qsTr("UTC 不确定度")],
+            [qsTr("遥控输入"), qsTr("有效输入轴"), qsTr("RC 链路状态"), qsTr("数据链路"), qsTr("链路实例"), qsTr("遥控接收年龄")]
+        ]
+        return titles[_activeDashboardPage][index]
+    }
+    function _summaryTileValue(index) {
+        if (_activeDashboardPage === 0) {
+            switch (index) {
+            case 0: return _telemetryHeadline
+            case 1: return _operationHeadline()
+            case 2: return _fact("operationAvailable")
+                        ? (_familyStatus("operationAvailable") === qsTr("已接收")
+                           ? _enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                           : _familyStatus("operationAvailable")) : qsTr("未上报")
+            case 3: return _fact("navigationAvailable")
+                        ? _navigationMetricText("positionStdM", _navCapabilityHorizontalPosition, 3, " m")
+                        : qsTr("未上报")
+            case 4: return _familyStatus("linkAvailable") === qsTr("已接收")
+                        ? qsTr("%1 条链路").arg(_linkStatuses.length) : _familyStatus("linkAvailable")
+            default: return _familyStatus("timeAvailable") === qsTr("已接收")
+                        ? _enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")])
+                        : _familyStatus("timeAvailable")
+            }
+        }
+        if (_activeDashboardPage === 1)
+            return [_familyStatus("operationAvailable"), _familyStatus("sensorHealthAvailable"),
+                    _familyStatus("controlAvailable"), _familyStatus("actuatorAvailable"),
+                    _familyStatus("resourceAvailable"), _eventCountText()][index]
+        if (_activeDashboardPage === 2)
+            return [_familyStatus("navigationAvailable"),
+                    _navigationMetricText("positionStdM", _navCapabilityHorizontalPosition, 3, " m"),
+                    _navigationMetricText("velocityStdMps", _navCapabilityVelocity, 3, " m/s"),
+                    _navigationMetricText("headingStdRad", _navCapabilityHeading, 3, " rad"),
+                    _familyStatus("timeAvailable") === qsTr("已接收")
+                        ? _enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")])
+                        : _familyStatus("timeAvailable"),
+                    _utcUncertaintyText()][index]
+        return [_familyStatus("rcInputAvailable"), _validRcAxisCountText(), _rcLinkStateText(),
+                _familyStatus("linkAvailable"),
+                _familyStatus("linkAvailable") === qsTr("已接收") ? String(_linkStatuses.length) : _familyStatus("linkAvailable"),
+                _receiveAgeText("rcInput")][index]
+    }
+    function _summaryTileDetail(index) {
+        if (_activeDashboardPage === 0) {
+            switch (index) {
+            case 0: return qsTr("接收不代表所有数据组均新鲜")
+            case 1: return _familyStatus("operationAvailable") === qsTr("已接收")
+                        ? qsTr("控制权：%1 · %2").arg(_enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
+                                               .arg(_familyStatus("operationAvailable"))
+                        : _familyStatus("operationAvailable")
+            case 2: return _familyStatus("operationAvailable") === qsTr("已接收") ? _reasonText(0, _fact("operationReasonCode")) : _familyStatus("operationAvailable")
+            case 3: return _familyStatus("navigationAvailable") === qsTr("已接收")
+                        ? qsTr("速度 %1 · 航向 %2").arg(_navigationMetricText("velocityStdMps", _navCapabilityVelocity, 3, " m/s"))
+                                                  .arg(_navigationMetricText("headingStdRad", _navCapabilityHeading, 3, " rad"))
+                        : _familyStatus("navigationAvailable")
+            case 4: return qsTr("地面站接收 %1").arg(_receiveAgeText("link"))
+            default: return _utcUncertaintyText()
+            }
+        }
+        if (_activeDashboardPage === 1) {
+            switch (index) {
+            case 0: return _receiveAgeText("operation")
+            case 1: return qsTr("%1 个传感器实例").arg(_sensorStatuses.length)
+            case 2: return _familyStatus("controlAvailable") === qsTr("已接收")
+                        ? _enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])
+                        : _receiveAgeText("control")
+            case 3: return qsTr("可用执行器掩码：%1").arg(_mask("actuatorAvailableMask"))
+            case 4: return qsTr("%1 个任务资源实例").arg(_resourceStatuses.length)
+            default: return _familyStatus("eventAvailable") === qsTr("已接收") ? qsTr("当前启动周期事件") : _familyStatus("eventAvailable")
+            }
+        }
+        if (_activeDashboardPage === 2) {
+            switch (index) {
+            case 0: return _receiveAgeText("navigation")
+            case 1: return _navigationMetricStatus(_navCapabilityHorizontalPosition)
+            case 2: return _navigationMetricStatus(_navCapabilityVelocity)
+            case 3: return _navigationMetricStatus(_navCapabilityHeading)
+            case 4: return _utcUncertaintyText()
+            default: return _fact("utcValid") === null ? qsTr("UTC 状态未上报") : (_fact("utcValid") ? qsTr("UTC 有效") : qsTr("UTC 无效"))
+            }
+        }
+        switch (index) {
+        case 0: return qsTr("RC 接收年龄：%1").arg(_receiveAgeText("rcInput"))
+        case 1: return qsTr("有效轴由 rcValidAxesMask 决定")
+        case 2: return _fact("rcReceiverFailsafe") === null ? qsTr("接收机失效保护未上报")
+                    : (_fact("rcReceiverFailsafe") ? qsTr("接收机失效保护触发") : qsTr("接收机失效保护未触发"))
+        case 3: return qsTr("链路接收年龄：%1").arg(_receiveAgeText("link"))
+        case 4: return qsTr("当前仅显示协议已上报链路实例")
+        default: return _receiveAgeText("rcInput")
+        }
+    }
+    function _summaryTileColor(index) {
+        if (_activeDashboardPage === 0) {
+            switch (index) {
+            case 0: return _telemetry && _telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+            case 1: return _familyStatusColor("operationAvailable")
+            case 2: return _failsafeColor()
+            case 3: return _navigationMetricColor(_navCapabilityHorizontalPosition)
+            case 4: return _familyStatusColor("linkAvailable")
+            default: return _familyStatusColor("timeAvailable")
+            }
+        }
+        if (_activeDashboardPage === 1)
+            return [_familyStatusColor("operationAvailable"), _familyStatusColor("sensorHealthAvailable"),
+                    _familyStatusColor("controlAvailable"), _familyStatusColor("actuatorAvailable"),
+                    _familyStatusColor("resourceAvailable"), _familyStatusColor("eventAvailable")][index]
+        if (_activeDashboardPage === 2)
+            return [_familyStatusColor("navigationAvailable"), _navigationMetricColor(_navCapabilityHorizontalPosition),
+                    _navigationMetricColor(_navCapabilityVelocity), _navigationMetricColor(_navCapabilityHeading),
+                    _familyStatusColor("timeAvailable"), _familyStatusColor("timeAvailable")][index]
+        return [_familyStatusColor("rcInputAvailable"), _familyStatusColor("rcInputAvailable"),
+                _rcLinkStateColor(_fact("rcLinkState")), _familyStatusColor("linkAvailable"),
+                _familyStatusColor("linkAvailable"), _familyStatusColor("rcInputAvailable")][index]
+    }
+    function _primaryLinkStatus() {
+        for (let index = 0; index < _linkStatuses.length; ++index)
+            if (Number(_linkStatuses[index].linkKind) === 1) return _linkStatuses[index]
+        return _linkStatuses.length > 0 ? _linkStatuses[0] : null
+    }
+    function _linkMetricText(fieldName, bit, decimals, suffix) {
+        if (_familyStatus("linkAvailable") !== qsTr("已接收")) return _familyStatus("linkAvailable")
+        const link = _primaryLinkStatus()
+        if (!link) return qsTr("未上报")
+        if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
+        if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
+        return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
+    }
+    function _timeTrendSampleValue() {
+        if (_familyStatus("timeAvailable") !== qsTr("已接收") || !_fact("utcValid")) return null
+        const value = Number(_fact("utcUncertaintyUs"))
+        return Number.isFinite(value) && value >= 0 ? value : null
+    }
+    function _linkTrendSampleValue(fieldName, bit, divisor, allowNegative) {
+        if (_familyStatus("linkAvailable") !== qsTr("已接收")) return null
+        const link = _primaryLinkStatus()
+        if (!link || _rawMaskState(link.validityMask, bit) !== 1) return null
+        const value = Number(link[fieldName])
+        if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
+        return value / divisor
+    }
+    function _rcAgeTrendSampleValue() {
+        if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return null
+        const value = Number(_fact("rcAgeUs"))
+        return Number.isFinite(value) && value >= 0 ? value / 1000 : null
+    }
+    function _rcAxisFactNameForChannel(channel) {
+        switch (Number(channel)) {
+        case 0: return "rcRollNorm"
+        case 1: return "rcPitchNorm"
+        case 2: return "rcThrottleNorm"
+        case 3: return "rcYawNorm"
+        default: return ""
+        }
+    }
+    function _rcAxisValidityBitForChannel(channel) {
+        switch (Number(channel)) {
+        case 0: return 0
+        case 1: return 1
+        case 2: return 3
+        case 3: return 2
+        default: return -1
+        }
+    }
+    function _rcAxisNameForChannel(channel) {
+        switch (Number(channel)) {
+        case 0: return qsTr("横滚")
+        case 1: return qsTr("俯仰")
+        case 2: return qsTr("油门")
+        case 3: return qsTr("偏航")
+        default: return qsTr("未知轴")
+        }
+    }
+    function _rcAxisValueForChannel(channel) { return Number(_fact(_rcAxisFactNameForChannel(channel))) }
+    function _rcAxisValidForChannel(channel) {
+        const raw = _fact(_rcAxisFactNameForChannel(channel))
+        const value = Number(raw)
+        const bit = _rcAxisValidityBitForChannel(channel)
+        const centered = Number(channel) !== 2
+        return bit >= 0 && _familyStatus("rcInputAvailable") === qsTr("已接收") &&
+               _rawMaskState(_fact("rcValidAxesMask"), bit) === 1 &&
+               raw !== null && raw !== undefined && Number.isFinite(value) &&
+               (centered ? value >= -1 && value <= 1 : value >= 0 && value <= 1)
+    }
+    function _rcAxisStickValueForChannel(channel) {
+        const value = _rcAxisValueForChannel(channel)
+        return Number(channel) === 2 ? value * 2 - 1 : value
+    }
 
     function _availabilityForFact(name) {
         if (name.endsWith("Available")) {
@@ -380,7 +656,12 @@ SetupPage {
             position: sessionFresh ? _trendSampleValue("navigationAvailable", "positionStdM", _navCapabilityHorizontalPosition) : null,
             velocity: sessionFresh ? _trendSampleValue("navigationAvailable", "velocityStdMps", _navCapabilityVelocity) : null,
             heading: sessionFresh ? _trendSampleValue("navigationAvailable", "headingStdRad", _navCapabilityHeading) : null,
-            control: sessionFresh ? _trendSampleValue("controlAvailable", "controlSolveTimeUs") : null
+            control: sessionFresh ? _trendSampleValue("controlAvailable", "controlSolveTimeUs") : null,
+            time: sessionFresh ? _timeTrendSampleValue() : null,
+            linkRssi: sessionFresh ? _linkTrendSampleValue("rssiDbm", 8, 1, true) : null,
+            linkQuality: sessionFresh ? _linkTrendSampleValue("linkQualityPermille", 9, 10, false) : null,
+            linkLoss: sessionFresh ? _linkTrendSampleValue("packetLossPpm", 10, 10000, false) : null,
+            rcAge: sessionFresh ? _rcAgeTrendSampleValue() : null
         }
         _trendSamples = _trendSamples.concat([sample]).slice(-_trendSampleLimit)
     }
@@ -706,79 +987,92 @@ SetupPage {
             Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
                 Layout.fillWidth: true
-                implicitHeight: headerRow.implicitHeight + 28
-                radius: 10
-                color: "#0A222B"
-                border.width: 1
-                border.color: "#1B6675"
-
+                implicitHeight: headerRow.implicitHeight + 10
+                radius: 0
+                color: "transparent"
+                border.width: 0
+                Canvas {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    width: parent.width * 0.44
+                    height: parent.height
+                    opacity: 0.62
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        if (!ctx) return
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.strokeStyle = "rgba(18, 196, 205, 0.24)"
+                        ctx.lineWidth = 1
+                        for (let row = 0; row < 4; ++row) {
+                            ctx.beginPath()
+                            ctx.moveTo(0, height * (0.32 + row * 0.17))
+                            ctx.lineTo(width, height * (0.18 + row * 0.20))
+                            ctx.stroke()
+                        }
+                        for (let column = 0; column < 9; ++column) {
+                            ctx.beginPath()
+                            ctx.moveTo(width * column / 8, height)
+                            ctx.lineTo(width * (0.34 + column * 0.045), 0)
+                            ctx.stroke()
+                        }
+                    }
+                }
                 GridLayout {
                     id: headerRow
                     anchors.fill: parent
-                    anchors.margins: 12
+                    anchors.margins: 5
                     columns: root.availableWidth < 420 ? 2 : 3
                     columnSpacing: 12
-                    rowSpacing: 8
-
+                    rowSpacing: 6
                     Rectangle {
                         Layout.rowSpan: headerRow.columns === 2 ? 2 : 1
-                        Layout.preferredWidth: 4
+                        Layout.preferredWidth: 5
                         Layout.fillHeight: true
                         radius: 2
-                        color: "#45C6D9"
+                        color: "#13B9C2"
                     }
-
-                    ColumnLayout {
+                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 3
-
-                        QGCLabel {
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            text: "FLIGHT DIAGNOSTICS OVERVIEW"
-                            color: "#45D6E5"
-                            font.pointSize: ScreenTools.secondaryFontPointSize
-                            font.weight: ScreenTools.strongFontWeight
-                        }
-
+                        spacing: 12
                         QGCLabel {
                             objectName: "flightTelemetry_dashboardTitle"
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            text: qsTr("飞控诊断总览")
+                            text: root._dashboardPageInfo[root._activeDashboardPage].title
                             color: "#E7F0F4"
                             typographyRole: "hero"
+                            wrapMode: Text.WordWrap
+                        }
+                        QGCLabel {
+                            objectName: "flightTelemetry_dashboardSubtitle"
+                            visible: root.availableWidth >= 760
+                            text: root._dashboardPageInfo[root._activeDashboardPage].subtitle
+                            color: "#9CBFC7"
+                            font.pointSize: ScreenTools.secondaryFontPointSize
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
-
                     Rectangle {
                         objectName: "flightTelemetry_readOnlyBadge"
                         Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                        radius: 8
-                        color: "#172F36"
-                        border.color: "#32606B"
-                        implicitWidth: readOnlyContent.implicitWidth + 24
-                        implicitHeight: readOnlyContent.implicitHeight + 18
-
+                        radius: 7
+                        color: "#092B32"
+                        border.color: "#176B73"
+                        implicitWidth: readOnlyContent.implicitWidth + 20
+                        implicitHeight: readOnlyContent.implicitHeight + 12
                         RowLayout {
                             id: readOnlyContent
                             anchors.centerIn: parent
-                            spacing: 8
-
+                            spacing: 7
                             Rectangle {
                                 Layout.preferredWidth: 7
                                 Layout.preferredHeight: 7
                                 radius: 4
                                 color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
                             }
-
                             ColumnLayout {
                                 spacing: 1
-                                QGCLabel {
-                                    text: qsTr("只读监控")
-                                    color: "#BDE8D9"
-                                    font.weight: ScreenTools.strongFontWeight
-                                }
+                                QGCLabel { text: qsTr("只读监控"); color: "#BDE8D9"; font.weight: ScreenTools.strongFontWeight }
                                 QGCLabel {
                                     text: root._telemetryHeadline
                                     color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
@@ -805,17 +1099,17 @@ SetupPage {
                 columnSpacing: 8
                 rowSpacing: 7
                 Repeater {
-                    model: [qsTr("总览总控"), qsTr("飞行健康"), qsTr("导航时序"), qsTr("遥控与链路")]
+                    model: root._dashboardPageInfo
                     delegate: Rectangle {
                         required property int index
-                        required property string modelData
+                        required property var modelData
                         objectName: "flightTelemetry_visualTab_" + index
                         Layout.fillWidth: true
-                        implicitHeight: 42
+                        implicitHeight: 46
                         radius: 5
-                        color: index === 0 ? "#075A63" : "#0B252E"
+                        color: root._activeDashboardPage === index ? "#075A63" : "#0B252E"
                         border.width: 1
-                        border.color: index === 0 ? "#20D7D8" : "#175665"
+                        border.color: root._activeDashboardPage === index ? "#20D7D8" : "#175665"
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
@@ -823,16 +1117,31 @@ SetupPage {
                             spacing: 8
                             QGCLabel {
                                 text: ["◈", "♡", "◷", "⌁"][index]
-                                color: index === 0 ? "#9BFFFF" : "#82B4C0"
+                                color: root._activeDashboardPage === index ? "#9BFFFF" : "#82B4C0"
                                 font.pointSize: ScreenTools.titleFontPointSize
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
-                                text: modelData
-                                color: index === 0 ? "#F0FFFF" : "#B8D5DC"
+                                text: modelData.tab
+                                color: root._activeDashboardPage === index ? "#F0FFFF" : "#B8D5DC"
                                 font.weight: ScreenTools.strongFontWeight
                                 horizontalAlignment: Text.AlignHCenter
                             }
+                        }
+                        Rectangle {
+                            visible: root._activeDashboardPage === index
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: 3
+                            radius: 2
+                            color: "#18E5E0"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root._activeDashboardPage = index
                         }
                     }
                 }
@@ -843,91 +1152,17 @@ SetupPage {
                 columns: root._summaryColumns
                 columnSpacing: 10
                 rowSpacing: 10
-
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryTelemetry"
-                    Layout.fillWidth: true
-                    titleText: qsTr("FCU 遥测接收")
-                    valueText: root._telemetryHeadline
-                    detailText: qsTr("接收不代表所有数据组均新鲜")
-                    accentColor: root._telemetry && root._telemetry.telemetryAvailable ? "#42CFA8" : "#8A9A94"
-                }
-
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryOperation"
-                    Layout.fillWidth: true
-                    titleText: qsTr("飞行状态")
-                    valueText: root._operationHeadline()
-                    detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                ? qsTr("控制权：%1 · %2")
-                                  .arg(root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
-                                  .arg(root._familyStatus("operationAvailable"))
-                                : root._familyStatus("operationAvailable")
-                    accentColor: root._familyStatusColor("operationAvailable")
-                }
-
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryFailsafe"
-                    Layout.fillWidth: true
-                    titleText: qsTr("失效保护等级")
-                    valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
-                               ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
-                               : root._fact("operationAvailable") ? root._familyStatus("operationAvailable") : qsTr("未上报")
-                    detailText: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                ? qsTr("%1 · %2")
-                                  .arg(root._reasonText(0, root._fact("operationReasonCode")))
-                                  .arg(root._familyStatus("operationAvailable"))
-                                : root._familyStatus("operationAvailable")
-                    accentColor: root._failsafeColor()
-                }
-
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryNavigation"
-                    Layout.fillWidth: true
-                    titleText: qsTr("导航估计")
-                    valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) === qsTr("已接收")
-                               ? qsTr("水平位置 %1").arg(root._number("positionStdM", 3, " m"))
-                               : root._fact("navigationAvailable")
-                                 ? root._navigationMetricStatus(root._navCapabilityHorizontalPosition)
-                                 : qsTr("未上报")
-                    detailText: root._familyStatus("navigationAvailable") === qsTr("已接收")
-                                ? qsTr("速度 %1 · 航向 %2 · %3")
-                                  .arg(root._navigationMetricText("velocityStdMps", root._navCapabilityVelocity, 3, " m/s"))
-                                  .arg(root._navigationMetricText("headingStdRad", root._navCapabilityHeading, 3, " rad"))
-                                  .arg(root._familyStatus("navigationAvailable"))
-                                : root._familyStatus("navigationAvailable")
-                    accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition)
-                }
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryLink"
-                    Layout.fillWidth: true
-                    titleText: qsTr("数据链路")
-                    valueText: root._familyStatus("linkAvailable") === qsTr("已接收")
-                               ? qsTr("%1 条链路").arg(root._linkStatuses.length)
-                               : root._familyStatus("linkAvailable")
-                    detailText: qsTr("地面站接收 %1").arg(root._receiveAgeText("link"))
-                    accentColor: root._familyStatusColor("linkAvailable")
-                }
-                SummaryTile {
-                    objectName: "flightTelemetry_summaryTime"
-                    Layout.fillWidth: true
-                    titleText: qsTr("时间同步")
-                    valueText: root._familyStatus("timeAvailable") === qsTr("已接收")
-                               ? root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")])
-                               : root._familyStatus("timeAvailable")
-                    detailText: root._familyStatus("timeAvailable") !== qsTr("已接收")
-                                ? root._familyStatus("timeAvailable")
-                                : root._fact("utcValid") === null ? qsTr("UTC 状态未上报")
-                                  : root._fact("utcValid")
-                                    ? qsTr("UTC 有效 · %1").arg(root._number("utcUncertaintyUs", 0, " μs"))
-                                    : qsTr("UTC 无效")
-                    accentColor: root._familyStatusColor("timeAvailable")
-                }
-
+                SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0) }
+                SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1) }
+                SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2) }
+                SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3) }
+                SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4) }
+                SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5) }
             }
 
             GridLayout {
                 objectName: "flightTelemetry_heroGrid"
+                visible: root._activeDashboardPage === 0
                 Layout.fillWidth: true
                 columns: root._dashboardColumns
                 columnSpacing: 12
@@ -1226,7 +1461,7 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_heroRcInput"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 2 : 1
-                    eyebrow: "ALARM EVENTS / RC INPUT"
+                    eyebrow: "ALARM EVENTS"
                     titleText: qsTr("告警事件（优先级）")
                     statusFamily: "eventAvailable"
 
@@ -1347,10 +1582,369 @@ SetupPage {
                 }
             }
 
+
+            GridLayout {
+                objectName: "flightTelemetry_healthPageGrid"
+                visible: root._activeDashboardPage === 1
+                Layout.fillWidth: true
+                columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
+                columnSpacing: 10
+                rowSpacing: 10
+                HeroPanel {
+                    objectName: "flightTelemetry_healthOverview"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "HEALTH OVERALL"
+                    titleText: qsTr("健康总评")
+                    statusFamily: "operationAvailable"
+                    QGCLabel { Layout.fillWidth: true; text: root._healthHeadline(); color: root._familyStatusColor("operationAvailable"); typographyRole: "hero"; wrapMode: Text.WordWrap }
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        text: qsTr("已接收 %1 · 超时 %2 · 等待 %3")
+                              .arg(root._healthStatusCount(qsTr("已接收")))
+                              .arg(root._healthStatusCount(qsTr("数据超时")))
+                              .arg(root._healthStatusCount(qsTr("等待遥测")))
+                        color: "#A8BBC3"
+                        font.pointSize: ScreenTools.captionFontPointSize
+                    }
+                    GridLayout {
+                        objectName: "flightTelemetry_healthPrimaryGrid"
+                        Layout.fillWidth: true
+                        columns: 1
+                        rowSpacing: 6
+                        Repeater {
+                            model: [
+                                { label: qsTr("飞控系统"), family: "operation", available: "operationAvailable" },
+                                { label: qsTr("传感器系统"), family: "sensorHealth", available: "sensorHealthAvailable" },
+                                { label: qsTr("导航定位"), family: "navigation", available: "navigationAvailable" },
+                                { label: qsTr("控制器"), family: "control", available: "controlAvailable" },
+                                { label: qsTr("执行器"), family: "actuator", available: "actuatorAvailable" },
+                                { label: qsTr("数据链路"), family: "link", available: "linkAvailable" }
+                            ]
+                            delegate: HealthCell {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_healthPrimary_" + modelData.family
+                                labelText: modelData.label
+                                familyName: modelData.family
+                                availableFact: modelData.available
+                            }
+                        }
+                    }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_healthPageMatrix"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "SYSTEM HEALTH MATRIX"
+                    titleText: qsTr("系统健康矩阵")
+                    statusFamily: "sensorHealthAvailable"
+                    GridLayout {
+                        objectName: "flightTelemetry_healthPageMatrixGrid"
+                        Layout.fillWidth: true
+                        columns: root._healthPageColumns
+                        columnSpacing: 7
+                        rowSpacing: 7
+                        Repeater {
+                            model: root._healthDomains
+                            delegate: HealthCell {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                objectName: "flightTelemetry_healthPage_" + modelData.family
+                                labelText: modelData.label
+                                familyName: modelData.family
+                                availableFact: modelData.available
+                            }
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        Repeater {
+                            model: [
+                                { color: "#45D39A", text: qsTr("正常") },
+                                { color: "#F0B94B", text: qsTr("注意") },
+                                { color: "#F06464", text: qsTr("告警") }
+                            ]
+                            delegate: RowLayout {
+                                required property var modelData
+                                spacing: 4
+                                Rectangle { Layout.preferredWidth: 8; Layout.preferredHeight: 8; radius: 4; color: modelData.color }
+                                QGCLabel { text: modelData.text; color: "#A8BBC3"; font.pointSize: ScreenTools.microFontPointSize }
+                            }
+                        }
+                    }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_healthSafety"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "SAFETY MONITORING"
+                    titleText: qsTr("安全监测")
+                    statusFamily: "prearmAvailable"
+                    TelemetryRow {
+                        labelText: qsTr("失效保护")
+                        valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                   ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                                   : root._familyStatus("operationAvailable")
+                        valueColor: root._failsafeColor()
+                    }
+                    TelemetryRow {
+                        labelText: qsTr("接收机失效保护")
+                        valueText: root._familyStatus("rcInputAvailable") !== qsTr("已接收")
+                                   ? root._familyStatus("rcInputAvailable")
+                                   : root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
+                                     : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
+                    }
+                    TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
+                    TelemetryRow { labelText: qsTr("解锁前检查"); valueText: root._prearmSummaryText() }
+                    TelemetryRow {
+                        labelText: qsTr("控制求解器")
+                        valueText: root._familyStatus("controlAvailable") === qsTr("已接收")
+                                   ? root._enum("solverStatus", [qsTr("未运行"), qsTr("求解成功"), qsTr("精度不足"), qsTr("迭代上限"), qsTr("原问题不可行"), qsTr("对偶问题不可行"), qsTr("数值失败"), qsTr("超时"), qsTr("输入无效")])
+                                   : root._familyStatus("controlAvailable")
+                    }
+                    TelemetryRow { labelText: qsTr("执行器可用掩码"); valueText: root._mask("actuatorAvailableMask") }
+                }
+            }
+            Rectangle {
+                objectName: "flightTelemetry_healthMaintenanceGrid"
+                visible: root._activeDashboardPage === 1
+                Layout.fillWidth: true
+                implicitHeight: maintenanceRow.implicitHeight + 18
+                radius: 8
+                color: "#0A222B"
+                border.width: 1
+                border.color: "#1B6675"
+                RowLayout {
+                    id: maintenanceRow
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 12
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        QGCLabel { text: qsTr("维护与可靠性"); color: "#E2ECEF"; typographyRole: "title" }
+                        QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
+                        QGCLabel { text: qsTr("启动 ID：%1").arg(String(root._fact("opBootIdHex") || qsTr("未上报"))); color: "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
+                    }
+                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: "#17606B" }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        QGCLabel { text: qsTr("最近异常"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
+                        QGCLabel { Layout.fillWidth: true; text: root._latestEventSummaryText(); color: root._familyStatusColor("eventAvailable"); wrapMode: Text.WordWrap }
+                        QGCLabel { text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event")); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                    }
+                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: "#17606B" }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        QGCLabel { text: qsTr("预检与系统资源"); color: "#E2ECEF"; font.weight: ScreenTools.strongFontWeight }
+                        QGCLabel { Layout.fillWidth: true; text: root._prearmSummaryText(); color: root._familyStatusColor("prearmAvailable"); wrapMode: Text.WordWrap }
+                        QGCLabel { text: qsTr("系统汇总 CPU：%1").arg(root._resourceCpuLoadText()); color: "#45D39A"; font.pointSize: ScreenTools.captionFontPointSize }
+                    }
+                }
+            }
+
+
+            GridLayout {
+                objectName: "flightTelemetry_navigationPageGrid"
+                visible: root._activeDashboardPage === 2
+                Layout.fillWidth: true
+                columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
+                columnSpacing: 10
+                rowSpacing: 10
+                HeroPanel {
+                    objectName: "flightTelemetry_navigationOverview"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "NAVIGATION OVERVIEW"
+                    titleText: qsTr("导航估计总览")
+                    statusFamily: "navigationAvailable"
+                    QGCLabel { Layout.fillWidth: true; text: root._familyStatus("navigationAvailable"); color: root._familyStatusColor("navigationAvailable"); typographyRole: "hero" }
+                    MetricReadout { labelText: qsTr("水平位置标准差"); valueText: root._navigationMetricValue("positionStdM", root._navCapabilityHorizontalPosition, 3); unitText: "m"; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition) }
+                    MetricReadout { labelText: qsTr("速度标准差"); valueText: root._navigationMetricValue("velocityStdMps", root._navCapabilityVelocity, 3); unitText: "m/s"; statusText: root._navigationMetricStatus(root._navCapabilityVelocity); accentColor: root._navigationMetricColor(root._navCapabilityVelocity) }
+                    MetricReadout { labelText: qsTr("航向标准差"); valueText: root._navigationMetricValue("headingStdRad", root._navCapabilityHeading, 3); unitText: "rad"; statusText: root._navigationMetricStatus(root._navCapabilityHeading); accentColor: root._navigationMetricColor(root._navCapabilityHeading) }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_navigationCapabilityPanel"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "NAVIGATION CAPABILITIES"
+                    titleText: qsTr("导航能力与定位精度")
+                    statusFamily: "navigationAvailable"
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 8
+                        rowSpacing: 8
+                        MetricReadout { labelText: qsTr("航向估计"); valueText: root._navigationMetricStatus(root._navCapabilityHeading); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHeading); accentColor: root._navigationMetricColor(root._navCapabilityHeading) }
+                        MetricReadout { labelText: qsTr("水平位置"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalPosition) }
+                        MetricReadout { labelText: qsTr("水平速度"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityHorizontalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityHorizontalVelocity) }
+                        MetricReadout { labelText: qsTr("垂直速度"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); unitText: ""; statusText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity); accentColor: root._navigationMetricColor(root._navCapabilityVerticalVelocity) }
+                    }
+                    TelemetryRow { labelText: qsTr("导航状态代次"); valueText: root._integer("navStateEpoch") }
+                    TelemetryRow { labelText: qsTr("原点 ID"); valueText: root._integer("originId") }
+                    TelemetryRow { labelText: qsTr("能力掩码"); valueText: root._mask("navigationCapabilities") }
+                    TelemetryRow { labelText: qsTr("数据年龄"); valueText: root._ageUsFact("navigationAgeUs") }
+                    TelemetryRow { labelText: qsTr("原因"); valueText: root._reasonText(0, root._fact("navigationReasonCode")) }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_navigationTimePanel"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "TIME SYNCHRONIZATION"
+                    titleText: qsTr("时间同步")
+                    statusFamily: "timeAvailable"
+                    TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
+                    TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
+                    TelemetryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : root._fact("utcValid") ? qsTr("是") : qsTr("否") }
+                    TelemetryRow { labelText: qsTr("UTC 不确定度"); valueText: root._utcUncertaintyText() }
+                    TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
+                    TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
+                    TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_navigationChecksPanel"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 2 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "CONSISTENCY CHECKS"
+                    titleText: qsTr("状态校验")
+                    statusFamily: "navigationAvailable"
+                    TelemetryRow { labelText: qsTr("导航数据"); valueText: root._familyStatus("navigationAvailable") }
+                    TelemetryRow { labelText: qsTr("位置能力"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) }
+                    TelemetryRow { labelText: qsTr("速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVelocity) }
+                    TelemetryRow { labelText: qsTr("航向能力"); valueText: root._navigationMetricStatus(root._navCapabilityHeading) }
+                    TelemetryRow { labelText: qsTr("时间数据"); valueText: root._familyStatus("timeAvailable") }
+                    TelemetryRow { labelText: qsTr("UTC 状态"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : root._fact("utcValid") ? qsTr("有效") : qsTr("无效") }
+                }
+            }
+
+
+            GridLayout {
+                objectName: "flightTelemetry_rcLinkPageGrid"
+                visible: root._activeDashboardPage === 3
+                Layout.fillWidth: true
+                columns: root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1
+                columnSpacing: 10
+                rowSpacing: 10
+                HeroPanel {
+                    objectName: "flightTelemetry_rcStickMonitor"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "RC INPUT MONITOR"
+                    titleText: qsTr("遥控输入监视")
+                    statusFamily: "rcInputAvailable"
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        Repeater {
+                            model: [qsTr("Mode 1"), qsTr("Mode 2"), qsTr("Mode 3")]
+                            delegate: Rectangle {
+                                required property int index
+                                required property string modelData
+                                objectName: "flightTelemetry_rcMode_" + (index + 1)
+                                Layout.fillWidth: true
+                                implicitHeight: 28
+                                radius: 4
+                                color: stickSettings.mode === index + 1 ? "#075A63" : "#0A2831"
+                                border.color: stickSettings.mode === index + 1 ? "#20D7D8" : "#175665"
+                                QGCLabel { anchors.centerIn: parent; text: modelData; color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: stickSettings.mode = index + 1 }
+                            }
+                        }
+                    }
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 7
+                        rowSpacing: 7
+                        StickVisualizer { objectName: "flightTelemetry_rcLeftStick"; Layout.fillWidth: true; titleText: qsTr("左摇杆"); horizontalChannel: root._stickChannels[0]; verticalChannel: root._stickChannels[1] }
+                        StickVisualizer { objectName: "flightTelemetry_rcRightStick"; Layout.fillWidth: true; titleText: qsTr("右摇杆"); horizontalChannel: root._stickChannels[2]; verticalChannel: root._stickChannels[3] }
+                    }
+                    QGCLabel { Layout.fillWidth: true; text: qsTr("按 FlightRadio 当前手型映射逻辑轴；无效轴不绘制摇杆位置"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_rcChannelMonitor"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "RC LOGICAL AXES / REAL-TIME"
+                    titleText: qsTr("逻辑通道输入（实时）")
+                    statusFamily: "rcInputAvailable"
+                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_roll"; axisName: qsTr("横滚"); rawValue: root._fact("rcRollNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 0; centered: true }
+                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_pitch"; axisName: qsTr("俯仰"); rawValue: root._fact("rcPitchNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 1; centered: true }
+                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_yaw"; axisName: qsTr("偏航"); rawValue: root._fact("rcYawNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 2; centered: true }
+                    AxisGauge { objectName: "flightTelemetry_rcPageAxis_throttle"; axisName: qsTr("油门"); rawValue: root._fact("rcThrottleNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 3; centered: false }
+                    QGCLabel { Layout.fillWidth: true; text: qsTr("当前 FlightTelemetry 协议发布四个逻辑轴，不伪造 CH5–CH8 原始 PWM"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_rcLinkQuality"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "DATA LINK QUALITY"
+                    titleText: qsTr("链路质量")
+                    statusFamily: "linkAvailable"
+                    QGCLabel {
+                        Layout.fillWidth: true
+                        visible: root._linkStatuses.length === 0
+                        text: root._familyStatus("linkAvailable") === qsTr("已接收") ? qsTr("当前无链路实例") : root._familyStatus("linkAvailable")
+                        color: "#8298A2"
+                    }
+                    Repeater {
+                        model: root._linkStatuses
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 4
+                            RowLayout {
+                                Layout.fillWidth: true
+                                QGCLabel { Layout.fillWidth: true; text: root._enumValue(modelData.linkKind, [qsTr("未知"), qsTr("RC"), qsTr("GCS"), qsTr("伴随计算机"), qsTr("其他")]); color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight }
+                                QGCLabel { text: root._enumValue(modelData.linkState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")]); color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs) }
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("RSSI %1 · 质量 %2 · 丢包 %3")
+                                      .arg(root._rawValidValue(modelData.rssiDbm, modelData.validityMask, 8, 0, " dBm"))
+                                      .arg(root._rawValidPermillePercent(modelData.linkQualityPermille, modelData.validityMask, 9))
+                                      .arg(root._rawValidLossPercent(modelData.packetLossPpm, modelData.validityMask, 10))
+                                color: "#A8BBC3"
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("原因：%1 · 接收年龄：%2").arg(root._reasonText(0, modelData.reasonCode)).arg(root._instanceReceiveAgeText(modelData.receiveAgeMs))
+                                color: "#8298A2"
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424F" }
+                        }
+                    }
+                }
+                HeroPanel {
+                    objectName: "flightTelemetry_rcFailsafe"
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 2 : root.availableWidth >= 760 ? 6 : 1
+                    eyebrow: "FAILSAFE & CONTROL"
+                    titleText: qsTr("失控保护")
+                    statusFamily: "operationAvailable"
+                    TelemetryRow {
+                        labelText: qsTr("失效保护")
+                        valueText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                   ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                                   : root._familyStatus("operationAvailable")
+                        valueColor: root._failsafeColor()
+                    }
+                    TelemetryRow {
+                        labelText: qsTr("接收机失效保护")
+                        valueText: root._familyStatus("rcInputAvailable") !== qsTr("已接收")
+                                   ? root._familyStatus("rcInputAvailable")
+                                   : root._fact("rcReceiverFailsafe") === null ? qsTr("未上报")
+                                     : root._fact("rcReceiverFailsafe") ? qsTr("触发") : qsTr("未触发")
+                    }
+                    TelemetryRow { labelText: qsTr("RC 链路"); valueText: root._rcLinkStateText(); valueColor: root._rcLinkStateColor(root._fact("rcLinkState")) }
+                    TelemetryRow { labelText: qsTr("RC 接收年龄"); valueText: root._ageUsFact("rcAgeUs") }
+                    TelemetryRow { labelText: qsTr("数据链路"); valueText: root._familyStatus("linkAvailable") }
+                    TelemetryRow { labelText: qsTr("飞控操作接收年龄"); valueText: root._receiveAgeText("operation") }
+                }
+            }
+
             StatusCard {
                 objectName: "flightTelemetry_trendPanel"
                 eyebrow: "GCS LIVE SAMPLE  /  1 HZ  /  LAST 60 POINTS"
-                title: qsTr("关键指标趋势")
+                title: root._activeDashboardPage === 1 ? qsTr("关键健康趋势")
+                       : root._activeDashboardPage === 2 ? qsTr("关键导航与时序趋势")
+                       : root._activeDashboardPage === 3 ? qsTr("关键链路与输入趋势")
+                       : qsTr("关键指标趋势")
                 GridLayout {
                     objectName: "flightTelemetry_trendGrid"
                     Layout.fillWidth: true
@@ -1359,40 +1953,48 @@ SetupPage {
                     rowSpacing: 10
                     TrendCard {
                         objectName: "flightTelemetry_trend_position"
-                        titleText: qsTr("水平位置标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m", root._navCapabilityHorizontalPosition)
-                        unitText: "m"
-                        decimals: 3
-                        valueKey: "position"
+                        titleText: root._activeDashboardPage === 3 ? qsTr("接收信号强度 RSSI") : qsTr("水平位置标准差")
+                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("rssiDbm", 8, 0, " dBm")
+                                   : root._trendDisplayValue("navigationAvailable", "positionStdM", 3, " m", root._navCapabilityHorizontalPosition)
+                        unitText: root._activeDashboardPage === 3 ? "dBm" : "m"
+                        decimals: root._activeDashboardPage === 3 ? 0 : 3
+                        valueKey: root._activeDashboardPage === 3 ? "linkRssi" : "position"
                         lineColor: "#49C7E7"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_velocity"
-                        titleText: qsTr("速度标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s", root._navCapabilityVelocity)
-                        unitText: "m/s"
-                        decimals: 3
-                        valueKey: "velocity"
+                        titleText: root._activeDashboardPage === 3 ? qsTr("链路质量") : qsTr("速度标准差")
+                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("linkQualityPermille", 9, 1, " %")
+                                   : root._trendDisplayValue("navigationAvailable", "velocityStdMps", 3, " m/s", root._navCapabilityVelocity)
+                        unitText: root._activeDashboardPage === 3 ? "%" : "m/s"
+                        decimals: root._activeDashboardPage === 3 ? 1 : 3
+                        valueKey: root._activeDashboardPage === 3 ? "linkQuality" : "velocity"
                         lineColor: "#52D5B1"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_heading"
-                        titleText: qsTr("航向标准差")
-                        valueText: root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad", root._navCapabilityHeading)
-                        unitText: "rad"
-                        decimals: 3
-                        valueKey: "heading"
+                        titleText: root._activeDashboardPage === 3 ? qsTr("丢包率") : qsTr("航向标准差")
+                        valueText: root._activeDashboardPage === 3 ? root._linkMetricText("packetLossPpm", 10, 2, " %")
+                                   : root._trendDisplayValue("navigationAvailable", "headingStdRad", 3, " rad", root._navCapabilityHeading)
+                        unitText: root._activeDashboardPage === 3 ? "%" : "rad"
+                        decimals: root._activeDashboardPage === 3 ? 2 : 3
+                        valueKey: root._activeDashboardPage === 3 ? "linkLoss" : "heading"
                         lineColor: "#A99AF2"
                         samples: root._trendSamples
                     }
                     TrendCard {
                         objectName: "flightTelemetry_trend_control"
-                        titleText: qsTr("控制求解耗时")
-                        valueText: root._trendDisplayValue("controlAvailable", "controlSolveTimeUs", 0, " μs")
-                        unitText: "μs"
-                        valueKey: "control"
+                        titleText: root._activeDashboardPage === 2 ? qsTr("UTC 时间不确定度")
+                                   : root._activeDashboardPage === 3 ? qsTr("RC 输入年龄")
+                                   : qsTr("控制求解耗时")
+                        valueText: root._activeDashboardPage === 2 ? root._utcUncertaintyText()
+                                   : root._activeDashboardPage === 3 ? root._ageUsFact("rcAgeUs")
+                                   : root._trendDisplayValue("controlAvailable", "controlSolveTimeUs", 0, " μs")
+                        unitText: root._activeDashboardPage === 2 ? "μs" : root._activeDashboardPage === 3 ? "ms" : "μs"
+                        decimals: root._activeDashboardPage === 3 ? 1 : 0
+                        valueKey: root._activeDashboardPage === 2 ? "time" : root._activeDashboardPage === 3 ? "rcAge" : "control"
                         lineColor: "#E4B75A"
                         samples: root._trendSamples
                     }
@@ -1408,6 +2010,7 @@ SetupPage {
 
             StatusCard {
                 objectName: "flightTelemetry_healthMatrix"
+                visible: root._activeDashboardPage === 0
                 eyebrow: "TELEMETRY DOMAIN STATUS"
                 title: qsTr("遥测域状态矩阵")
                 GridLayout {
@@ -2179,6 +2782,74 @@ SetupPage {
             }
         }
     }
+
+
+    component StickVisualizer: Rectangle {
+        id: stick
+        required property string titleText
+        required property int horizontalChannel
+        required property int verticalChannel
+        readonly property bool horizontalValid: root._rcAxisValidForChannel(horizontalChannel)
+        readonly property bool verticalValid: root._rcAxisValidForChannel(verticalChannel)
+        readonly property real horizontalValue: root._rcAxisStickValueForChannel(horizontalChannel)
+        readonly property real verticalValue: root._rcAxisStickValueForChannel(verticalChannel)
+        Layout.fillWidth: true
+        implicitWidth: 140
+        implicitHeight: 174
+        radius: 6
+        color: "#0B303A"
+        border.width: 1
+        border.color: "#1B6675"
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 7
+            spacing: 4
+            QGCLabel { Layout.fillWidth: true; text: stick.titleText; color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight; horizontalAlignment: Text.AlignHCenter }
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 112
+                Rectangle {
+                    id: stickStage
+                    width: Math.min(parent.width, parent.height)
+                    height: width
+                    anchors.centerIn: parent
+                    radius: width / 2
+                    color: "#071E26"
+                    border.width: 1
+                    border.color: "#1B7880"
+                    Rectangle { anchors.centerIn: parent; width: parent.width * 0.66; height: parent.height * 0.66; radius: width / 2; color: "transparent"; border.color: "#164C58" }
+                    Rectangle { anchors.centerIn: parent; width: parent.width * 0.34; height: parent.height * 0.34; radius: width / 2; color: "transparent"; border.color: "#164C58" }
+                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 1; height: parent.height - 10; color: "#47727B"; opacity: 0.8 }
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; height: 1; width: parent.width - 10; color: "#47727B"; opacity: 0.8 }
+                    Rectangle {
+                        objectName: stick.objectName + "_marker"
+                        visible: stick.horizontalValid && stick.verticalValid
+                        width: 12
+                        height: 12
+                        radius: 6
+                        x: parent.width / 2 + stick.horizontalValue * (parent.width / 2 - 14) - width / 2
+                        y: parent.height / 2 - stick.verticalValue * (parent.height / 2 - 14) - height / 2
+                        color: "#45E7B1"
+                        border.width: 2
+                        border.color: "#D5FFFF"
+                    }
+                }
+            }
+            QGCLabel {
+                Layout.fillWidth: true
+                text: qsTr("%1 %2 · %3 %4")
+                      .arg(root._rcAxisNameForChannel(stick.horizontalChannel))
+                      .arg(stick.horizontalValid ? root._rcAxisValueForChannel(stick.horizontalChannel).toFixed(2) : qsTr("无效"))
+                      .arg(root._rcAxisNameForChannel(stick.verticalChannel))
+                      .arg(stick.verticalValid ? root._rcAxisValueForChannel(stick.verticalChannel).toFixed(2) : qsTr("无效"))
+                color: stick.horizontalValid && stick.verticalValid ? "#9DD9D0" : "#F0B94B"
+                font.pointSize: ScreenTools.microFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
 
     component HealthCell: Rectangle {
         id: healthCell
