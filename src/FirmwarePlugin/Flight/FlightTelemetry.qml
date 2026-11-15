@@ -5768,7 +5768,6 @@ SetupPage {
                     wrapMode: Text.WordWrap
                 }
                 QGCLabel {
-                    objectName: healthCell.objectName + "_status"
                     visible: !healthCell.statusAsBadge
                     Layout.minimumWidth: 0
                     text: healthCell.statusText
@@ -5777,7 +5776,7 @@ SetupPage {
                     wrapMode: Text.WordWrap
                 }
                 FamilyStatusBadge {
-                    objectName: healthCell.objectName + "_statusBadge"
+                    objectName: healthCell.statusAsBadge ? healthCell.objectName + "_statusBadge" : ""
                     visible: healthCell.statusAsBadge
                     Layout.alignment: Qt.AlignVCenter
                     statusText: healthCell.statusText
