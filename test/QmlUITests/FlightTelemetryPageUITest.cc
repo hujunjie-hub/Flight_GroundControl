@@ -5441,11 +5441,47 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("vehicleConfig_flightSidebar"), 3000);
             QQuickItem* flightSidebarButton = findVisibleItem(
                 _rootItem, QStringLiteral("vehicleConfig_parametersButton"), 3000);
+            QQuickItem* dashboardHeaderRow = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_dashboardHeaderRow"), 3000);
+            QQuickItem* dashboardHeaderAccent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_dashboardHeaderAccent"), 3000);
+            QQuickItem* dashboardHeaderText = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_dashboardHeaderText"), 3000);
+            QQuickItem* dashboardReadOnlyBadge = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_readOnlyBadge"), 3000);
+            QQuickItem* dashboardReadOnlyContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_readOnlyContent"), 3000);
+            QQuickItem* dashboardReadOnlyDot = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_readOnlyDot"), 3000);
+            QQuickItem* dashboardOverviewTab = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
+            QQuickItem* dashboardHealthTab = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
+            QQuickItem* dashboardOverviewTabIcon = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTabIcon_0"), 3000);
+            QQuickItem* dashboardOverviewTabIndicator = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTabActiveIndicator_0"));
+            QQuickItem* overviewHeroPanel = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroFlight"));
+            QQuickItem* overviewHeroAccent = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroFlight_accentStripe"));
             QVERIFY(flightConfigToolbar);
             QVERIFY(flightConfigToolbarContent);
             QVERIFY(vehicleConfigView);
             QVERIFY(flightSidebar);
             QVERIFY(flightSidebarButton);
+            QVERIFY(dashboardHeaderRow);
+            QVERIFY(dashboardHeaderAccent);
+            QVERIFY(dashboardHeaderText);
+            QVERIFY(dashboardReadOnlyBadge);
+            QVERIFY(dashboardReadOnlyContent);
+            QVERIFY(dashboardReadOnlyDot);
+            QVERIFY(dashboardOverviewTab);
+            QVERIFY(dashboardHealthTab);
+            QVERIFY(dashboardOverviewTabIcon);
+            QVERIFY(dashboardOverviewTabIndicator);
+            QVERIFY(overviewHeroPanel);
+            QVERIFY(overviewHeroAccent);
             const qreal originalFlightToolbarHeight = flightConfigToolbar->height();
             const qreal originalFlightSidebarWidth = flightSidebar->width();
             const qreal originalFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
@@ -5458,6 +5494,48 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->setWidth(originalDpiPageWidth);
                 page->setHeight(originalDpiPageHeight);
             });
+            const auto dashboardChromeFits = [&]() {
+                const auto itemFitsInParent = [](QQuickItem* item, QQuickItem* parent) {
+                    if (!item || !parent || !item->isVisible()) return false;
+                    const QPointF topLeft = item->mapToItem(parent, 0, 0);
+                    return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                           topLeft.x() + item->width() <= parent->width() + 1.0 &&
+                           topLeft.y() + item->height() <= parent->height() + 1.0;
+                };
+                const qreal horizontalInset = dashboardReadOnlyBadge->property("horizontalInset").toReal();
+                const qreal verticalInset = dashboardReadOnlyBadge->property("verticalInset").toReal();
+                const QPointF contentTopLeft = dashboardReadOnlyContent->mapToItem(
+                    dashboardReadOnlyBadge, 0, 0);
+                const QPointF dotTopLeft = dashboardReadOnlyDot->mapToItem(
+                    dashboardReadOnlyContent, 0, 0);
+                return itemFitsInParent(dashboardHeaderAccent, dashboardHeaderRow) &&
+                       itemFitsInParent(dashboardHeaderText, dashboardHeaderRow) &&
+                       itemFitsInParent(dashboardReadOnlyBadge, dashboardHeaderRow) &&
+                       contentTopLeft.x() >= horizontalInset - 1.0 &&
+                       contentTopLeft.y() >= verticalInset - 1.0 &&
+                       contentTopLeft.x() + dashboardReadOnlyContent->width() <=
+                           dashboardReadOnlyBadge->width() - horizontalInset + 1.0 &&
+                       contentTopLeft.y() + dashboardReadOnlyContent->height() <=
+                           dashboardReadOnlyBadge->height() - verticalInset + 1.0 &&
+                       dotTopLeft.x() >= -1.0 && dotTopLeft.y() >= -1.0 &&
+                       dotTopLeft.x() + dashboardReadOnlyDot->width() <=
+                           dashboardReadOnlyContent->width() + 1.0 &&
+                       dotTopLeft.y() + dashboardReadOnlyDot->height() <=
+                           dashboardReadOnlyContent->height() + 1.0 &&
+                       itemFitsInParent(dashboardOverviewTabIcon, dashboardOverviewTab) &&
+                       itemFitsInParent(dashboardOverviewTabIndicator, dashboardOverviewTab) &&
+                       itemFitsInParent(overviewHeroAccent, overviewHeroPanel) &&
+                       qAbs(dashboardHeaderAccent->width() -
+                            page->property("_dashboardHeaderAccentWidth").toReal()) < 1.0 &&
+                       qAbs(dashboardOverviewTabIcon->width() -
+                            page->property("_dashboardTabIconSize").toReal()) < 1.0 &&
+                       qAbs(dashboardOverviewTabIcon->height() -
+                            page->property("_dashboardTabIconSize").toReal()) < 1.0 &&
+                       qAbs(dashboardOverviewTabIndicator->height() -
+                            page->property("_dashboardTabActiveIndicatorHeight").toReal()) < 1.0 &&
+                       qAbs(overviewHeroAccent->width() -
+                            page->property("_dashboardPanelAccentStripeWidth").toReal()) < 1.0;
+            };
 
             uiScaleFact->setRawValue(100);
             const qreal expectedBasePanelPadding =
@@ -5476,6 +5554,41 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const qreal baseFlightSidebarButtonPadding = flightSidebarButton->property("padding").toReal();
             const qreal basePanelPadding = page->property("_dashboardPanelPadding").toReal();
             QVERIFY(basePanelPadding > 0.0);
+            const qreal baseDashboardHeaderInset = page->property("_dashboardHeaderInset").toReal();
+            const qreal baseDashboardHeaderAccentWidth =
+                page->property("_dashboardHeaderAccentWidth").toReal();
+            const qreal baseReadOnlyHorizontalInset =
+                dashboardReadOnlyBadge->property("horizontalInset").toReal();
+            const qreal baseReadOnlyVerticalInset =
+                dashboardReadOnlyBadge->property("verticalInset").toReal();
+            const qreal baseDashboardTabHeight = page->property("_dashboardTabHeight").toReal();
+            const qreal baseDashboardTabIconSize = page->property("_dashboardTabIconSize").toReal();
+            const qreal baseDashboardTabIndicatorHeight =
+                page->property("_dashboardTabActiveIndicatorHeight").toReal();
+            const qreal baseDashboardPanelRadius = page->property("_dashboardPanelRadius").toReal();
+            const qreal baseDashboardPanelAccentWidth =
+                page->property("_dashboardPanelAccentStripeWidth").toReal();
+            QVERIFY(baseDashboardHeaderInset > 0.0);
+            QVERIFY(baseDashboardHeaderAccentWidth > 0.0);
+            QVERIFY(baseReadOnlyHorizontalInset > 0.0);
+            QVERIFY(baseReadOnlyVerticalInset > 0.0);
+            QVERIFY(baseDashboardTabHeight > 0.0);
+            QVERIFY(baseDashboardTabIconSize > 0.0);
+            QVERIFY(baseDashboardTabIndicatorHeight > 0.0);
+            QVERIFY(baseDashboardPanelRadius > 0.0);
+            QVERIFY(baseDashboardPanelAccentWidth > 0.0);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(baseDashboardTabHeight - 42.0) < 1.0 &&
+                                         qAbs(baseDashboardTabIconSize - 20.0) < 1.0 &&
+                                         qAbs(baseDashboardTabIndicatorHeight - 3.0) < 1.0 &&
+                                         qAbs(baseReadOnlyHorizontalInset - 10.0) < 1.0 &&
+                                         qAbs(baseReadOnlyVerticalInset - 6.0) < 1.0, 3000);
+            QVERIFY(_clickItemAt(dashboardOverviewTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(dashboardChromeFits(), 3000);
+            QVERIFY(_clickItemAt(dashboardHealthTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
             const qreal baseAlarmSeverityChipHeight =
                 page->property("_overviewAlarmSeverityChipMinimumHeight").toReal();
             const qreal baseAlarmPrimaryMinimumHeight =
@@ -5504,7 +5617,21 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->property("_overviewAlarmPrimaryLeftInset").toReal() >= baseAlarmPrimaryInset * 1.35 &&
                 page->property("_overviewAlarmEventContentSpacing").toReal() >= baseAlarmEventSpacing * 1.35 &&
                 page->property("_overviewEventHistoryGridColumnSpacing").toReal() >=
-                    baseAlarmHistorySpacing * 1.35, 3000);
+                    baseAlarmHistorySpacing * 1.35 &&
+                page->property("_dashboardHeaderInset").toReal() >= baseDashboardHeaderInset * 1.35 &&
+                page->property("_dashboardHeaderAccentWidth").toReal() >=
+                    baseDashboardHeaderAccentWidth * 1.35 &&
+                dashboardReadOnlyBadge->property("horizontalInset").toReal() >=
+                    baseReadOnlyHorizontalInset * 1.35 &&
+                dashboardReadOnlyBadge->property("verticalInset").toReal() >=
+                    baseReadOnlyVerticalInset * 1.35 &&
+                page->property("_dashboardTabHeight").toReal() >= baseDashboardTabHeight * 1.35 &&
+                page->property("_dashboardTabIconSize").toReal() >= baseDashboardTabIconSize * 1.35 &&
+                page->property("_dashboardTabActiveIndicatorHeight").toReal() >=
+                    baseDashboardTabIndicatorHeight * 1.35 &&
+                page->property("_dashboardPanelRadius").toReal() >= baseDashboardPanelRadius * 1.35 &&
+                page->property("_dashboardPanelAccentStripeWidth").toReal() >=
+                    baseDashboardPanelAccentWidth * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -5518,6 +5645,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                      vehicleConfigView->property("_flightSidebarWidth").toReal()) < 1.0, 3000);
             page->setWidth(1672.0 / 1.5);
             page->setHeight(941.0 / 1.5);
+            QVERIFY(_clickItemAt(dashboardOverviewTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(dashboardChromeFits(), 3000);
+            QVERIFY(_clickItemAt(dashboardHealthTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
@@ -5538,7 +5672,21 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->property("_overviewAlarmPrimaryLeftInset").toReal() >= baseAlarmPrimaryInset * 1.8 &&
                 page->property("_overviewAlarmEventContentSpacing").toReal() >= baseAlarmEventSpacing * 1.8 &&
                 page->property("_overviewEventHistoryGridColumnSpacing").toReal() >=
-                    baseAlarmHistorySpacing * 1.8, 3000);
+                    baseAlarmHistorySpacing * 1.8 &&
+                page->property("_dashboardHeaderInset").toReal() >= baseDashboardHeaderInset * 1.8 &&
+                page->property("_dashboardHeaderAccentWidth").toReal() >=
+                    baseDashboardHeaderAccentWidth * 1.8 &&
+                dashboardReadOnlyBadge->property("horizontalInset").toReal() >=
+                    baseReadOnlyHorizontalInset * 1.8 &&
+                dashboardReadOnlyBadge->property("verticalInset").toReal() >=
+                    baseReadOnlyVerticalInset * 1.8 &&
+                page->property("_dashboardTabHeight").toReal() >= baseDashboardTabHeight * 1.8 &&
+                page->property("_dashboardTabIconSize").toReal() >= baseDashboardTabIconSize * 1.8 &&
+                page->property("_dashboardTabActiveIndicatorHeight").toReal() >=
+                    baseDashboardTabIndicatorHeight * 1.8 &&
+                page->property("_dashboardPanelRadius").toReal() >= baseDashboardPanelRadius * 1.8 &&
+                page->property("_dashboardPanelAccentStripeWidth").toReal() >=
+                    baseDashboardPanelAccentWidth * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -5546,6 +5694,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 3000);
             page->setWidth(1280.0 / 2.0);
             page->setHeight(720.0 / 2.0);
+            QVERIFY(_clickItemAt(dashboardOverviewTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(dashboardChromeFits(), 3000);
+            QVERIFY(_clickItemAt(dashboardHealthTab, 0.5, 0.5,
+                                 QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit() &&
