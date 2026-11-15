@@ -2452,7 +2452,7 @@ SetupPage {
                             ctx.lineWidth = 2 * scale
                             ctx.strokeRect(cx - 14 * scale, cy - 22 * scale, 28 * scale, 44 * scale)
                             ctx.fillStyle = "#D7FBFD"
-                            ctx.font = "bold " + Math.max(7, 8 * scale) + "px sans-serif"
+                            ctx.font = "bold " + Math.max(7, Math.round(8 * scale)) + "px sans-serif"
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
                             ctx.fillText("FCU", cx, cy)
