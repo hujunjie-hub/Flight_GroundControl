@@ -60,17 +60,39 @@ SetupPage {
     readonly property int _healthPageColumns: availableWidth >= 1280 ? 4 : availableWidth >= 760 ? 2 : 1
 
     // Shared visual tokens for all primary and diagnostic panels on the four-page dashboard.
+    // At the 1672x941 reference viewport, tighten decorative spacing and card insets only;
+    // telemetry fields, typography roles, trend plot area and diagnostic content remain intact.
+    readonly property bool _compactDashboardVertical: availableHeight < 960
+    readonly property real _dashboardOuterSpacing: _compactDashboardVertical ? 8 : 12
+    readonly property real _dashboardHeaderInset: _compactDashboardVertical ? 3 : 5
+    readonly property real _dashboardHeaderExtraHeight: _compactDashboardVertical ? 6 : 10
+    readonly property real _dashboardHeaderColumnSpacing: _compactDashboardVertical ? 10 : 12
+    readonly property real _dashboardHeaderRowSpacing: _compactDashboardVertical ? 4 : 6
+    readonly property real _dashboardTabHeight: _compactDashboardVertical ? 42 : 46
+    readonly property real _dashboardTabColumnSpacing: _compactDashboardVertical ? 6 : 8
+    readonly property real _dashboardTabRowSpacing: _compactDashboardVertical ? 5 : 7
+    readonly property real _dashboardTabInset: _compactDashboardVertical ? 8 : 10
+    readonly property real _dashboardTabItemSpacing: _compactDashboardVertical ? 7 : 8
+    readonly property real _dashboardSummaryInset: _compactDashboardVertical ? 8 : 10
+    readonly property real _dashboardSummarySpacing: _compactDashboardVertical ? 8 : 10
+    readonly property real _dashboardSummaryIconSize: _compactDashboardVertical ? 24 : 26
+    readonly property real _dashboardSummaryMinHeight: _compactDashboardVertical ? 60 : 66
+    readonly property real _dashboardTrendGridSpacing: _compactDashboardVertical ? 8 : 10
+    readonly property real _dashboardTrendInset: _compactDashboardVertical ? 6 : 8
+    readonly property real _dashboardTrendSpacing: _compactDashboardVertical ? 4 : 5
+    readonly property real _dashboardTrendMinimumHeight: _compactDashboardVertical ? 128 : 134
+
     readonly property int _dashboardPanelRadius: 8
     readonly property color _dashboardPanelBackground: "#06232B"
     readonly property color _dashboardPanelBorder: "#0B6873"
     readonly property color _dashboardPanelEyebrow: "#45D6E5"
     readonly property color _dashboardPanelTitle: "#E6F0F4"
     readonly property color _dashboardPanelDivider: "#104B55"
-    readonly property real _dashboardPanelPadding: ScreenTools.defaultFontPixelHeight * 0.55
-    readonly property real _dashboardPanelHeaderSpacing: ScreenTools.defaultFontPixelWidth * 0.8
-    readonly property real _dashboardPanelSectionSpacing: ScreenTools.defaultFontPixelHeight * 0.45
-    readonly property real _dashboardPanelBodySpacing: ScreenTools.defaultFontPixelHeight * 0.4
-    readonly property real _dashboardGridSpacing: ScreenTools.defaultFontPixelHeight * 0.67
+    readonly property real _dashboardPanelPadding: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.42 : 0.55)
+    readonly property real _dashboardPanelHeaderSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.65 : 0.8)
+    readonly property real _dashboardPanelSectionSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.34 : 0.45)
+    readonly property real _dashboardPanelBodySpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.32 : 0.4)
+    readonly property real _dashboardGridSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.50 : 0.67)
     readonly property real _dashboardMetricTileInset: ScreenTools.defaultFontPixelHeight * 0.34
     readonly property real _dashboardMetricTileGap: ScreenTools.defaultFontPixelHeight * 0.34
     readonly property real _dashboardMetricTileMinHeight: ScreenTools.defaultFontPixelHeight * 2.8
@@ -1802,12 +1824,12 @@ SetupPage {
         ColumnLayout {
             objectName: "flightTelemetry_contentRoot"
             width: availableWidth
-            spacing: 12
+            spacing: root._dashboardOuterSpacing
 
             Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
                 Layout.fillWidth: true
-                implicitHeight: headerRow.implicitHeight + 10
+                implicitHeight: headerRow.implicitHeight + root._dashboardHeaderExtraHeight
                 radius: 0
                 color: "transparent"
                 border.width: 0
@@ -1858,10 +1880,10 @@ SetupPage {
                 GridLayout {
                     id: headerRow
                     anchors.fill: parent
-                    anchors.margins: 5
+                    anchors.margins: root._dashboardHeaderInset
                     columns: root.availableWidth < 760 ? 2 : 3
-                    columnSpacing: 12
-                    rowSpacing: 6
+                    columnSpacing: root._dashboardHeaderColumnSpacing
+                    rowSpacing: root._dashboardHeaderRowSpacing
                     Rectangle {
                         Layout.rowSpan: headerRow.columns === 2 ? 2 : 1
                         Layout.preferredWidth: 5
@@ -1875,7 +1897,7 @@ SetupPage {
                         spacing: 2
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 12
+                            spacing: root._dashboardHeaderColumnSpacing
                             QGCLabel {
                                 objectName: "flightTelemetry_dashboardTitle"
                                 Layout.fillWidth: true
@@ -1949,8 +1971,8 @@ SetupPage {
                 objectName: "flightTelemetry_visualTabs"
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1000 ? 4 : 2
-                columnSpacing: 8
-                rowSpacing: 7
+                columnSpacing: root._dashboardTabColumnSpacing
+                rowSpacing: root._dashboardTabRowSpacing
                 Repeater {
                     model: root._dashboardPageInfo
                     delegate: Rectangle {
@@ -1959,7 +1981,7 @@ SetupPage {
                         objectName: "flightTelemetry_visualTab_" + index
                         property bool hovered: false
                         Layout.fillWidth: true
-                        implicitHeight: 46
+                        implicitHeight: root._dashboardTabHeight
                         radius: 8
                         color: root._activeDashboardPage === index ? "#07545E"
                                : hovered ? "#10323C" : "#0B252E"
@@ -1970,9 +1992,9 @@ SetupPage {
                         Behavior on border.color { ColorAnimation { duration: 140 } }
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 8
+                            anchors.leftMargin: root._dashboardTabInset
+                            anchors.rightMargin: root._dashboardTabInset
+                            spacing: root._dashboardTabItemSpacing
                             QGCColoredImage {
                                 objectName: "flightTelemetry_visualTabIcon_" + index
                                 Layout.preferredWidth: 20
@@ -3713,8 +3735,8 @@ SetupPage {
                     objectName: "flightTelemetry_trendGrid"
                     Layout.fillWidth: true
                     columns: root._trendColumns
-                    columnSpacing: 10
-                    rowSpacing: 10
+                    columnSpacing: root._dashboardTrendGridSpacing
+                    rowSpacing: root._dashboardTrendGridSpacing
                     TrendCard {
                         objectName: "flightTelemetry_trend_position"
                         titleText: root._activeDashboardPage === 1 ? qsTr("系统 CPU 负载")
@@ -3867,6 +3889,7 @@ SetupPage {
                 spacing: 2
                 QGCLabel {
                     objectName: "flightTelemetry_diagnosticDetailsEyebrow"
+                    visible: !root._compactDashboardVertical
                     text: [ "FLIGHT / OPERATION DETAILS", "HEALTH & SAFETY DETAILS",
                             "NAVIGATION & TIMING DETAILS", "RC INPUT & DATA LINK DETAILS" ][root._activeDashboardPage]
                     color: "#45CFE0"
@@ -5259,7 +5282,7 @@ SetupPage {
 
         Layout.fillWidth: true
         implicitWidth: 230
-        implicitHeight: Math.max(134, trendContent.implicitHeight + 16)
+        implicitHeight: Math.max(root._dashboardTrendMinimumHeight, trendContent.implicitHeight + root._dashboardTrendInset * 2)
         radius: root._dashboardPanelRadius
         color: "#082B33"
         border.width: 1
@@ -5268,8 +5291,8 @@ SetupPage {
         ColumnLayout {
             id: trendContent
             anchors.fill: parent
-            anchors.margins: 8
-            spacing: 5
+            anchors.margins: root._dashboardTrendInset
+            spacing: root._dashboardTrendSpacing
             RowLayout {
                 Layout.fillWidth: true
                 QGCLabel {
@@ -5499,19 +5522,20 @@ SetupPage {
         Layout.fillWidth: true
         Layout.fillHeight: true
         implicitWidth: 180
-        implicitHeight: Math.max(root.availableWidth < 760 ? 82 : 66, summaryContent.implicitHeight + 20)
+        implicitHeight: Math.max(root.availableWidth < 760 ? 82 : root._dashboardSummaryMinHeight,
+                                 summaryContent.implicitHeight + root._dashboardSummaryInset * 2)
         radius: 0
         color: "transparent"
         border.width: 0
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 10
+            anchors.margins: root._dashboardSummaryInset
+            spacing: root._dashboardSummarySpacing
 
             QGCColoredImage {
-                Layout.preferredWidth: 26
-                Layout.preferredHeight: 26
+                Layout.preferredWidth: root._dashboardSummaryIconSize
+                Layout.preferredHeight: root._dashboardSummaryIconSize
                 Layout.alignment: Qt.AlignVCenter
                 source: tile.iconSource
                 color: tile.accentColor
