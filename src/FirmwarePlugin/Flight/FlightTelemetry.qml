@@ -1081,6 +1081,75 @@ SetupPage {
         return qsTr("%1 新鲜 · %2 超时 · %3 等待").arg(fresh).arg(stale).arg(waiting)
     }
 
+    function _linkInstanceStateSummaryText() {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        const statuses = _linkStatuses
+        if (statuses.length === 0) return qsTr("未上报")
+
+        let healthy = 0, degraded = 0, lost = 0, recovering = 0
+        let initializing = 0, unknown = 0, stale = 0, waiting = 0
+        let freshCount = 0
+        for (let index = 0; index < statuses.length; ++index) {
+            const link = statuses[index]
+            const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+            if (freshness !== qsTr("已接收")) {
+                if (freshness === qsTr("数据超时")) ++stale
+                else ++waiting
+                continue
+            }
+            ++freshCount
+            switch (Number(link.linkState)) {
+            case 1: ++initializing; break
+            case 2: ++healthy; break
+            case 3: ++degraded; break
+            case 4: ++lost; break
+            case 5: ++recovering; break
+            default: ++unknown; break
+            }
+        }
+
+        const parts = []
+        if (healthy > 0) parts.push(qsTr("健康 %1").arg(healthy))
+        if (degraded > 0) parts.push(qsTr("降级 %1").arg(degraded))
+        if (lost > 0) parts.push(qsTr("丢失 %1").arg(lost))
+        if (recovering > 0) parts.push(qsTr("恢复中 %1").arg(recovering))
+        if (initializing > 0) parts.push(qsTr("初始化 %1").arg(initializing))
+        if (unknown > 0) parts.push(qsTr("未知 %1").arg(unknown))
+        if (freshCount === 0) parts.push(qsTr("无新鲜实例"))
+        if (stale > 0) parts.push(qsTr("超时 %1").arg(stale))
+        if (waiting > 0) parts.push(qsTr("等待 %1").arg(waiting))
+        return parts.length > 0 ? parts.join(" · ") : qsTr("未上报")
+    }
+
+    function _linkInstanceStateSummaryColor() {
+        const familyStatus = _familyStatus("linkAvailable")
+        if (familyStatus !== qsTr("已接收")) return _familyStatusColor("linkAvailable")
+        const statuses = _linkStatuses
+        if (statuses.length === 0) return "#8A9A94"
+
+        let freshCount = 0, stale = 0, degraded = false, unknown = false
+        for (let index = 0; index < statuses.length; ++index) {
+            const link = statuses[index]
+            const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
+            if (freshness !== qsTr("已接收")) {
+                if (freshness === qsTr("数据超时")) ++stale
+                continue
+            }
+            ++freshCount
+            switch (Number(link.linkState)) {
+            case 2: break
+            case 3:
+            case 5: degraded = true; break
+            case 4: return "#F06464"
+            default: unknown = true; break
+            }
+        }
+        if (degraded || stale > 0) return "#F0B94B"
+        if (freshCount === 0 || unknown) return "#8A9A94"
+        return "#45D39A"
+    }
+
     function _linkInstanceSummaryValue() {
         const familyStatus = _familyStatus("linkAvailable")
         if (familyStatus !== qsTr("已接收")) return familyStatus
@@ -3414,6 +3483,13 @@ SetupPage {
                     titleText: qsTr("链路质量")
                     // Link instances expose independent freshness/state; do not imply one aggregate health state.
                     statusFamily: ""
+                    TelemetryRow {
+                        objectName: "flightTelemetry_linkInstanceStateSummary"
+                        visible: root._linkStatuses.length > 0
+                        labelText: qsTr("链路状态分布")
+                        valueText: root._linkInstanceStateSummaryText()
+                        valueColor: root._linkInstanceStateSummaryColor()
+                    }
                     QGCLabel {
                         Layout.fillWidth: true
                         visible: root._linkStatuses.length === 0
