@@ -867,6 +867,21 @@ QVariantList Fact::validationRules() const
     return _metaData ? _metaData->validationRules() : QVariantList();
 }
 
+QString Fact::sourceFile() const
+{
+    return _metaData ? _metaData->sourceFile() : QString();
+}
+
+QString Fact::sourcePath() const
+{
+    return _metaData ? _metaData->sourcePath() : QString();
+}
+
+QString Fact::sourceKind() const
+{
+    return _metaData ? _metaData->sourceKind() : QString();
+}
+
 bool Fact::qgcRebootRequired() const
 {
     if (_metaData) {
