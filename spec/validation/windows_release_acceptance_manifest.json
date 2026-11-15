@@ -864,7 +864,8 @@
     "health_matrix_cells_use_screen_tools_scaled_insets_and_content_driven_height",
     "health_maintenance_panel_reserves_two_scaled_insets_and_tracks_wrapped_text_height",
     "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px",
-    "link_quality_trend_value_and_samples_share_the_same_range_validity_gate"
+    "link_quality_trend_value_and_samples_share_the_same_range_validity_gate",
+    "navigation_utc_timestamp_uses_full_width_stacked_row_and_preserves_microseconds_at_all_breakpoints"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
