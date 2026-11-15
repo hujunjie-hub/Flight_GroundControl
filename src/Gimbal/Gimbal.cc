@@ -37,6 +37,7 @@ const Gimbal &Gimbal::operator=(const Gimbal &other)
     _neutral = other._neutral;
     _haveControl = other._haveControl;
     _othersHaveControl = other._othersHaveControl;
+    _ownershipStatusValid = other._ownershipStatusValid;
     _capabilityFlags = other._capabilityFlags;
     _managerStatusReceiveClock = other._managerStatusReceiveClock;
     _attitudeStatusReceiveClock = other._attitudeStatusReceiveClock;
