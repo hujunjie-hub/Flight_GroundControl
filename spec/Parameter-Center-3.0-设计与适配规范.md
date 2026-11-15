@@ -404,7 +404,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 - 参数中心响应面板开始接入 Vehicle.flightTelemetry 的真实 FCU_CONTROL_STATUS 数据，采集 controlTimeBootUs、controlBootId 和 controlSolveTimeUs。
 - 仅在 controlAvailable 为真且收到新的飞控时间戳时采样；最多保留最近 120 个有效样本，不用地面站定时器重复采样旧值。
-- 控制器 boot ID 变化、飞控时间戳回退或活动飞行器切换时清空历史样本，避免跨启动/跨飞行器拼接曲线。
+- 控制器 boot ID 变化、飞控时间戳回退或活动飞行器切换时清空历史样本，避免跨启动/跨飞行器拼接曲线。 相邻有效样本间隔超过 FlightTelemetryFactGroup 的 3 秒 stale threshold 时断开曲线并单独绘制采样点，不跨缺样区间连线。
 - 当前曲线明确标记为“控制求解耗时”，显示最近真实值；控制遥测失效时标注历史样本，样本不足两个时显示等待态。
 - 该曲线是控制计算耗时趋势，不冒充参数目标/反馈误差响应曲线；参数变化标记、实际反馈、仿真预测、仿真接口、影响关系和 AI 建议仍待后续实现。
 - 本轮未运行 Windows 构建、QML UI 测试、单元测试或 CI，所有运行时验收保持 NOT_RUN。
