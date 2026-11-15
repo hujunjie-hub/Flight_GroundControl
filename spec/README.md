@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.47
+- 版本 4.48
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -210,3 +210,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 总览拓扑视觉层级收口：六条连接线与六个节点共用各自 family freshness 状态，fresh/stale/waiting 分别使用绿/琥珀/灰；节点卡增加状态色底纹与侧边标识；拓扑作为六域复合面板移除 navigation 单域状态徽标。新增 MockLink fresh→stale→recovered 连线/节点同步断言与 1600–400 px 边界回归。本轮未运行 CI，新增断言 NOT_RUN。
 
 - 2026-11-15 趋势卡状态表达增量：每张趋势卡新增独立「断点 N」计数，历史断点不因最新样本恢复而清除；WAIT/NOW/GAP 单独表达最新样本状态。新增 MockLink 过期→恢复与 1600/400 px footer 边界断言。本轮未运行 CI，新增断言 NOT_RUN。
+
+- 2026-11-15 总览整机状态优先级调整：飞行模式作为主视觉，解锁状态独立显示，失效保护升级为全宽分级安全状态条，控制权下沉为次级行；freshness 与业务状态分开表达。新增 MockLink WAIT/fresh/stale 与 1600/1000/400 px 内容边界断言。本轮未运行 CI，新增回归 NOT_RUN。
