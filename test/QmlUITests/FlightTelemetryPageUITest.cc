@@ -2856,7 +2856,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcAxesGrid"), 3000);
                         QQuickItem* linkMetricsAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_linkMetrics_2"), 3000);
+                        QQuickItem* stickBadgeAtWidth = findItem(
+                            _rootItem, QStringLiteral("flightTelemetry_rcStickMonitor_statusBadge"));
+                        QQuickItem* axisBadgeAtWidth = findItem(
+                            _rootItem, QStringLiteral("flightTelemetry_rcChannelMonitor_statusBadge"));
                         for (QQuickItem* panel : rcPanels) QVERIFY(panel);
+                        QVERIFY(stickBadgeAtWidth);
+                        QVERIFY(axisBadgeAtWidth);
+                        QTRY_VERIFY_WITH_TIMEOUT(stickBadgeAtWidth->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(!axisBadgeAtWidth->isVisible(), 3000);
+                        QTRY_COMPARE_WITH_TIMEOUT(rcPanels[1]->property("statusFamily").toString(),
+                                                  QStringLiteral("rcInputAvailable"), 3000);
                         QVERIFY(leftStickAtWidth);
                         QVERIFY(rightStickAtWidth);
                         QVERIFY(axesGridAtWidth);
