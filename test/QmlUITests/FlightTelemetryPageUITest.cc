@@ -908,6 +908,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#8A9A94"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(), waitingFcuText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroOperationFreshness->property("text").toString(), waitingText, 3000);
@@ -2103,6 +2105,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             // RC input uses a longer 5500 ms family freshness window.
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), staleText, 6500);
             QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeHeroStatus->property("valueColor").toString(),
                                       QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueColor").toString(),
