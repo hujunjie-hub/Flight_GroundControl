@@ -474,6 +474,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
 - 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不在 QML 内硬编码型号或重复判断固件身份。Flight SIL 通过身份校验后，插件返回注册的 SIM_ONLY / SIL_ONLY profiles；用户必须单选一个 profile 作为参数调优上下文，ParameterEditor 只显示该 profile 的参数名与参数域白名单。该选择不改变 activeVehicle 的真实硬件类型。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
+- 参数 profile 不再在页面启动或 activeVehicle 切换时自动预选首项；必须由操作者显式选择后才创建参数编辑器并解锁该 profile 的参数域。这样可避免把“注册表中存在唯一候选”误认为操作者已确认当前调参对象。无候选时显示“未登记可调机型”，有候选但未选择时显示“请选择机型配置”。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
