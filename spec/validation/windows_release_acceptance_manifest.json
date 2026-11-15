@@ -486,7 +486,8 @@
         "overview_topology_canvas_label_geometry_uses_the_rendered_font_metrics_without_overlap",
         "health_matrix_cells_use_screen_tools_scaled_insets_and_content_driven_height",
         "health_maintenance_panel_reserves_two_scaled_insets_and_tracks_wrapped_text_height",
-        "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px"
+        "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px",
+        "link_quality_trend_value_and_samples_share_the_same_range_validity_gate"
       ]
     },
     {
@@ -859,7 +860,8 @@
     "navigation_timeline_geometry_scales_with_screen_tools_font_metrics_and_fits_compact_reference_viewport",
     "health_matrix_cells_use_screen_tools_scaled_insets_and_content_driven_height",
     "health_maintenance_panel_reserves_two_scaled_insets_and_tracks_wrapped_text_height",
-    "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px"
+    "health_maintenance_columns_and_long_diagnostic_text_fit_at_1600_1000_900_760_759_700_400_px",
+    "link_quality_trend_value_and_samples_share_the_same_range_validity_gate"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
