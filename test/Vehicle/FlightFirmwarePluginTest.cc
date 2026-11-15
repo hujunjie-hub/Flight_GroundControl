@@ -152,6 +152,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject invalidRebootRequiredEntry = validEntry;
     invalidRebootRequiredEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_REBOOT_REQUIRED"));
     invalidRebootRequiredEntry.insert(QStringLiteral("rebootRequired"), QStringLiteral("yes"));
+    invalidRebootRequiredEntry.insert(QStringLiteral("updatePolicy"), QStringLiteral("FIRMWARE_CONFIRMATION"));
 
     QJsonObject invalidReadOnlyFlagEntry = validEntry;
     invalidReadOnlyFlagEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_READ_ONLY_FLAG"));
