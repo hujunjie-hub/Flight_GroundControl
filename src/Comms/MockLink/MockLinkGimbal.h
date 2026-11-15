@@ -79,6 +79,8 @@ private:
     float     _pitch = 0.0f;
     float     _yaw = 0.0f;
     bool      _manualControl = false;  // true when under external control command
+    bool      _yawLock = false;
+    bool      _retracted = false;
     /// Protects gimbal state and intervals from race conditions between:
     ///   - Main thread: _handleSetMessageInterval() and _handleGimbalManagerPitchYaw() modifying state
     ///   - Worker thread: run1HzTasks() reading intervals and auto-updating attitude every 1s
