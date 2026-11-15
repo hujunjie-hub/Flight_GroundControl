@@ -85,6 +85,7 @@ public:
     void setCalibrationPose(MockLinkPX4Calibration::Pose pose) const { _mockLinkPX4Calibration->setPose(pose); }
 
     /// Test API: simulate one gimbal device going offline and rediscovering.
+    /// Use the manager-scoped overload when legacy device IDs repeat across managers.
     bool setGimbalDeviceOnlineForTesting(uint8_t gimbalDeviceId, bool online);
     bool setGimbalDeviceOnlineForTesting(uint8_t managerCompId, uint8_t gimbalDeviceId, bool online);
 
