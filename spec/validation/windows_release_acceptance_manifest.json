@@ -271,7 +271,7 @@
         "RC_link_trends_require_link_family_freshness_and_field_validity_masks",
         "per_link_trend_samples_are_rejected_when_instance_receive_age_is_stale",
         "health_trend_samples_are_rejected_when_resource_task_zero_instance_is_stale_or_invalid",
-        "health_maintenance_content_reflows_3_2_1_without_horizontal_overflow"
+        "health_maintenance_content_reflows_3_2_1_1_at_1600_1000_700_400_px_without_horizontal_overflow"
       ]
     },
     {
