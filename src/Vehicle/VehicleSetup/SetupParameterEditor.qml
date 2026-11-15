@@ -91,16 +91,41 @@ Item {
             property bool parameterDomainAvailable: false
             property string targetValueText: ""
             property var responseSamples: []
+            property var parameterChangeMarkers: []
+            property var pendingParameterChangeMarkers: []
+            property string parameterChangeSummary: ""
             property string lastControlTimestamp: ""
             property string lastControlBootId: ""
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
             readonly property bool controlTelemetryAvailable: {
                 const telemetry = root._activeVehicle ? root._activeVehicle.flightTelemetry : null
                 return root._linkHealthy && telemetry && telemetry.factExists("controlAvailable") &&
-                       telemetry.getFact("controlAvailable").value
+                       telemetry.getFact("controlAvailable").value &&
+                       telemetry.familyStale["control"] === false
             }
             readonly property var lastResponseSample: responseSamples.length > 0
                                                        ? responseSamples[responseSamples.length - 1] : null
+            readonly property var responseSampleStats: {
+                const samples = responseSamples
+                if (samples.length === 0) {
+                    return null
+                }
+                let minValue = Number.POSITIVE_INFINITY
+                let maxValue = Number.NEGATIVE_INFINITY
+                let sum = 0
+                for (let i = 0; i < samples.length; i++) {
+                    minValue = Math.min(minValue, samples[i].value)
+                    maxValue = Math.max(maxValue, samples[i].value)
+                    sum += samples[i].value
+                }
+                return {
+                    count: samples.length,
+                    min: minValue,
+                    max: maxValue,
+                    average: sum / samples.length,
+                    durationSeconds: Math.max(0, samples[samples.length - 1].time - samples[0].time) / 1000000
+                }
+            }
             readonly property bool targetValueValid: {
                 if (!selectedFact || targetValueText.trim() === "") {
                     return false
@@ -132,6 +157,29 @@ Item {
                 return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
             }
 
+            function recordParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
+                if (lastControlBootId === "" || lastControlTimestamp === "") {
+                    parameterChangeSummary = qsTr("参数 %1 已收到 PARAM_VALUE 确认；当前没有同一启动会话的遥测基线，未标记曲线")
+                                                 .arg(parameterName)
+                    return
+                }
+
+                const pending = pendingParameterChangeMarkers.slice()
+                pending.push({
+                    componentId: componentId,
+                    name: parameterName,
+                    value: String(confirmedValue),
+                    bootId: lastControlBootId,
+                    afterTimestamp: Number(lastControlTimestamp)
+                })
+                if (pending.length > 16) {
+                    pending.shift()
+                }
+                pendingParameterChangeMarkers = pending
+                parameterChangeSummary = qsTr("参数 %1 = %2 已收到飞控确认，等待同一启动会话的下一帧控制遥测")
+                                             .arg(parameterName).arg(String(confirmedValue))
+            }
+
             Timer {
                 id: responseSampleTimer
                 interval: 100
@@ -143,23 +191,32 @@ Item {
                         !telemetry.factExists("controlTimeBootUs") ||
                         !telemetry.factExists("controlBootId") ||
                         !telemetry.factExists("controlSolveTimeUs") ||
-                        !telemetry.getFact("controlAvailable").value) {
+                        !telemetry.getFact("controlAvailable").value ||
+                        telemetry.familyStale["control"] !== false) {
                         return
                     }
 
                     const timestamp = Number(telemetry.getFact("controlTimeBootUs").value)
                     const timestampText = String(timestamp)
                     const bootIdText = telemetry.getFact("controlBootId").valueString
-                    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+                    if (!Number.isFinite(timestamp) || timestamp <= 0 || bootIdText === "") {
                         return
                     }
 
-                    if (bootIdText !== dashboardRoot.lastControlBootId ||
+                    const sessionChanged =
+                        (dashboardRoot.lastControlBootId !== "" &&
+                         bootIdText !== dashboardRoot.lastControlBootId) ||
                         (dashboardRoot.lastControlTimestamp !== "" &&
-                         timestamp <= Number(dashboardRoot.lastControlTimestamp))) {
+                         timestamp <= Number(dashboardRoot.lastControlTimestamp))
+                    if (sessionChanged) {
                         dashboardRoot.responseSamples = []
+                        dashboardRoot.parameterChangeMarkers = []
                         dashboardRoot.lastControlTimestamp = ""
-                        dashboardRoot.lastControlBootId = bootIdText
+                        if (dashboardRoot.pendingParameterChangeMarkers.length > 0) {
+                            dashboardRoot.pendingParameterChangeMarkers = []
+                            dashboardRoot.parameterChangeSummary =
+                                qsTr("参数已确认，但飞控启动会话或时间戳发生变化，未关联到响应曲线")
+                        }
                     }
                     if (timestampText === dashboardRoot.lastControlTimestamp) {
                         return
@@ -174,6 +231,41 @@ Item {
                     samples.push({ time: timestamp, value: solveTimeUs })
                     if (samples.length > 120) {
                         samples.shift()
+                    }
+
+                    const pending = dashboardRoot.pendingParameterChangeMarkers.slice()
+                    const waiting = []
+                    const correlated = []
+                    for (let i = 0; i < pending.length; i++) {
+                        const marker = pending[i]
+                        if (marker.bootId !== bootIdText) {
+                            continue
+                        }
+                        if (timestamp > marker.afterTimestamp) {
+                            correlated.push({
+                                time: timestamp,
+                                name: marker.name,
+                                value: marker.value,
+                                componentId: marker.componentId
+                            })
+                        } else {
+                            waiting.push(marker)
+                        }
+                    }
+                    dashboardRoot.pendingParameterChangeMarkers = waiting
+                    if (correlated.length > 0) {
+                        const markers = dashboardRoot.parameterChangeMarkers.concat(correlated)
+                        dashboardRoot.parameterChangeMarkers = markers.slice(-16)
+                        const latestMarker = correlated[correlated.length - 1]
+                        dashboardRoot.parameterChangeSummary =
+                            qsTr("参数 %1 = %2 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
+                                .arg(latestMarker.name).arg(latestMarker.value)
+                    }
+
+                    if (samples.length > 0) {
+                        const firstTimestamp = samples[0].time
+                        dashboardRoot.parameterChangeMarkers =
+                            dashboardRoot.parameterChangeMarkers.filter(marker => marker.time >= firstTimestamp)
                     }
                     dashboardRoot.responseSamples = samples
                     dashboardRoot.lastControlTimestamp = timestampText
@@ -843,6 +935,9 @@ Item {
                                         // ParameterEditorController captures activeVehicle at construction.
                                         dashboardRoot.parameterDomainAvailable = false
                                         dashboardRoot.responseSamples = []
+                                        dashboardRoot.parameterChangeMarkers = []
+                                        dashboardRoot.pendingParameterChangeMarkers = []
+                                        dashboardRoot.parameterChangeSummary = qsTr("飞行器已切换，已清空遥测与参数确认标记")
                                         dashboardRoot.lastControlTimestamp = ""
                                         dashboardRoot.lastControlBootId = ""
                                         parameterEditorLoader.sourceComponent = undefined
@@ -862,6 +957,9 @@ Item {
                                     target: parameterEditorLoader.item
                                     function onModelProfileBoundChanged() {
                                         dashboardRoot.syncParameterDomain()
+                                    }
+                                    function onParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
+                                        dashboardRoot.recordParameterWriteConfirmed(componentId, parameterName, confirmedValue)
                                     }
                                 }
 
@@ -1184,6 +1282,27 @@ Item {
                                 color: dashboardRoot.controlTelemetryAvailable ? root.cyan : root.amber
                                 font.pointSize: ScreenTools.microFontPointSize
                             }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: dashboardRoot.responseSampleStats
+                                      ? qsTr("最小 %1 · 平均 %2 · 峰值 %3 μs · 时间窗 %4 s")
+                                        .arg(dashboardRoot.responseSampleStats.min.toFixed(0))
+                                        .arg(dashboardRoot.responseSampleStats.average.toFixed(0))
+                                        .arg(dashboardRoot.responseSampleStats.max.toFixed(0))
+                                        .arg(dashboardRoot.responseSampleStats.durationSeconds.toFixed(1))
+                                      : qsTr("等待有效样本 · 横轴使用 FCU 启动时间")
+                                color: root.mutedText
+                                font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                visible: dashboardRoot.parameterChangeSummary !== ""
+                                text: dashboardRoot.parameterChangeSummary
+                                color: root.amber
+                                font.pointSize: ScreenTools.microFontPointSize
+                                wrapMode: Text.WordWrap
+                            }
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -1220,32 +1339,52 @@ Item {
                                             maxValue = Math.max(maxValue, samples[i].value)
                                         }
                                         const valueRange = Math.max(1, maxValue - minValue)
+                                        const firstTime = samples[0].time
+                                        const timeSpan = Math.max(1, samples[samples.length - 1].time - firstTime)
+                                        const points = []
+                                        for (let i = 0; i < samples.length; i++) {
+                                            points.push({
+                                                x: (width - 1) * (samples[i].time - firstTime) / timeSpan,
+                                                y: (height - 1) -
+                                                   ((samples[i].value - minValue) / valueRange) * (height - 1)
+                                            })
+                                        }
+
+                                        // FCU time is the horizontal axis; gaps over the 3 s freshness window
+                                        // are left open instead of being compressed into adjacent samples.
+                                        const maxContinuousGapUs = 3000000
                                         ctx.strokeStyle = "#18DDE2"
                                         ctx.fillStyle = "#18DDE2"
                                         ctx.lineWidth = 2
-                                        // FlightTelemetryFactGroup marks a control family stale after
-                                        // 3 seconds. Break the trace across gaps of that duration instead
-                                        // of drawing a misleading continuous line through missing telemetry.
-                                        const maxContinuousGapUs = 3000000
                                         ctx.beginPath()
-                                        for (let i = 0; i < samples.length; i++) {
-                                            const x = (width - 1) * i / (samples.length - 1)
-                                            const y = (height - 1) -
-                                                      ((samples[i].value - minValue) / valueRange) * (height - 1)
+                                        for (let i = 0; i < points.length; i++) {
                                             if (i === 0 || samples[i].time - samples[i - 1].time > maxContinuousGapUs) {
-                                                ctx.moveTo(x, y)
+                                                ctx.moveTo(points[i].x, points[i].y)
                                             } else {
-                                                ctx.lineTo(x, y)
+                                                ctx.lineTo(points[i].x, points[i].y)
                                             }
                                         }
                                         ctx.stroke()
-                                        for (let i = 0; i < samples.length; i++) {
-                                            const x = (width - 1) * i / (samples.length - 1)
-                                            const y = (height - 1) -
-                                                      ((samples[i].value - minValue) / valueRange) * (height - 1)
+
+                                        // Keep isolated real samples visible on both sides of a gap.
+                                        for (let i = 0; i < points.length; i++) {
                                             ctx.beginPath()
-                                            ctx.arc(x, y, 2, 0, Math.PI * 2)
+                                            ctx.arc(points[i].x, points[i].y, 2, 0, Math.PI * 2)
                                             ctx.fill()
+                                        }
+
+                                        // Amber ticks mark the first control frame after a confirmed PARAM_VALUE.
+                                        // This is temporal association, not proof of causal parameter response.
+                                        ctx.fillStyle = "#E8BD67"
+                                        const markers = dashboardRoot.parameterChangeMarkers
+                                        for (let i = 0; i < markers.length; i++) {
+                                            if (markers[i].time < firstTime || markers[i].time > samples[samples.length - 1].time) {
+                                                continue
+                                            }
+                                            const x = (width - 1) * (markers[i].time - firstTime) / timeSpan
+                                            for (let y = 0; y < height; y += 8) {
+                                                ctx.fillRect(x, y, 1, Math.min(4, height - y))
+                                            }
                                         }
                                     }
                                     onWidthChanged: requestPaint()
