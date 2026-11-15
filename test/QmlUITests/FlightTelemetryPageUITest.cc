@@ -285,6 +285,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(topologyNodesGrid);
             QVERIFY(topologyLegend);
             QVERIFY(topologyLegendTitle);
+            QCOMPARE(topologyLegendTitle->property("text").toString(),
+                     translatedTelemetryText("状态图例"));
             QVERIFY(alarmPriorityHint);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
@@ -541,7 +543,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const auto topologyLegendItemsFit = [&]() {
                 QQuickItem* items[] = {
                     topologyLegendTitle,
-                    topologyLegendRows[0], topologyLegendRows[1], topologyLegendRows[2]};
+                    topologyLegendRows[0], topologyLegendRows[1], topologyLegendRows[2],
+                    topologyLegendLabels[0], topologyLegendLabels[1], topologyLegendLabels[2],
+                    topologyLegendDots[0], topologyLegendDots[1], topologyLegendDots[2]};
                 for (QQuickItem* item : items) {
                     if (!item || !item->isVisible()) return false;
                     const QPointF topLeft = item->mapToItem(topologyLegend, 0, 0);
