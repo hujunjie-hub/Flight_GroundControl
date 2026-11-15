@@ -3228,8 +3228,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"), 3000),
-                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000),
-                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000)};
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000)};
+                    QQuickItem* navigationUtcTimestampValue = findVisibleItem(
+                        _rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp_value"), 3000);
                     QQuickItem* navigationEstimatePosition =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000);
                     QQuickItem* navigationEstimateVelocity =
@@ -3269,6 +3271,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(navigationPageGrid);
                     QVERIFY(navigationCapabilitiesGrid);
                     QVERIFY(navigationTimeMetricsGrid);
+                    QVERIFY(navigationUtcTimestampValue);
                     for (QQuickItem* row : navigationTimeMetricRows) QVERIFY(row);
                     QVERIFY(navigationEstimatePosition);
                     QVERIFY(navigationEstimateVelocity);
@@ -3305,6 +3308,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 2, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(
                         navigationTimeMetricRows[4]->width() >= navigationTimeMetricRows[0]->width() * 1.8, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationUtcTimestampValue->width() >= navigationTimeMetricRows[4]->width() * 0.9, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationUtcTimestampValue->height() + 1.0 >=
+                            navigationUtcTimestampValue->implicitHeight(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(
                         navigationTimeMetricRows[4]->y() > navigationTimeMetricRows[3]->y(), 3000);
                     const auto navigationTimeMetricFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
@@ -4208,14 +4216,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"), 3000),
-                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000),
-                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000)};
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000)};
+                        QQuickItem* navigationUtcTimestampValueAtWidth = findVisibleItem(
+                            _rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp_value"), 3000);
                         QQuickItem* navigationChecksDomainsAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksDomains"), 3000);
                         for (QQuickItem* panel : navigationPanels) QVERIFY(panel);
                         QVERIFY(navigationCapabilitiesGridAtWidth);
                         QVERIFY(navigationTimeMetricsGridAtWidth);
                         for (QQuickItem* row : navigationTimeMetricRowsAtWidth) QVERIFY(row);
+                        QVERIFY(navigationUtcTimestampValueAtWidth);
                         QVERIFY(navigationChecksDomainsAtWidth);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
@@ -4231,6 +4242,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         }
                         QTRY_VERIFY_WITH_TIMEOUT(
                             navigationTimeMetricRowsAtWidth[4]->y() > navigationTimeMetricRowsAtWidth[3]->y(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationTimeMetricRowsAtWidth[4]->width() >= navigationPanels[2]->width() * 0.82, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationUtcTimestampValueAtWidth->width() >=
+                                navigationTimeMetricRowsAtWidth[4]->width() * 0.9, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationUtcTimestampValueAtWidth->height() + 1.0 >=
+                                navigationUtcTimestampValueAtWidth->implicitHeight(), 3000);
                         const auto navigationTimeMetricFitsInPanelAtWidth = [](QQuickItem* row, QQuickItem* panel) {
                             const auto topLeft = row->mapToItem(panel, 0, 0);
                             return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
