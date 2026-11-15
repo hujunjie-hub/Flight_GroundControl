@@ -3849,12 +3849,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_VERIFY_WITH_TIMEOUT(navigationClockGroup->x() < navigationUtcGroup->x(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationTimeGroupFitsInPanel(navigationClockGroup, navigationPageTime), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationTimeGroupFitsInPanel(navigationUtcGroup, navigationPageTime), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->width() >= navigationTimeMetricRows[0]->width() * 1.8, 3000);
                     page->setWidth(839 + navigationAvailableWidthInset);
                     QTRY_VERIFY_WITH_TIMEOUT(qAbs(page->property("availableWidth").toReal() - 839.0) < 1.0, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 1, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationUtcGroup->y() > navigationClockGroup->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(
                         qAbs(navigationClockGroup->x() - navigationUtcGroup->x()) < 1.0, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->width() > navigationTimeMetricRows[0]->width(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->width() - navigationTimeMetricRows[0]->width() <=
+                            2.0 * navigationClockGroup->property("contentInset").toReal() + 2.0, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationTimeGroupFitsInPanel(navigationClockGroup, navigationPageTime), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationTimeGroupFitsInPanel(navigationUtcGroup, navigationPageTime), 3000);
                     page->setWidth(1600);
