@@ -284,6 +284,11 @@ SetupPage {
         if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
         return value / divisor
     }
+    function _rcAgeDisplayText() {
+        if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return _familyStatus("rcInputAvailable")
+        const value = Number(_fact("rcAgeUs"))
+        return Number.isFinite(value) && value >= 0 ? (value / 1000).toFixed(1) + " ms" : qsTr("无效")
+    }
     function _rcAgeTrendSampleValue() {
         if (_familyStatus("rcInputAvailable") !== qsTr("已接收")) return null
         const value = Number(_fact("rcAgeUs"))
@@ -1091,7 +1096,7 @@ SetupPage {
             }
 
 
-            // Static visual strip from the confirmed reference image; no sub-page routing.
+            // Four reference-matched dashboard pages; the selected tab controls the visible content panel.
             GridLayout {
                 objectName: "flightTelemetry_visualTabs"
                 Layout.fillWidth: true
@@ -1539,46 +1544,12 @@ SetupPage {
                         Layout.preferredHeight: 1
                         color: "#174D59"
                     }
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        text: qsTr("遥控输入 · 四轴实时值")
-                        color: "#73DCE8"
-                        font.pointSize: ScreenTools.captionFontPointSize
-                        font.weight: ScreenTools.strongFontWeight
-                    }
 
-                    AxisGauge {
-                        objectName: "flightTelemetry_rcAxis_roll"
-                        axisName: qsTr("横滚")
-                        rawValue: root._fact("rcRollNorm")
-                        validityMask: root._fact("rcValidAxesMask")
-                        validityBit: 0
-                        centered: true
-                    }
-                    AxisGauge {
-                        objectName: "flightTelemetry_rcAxis_pitch"
-                        axisName: qsTr("俯仰")
-                        rawValue: root._fact("rcPitchNorm")
-                        validityMask: root._fact("rcValidAxesMask")
-                        validityBit: 1
-                        centered: true
-                    }
-                    AxisGauge {
-                        objectName: "flightTelemetry_rcAxis_yaw"
-                        axisName: qsTr("偏航")
-                        rawValue: root._fact("rcYawNorm")
-                        validityMask: root._fact("rcValidAxesMask")
-                        validityBit: 2
-                        centered: true
-                    }
-                    AxisGauge {
-                        objectName: "flightTelemetry_rcAxis_throttle"
-                        axisName: qsTr("油门")
-                        rawValue: root._fact("rcThrottleNorm")
-                        validityMask: root._fact("rcValidAxesMask")
-                        validityBit: 3
-                        centered: false
-                    }
+
+
+
+
+
                 }
             }
 
@@ -1990,7 +1961,7 @@ SetupPage {
                                    : root._activeDashboardPage === 3 ? qsTr("RC 输入年龄")
                                    : qsTr("控制求解耗时")
                         valueText: root._activeDashboardPage === 2 ? root._utcUncertaintyText()
-                                   : root._activeDashboardPage === 3 ? root._ageUsFact("rcAgeUs")
+                                   : root._activeDashboardPage === 3 ? root._rcAgeDisplayText()
                                    : root._trendDisplayValue("controlAvailable", "controlSolveTimeUs", 0, " μs")
                         unitText: root._activeDashboardPage === 2 ? "μs" : root._activeDashboardPage === 3 ? "ms" : "μs"
                         decimals: root._activeDashboardPage === 3 ? 1 : 0
