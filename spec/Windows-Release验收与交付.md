@@ -305,7 +305,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - 四张 1672×941 原图是四个实际页面，不是单页内的静态主题标签。
 - Integration 必须逐一点击四个页签，断言标题、六项 KPI、主布局和页内趋势同步切换。
-- 1600/1000/700 px 分别验证主布局 12/6/1 列；健康页主矩阵 4/2/1 列。
+- 1600/1000/700 px 分别验证主布局 12/6/1 列；健康页主矩阵 4/2/1 列、维护信息横条 3/2/1 列。
 - Mode 1/2/3 映射读取与 FlightRadio 同一持久化设置；RC 输入无效或过期时摇杆 marker 隐藏。
 - Windows 本地必须提供 1672×941 参考尺寸以及 100%/125%/150% DPI 截图；UI Integration 通过不能代替像素级视觉签收。
 

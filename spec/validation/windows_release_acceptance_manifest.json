@@ -218,7 +218,8 @@
         "per_link_metrics_require_receive_age_within_link_family_freshness_limit",
         "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
         "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns",
-        "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates"
+        "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates",
+        "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards"
       ]
     },
     {
@@ -269,7 +270,8 @@
         "RC_stick_markers_follow_persisted_FlightRadio_mode_and_hide_on_invalid_axes",
         "RC_link_trends_require_link_family_freshness_and_field_validity_masks",
         "per_link_trend_samples_are_rejected_when_instance_receive_age_is_stale",
-        "health_trend_samples_are_rejected_when_resource_task_zero_instance_is_stale_or_invalid"
+        "health_trend_samples_are_rejected_when_resource_task_zero_instance_is_stale_or_invalid",
+        "health_maintenance_content_reflows_3_2_1_without_horizontal_overflow"
       ]
     },
     {
@@ -405,7 +407,8 @@
     "per_link_metrics_require_receive_age_within_link_family_freshness_limit",
     "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
     "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns",
-    "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates"
+    "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates",
+    "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
