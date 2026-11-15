@@ -243,6 +243,35 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
         return false;
     }
 
+    const auto rejectProfile = [this](const QString &reason) {
+        if (_selectedFact) {
+            disconnect(_selectedFact, &Fact::vehicleUpdated,
+                       this, &ParameterEditorController::_selectedFactVehicleUpdated);
+        }
+        _selectedFact = nullptr;
+        _confirmedValue.clear();
+        _previousValue.clear();
+        _pendingOriginalValue.clear();
+        _pendingParameterName.clear();
+        _pendingComponentId = -1;
+        _previousValues.clear();
+        _hasPreviousValue = false;
+        _selectedModelProfileId.clear();
+        _selectedModelParameterNames.clear();
+        _selectedModelParameterDomains.clear();
+        _tuningStatus = tr("机型配置校验失败，参数编辑已锁定");
+        _tuningError = reason;
+        if (_parameterMgr) {
+            _buildLists();
+            if (!_searchText.isEmpty() || _showModifiedOnly || _showFavoritesOnly) {
+                _performSearch();
+            }
+        }
+        emit selectedFactChanged();
+        emit tuningStateChanged();
+        return false;
+    };
+
     QVariantMap selectedProfile;
     QStringList parameterNames;
     QStringList parameterDomains;
@@ -250,7 +279,7 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
     if (!profileId.isEmpty()) {
         if (!_parameterMgr || !_parameterMgr->parametersReady() ||
             _parameterMgr->missingParameters() || _parameterMgr->parameterDownloadSkipped()) {
-            return false;
+            return rejectProfile(tr("飞控参数列表尚未完整就绪，不能绑定机型参数清单。"));
         }
 
         for (const QVariant &value : _vehicle->vehicleModelProfiles()) {
@@ -261,13 +290,13 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
             if (candidate.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
                 candidate.value(QStringLiteral("hardwareEligible")).toBool() ||
                 candidate.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
-                return false;
+                return rejectProfile(tr("机型配置不满足 SIL-only 写入资格。"));
             }
             selectedProfile = candidate;
             break;
         }
         if (selectedProfile.isEmpty()) {
-            return false;
+            return rejectProfile(tr("当前飞行器未注册所选机型配置。"));
         }
 
         static const QSet<QString> supportedDomains {
@@ -287,7 +316,7 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
                 qCWarning(ParameterEditorControllerLog)
                     << "Rejecting Flight model profile with an empty or duplicate parameter name:"
                     << profileId << name;
-                return false;
+                return rejectProfile(tr("机型参数清单包含空参数名或重复参数名。"));
             }
             uniqueParameterNames.insert(name);
             parameterNames.append(name);
@@ -301,14 +330,14 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
                 qCWarning(ParameterEditorControllerLog)
                     << "Rejecting Flight model profile with an empty, duplicate or unsupported domain:"
                     << profileId << domain;
-                return false;
+                return rejectProfile(tr("机型参数清单包含未登记或重复的参数域。"));
             }
             uniqueParameterDomains.insert(domain);
             parameterDomains.append(domain);
         }
 
         if (parameterNames.isEmpty() || parameterDomains.isEmpty()) {
-            return false;
+            return rejectProfile(tr("机型参数清单为空，不能启用参数编辑。"));
         }
 
         // A profile is valid only when every registered parameter is present in the
@@ -325,17 +354,18 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
                     qCWarning(ParameterEditorControllerLog)
                         << "Rejecting Flight model profile because a live parameter has an undeclared domain:"
                         << profileId << liveName << (liveFact ? liveFact->category() : QString());
-                    return false;
+                    return rejectProfile(tr("飞控参数 %1 的实际参数域与机型注册清单不一致。").arg(liveName));
                 }
                 resolvedParameterNames.insert(liveName);
             }
         }
 
         if (resolvedParameterNames != uniqueParameterNames) {
+            const QStringList missingNames = (uniqueParameterNames - resolvedParameterNames).values();
             qCWarning(ParameterEditorControllerLog)
                 << "Rejecting Flight model profile because one or more registered parameters are missing:"
-                << profileId << (uniqueParameterNames - resolvedParameterNames).values();
-            return false;
+                << profileId << missingNames;
+            return rejectProfile(tr("飞控缺少机型注册清单中的参数：%1").arg(missingNames.join(QStringLiteral(", "))));
         }
     }
 
@@ -363,13 +393,23 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
         : tr("已绑定机型配置：%1").arg(selectedProfile.value(QStringLiteral("displayName")).toString());
     _tuningError.clear();
 
-    _buildLists();
-    if (!_searchText.isEmpty() || _showModifiedOnly || _showFavoritesOnly) {
-        _performSearch();
+    if (_parameterMgr) {
+        _buildLists();
+        if (!_searchText.isEmpty() || _showModifiedOnly || _showFavoritesOnly) {
+            _performSearch();
+        }
     }
     emit selectedFactChanged();
     emit tuningStateChanged();
     return true;
+}
+
+bool ParameterEditorController::modelProfileBound() const
+{
+    return !_flightParameterCenterSafeMode() ||
+           (!_selectedModelProfileId.isEmpty() &&
+            !_selectedModelParameterNames.isEmpty() &&
+            !_selectedModelParameterDomains.isEmpty());
 }
 
 bool ParameterEditorController::_profileAllowsSelectedParameter() const
@@ -649,6 +689,10 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
 
 void ParameterEditorController::_buildListsForComponent(int compId)
 {
+    if (_flightParameterCenterSafeMode() && _selectedModelProfileId.isEmpty()) {
+        return;
+    }
+
     for (const QString& factName: _parameterMgr->parameterNames(compId)) {
         if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(factName)) {
             continue;
@@ -743,6 +787,9 @@ void ParameterEditorController::_buildLists(void)
 
 void ParameterEditorController::_factAdded(int compId, Fact* fact)
 {
+    if (_flightParameterCenterSafeMode() && _selectedModelProfileId.isEmpty()) {
+        return;
+    }
     if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(fact->name())) {
         return;
     }
@@ -1148,6 +1195,9 @@ void ParameterEditorController::resetAllToVehicleConfiguration(void)
 
 bool ParameterEditorController::_shouldShow(Fact* fact) const
 {
+    if (_flightParameterCenterSafeMode() && _selectedModelProfileId.isEmpty()) {
+        return false;
+    }
     if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(fact->name())) {
         return false;
     }
