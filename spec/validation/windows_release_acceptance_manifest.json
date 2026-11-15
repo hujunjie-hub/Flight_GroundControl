@@ -419,7 +419,10 @@
         "four_dashboard_pages_and_detail_grid_share_screen_tools_scaled_spacing_across_responsive_widths",
         "overview_topology_freshness_legend_maps_received_stale_waiting_colors_and_fits_all_responsive_widths",
         "health_page_global_communication_loss_is_red_without_overriding_independent_family_freshness",
-        "overview_navigation_kpi_measurement_values_use_neutral_color_and_status_color_tracks_freshness_capability"
+        "overview_navigation_kpi_measurement_values_use_neutral_color_and_status_color_tracks_freshness_capability",
+        "overview_alarm_empty_state_exposes_waiting_text_and_disappears_after_first_fcu_event",
+        "overview_alarm_live_priority_reorders_new_highest_severity_and_breaks_ties_by_local_receive_sequence",
+        "overview_alarm_priority_hint_matches_severity_then_local_sequence_ordering_contract"
       ]
     },
     {
