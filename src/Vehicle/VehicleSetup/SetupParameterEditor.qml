@@ -999,6 +999,20 @@ Item {
                                                ? root.amber : root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
                                     }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
+                                              ? qsTr("参数权限：—")
+                                              : dashboardRoot.selectedFact.readOnly
+                                                ? qsTr("参数权限：只读 · 允许查看和回读")
+                                                : dashboardRoot.selectedFact.writeOnly
+                                                  ? qsTr("参数权限：只写 · 禁止在线调参")
+                                                  : qsTr("参数权限：允许调参")
+                                        color: !dashboardRoot.selectedFact ? root.mutedText
+                                               : dashboardRoot.selectedFact.readOnly || dashboardRoot.selectedFact.writeOnly
+                                                 ? root.amber : root.green
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
                                     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424C" }
                                     RowLayout {
                                         Layout.fillWidth: true
