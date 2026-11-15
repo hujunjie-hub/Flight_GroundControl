@@ -4789,8 +4789,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             QTRY_VERIFY_WITH_TIMEOUT(
                                 qAbs(navigationClockGroupAtWidth->width() - navigationUtcGroupAtWidth->width()) < 1.0, 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
-                                qAbs(navigationTimeMetricRowsAtWidth[4]->width() -
-                                     navigationTimeMetricRowsAtWidth[0]->width()) < 1.0, 3000);
+                                navigationTimeMetricRowsAtWidth[4]->width() >
+                                navigationTimeMetricRowsAtWidth[0]->width(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                navigationTimeMetricRowsAtWidth[4]->width() -
+                                    navigationTimeMetricRowsAtWidth[0]->width() <=
+                                    2.0 * navigationClockGroupAtWidth->property("contentInset").toReal() + 2.0, 3000);
                         }
                         QTRY_VERIFY_WITH_TIMEOUT(
                             navigationTimeMetricRowsAtWidth[4]->mapToItem(navigationTimeMetricsGridAtWidth, 0, 0).y() >
