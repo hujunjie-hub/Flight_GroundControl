@@ -177,6 +177,11 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             }
         }
     }
+    for (auto it = nameOccurrences.cbegin(); it != nameOccurrences.cend(); ++it) {
+        if (it.value() > 1) {
+            declaredParameterNames.remove(it.key());
+        }
+    }
 
     for (const QJsonValue &value : parameters) {
         if (!value.isObject()) {
