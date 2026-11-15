@@ -375,7 +375,10 @@
         "per_link_metric_validity_summary_distinguishes_valid_invalid_and_unreported_fields",
         "stale_link_instance_gates_primary_fcu_age_and_detail_metric_validity_summary",
         "rc_link_primary_hero_excludes_duplicate_reason_and_detail_preserves_reason_and_separate_receive_age",
-        "link_detail_distinguishes_family_message_receive_age_from_per_instance_receive_age_and_fcu_age"
+        "link_detail_distinguishes_family_message_receive_age_from_per_instance_receive_age_and_fcu_age",
+        "overview_topology_connector_colors_follow_each_family_fresh_stale_recovered_state",
+        "overview_topology_node_cards_share_status_text_color_and_receive_age_with_canvas",
+        "multi_domain_topology_panel_has_no_navigation_only_status_badge"
       ]
     },
     {
@@ -632,7 +635,10 @@
     "navigation_overview_time_panel_and_maintenance_boot_id_follow_family_freshness",
     "build_info_snapshot_values_are_labeled_last_known_when_family_stale",
     "profile_compatibility_requires_fresh_operation_and_same_boot_build_snapshot",
-    "overview_global_communication_loss_overrides_latched_telemetry_received_state_and_recovers"
+    "overview_global_communication_loss_overrides_latched_telemetry_received_state_and_recovers",
+    "overview_topology_connector_colors_follow_each_family_fresh_stale_recovered_state",
+    "overview_topology_node_cards_share_status_text_color_and_receive_age_with_canvas",
+    "multi_domain_topology_panel_has_no_navigation_only_status_badge"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
