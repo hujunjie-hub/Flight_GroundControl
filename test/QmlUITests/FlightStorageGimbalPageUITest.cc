@@ -256,6 +256,9 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
     ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
                      QRegularExpression(QStringLiteral(
                          "COMP_METADATA_TYPE_GENERAL : failed to load metadata \\(primary and fallback\\)")));
+    ignoreLogMessage("Gimbal.GimbalController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "Set active gimbal: (refusing an unknown or incomplete device|release control before switching devices)")));
 
     runWithMockLink(
         []() { return MockLink::startGenericMockLink(MockConfiguration::OptionEnableGimbal); },
