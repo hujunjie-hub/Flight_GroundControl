@@ -218,6 +218,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_healthPage_navigation"));
             QQuickItem* heroFailsafe = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafe"), 3000);
             QQuickItem* axisRoll = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll"));
+            QQuickItem* axisRollValue = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll_value"));
             QQuickItem* axisPitch = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_pitch"));
             QQuickItem* axisYaw = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_yaw"));
             QQuickItem* axisThrottle = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_throttle"));
@@ -323,6 +325,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(healthNavigation);
             QVERIFY(heroFailsafe);
             QVERIFY(axisRoll);
+            QVERIFY(axisRollValue);
             QVERIFY(axisPitch);
             QVERIFY(axisYaw);
             QVERIFY(axisThrottle);
@@ -771,6 +774,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(healthOperation->property("statusText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthNavigation->property("statusText").toString(), waitingText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#8A9A94")), 3000);
             QCOMPARE(trendPosition->property("validSampleCount").toInt(), 0);
             QVERIFY(!trendPosition->property("hasRenderableSeries").toBool());
             QCOMPARE(trendPosition->property("gapCount").toInt(), 0);
@@ -1409,6 +1414,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisThrottle->property("valid").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#E6F0F4")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisRoll->property("normalizedValue").toDouble() - 0.25) < 0.0001, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisPitch->property("normalizedValue").toDouble() + 0.25) < 0.0001, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(axisYaw->property("normalizedValue").toDouble() - 0.50) < 0.0001, 3000);
@@ -1741,6 +1748,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendRcInputStatus(lastOperationTime + 300, bootId, 0x0E, 0.25F, -0.25F, 0.50F, 0.40F);
             QTRY_VERIFY_WITH_TIMEOUT(!axisRoll->property("valid").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(axisRoll->property("displayValue").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(axisRollValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisThrottle->property("valid").toBool(), 3000);
@@ -1749,6 +1758,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!rightStickMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->property("text").toString().contains(invalidText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rightStickReadout->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
