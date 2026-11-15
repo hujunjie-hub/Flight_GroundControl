@@ -508,6 +508,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 同一元数据文档中出现重复参数名时，所有同名条目均拒绝缓存，避免“先到先得”导致不确定的参数范围、单位或描述。
 - 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
 - readOnly 参数允许查看和单参数回读，但禁止在线写入；writeOnly 参数因无法完成 PARAM_VALUE 回读确认，禁止进入在线调参闭环。详情卡片明确显示当前 Fact 的权限类型。
+- 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY，以及当前参数名和参数域仍在注册白名单中；不能只依赖首次绑定时缓存的资格。
 - 参数工具菜单的飞控重启操作仅在已连接、解除锁定、未飞行且 ParameterManager 无待写入时启用，避免在飞行中、链路异常或参数同步过程中触发重启。
 - C++ 单参数回读资格也检查 `parameterDownloadSkipped`，与写入资格和 QML 页面就绪门控保持一致，避免 UI 隐藏后仍可通过控制器调用回读路径。
 - QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
