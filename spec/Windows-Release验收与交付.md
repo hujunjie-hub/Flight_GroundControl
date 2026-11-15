@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.31  
+版本：4.32  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -328,12 +328,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 ### G15 遥控与链路页专项补充（2026-11-15）
 
-- 桌面宽屏四个主视觉面板采用 3/3/3/3 等宽同排布局并等高；1000 px 中屏按 6 列逐行排列，700/400 px 单列堆叠。
+- 桌面宽屏采用两行主视觉：第一行遥控输入监视/逻辑轴输入各 6/12，第二行链路质量/失控保护分别 8/12、4/12；1000 px 中屏使用 3/3 与 4/2 列跨度，700/400 px 四面板单列堆叠。
 - 失控保护和多实例链路质量面板不得用 operation/link 单域徽标冒充整张面板的综合状态；各数据行/链路实例分别显示真实状态。
 - 左右摇杆的轴读数保留 RC family freshness 和逐轴 validity 语义；清除某个逻辑轴 validity bit 后对应 marker 隐藏，读数显示“无效”，不能显示成零。
 - 每个链路实例的 RSSI、质量、丢包率分别显示，字段值分别服从 validity mask 与实例 receiveAgeMs；无效字段不得显示原始数值。
 - 当 RC 与 GCS 链路同时有效时，链路趋势必须选用 GCS 实例；优先顺序为新鲜 GCS、伴随计算机、其他，存在非 RC 实例但均超时时保留超时/断点；只有无非 RC 实例时才回退 RC。
-- 本轮新增的 MockLink Integration 断言覆盖逐实例三个指标、GCS 优先于 RC、非 RC 链路超时后不回退 RC、四面板均衡和中窄屏重排；本轮未运行 CI，未形成 PASS 证据。后续集中执行 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地参考图/DPI 验收。
+- 本轮新增/更新的 MockLink Integration 断言覆盖逐实例三个指标、GCS 优先于 RC、非 RC 链路超时后不回退 RC、宽屏 6/6 + 8/4 两行布局、中屏 3/3 + 4/2、700/400 px 单列、双摇杆不越界、无聚合徽标及字段 freshness；本轮未运行 CI，未形成 PASS 证据。后续集中执行 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地参考图/DPI 验收。
 
 - 健康页控制器/执行器 freshness 验收：分别注入 controlAvailable、actuatorAvailable fresh → stale → recovered；求解器、序号、求解耗时、DOF、执行器掩码、许可代次、输出策略、原因和 FCU 时间戳必须同步显示状态/恢复值，不得保留旧值冒充当前值。
 
