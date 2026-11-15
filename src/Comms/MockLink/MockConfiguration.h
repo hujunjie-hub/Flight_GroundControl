@@ -49,6 +49,7 @@ public:
         OptionStayMavlinkV1       = 1 << 5,
         OptionAPMStartFreshParams = 1 << 6,
         OptionFtpCapability       = 1 << 7,
+        OptionEnableMultipleGimbals = 1 << 8,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -93,6 +94,10 @@ public:
     void setEnableCamera(bool enableCamera) { _enableCamera = enableCamera; emit enableCameraChanged(); }
     bool enableGimbal() const { return _enableGimbal; }
     void setEnableGimbal(bool enableGimbal) { _enableGimbal = enableGimbal; emit enableGimbalChanged(); }
+
+    // Test-only option: add a second independently stateful gimbal behind the same manager.
+    bool enableMultipleGimbals() const { return _enableMultipleGimbals; }
+    void setEnableMultipleGimbals(bool enabled) { _enableMultipleGimbals = enabled; }
     bool enableProximity() const { return _enableProximity; }
     void setEnableProximity(bool enableProximity) { _enableProximity = enableProximity; emit enableProximityChanged(); }
 
@@ -205,6 +210,7 @@ private:
     bool _apmStartFreshParams = false;
     bool _enableCamera = false;
     bool _enableGimbal = false;
+    bool _enableMultipleGimbals = false;
     bool _enableProximity = false;
     FailureMode_t _failureMode = FailNone;
     bool _incrementVehicleId = true;
