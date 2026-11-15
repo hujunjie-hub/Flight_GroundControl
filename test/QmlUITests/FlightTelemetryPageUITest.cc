@@ -1956,6 +1956,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("2 超时")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+            QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(linkInstanceStateSummary->isVisible(), 3000);
 
             // Restore all three instances, then exercise partial loss, total loss,
             // recovery, and return to healthy without changing the link-family message.
@@ -2024,6 +2027,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("健康"), 3000);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
             // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
             // the capability mask gates each value independently.
