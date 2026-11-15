@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.65
+版本：4.66
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -671,3 +671,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 每个资源任务使用 CPU 摘要和 WCET/栈剩余/截止期错过/AXI 2×2 指标格；每项独立 freshness/validity gating。
 - MockLink UI Integration 验证四项资源的原始值和独立 validity mask、传感器与预检卡片，以及 1600/1000/900/700/400 px 子卡片边界。
 - 按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言为 NOT_RUN，待集中验收。
+
+
+### G15 新 boot 首包非操作域时趋势会话隔离验收（2026-11-15）
+
+- 使用 MockLink 在已有趋势数据后先发送新 boot_id 的 FCU_NAV_STATUS，不先发送 OPERATION_STATUS。
+- 在下一次 1 Hz 趋势采样周期内，断言旧趋势缓冲区被清空、趋势 boot ID 暂时为空，且不会跨 boot epoch 连线。
+- 新 OPERATION_STATUS 到达前，趋势保持 GAP；导航域显示新会话时间戳，时间同步和事件域仍显示等待遥测，不得显示旧会话时间戳。
+- 新会话各域恢复后继续验证原有 FCU 时间线排序、无效时间戳颜色和数据 freshness 门控。
+- 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 完整回归。
