@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.7
+- 版本 4.8
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -114,7 +114,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
-- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；四页结构、页面专属 KPI/趋势、健康矩阵 4/2/1/1 与维护横条 3/2/1/1、导航时序页四块主面板等宽等高及跨域 freshness 已同步 SPEC/G15。当前继续完成遥控与链路页：四面板桌面 3/3/3/3 等宽等高、逐实例 RSSI/质量/丢包有效性显示、GCS/伴随计算机/其他优先于 RC 的链路趋势选择、失控保护与多链路面板取消单域状态徽标；Integration 增加真实 MockLink 链路帧、无效指标和响应式断言。CI 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
+- FGC-0044（飞控诊断四页高级大屏重构）保持 IN_PROGRESS；总览总控、飞行健康、导航时序、遥控与链路四页结构、页面专属 KPI/趋势、原始字段与只读边界均已实现并同步 SPEC/G15。总览包含六域真实 freshness 拓扑、告警严重度排序和 3/2/3/2 节点网格；健康页完成 13 域矩阵与资源实例 freshness 门控；导航页完成 capability/UTC/freshness 门控；遥控与链路页完成四面板 3/3/3/3 均衡、逐实例链路有效性和非 RC 数据链路优先级。当前继续补强 UI Integration 的几何边界和 freshness 状态转换断言；CI、Windows Release 与本地 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前不得标记 VERIFIED。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
 - FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
 - FGC-0047（全项目字体体系、中文字体回退与渲染一致性）继续扩展到全仓 QML：旧 default/small/medium/large 字号令牌引用迁移到语义令牌；三维视图固定 pixelSize 改为 pointSize；摇杆遥测等宽字族改用 ScreenTools.fixedFontFamily；新增 body-emphasis、caption-emphasis、section-heading、world-overlay 语义令牌。`qml-typography-check --all` 递归扫描全部 `src/**/*.qml`（当前 459 个文件），覆盖旧字号别名、固定 pixelSize、硬编码字体族和页面局部字号乘数；动态地图罗盘缩放和 DebugWindow 字体预览列为明确例外。新提交的精确 HEAD CI 尚待运行；Windows 100%/125%/150% 实机视觉检查尚未完成，保持 NOT_RUN。
@@ -146,7 +146,7 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 本轮增量：健康页明确区分 13 域消息新鲜度矩阵与设备/字段健康结论；移除多域面板的单域状态徽标，详情卡调整为 4/4/4 与 6/3/3 桌面网格并覆盖中窄屏重排。
 - 2026-11-15 本轮增量：总览三张主视觉卡与健康页三张主面板启用显式同排等高，其他 HeroPanel 不受影响；Integration 增加高度对齐断言。
 - 2026-11-15 飞行健康页专项：中屏主面板调整为概览/矩阵半行同排、安全监测整行；健康详情网格在 760–1279px 独立采用 6 列，与其他页面的断点解耦；预检恢复原因完整换行。资源实例 CPU/WCET/栈/AXI 数值按实例 receiveAgeMs 门控，安全摘要执行器掩码按 actuator 域 freshness 门控。
-- 2026-11-15 总览总控页专项：六域状态拓扑与接收年龄实时联动；右侧事件按严重度与序号排序；3:5:4 主面板和 3/2/3/2 节点网格响应式适配；保留原始遥测和只读边界。
+- 2026-11-15 总览总控页专项：六域状态拓扑与接收年龄实时联动；右侧事件按严重度与序号排序；3:5:4 主面板和 3/2/3/2 节点网格响应式适配；保留原始遥测和只读边界。 本轮补充六档宽度节点边界断言，以及导航节点 fresh/stale/recovered 颜色状态转换断言。
 - 视觉验收仍须使用精确 main HEAD 的 Windows Release 二进制，完成 1672×941 截图叠加和 100/125/150% DPI 检查。
 
 - 2026-11-15 本轮增量：遥控与链路页四张主视觉面板调整为桌面 3/3/3/3 等宽等高；RC 轴读数保留 freshness/validity 状态；链路 RSSI、质量、丢包改为逐实例独立指标格，趋势优先 GCS/伴随计算机/其他数据链路并仅在无非 RC 实例时回退 RC；非 RC 链路超时后不以 RC 值伪装数据链路；MockLink Integration 增加 RC/GCS/其他实例与无效字段覆盖。本轮按用户要求跳过 CI，后续集中验收。
