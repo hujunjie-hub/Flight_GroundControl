@@ -58,6 +58,7 @@ signals:
     void linkStatusesChanged();
     void resourceStatusesChanged();
     void familyReceiveAgeMsChanged();
+    void controlStatusUpdated();
 
 private:
     Fact _opTimeBootUs{0, QStringLiteral("opTimeBootUs"), FactMetaData::valueTypeUint64, this};
