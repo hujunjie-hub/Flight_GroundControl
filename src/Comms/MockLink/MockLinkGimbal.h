@@ -64,6 +64,7 @@ public:
         bool hasNeutral);
 
     /// Test hook for simulating one device disconnecting and rediscovering.
+    /// The manager-scoped overload disambiguates duplicate legacy device IDs.
     bool setSimulatedDeviceOnline(uint8_t gimbalDeviceId, bool online);
     bool setSimulatedDeviceOnline(uint8_t managerCompId, uint8_t gimbalDeviceId, bool online);
 
