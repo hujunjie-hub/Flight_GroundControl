@@ -24,6 +24,18 @@ Item {
     property bool externalCategoryNavigation: false
     // Flight's parameter-center safe mode routes every write through the guarded tuning controller.
     property bool parameterCenterSafeMode: false
+    property string selectedModelProfileId: ""
+
+    onSelectedModelProfileIdChanged: {
+        if (parameterCenterSafeMode && controller) {
+            controller.setSelectedModelProfileId(selectedModelProfileId)
+        }
+    }
+    Component.onCompleted: {
+        if (parameterCenterSafeMode) {
+            controller.setSelectedModelProfileId(selectedModelProfileId)
+        }
+    }
 
     readonly property var selectedFact: controller.selectedFact
     readonly property string selectedParameterName: controller.selectedParameterName
