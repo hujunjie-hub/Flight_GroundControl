@@ -215,6 +215,7 @@
         "rc_page_uses_FlightRadio_Mode1_Mode2_Mode3_axis_mapping",
         "stick_markers_follow_live_valid_rc_axes_and_hide_when_validity_mask_clears",
         "link_page_shows_only_valid_RSSI_quality_loss_and_rc_age_fields",
+        "per_link_metrics_require_receive_age_within_link_family_freshness_limit",
         "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
         "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns"
       ]
@@ -265,7 +266,8 @@
         "health_page_primary_matrix_uses_4_2_1_columns_and_all_cells_fit",
         "navigation_page_utc_uncertainty_trend_requires_time_freshness_and_utc_validity",
         "RC_stick_markers_follow_persisted_FlightRadio_mode_and_hide_on_invalid_axes",
-        "RC_link_trends_require_link_family_freshness_and_field_validity_masks"
+        "RC_link_trends_require_link_family_freshness_and_field_validity_masks",
+        "per_link_trend_samples_are_rejected_when_instance_receive_age_is_stale"
       ]
     },
     {
@@ -398,6 +400,7 @@
     "rc_page_uses_FlightRadio_Mode1_Mode2_Mode3_axis_mapping",
     "stick_markers_follow_live_valid_rc_axes_and_hide_when_validity_mask_clears",
     "link_page_shows_only_valid_RSSI_quality_loss_and_rc_age_fields",
+    "per_link_metrics_require_receive_age_within_link_family_freshness_limit",
     "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
     "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns"
   ],
