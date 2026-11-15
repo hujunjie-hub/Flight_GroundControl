@@ -301,6 +301,7 @@ private:
     QVariant                    _confirmedValue;
     QVariant                    _previousValue;
     QVariant                    _pendingOriginalValue;
+    QVariant                    _pendingTargetValue;
     QHash<QString, QVariant>    _previousValues;
     QString                     _pendingParameterName;
     int                         _pendingComponentId = -1;
