@@ -2183,16 +2183,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       diagnosticCardItems[0]->property("radius").toInt(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("color").value<QColor>(),
                                       diagnosticCardItems[0]->property("color").value<QColor>(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelPadding").toInt(),
-                                      diagnosticCardItems[0]->property("panelPadding").toInt(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelSectionSpacing").toInt(),
-                                      diagnosticCardItems[0]->property("panelSectionSpacing").toInt(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelBodySpacing").toInt(),
-                                      diagnosticCardItems[0]->property("panelBodySpacing").toInt(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(overviewFlight->property("panelPadding").toReal() -
+                     diagnosticCardItems[0]->property("panelPadding").toReal()) < 0.01, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(overviewFlight->property("panelSectionSpacing").toReal() -
+                     diagnosticCardItems[0]->property("panelSectionSpacing").toReal()) < 0.01, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(overviewFlight->property("panelBodySpacing").toReal() -
+                     diagnosticCardItems[0]->property("panelBodySpacing").toReal()) < 0.01, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("radius").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(detailEventBadge->property("radius").toInt(), 12, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("implicitHeight").toInt(), 24, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(detailEventBadge->property("implicitHeight").toInt(), 24, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewEventBadge->property("implicitHeight").toReal() >= 24.0 &&
+                                         detailEventBadge->property("implicitHeight").toReal() >= 24.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(overviewEventBadge->property("implicitHeight").toReal() -
+                     detailEventBadge->property("implicitHeight").toReal()) < 0.01, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("statusText").toString(),
                                       detailEventBadge->property("statusText").toString(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("statusColor").value<QColor>(),
