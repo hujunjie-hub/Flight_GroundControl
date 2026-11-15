@@ -1352,8 +1352,15 @@ SetupPage {
         const currentBootIdRaw = _fact("opBootIdHex")
         const currentBootId = currentBootIdRaw === null || currentBootIdRaw === undefined
                               ? "" : String(currentBootIdRaw)
+        const operationFamilyAvailable = Boolean(_fact("operationAvailable"))
+        // Any accepted telemetry family may be the first frame of a new FCU boot epoch.
+        // The FactGroup clears operationAvailable/opBootIdHex at that point. Do not keep
+        // plotting the previous session while waiting for the next OPERATION_STATUS.
+        const bootEpochResetBeforeOperation = _telemetry && currentBootId === "" &&
+                                              _trendBootId !== "" && !operationFamilyAvailable
         if (_trendVehicle !== _vehicle ||
-                (currentBootId !== "" && _trendBootId !== "" && currentBootId !== _trendBootId)) {
+                (currentBootId !== "" && _trendBootId !== "" && currentBootId !== _trendBootId) ||
+                bootEpochResetBeforeOperation) {
             _trendSamples = []
             _trendSampleSequence = 0
             _trendBootId = currentBootId
