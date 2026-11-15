@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.30
+- 版本：6.31
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC 动态详情及 RC/链路实例 freshness 持续收口；本轮补齐链路详情卡三态实例覆盖与 per-instance stale 指标色彩回归；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检与资源实例新鲜度覆盖已收口；操作、导航、时间、RC/链路详情 freshness 持续收口；本轮补齐 RC 有效轴计数、手型标签与 FCU/地面站接收年龄语义；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -851,3 +851,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 指标行颜色与实例 freshness/字段 validity 对齐：超时琥珀色、无效字段琥珀色、未知字段中性灰、有效值使用中性前景色。
 - MockLink UI Integration 覆盖 3/0/0 新鲜覆盖、1/2/0 stale 覆盖、实例状态“最近状态”标识、指标值超时替代及 stale 色彩。
 - 仅修改 FlightTelemetry QML、对应 UI Integration 和 SPEC/G15；不修改 MAVLink 消息、FactGroup 缓存、链路选择规则或 RC/飞行控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
+
+
+## 58. RC 输入有效性与接收年龄语义统一（2026-11-15）
+
+- 「有效输入轴」计数必须同时满足 rcValidAxesMask 对应位有效、归一化值为有限数且位于轴值范围；与 AxisGauge、StickVisualizer 使用相同的有效性判断，避免掩码置位但数值越界时仍显示 4/4。
+- 顶部 KPI 的「RC 遥测接收年龄」表示地面站本地收到 rcInput 遥测族的年龄，辅助说明明确为「地面站接收 RC 状态」；失控保护详情中的「FCU 侧 RC 输入年龄」表示 FCU 上报的 rcAgeUs。两种年龄均保留各自 family freshness 门控，不得混用或使用相同含义标签。
+- 遥控手型选择使用「1 日本手 / 2 美国手 / 3 中国手」标签，与 FlightRadio 当前手型映射保持一致；映射算法和设置持久化行为不变。
+- 轴输入面板命名为「逻辑轴输入（实时）」，准确反映 FlightTelemetry 当前发布的是横滚、俯仰、偏航、油门四个归一化逻辑轴，而非原始 PWM 通道。
+- MockLink UI Integration 覆盖正常轴 4/4、掩码置位但横滚数值越界时 3/4、恢复后 4/4；同时检查 KPI 年龄语义、FCU 侧年龄标签、逻辑轴标题及三种中文手型标签。
+- 仅修改 GroundControl QML、对应 UI Integration 与本 SPEC；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、FlightRadio 手型映射算法、飞控判定或控制行为。本轮不运行、不触发 CI，新增回归状态为 NOT_RUN。
