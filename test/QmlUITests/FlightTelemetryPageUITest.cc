@@ -7,6 +7,7 @@
 #include <QtCore/QVariant>
 #include <QtGui/QColor>
 #include <QtGui/QFont>
+#include <QtGui/QFontMetricsF>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -586,6 +587,65 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
+            const auto topologyCanvasLabelsFit = [&]() {
+                const qreal canvasWidth = topologyCanvas->width();
+                const qreal canvasHeight = topologyCanvas->height();
+                const qreal centerX = canvasWidth / 2.0;
+                const qreal centerY = canvasHeight / 2.0;
+                const qreal scale = qMin(1.0, qMax(0.72, canvasWidth / 480.0));
+                const qreal ringRadius = qMin(qMin(76.0, canvasHeight * 0.42), canvasWidth * 0.16);
+                const qreal nodeX = qMin(canvasWidth * 0.34, ringRadius + 36.0);
+                const qreal nodeY = qMin(canvasHeight * 0.40, ringRadius + 8.0);
+                QFont labelFont;
+                labelFont.setBold(true);
+                labelFont.setPixelSize(qMax(7, qRound(8.0 * scale)));
+                const QFontMetricsF metrics(labelFont);
+                const QString labels[] = {
+                    translatedTelemetryText("传感器系统"), translatedTelemetryText("导航定位"),
+                    translatedTelemetryText("数据链路"), translatedTelemetryText("飞控系统"),
+                    translatedTelemetryText("执行器"), translatedTelemetryText("时间同步")};
+                struct LabelAnchor {
+                    qreal x;
+                    qreal y;
+                    Qt::Alignment alignment;
+                };
+                const LabelAnchor anchors[] = {
+                    {centerX - nodeX + 14.0, centerY - nodeY - 9.0, Qt::AlignLeft},
+                    {centerX, centerY - canvasHeight * 0.40 + 20.0, Qt::AlignHCenter},
+                    {centerX + nodeX - 14.0, centerY - nodeY - 9.0, Qt::AlignRight},
+                    {centerX - nodeX + 14.0, centerY + nodeY + 9.0, Qt::AlignLeft},
+                    {centerX, centerY + canvasHeight * 0.40 - 18.0, Qt::AlignHCenter},
+                    {centerX + nodeX - 14.0, centerY + nodeY + 9.0, Qt::AlignRight}};
+                for (int index = 0; index < 6; ++index) {
+                    const qreal textWidth = metrics.horizontalAdvance(labels[index]);
+                    const qreal left = anchors[index].alignment == Qt::AlignRight
+                                            ? anchors[index].x - textWidth
+                                            : anchors[index].alignment == Qt::AlignHCenter
+                                                  ? anchors[index].x - textWidth / 2.0
+                                                  : anchors[index].x;
+                    const qreal top = anchors[index].y - metrics.height() / 2.0;
+                    if (left < 0.0 || top < 0.0 ||
+                        left + textWidth > canvasWidth || top + metrics.height() > canvasHeight) {
+                        return false;
+                    }
+                    for (int previous = 0; previous < index; ++previous) {
+                        const qreal previousWidth = metrics.horizontalAdvance(labels[previous]);
+                        const qreal previousLeft = anchors[previous].alignment == Qt::AlignRight
+                                                       ? anchors[previous].x - previousWidth
+                                                       : anchors[previous].alignment == Qt::AlignHCenter
+                                                             ? anchors[previous].x - previousWidth / 2.0
+                                                             : anchors[previous].x;
+                        const qreal previousTop = anchors[previous].y - metrics.height() / 2.0;
+                        const bool horizontalOverlap =
+                            left < previousLeft + previousWidth && left + textWidth > previousLeft;
+                        const bool verticalOverlap =
+                            top < previousTop + metrics.height() && top + metrics.height() > previousTop;
+                        if (horizontalOverlap && verticalOverlap) return false;
+                    }
+                }
+                return true;
+            };
+
             const auto topologyLegendItemsFit = [&]() {
                 QQuickItem* items[] = {
                     topologyLegendTitle,
@@ -740,6 +800,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyCanvas->height() >= 170, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationCard->y(), latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(operationCard->x() < latestEventCard->x(), 3000);
@@ -760,6 +821,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             page->setWidth(1000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
@@ -777,6 +839,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(overviewHeroPanelsSameHeight(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
@@ -789,6 +852,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
@@ -809,6 +873,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
@@ -827,6 +892,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(topologyNodesGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(topologyCanvasLabelsFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(topologyLegendItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendFooterItemsFit(), 3000);
