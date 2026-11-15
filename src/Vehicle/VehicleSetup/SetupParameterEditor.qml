@@ -158,7 +158,7 @@ Item {
                 return parameterEditorLoader.item ? parameterEditorLoader.item.restorePreviousValue() : false
             }
 
-            function recordParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
+            function recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
                 if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
                     parameterChangeSummary = qsTr("参数 %1 已收到 PARAM_VALUE 确认；当前没有同一启动会话的遥测基线，未标记曲线")
                                                  .arg(parameterName)
@@ -169,6 +169,7 @@ Item {
                 pending.push({
                     componentId: componentId,
                     name: parameterName,
+                    previousValue: String(previousValue),
                     value: String(confirmedValue),
                     bootId: lastControlBootId,
                     profileId: lastControlProfileId,
@@ -178,8 +179,8 @@ Item {
                     pending.shift()
                 }
                 pendingParameterChangeMarkers = pending
-                parameterChangeSummary = qsTr("参数 %1 = %2 已收到飞控确认，等待同一启动会话的下一帧控制遥测")
-                                             .arg(parameterName).arg(String(confirmedValue))
+                parameterChangeSummary = qsTr("参数 %1：%2 → %3 已收到飞控确认，等待同一启动会话的下一帧控制遥测")
+                                             .arg(parameterName).arg(String(previousValue)).arg(String(confirmedValue))
             }
 
             function captureControlSample() {
@@ -253,6 +254,7 @@ Item {
                         correlated.push({
                             time: timestamp,
                             name: marker.name,
+                            previousValue: marker.previousValue,
                             value: marker.value,
                             componentId: marker.componentId
                         })
@@ -266,8 +268,8 @@ Item {
                     dashboardRoot.parameterChangeMarkers = markers.slice(-16)
                     const latestMarker = correlated[correlated.length - 1]
                     dashboardRoot.parameterChangeSummary =
-                        qsTr("参数 %1 = %2 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
-                            .arg(latestMarker.name).arg(latestMarker.value)
+                        qsTr("参数 %1：%2 → %3 已确认；标记对应确认后的首帧控制遥测（非因果结论）")
+                            .arg(latestMarker.name).arg(latestMarker.previousValue).arg(latestMarker.value)
                 }
 
                 if (samples.length > 0) {
@@ -974,8 +976,8 @@ Item {
                                     function onModelProfileBoundChanged() {
                                         dashboardRoot.syncParameterDomain()
                                     }
-                                    function onParameterWriteConfirmed(componentId, parameterName, confirmedValue) {
-                                        dashboardRoot.recordParameterWriteConfirmed(componentId, parameterName, confirmedValue)
+                                    function onParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
+                                        dashboardRoot.recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue)
                                     }
                                 }
 
