@@ -1094,14 +1094,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             auto sendLinkStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint8_t linkKind,
                                       int16_t rssiDbm, uint16_t linkQualityPermille, uint32_t packetLossPpm,
-                                      uint32_t validityMask) {
+                                      uint32_t validityMask, uint8_t linkState) {
                 mavlink_fcu_link_status_t payload{};
                 payload.time_boot_us = timeBootUs;
                 payload.boot_id = sessionBootId;
                 payload.profile_id = profileId;
                 payload.link_instance_id = linkKind;
                 payload.link_kind = linkKind;
-                payload.link_state = 2;
+                payload.link_state = linkState;
                 payload.validity_mask = validityMask;
                 payload.packet_loss_ppm = packetLossPpm;
                 payload.age_us = 2500;
@@ -1131,9 +1131,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendNavigationStatus(1100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
             sendControlStatus(1200, bootId, 1800);
             sendRcInputStatus(1300, bootId, 0x0F, 0.25F, -0.25F, 0.50F, 0.40F, 0);
-            sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700);
-            sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
-            sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
+            sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700, 2);
+            sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700, 2);
+            sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0, 2);
             sendEventStatus(9200, bootId, 4321, 3);
             for (uint8_t digestKind = 0; digestKind < 4; ++digestKind)
                 sendBuildInfoStatus(1800, bootId, digestKind);
@@ -1225,6 +1225,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailMessage"));
             QQuickItem* linkDetailCoverage = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailCoverage"));
+            QQuickItem* linkInstanceStateSummary = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkInstanceStateSummary"));
             QQuickItem* linkDetailState = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailState_2"));
             QQuickItem* linkDetailReason = findItem(
@@ -1264,6 +1266,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(linkDetailCard);
             QVERIFY(linkDetailMessage);
             QVERIFY(linkDetailCoverage);
+            QVERIFY(linkInstanceStateSummary);
             QVERIFY(linkDetailState);
             QVERIFY(linkDetailReason);
             QVERIFY(linkDetailReceiveAge);
@@ -1287,6 +1290,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
                                       translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("健康 %1").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("健康"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(linkDetailReason->property("text").toString().contains(
@@ -1881,7 +1888,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // Refresh RC only after the non-RC link instances age out. The trend must remain
             // on the stale GCS instance rather than disguise RC quality as data-link quality.
-            sendLinkStatus(lastOperationTime + 300, bootId, 1, -40, 950, 5000, 0x700);
+            sendLinkStatus(lastOperationTime + 300, bootId, 1, -40, 950, 5000, 0x700, 2);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendPosition->property("valueText").toString(), staleText, 3000);
@@ -1891,6 +1898,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
                                           .arg(1).arg(2).arg(0), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("健康 %1 · 超时 %2").arg(1).arg(2), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
                                       translatedTelemetryText("%1 · 最近状态：%2")
                                           .arg(staleText).arg(translatedTelemetryText("健康")), 3000);
@@ -1915,6 +1926,61 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                          translatedTelemetryText("2 超时")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+
+            // Restore all three instances, then exercise partial loss, total loss,
+            // recovery, and return to healthy without changing the link-family message.
+            sendLinkStatus(lastOperationTime + 400, bootId, 1, -42, 900, 10000, 0x700, 2);
+            sendLinkStatus(lastOperationTime + 500, bootId, 2, -68, 700, 30000, 0x700, 2);
+            sendLinkStatus(lastOperationTime + 600, bootId, 4, -20, 1000, 0, 0, 2);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("健康 %1").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
+                                      translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
+
+            // One lost instance must remain visible as a red partial outage.
+            sendLinkStatus(lastOperationTime + 700, bootId, 2, -68, 700, 30000, 0x700, 4);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("健康 %1 · 丢失 %2").arg(2).arg(1), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#F06464"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
+                                      translatedTelemetryText("丢失"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F06464")), 3000);
+
+            // All three lost instances are a total outage, not merely a freshness warning.
+            sendLinkStatus(lastOperationTime + 800, bootId, 1, -42, 900, 10000, 0x700, 4);
+            sendLinkStatus(lastOperationTime + 900, bootId, 4, -20, 1000, 0, 0, 4);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("丢失 %1").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#F06464"), 3000);
+
+            // Recovery is distinct from both lost and healthy.
+            sendLinkStatus(lastOperationTime + 1000, bootId, 1, -42, 900, 10000, 0x700, 5);
+            sendLinkStatus(lastOperationTime + 1100, bootId, 2, -68, 700, 30000, 0x700, 5);
+            sendLinkStatus(lastOperationTime + 1200, bootId, 4, -20, 1000, 0, 0, 5);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("恢复中 %1").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
+                                      translatedTelemetryText("恢复中"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+
+            // A fresh healthy report clears the alarm state on every instance.
+            sendLinkStatus(lastOperationTime + 1300, bootId, 1, -42, 900, 10000, 0x700, 2);
+            sendLinkStatus(lastOperationTime + 1400, bootId, 2, -68, 700, 30000, 0x700, 2);
+            sendLinkStatus(lastOperationTime + 1500, bootId, 4, -20, 1000, 0, 0, 2);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueText").toString(),
+                                      translatedTelemetryText("健康 %1").arg(3), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkInstanceStateSummary->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailState->property("text").toString(),
+                                      translatedTelemetryText("健康"), 3000);
 
             // A fresh FCU_NAV_STATUS frame does not make every navigation metric valid:
             // the capability mask gates each value independently.
