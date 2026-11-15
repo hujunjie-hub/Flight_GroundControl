@@ -704,7 +704,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // components and be acknowledged by the manager component.
             QVERIFY(!mockLink->setGimbalDeviceOnlineForTesting(200, false));
             uint8_t broadcastAckComponent = 0;
-            uint8_t broadcastAckResult = MAV_RESULT_UNSUPPORTED;
+            uint8_t broadcastAckResult = static_cast<uint8_t>(MAV_RESULT_UNSUPPORTED);
             int broadcastAckCount = 0;
             const QMetaObject::Connection broadcastAckConnection =
                 connect(vehicle, &Vehicle::mavlinkMessageReceived, this,
