@@ -844,6 +844,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const qreal originalPageWidth = page->width();
             QVERIFY(originalPageWidth > 0);
             page->setWidth(1600);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
@@ -880,6 +881,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(eventHistoryCard->y() > latestEventCard->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
             page->setWidth(1400);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmSeverityGrid->property("columns").toInt(), 5, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
                                          overviewGridSpacingMatches(heroGrid), 3000);
