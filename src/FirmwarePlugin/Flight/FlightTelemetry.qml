@@ -115,6 +115,29 @@ SetupPage {
     readonly property real _navigationDomainGridSpacing: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.8)
     readonly property real _dashboardMetricReadoutSpacing: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.3)
 
+    // RC monitor geometry keeps the reference density at 100% and scales with ScreenTools.
+    readonly property real _rcModeButtonSpacing: Math.max(4, ScreenTools.defaultFontPixelWidth * 0.4)
+    readonly property real _rcModeButtonHeight: Math.max(28, ScreenTools.defaultFontPixelHeight * 2.8)
+    readonly property real _rcModeButtonInset: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.6)
+    readonly property real _rcStickGridSpacing: Math.max(10, ScreenTools.defaultFontPixelWidth)
+    readonly property real _rcAxesGridColumnSpacing: Math.max(14, ScreenTools.defaultFontPixelWidth * 1.4)
+    readonly property real _rcAxesGridRowSpacing: Math.max(12, ScreenTools.defaultFontPixelHeight * 1.2)
+    readonly property real _rcLinkInstanceSpacing: Math.max(5, ScreenTools.defaultFontPixelHeight * 0.5)
+    readonly property real _rcLinkMetricColumnSpacing: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.6)
+    readonly property real _rcLinkMetricRowSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
+    readonly property real _rcLinkMetricCardInset: Math.max(6, ScreenTools.defaultFontPixelHeight * 0.6)
+    readonly property real _rcLinkMetricCardSpacing: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.2)
+    readonly property real _rcLinkMetricCardMinimumHeight: Math.max(58, ScreenTools.defaultFontPixelHeight * 5.8)
+    readonly property real _rcLinkQualityBarHeight: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
+    readonly property real _rcStickInset: Math.max(7, ScreenTools.defaultFontPixelHeight * 0.7)
+    readonly property real _rcStickSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
+    readonly property real _rcStickMarkerSize: Math.max(12, ScreenTools.defaultFontPixelHeight * 1.2)
+    readonly property real _rcStickMarkerEdgeInset: Math.max(14, ScreenTools.defaultFontPixelHeight * 1.4)
+    readonly property real _rcAxisGaugeSpacing: Math.max(3, ScreenTools.defaultFontPixelHeight * 0.3)
+    readonly property real _rcAxisGaugeTrackHeight: Math.max(9, ScreenTools.defaultFontPixelHeight * 0.9)
+    readonly property real _rcAxisGaugeCenterLineWidth: Math.max(1, ScreenTools.defaultFontPixelWidth * 0.1)
+    readonly property real _rcAxisGaugeCenterLineOverscan: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
+
     readonly property int _dashboardPanelRadius: 8
     readonly property color _dashboardPanelBackground: "#06232B"
     readonly property color _dashboardPanelBorder: "#0B6873"
@@ -3712,7 +3735,7 @@ SetupPage {
                     statusFamily: "rcInputAvailable"
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: root._rcModeButtonSpacing
                         Repeater {
                             model: [qsTr("1 日本手"), qsTr("2 美国手"), qsTr("3 中国手")]
                             delegate: Rectangle {
@@ -3720,11 +3743,22 @@ SetupPage {
                                 required property string modelData
                                 objectName: "flightTelemetry_rcMode_" + (index + 1)
                                 Layout.fillWidth: true
-                                implicitHeight: 28
+                                implicitHeight: Math.max(root._rcModeButtonHeight, modeLabel.implicitHeight + root._rcModeButtonInset * 2)
                                 radius: 4
                                 color: stickSettings.mode === index + 1 ? "#07545E" : "#0A2831"
                                 border.color: stickSettings.mode === index + 1 ? "#18DAD4" : "#0D5964"
-                                QGCLabel { objectName: "flightTelemetry_rcModeLabel_" + (index + 1); anchors.centerIn: parent; text: modelData; color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
+                                QGCLabel {
+                                    id: modeLabel
+                                    objectName: "flightTelemetry_rcModeLabel_" + (index + 1)
+                                    anchors.centerIn: parent
+                                    width: parent.width - root._rcModeButtonInset * 2
+                                    text: modelData
+                                    color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"
+                                    font.pointSize: ScreenTools.captionFontPointSize
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    wrapMode: Text.WordWrap
+                                }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: stickSettings.mode = index + 1 }
                             }
                         }
@@ -3733,8 +3767,8 @@ SetupPage {
                         objectName: "flightTelemetry_rcSticksGrid"
                         Layout.fillWidth: true
                         columns: 2
-                        columnSpacing: 10
-                        rowSpacing: 10
+                        columnSpacing: root._rcStickGridSpacing
+                        rowSpacing: root._rcStickGridSpacing
                         StickVisualizer { objectName: "flightTelemetry_rcLeftStick"; Layout.fillWidth: true; titleText: qsTr("左摇杆"); horizontalChannel: root._stickChannels[0]; verticalChannel: root._stickChannels[1] }
                         StickVisualizer { objectName: "flightTelemetry_rcRightStick"; Layout.fillWidth: true; titleText: qsTr("右摇杆"); horizontalChannel: root._stickChannels[2]; verticalChannel: root._stickChannels[3] }
                     }
@@ -3752,8 +3786,8 @@ SetupPage {
                         objectName: "flightTelemetry_rcAxesGrid"
                         Layout.fillWidth: true
                         columns: root.availableWidth >= 760 ? 2 : 1
-                        columnSpacing: 14
-                        rowSpacing: 12
+                        columnSpacing: root._rcAxesGridColumnSpacing
+                        rowSpacing: root._rcAxesGridRowSpacing
                         AxisGauge { objectName: "flightTelemetry_rcPageAxis_roll"; axisName: qsTr("横滚"); rawValue: root._fact("rcRollNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 0; centered: true }
                         AxisGauge { objectName: "flightTelemetry_rcPageAxis_pitch"; axisName: qsTr("俯仰"); rawValue: root._fact("rcPitchNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 1; centered: true }
                         AxisGauge { objectName: "flightTelemetry_rcPageAxis_yaw"; axisName: qsTr("偏航"); rawValue: root._fact("rcYawNorm"); validityMask: root._fact("rcValidAxesMask"); validityBit: 2; centered: true }
@@ -3788,16 +3822,20 @@ SetupPage {
                             required property var modelData
                             objectName: "flightTelemetry_linkInstance_" + modelData.linkInstanceId
                             Layout.fillWidth: true
-                            spacing: 5
+                            spacing: root._rcLinkInstanceSpacing
                             RowLayout {
                                 Layout.fillWidth: true
+                                spacing: root._rcLinkInstanceSpacing * 0.6
                                 QGCLabel {
                                     Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
                                     text: qsTr("%1 · 实例 %2").arg(root._linkKindText(modelData.linkKind)).arg(modelData.linkInstanceId)
                                     color: "#DCE8ED"
                                     font.weight: ScreenTools.strongFontWeight
+                                    elide: Text.ElideRight
                                 }
                                 QGCLabel {
+                                    Layout.minimumWidth: 0
                                     text: root._linkInstanceStateText(modelData)
                                     color: root._linkStateColor(modelData.linkState, modelData.receiveAgeMs)
                                     wrapMode: Text.WordWrap
@@ -3807,24 +3845,28 @@ SetupPage {
                                 objectName: "flightTelemetry_linkMetrics_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
                                 columns: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 420 ? 2 : 1
-                                columnSpacing: 6
-                                rowSpacing: 4
+                                columnSpacing: root._rcLinkMetricColumnSpacing
+                                rowSpacing: root._rcLinkMetricRowSpacing
                                 Rectangle {
                                     objectName: "flightTelemetry_linkMetric_rssi_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    implicitHeight: 58
+                                    implicitHeight: Math.max(root._rcLinkMetricCardMinimumHeight,
+                                                             rssiMetricContent.implicitHeight + root._rcLinkMetricCardInset * 2)
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
                                     ColumnLayout {
+                                        id: rssiMetricContent
+                                        objectName: "flightTelemetry_linkMetricContent_rssi_" + modelData.linkInstanceId
                                         anchors.fill: parent
-                                        anchors.margins: 6
-                                        spacing: 2
-                                        QGCLabel { text: qsTr("RSSI"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        anchors.margins: root._rcLinkMetricCardInset
+                                        spacing: root._rcLinkMetricCardSpacing
+                                        QGCLabel { Layout.fillWidth: true; Layout.minimumWidth: 0; text: qsTr("RSSI"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
                                         QGCLabel {
                                             objectName: "flightTelemetry_linkMetricValue_rssi_" + modelData.linkInstanceId
                                             Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             text: root._linkInstanceMetricText(modelData, "rssiDbm", 8, 0, " dBm")
                                             color: root._linkInstanceMetricColor(modelData, 8)
                                             font.pointSize: ScreenTools.captionFontPointSize
@@ -3837,18 +3879,22 @@ SetupPage {
                                     objectName: "flightTelemetry_linkMetric_quality_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    implicitHeight: 58
+                                    implicitHeight: Math.max(root._rcLinkMetricCardMinimumHeight,
+                                                             qualityMetricContent.implicitHeight + root._rcLinkMetricCardInset * 2)
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
                                     ColumnLayout {
+                                        id: qualityMetricContent
+                                        objectName: "flightTelemetry_linkMetricContent_quality_" + modelData.linkInstanceId
                                         anchors.fill: parent
-                                        anchors.margins: 6
-                                        spacing: 2
-                                        QGCLabel { text: qsTr("链路质量"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        anchors.margins: root._rcLinkMetricCardInset
+                                        spacing: root._rcLinkMetricCardSpacing
+                                        QGCLabel { Layout.fillWidth: true; Layout.minimumWidth: 0; text: qsTr("链路质量"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
                                         QGCLabel {
                                             objectName: "flightTelemetry_linkMetricValue_quality_" + modelData.linkInstanceId
                                             Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             text: root._linkInstanceMetricText(modelData, "linkQualityPermille", 9, 1, " %")
                                             color: root._linkInstanceMetricColor(modelData, 9)
                                             font.pointSize: ScreenTools.captionFontPointSize
@@ -3858,8 +3904,8 @@ SetupPage {
                                         Rectangle {
                                             objectName: "flightTelemetry_linkQualityTrack_" + modelData.linkInstanceId
                                             Layout.fillWidth: true
-                                            Layout.preferredHeight: 4
-                                            radius: 2
+                                            Layout.preferredHeight: root._rcLinkQualityBarHeight
+                                            radius: height / 2
                                             visible: root._linkInstanceQualityPermille(modelData) !== null
                                             color: "#123B45"
                                             border.color: "#1B5360"
@@ -3878,18 +3924,22 @@ SetupPage {
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
                                     Layout.columnSpan: root.availableWidth >= 420 && root.availableWidth < 760 ? 2 : 1
-                                    implicitHeight: 58
+                                    implicitHeight: Math.max(root._rcLinkMetricCardMinimumHeight,
+                                                             lossMetricContent.implicitHeight + root._rcLinkMetricCardInset * 2)
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
                                     ColumnLayout {
+                                        id: lossMetricContent
+                                        objectName: "flightTelemetry_linkMetricContent_loss_" + modelData.linkInstanceId
                                         anchors.fill: parent
-                                        anchors.margins: 6
-                                        spacing: 2
-                                        QGCLabel { text: qsTr("丢包率"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
+                                        anchors.margins: root._rcLinkMetricCardInset
+                                        spacing: root._rcLinkMetricCardSpacing
+                                        QGCLabel { Layout.fillWidth: true; Layout.minimumWidth: 0; text: qsTr("丢包率"); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize; wrapMode: Text.WordWrap }
                                         QGCLabel {
                                             objectName: "flightTelemetry_linkMetricValue_loss_" + modelData.linkInstanceId
                                             Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             text: root._linkInstanceMetricText(modelData, "packetLossPpm", 10, 2, " %")
                                             color: root._linkInstanceMetricColor(modelData, 10)
                                             font.pointSize: ScreenTools.captionFontPointSize
@@ -5314,13 +5364,20 @@ SetupPage {
                                                 : numericValue.toFixed(2)
 
         Layout.fillWidth: true
-        spacing: 3
+        readonly property real contentSpacing: root._rcAxisGaugeSpacing
+        readonly property real trackHeight: root._rcAxisGaugeTrackHeight
+        readonly property real centerLineWidth: root._rcAxisGaugeCenterLineWidth
+        readonly property real centerLineOverscan: root._rcAxisGaugeCenterLineOverscan
+
+        spacing: axis.contentSpacing
 
         RowLayout {
             Layout.fillWidth: true
             QGCLabel {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: axis.axisName
+                wrapMode: Text.WordWrap
                 color: "#A8BBC3"
                 font.pointSize: ScreenTools.captionFontPointSize
             }
@@ -5336,8 +5393,8 @@ SetupPage {
         Rectangle {
             id: axisTrack
             Layout.fillWidth: true
-            Layout.preferredHeight: 9
-            radius: 5
+            Layout.preferredHeight: axis.trackHeight
+            radius: height / 2
             color: "#05232B"
             border.color: "#0B6873"
             clip: true
@@ -5351,15 +5408,15 @@ SetupPage {
                        : axis.centered ? Math.abs(axis.numericValue) * axisTrack.width / 2
                                        : axis.numericValue * axisTrack.width
                 height: parent.height
-                radius: 5
+                radius: parent.height / 2
                 color: "#35D4E5"
             }
             Rectangle {
                 visible: axis.centered
                 x: axisTrack.width / 2
-                width: 1
-                height: parent.height + 4
-                y: -2
+                width: axis.centerLineWidth
+                height: parent.height + axis.centerLineOverscan
+                y: -axis.centerLineOverscan / 2
                 color: "#91A8B2"
                 opacity: 0.65
             }
@@ -5376,30 +5433,44 @@ SetupPage {
         readonly property bool verticalValid: root._rcAxisValidForChannel(verticalChannel)
         readonly property real horizontalValue: root._rcAxisStickValueForChannel(horizontalChannel)
         readonly property real verticalValue: root._rcAxisStickValueForChannel(verticalChannel)
+        readonly property real contentInset: root._rcStickInset
+        readonly property real contentSpacing: root._rcStickSpacing
+        readonly property real stageMinimumHeight: Math.max(112, ScreenTools.defaultFontPixelHeight * 11.2)
+        readonly property real stageMaximumHeight: Math.max(176, ScreenTools.defaultFontPixelHeight * 17.6)
+        readonly property real minimumCardHeight: Math.max(190, ScreenTools.defaultFontPixelHeight * 19)
+        readonly property real maximumCardHeight: Math.max(252, ScreenTools.defaultFontPixelHeight * 25.2)
+        readonly property real markerSize: root._rcStickMarkerSize
+        readonly property real markerEdgeInset: root._rcStickMarkerEdgeInset
+        readonly property real markerBorderWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.2)
         Layout.fillWidth: true
         implicitWidth: 140
-        implicitHeight: Math.max(190, Math.min(252, width * 0.45 + 78))
+        implicitHeight: Math.max(stick.minimumCardHeight,
+                                 Math.min(stick.maximumCardHeight, width * 0.45 + ScreenTools.defaultFontPixelHeight * 7.8))
         radius: root._dashboardPanelRadius
         color: "#082E36"
         border.width: 1
         border.color: root._dashboardPanelBorder
         ColumnLayout {
+            objectName: stick.objectName + "_content"
             anchors.fill: parent
-            anchors.margins: 7
-            spacing: 4
+            anchors.margins: stick.contentInset
+            spacing: stick.contentSpacing
             QGCLabel { Layout.fillWidth: true; text: stick.titleText; color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight; horizontalAlignment: Text.AlignHCenter }
             QGCLabel {
                 objectName: stick.objectName + "_channelMapping"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: qsTr("横向 CH%1 · 纵向 CH%2")
                       .arg(stick.horizontalChannel + 1).arg(stick.verticalChannel + 1)
                 color: "#59A9B7"
                 font.pointSize: ScreenTools.microFontPointSize
                 horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
             }
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(176, Math.max(112, parent.width * 0.45))
+                Layout.preferredHeight: Math.min(stick.stageMaximumHeight,
+                                                 Math.max(stick.stageMinimumHeight, parent.width * 0.45))
                 Rectangle {
                     id: stickStage
                     objectName: stick.objectName + "_stage"
@@ -5412,18 +5483,18 @@ SetupPage {
                     border.color: "#14AEB5"
                     Rectangle { anchors.centerIn: parent; width: parent.width * 0.66; height: parent.height * 0.66; radius: width / 2; color: "transparent"; border.color: "#164C58" }
                     Rectangle { anchors.centerIn: parent; width: parent.width * 0.34; height: parent.height * 0.34; radius: width / 2; color: "transparent"; border.color: "#164C58" }
-                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 1; height: parent.height - 10; color: "#47727B"; opacity: 0.8 }
-                    Rectangle { anchors.verticalCenter: parent.verticalCenter; height: 1; width: parent.width - 10; color: "#47727B"; opacity: 0.8 }
+                    Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: Math.max(1, ScreenTools.defaultFontPixelWidth * 0.1); height: parent.height - ScreenTools.defaultFontPixelHeight; color: "#47727B"; opacity: 0.8 }
+                    Rectangle { anchors.verticalCenter: parent.verticalCenter; height: Math.max(1, ScreenTools.defaultFontPixelHeight * 0.1); width: parent.width - ScreenTools.defaultFontPixelWidth; color: "#47727B"; opacity: 0.8 }
                     Rectangle {
                         objectName: stick.objectName + "_marker"
                         visible: stick.horizontalValid && stick.verticalValid
-                        width: 12
-                        height: 12
-                        radius: 6
-                        x: parent.width / 2 + stick.horizontalValue * (parent.width / 2 - 14) - width / 2
-                        y: parent.height / 2 - stick.verticalValue * (parent.height / 2 - 14) - height / 2
+                        width: stick.markerSize
+                        height: stick.markerSize
+                        radius: width / 2
+                        x: parent.width / 2 + stick.horizontalValue * (parent.width / 2 - stick.markerEdgeInset) - width / 2
+                        y: parent.height / 2 - stick.verticalValue * (parent.height / 2 - stick.markerEdgeInset) - height / 2
                         color: "#45E7B1"
-                        border.width: 2
+                        border.width: stick.markerBorderWidth
                         border.color: "#D5FFFF"
                         Behavior on x {
                             NumberAnimation { duration: 65; easing.type: Easing.OutCubic }
@@ -5437,6 +5508,7 @@ SetupPage {
             QGCLabel {
                 objectName: stick.objectName + "_readout"
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 text: qsTr("%1 · %2")
                       .arg(root._rcAxisDisplayTextForChannel(stick.horizontalChannel))
                       .arg(root._rcAxisDisplayTextForChannel(stick.verticalChannel))
