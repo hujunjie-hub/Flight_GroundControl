@@ -10,6 +10,8 @@
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QMetaType>
+
 #include <algorithm>
 #include <cmath>
 
@@ -288,8 +290,11 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
             if (candidate.value(QStringLiteral("id")).toString() != profileId) {
                 continue;
             }
+            const QVariant hardwareEligible = candidate.value(QStringLiteral("hardwareEligible"));
             if (candidate.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
-                candidate.value(QStringLiteral("hardwareEligible")).toBool() ||
+                !candidate.contains(QStringLiteral("hardwareEligible")) ||
+                hardwareEligible.metaType().id() != QMetaType::Bool ||
+                hardwareEligible.toBool() ||
                 candidate.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
                 return rejectProfile(tr("机型配置不满足 SIL-only 写入资格。"));
             }
