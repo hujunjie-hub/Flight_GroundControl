@@ -21,6 +21,11 @@ Item {
     property var    _controller:        controller
     property var    _favorites:         controller.favoriteParameterNames
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
+    readonly property bool _compactHeader: parameterCenterSafeMode &&
+                                           width < ScreenTools.defaultFontPixelWidth * 82
+    readonly property bool _showGroupNavigation: !_searchFilter &&
+                                                  !(parameterCenterSafeMode &&
+                                                    width < ScreenTools.defaultFontPixelWidth * 52)
     property bool externalCategoryNavigation: false
     // Flight's parameter-center safe mode routes every write through the guarded tuning controller.
     property bool parameterCenterSafeMode: false
@@ -91,7 +96,7 @@ Item {
     readonly property bool _canUpload: _canImport && !parameterCenterSafeMode
 
     function _openImport() {
-        fileDialog.title = qsTr("Load Parameters")
+        fileDialog.title = parameterCenterSafeMode ? qsTr("导入参数预览") : qsTr("Load Parameters")
         fileDialog.openForLoad()
     }
 
@@ -120,11 +125,12 @@ Item {
     QGCMenu {
         id:                 toolsMenu
         QGCMenuItem {
-            text:           qsTr("Refresh")
+            text:           parameterCenterSafeMode ? qsTr("刷新参数") : qsTr("Refresh")
             onTriggered:	controller.refresh()
         }
         QGCMenuItem {
-            text:           qsTr("Reset all to firmware's defaults")
+            text:           parameterCenterSafeMode ? qsTr("恢复固件默认值") : qsTr("Reset all to firmware's defaults")
+            visible:        !parameterCenterSafeMode
             enabled:        !parameterCenterSafeMode
             onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations."),
@@ -132,24 +138,24 @@ Item {
                                                          function() { controller.resetAllToDefaults() })
         }
         QGCMenuItem {
-            text:           qsTr("Reset to vehicle's configuration defaults")
-            visible:        _activeVehicle && !_activeVehicle.apmFirmware
+            text:           parameterCenterSafeMode ? qsTr("恢复飞行器配置默认值") : qsTr("Reset to vehicle's configuration defaults")
+            visible:        !parameterCenterSafeMode && _activeVehicle && !_activeVehicle.apmFirmware
             enabled:        !parameterCenterSafeMode
             onTriggered:    QGroundControl.showMessageDialog(_root, qsTr("Reset All"),
                                                          qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults."),
                                                          Dialog.Cancel | Dialog.Reset,
                                                          function() { controller.resetAllToVehicleConfiguration() })
         }
-        QGCMenuSeparator { }
+        QGCMenuSeparator { visible: !parameterCenterSafeMode }
         QGCMenuItem {
             objectName:     "parameterEditor_toolLoadFromFile"
-            text:           qsTr("Load from file for review...")
+            text:           parameterCenterSafeMode ? qsTr("导入参数预览…") : qsTr("Load from file for review...")
             enabled:        _canImport
             onTriggered:    _openImport()
 
         }
         QGCMenuItem {
-            text:           qsTr("Save to file...")
+            text:           parameterCenterSafeMode ? qsTr("导出参数…") : qsTr("Save to file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Save Parameters")
                 fileDialog.openForSave()
@@ -157,18 +163,19 @@ Item {
         }
         QGCMenuSeparator { }
         QGCMenuItem {
-            text:           qsTr("Clear all favorites")
+            text:           parameterCenterSafeMode ? qsTr("清空全部收藏") : qsTr("Clear all favorites")
             onTriggered:    controller.clearAllFavorites()
         }
-        QGCMenuSeparator { visible: _showRCToParam }
+        QGCMenuSeparator { visible: _showRCToParam && !parameterCenterSafeMode }
         QGCMenuItem {
             text:           qsTr("Clear all RC to Param")
             onTriggered:	_activeVehicle.clearAllParamMapRC()
-            visible:        _showRCToParam
+            visible:        _showRCToParam && !parameterCenterSafeMode
         }
-        QGCMenuSeparator { }
+        QGCMenuSeparator { visible: !parameterCenterSafeMode }
         QGCMenuItem {
-            text:           qsTr("Reboot Vehicle")
+            text:           parameterCenterSafeMode ? qsTr("重启飞行器") : qsTr("Reboot Vehicle")
+            visible:        !parameterCenterSafeMode
             enabled:        _activeVehicle && !_activeVehicle.armed && !_activeVehicle.flying &&
                             !_activeVehicle.vehicleLinkManager.communicationLost &&
                             !_activeVehicle.parameterManager.pendingWrites
@@ -228,52 +235,60 @@ Item {
         }
     }
 
-    RowLayout {
+    GridLayout {
         id:             header
         anchors.left:   parent.left
         anchors.right:  parent.right
+        columns:        _compactHeader ? 2 : 6
+        columnSpacing:  ScreenTools.defaultFontPixelWidth * 0.5
+        rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.35
 
-        RowLayout {
-            Layout.alignment:   Qt.AlignLeft
-            spacing:            ScreenTools.defaultFontPixelWidth
+        QGCTextField {
+            id:                     searchText
+            Layout.columnSpan:      _compactHeader ? 2 : 1
+            Layout.fillWidth:       true
+            Layout.preferredWidth:  _compactHeader ? -1 : ScreenTools.defaultFontPixelWidth * 22
+            placeholderText:        parameterCenterSafeMode ? qsTr("搜索参数名称或描述") : qsTr("Search")
+            onDisplayTextChanged:   controller.searchText = displayText
+        }
 
-            QGCTextField {
-                id:                     searchText
-                placeholderText:        qsTr("Search")
-                onDisplayTextChanged:   controller.searchText = displayText
-            }
-
-            QGCButton {
-                text: qsTr("Clear")
-                onClicked: {
-                    if(ScreenTools.isMobile) {
-                        Qt.inputMethod.hide();
-                    }
-                    clearTimer.start()
+        QGCButton {
+            Layout.fillWidth: _compactHeader
+            text: parameterCenterSafeMode ? qsTr("清空筛选") : qsTr("Clear")
+            onClicked: {
+                if(ScreenTools.isMobile) {
+                    Qt.inputMethod.hide();
                 }
-            }
-
-            QGCCheckBox {
-                text:       qsTr("Hide read-only")
-                checked:    controller.hideReadOnly
-                onClicked:  controller.hideReadOnly = checked
+                clearTimer.start()
             }
         }
 
-        Item { Layout.fillWidth: true }
+        QGCCheckBox {
+            Layout.fillWidth: _compactHeader
+            text: parameterCenterSafeMode ? qsTr("隐藏只读参数") : qsTr("Hide read-only")
+            checked: controller.hideReadOnly
+            onClicked: controller.hideReadOnly = checked
+        }
 
-        QGCButton {
-            objectName:         "parameterEditor_importButton"
-            text:               qsTr("Import Parameters...")
-            enabled:            _canImport
-            onClicked:          _openImport()
+        Item {
+            visible: !_compactHeader
+            Layout.fillWidth: true
         }
 
         QGCButton {
-            Layout.alignment:   Qt.AlignRight
-            objectName:         "parameterEditor_toolsButton"
-            text:               qsTr("Tools")
-            onClicked:          toolsMenu.popup()
+            Layout.fillWidth: _compactHeader
+            objectName: "parameterEditor_importButton"
+            text: parameterCenterSafeMode ? qsTr("导入参数预览…") : qsTr("Import Parameters...")
+            enabled: _canImport
+            onClicked: _openImport()
+        }
+
+        QGCButton {
+            Layout.fillWidth: _compactHeader
+            Layout.alignment: Qt.AlignRight
+            objectName: "parameterEditor_toolsButton"
+            text: parameterCenterSafeMode ? qsTr("工具") : qsTr("Tools")
+            onClicked: toolsMenu.popup()
         }
     }
 
@@ -284,9 +299,9 @@ Item {
         anchors.top:        header.bottom
         anchors.topMargin:  _margins
 
-        QGCTabButton { text: qsTr("Full List") }
-        QGCTabButton { text: qsTr("Modified") }
-        QGCTabButton { text: qsTr("Favorites") }
+        QGCTabButton { text: parameterCenterSafeMode ? qsTr("全部参数") : qsTr("Full List") }
+        QGCTabButton { text: parameterCenterSafeMode ? qsTr("已修改") : qsTr("Modified") }
+        QGCTabButton { text: parameterCenterSafeMode ? qsTr("收藏") : qsTr("Favorites") }
 
         onCurrentIndexChanged: {
             controller.showModifiedOnly  = (currentIndex === 1)
@@ -297,7 +312,10 @@ Item {
     /// Group buttons
     QGCFlickable {
         id :                groupScroll
-        width:              ScreenTools.defaultFontPixelWidth * 25
+        width:              parameterCenterSafeMode
+                            ? Math.min(ScreenTools.defaultFontPixelWidth * 25,
+                                       Math.max(ScreenTools.defaultFontPixelWidth * 12, parent.width * 0.22))
+                            : ScreenTools.defaultFontPixelWidth * 25
         anchors.top:        tabBar.bottom
         anchors.topMargin:  _margins
         anchors.bottom:     parent.bottom
@@ -305,7 +323,7 @@ Item {
         pixelAligned:       true
         contentHeight:      groupedViewCategoryColumn.height
         flickableDirection: Flickable.VerticalFlick
-        visible:            !_searchFilter
+        visible:            _showGroupNavigation
 
         ColumnLayout {
             id:             groupedViewCategoryColumn
@@ -380,7 +398,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 // A synced header view has no DisplayRole for columns without header data;
                 // assigning undefined to text logs a warning on every rebuild.
-                text:                   display ?? ""
+                text:                   parameterCenterSafeMode
+                                        ? (column === 0 ? qsTr("收藏")
+                                           : column === 1 ? qsTr("参数名称")
+                                           : column === 2 ? qsTr("当前值")
+                                           : column === 3 ? qsTr("单位")
+                                           : qsTr("说明"))
+                                        : display ?? ""
                 font.bold:              true
             }
 
@@ -424,7 +448,7 @@ Item {
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
         anchors.top:        headerView.bottom
         anchors.bottom:     parent.bottom
-        anchors.left:       _searchFilter ? parent.left : groupScroll.right
+        anchors.left:       _showGroupNavigation ? groupScroll.right : parent.left
         anchors.right:      parent.right
         columnSpacing:      0
         rowSpacing:         0
@@ -436,14 +460,26 @@ Item {
         // visible row. With a filtered list such as SIM_TLM_HZ the table then
         // ended in the middle of the Units/Description headers. Use explicit
         // proportional widths so every group fills the viewport.
-        property real _favWidth:  Math.max(ScreenTools.implicitCheckBoxHeight +
-                                           ScreenTools.defaultFontPixelWidth * 2,
-                                           ScreenTools.defaultFontPixelWidth * 6)
-        property real _nameWidth: Math.max(ScreenTools.defaultFontPixelWidth * 15, width * 0.24)
-        property real _valueWidth: Math.max(ScreenTools.defaultFontPixelWidth * 13, width * 0.18)
-        property real _unitsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 8, width * 0.12)
-        property real _descWidth:  Math.max(ScreenTools.defaultFontPixelWidth * 10,
-                                            width - _favWidth - _nameWidth - _valueWidth - _unitsWidth)
+        property bool _compactParameterColumns: parameterCenterSafeMode &&
+                                                width < ScreenTools.defaultFontPixelWidth * 70
+        property real _favWidth: _compactParameterColumns
+                                 ? Math.max(ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth * 2,
+                                            width * 0.12)
+                                 : Math.max(ScreenTools.implicitCheckBoxHeight +
+                                            ScreenTools.defaultFontPixelWidth * 2,
+                                            ScreenTools.defaultFontPixelWidth * 6)
+        property real _nameWidth: _compactParameterColumns
+                                  ? width * 0.36
+                                  : Math.max(ScreenTools.defaultFontPixelWidth * 15, width * 0.24)
+        property real _valueWidth: _compactParameterColumns
+                                   ? width * 0.30
+                                   : Math.max(ScreenTools.defaultFontPixelWidth * 13, width * 0.18)
+        property real _unitsWidth: _compactParameterColumns ? 0
+                                   : Math.max(ScreenTools.defaultFontPixelWidth * 8, width * 0.12)
+        property real _descWidth: _compactParameterColumns
+                                  ? Math.max(0, width - _favWidth - _nameWidth - _valueWidth)
+                                  : Math.max(ScreenTools.defaultFontPixelWidth * 10,
+                                             width - _favWidth - _nameWidth - _valueWidth - _unitsWidth)
         columnWidthProvider: function(column) {
             return column === 0 ? _favWidth
                  : column === 1 ? _nameWidth
@@ -545,16 +581,23 @@ Item {
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
                 anchors.verticalCenter: parent.verticalCenter
-                width:              column == 2 ? ScreenTools.defaultFontPixelWidth * 15
-                                  : column == 3 ? label.implicitWidth
-                                  : implicitWidth
+                width:              column == 2
+                                     ? (parameterCenterSafeMode
+                                        ? Math.max(0, parent.width - ScreenTools.defaultFontPixelWidth)
+                                        : ScreenTools.defaultFontPixelWidth * 15)
+                                     : column == 3 ? label.implicitWidth
+                                     : column == 4 && parameterCenterSafeMode
+                                       ? Math.max(0, parent.width - ScreenTools.defaultFontPixelWidth)
+                                       : implicitWidth
                 text:               column == 2 ? col1String()
                                   : column == 3 ? fact.units
                                   : display
                 color:              column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault ? qgcPal.modifiedParamValue : qgcPal.text
                 font.bold:          column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault
-                maximumLineCount:   1
-                elide:              column == 2 ? Text.ElideRight : Text.ElideNone
+                wrapMode:           parameterCenterSafeMode && column === 4 ? Text.WordWrap : Text.NoWrap
+                maximumLineCount:   parameterCenterSafeMode && column === 4 ? 2 : 1
+                elide:              column === 2 || (parameterCenterSafeMode && column === 4)
+                                     ? Text.ElideRight : Text.ElideNone
 
                 function col1String() {
                     if (fact.enumStrings.length === 0) {
