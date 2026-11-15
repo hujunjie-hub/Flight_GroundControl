@@ -979,6 +979,8 @@ Item {
                                     target: root._activeVehicle
                                     function onVehicleModelProfilesChanged() {
                                         root._syncModelProfileSelection(false)
+                                        dashboardRoot.resetResponseHistory(
+                                            qsTr("机型配置注册表已更新，已清空遥测与参数确认标记"))
                                         dashboardRoot.syncParameterDomain()
                                     }
                                 }
