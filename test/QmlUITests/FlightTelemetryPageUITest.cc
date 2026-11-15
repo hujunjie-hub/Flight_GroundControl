@@ -2326,6 +2326,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_rcLinkQuality"), 3000);
             QQuickItem* rcFailsafePanel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcFailsafe"), 3000);
+            QQuickItem* linkDetailCoverage = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailCoverage"));
+            QQuickItem* linkDetailState = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailState_2"));
+            QQuickItem* linkDetailMetrics = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
             QQuickItem* leftStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
             QQuickItem* rightStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
             QQuickItem* leftMarker = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick_marker"));
