@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.37
+- 版本：6.38
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页补齐 VehicleLinkManager 全链路通信丢失提示与恢复颜色；保留当前构建快照/Profile 双域 freshness 约束；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -873,7 +873,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 GroundControl QML、UI Integration 与 SPEC/G15，不改变 MAVLink、FactGroup freshness 阈值或飞控控制行为。
 
 
-## 58. Phase 2.15 导航时序页 FCU 单调时间线适配（2026-11-15）
+## 60. Phase 2.15 导航时序页 FCU 单调时间线适配（2026-11-15）
 
 - 导航时序页第四张主视觉面板由重复的能力/UTC 状态校验改为「导航与时间时序」；导航能力仍集中在「导航能力与定位精度」面板，UTC 有效性与 UTC 绝对时间仍集中在「时间同步」面板，避免同一字段在多个主面板重复呈现。
 - 新增 FCU 单调时间线，展示导航状态发布（`navTimeBootUs`）、时间同步发布（`timeStatusTimeBootUs`）和最近事件（`eventTimeBootUs`）三个真实时间标记，并按当前 FCU 启动时间从早到晚排列。
@@ -885,7 +885,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本轮只更新 GroundControl QML、UI Integration 与 SPEC；按用户要求不运行 CI/Unit/Integration/Windows Release，新增回归状态为 NOT_RUN，等待后续集中验收。
 
 
-## 60. 固件构建快照与 Profile 兼容性双域 freshness（2026-11-15）
+## 61. 固件构建快照与 Profile 兼容性双域 freshness（2026-11-15）
 
 - 固件构建信息是本启动周期的快照；构建消息 family 超时后，产品版本、接口版本、Schema、哈希、源码提交和发布时间继续保留，但统一标注「最近已知」，不得冒充当前新鲜上报。
 - ICD/Schema 兼容性结果在 buildInfo family stale 时标注为最近已知；未收到构建快照时保持「未收到版本」。
@@ -894,7 +894,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 GroundControl QML、MockLink UI Integration 与 SPEC/G15；不修改 BUILD_INFO 协议、构建快照缓存、Profile ID 定义或飞控控制行为。本轮不运行 CI，新增断言为 NOT_RUN。
 
 
-## 61. Phase 2.16 遥控与链路页大屏主视觉布局适配（2026-11-15）
+## 62. Phase 2.16 遥控与链路页大屏主视觉布局适配（2026-11-15）
 
 - 本阶段适配对象是 Flight Diagnostics 第四页「遥控与链路」（FlightTelemetry.qml 的 flightTelemetry_rcLinkPageGrid），不是独立遥控校准页 FlightRadio.qml；后者保留既有校准、CRSF 绑定、微调量复制和原始 RC PWM 通道职责。
 - 16:9 桌面大屏（availableWidth ≥ 1280）采用两行主视觉布局：第一行「遥控输入监视」与「逻辑轴输入（实时）」各占 6/12；第二行「链路质量」占 8/12、「失控保护」占 4/12。优先给双摇杆和链路实例指标足够宽度，避免四张卡片等宽横排造成信息拥挤。
@@ -907,7 +907,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 和本 SPEC；不修改 FlightRadio.qml、MAVLink 消息、FlightTelemetryFactGroup、Flight ICD、遥控手型映射算法、飞控判定或控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增布局回归状态为 NOT_RUN，待后续集中验收。
 
-## 62. Phase 2.17 总览总控页全链路通信丢失状态适配（2026-11-15）
+## 63. Phase 2.17 总览总控页全链路通信丢失状态适配（2026-11-15）
 
 - 总览页「FCU 遥测接收」KPI 与页面只读监控状态徽标，除区分未连接、等待 FCU 遥测、已收到 FCU 遥测外，新增独立的「通信丢失」状态。
 - 通信状态唯一依据为当前 Vehicle 的 `vehicleLinkManager.communicationLost`，即 VehicleLinkManager 对所有活动链路心跳的整体判定；不得用 `telemetryAvailable` 代替当前链路状态。该 Fact 只说明曾收到 FCU 遥测，不代表通信当前正常，也不代表各遥测域健康。
@@ -918,7 +918,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 
 
 
-## 63. Phase 2.18 导航时序时间线层级与中窄屏可读性（2026-11-15）
+## 64. Phase 2.18 导航时序时间线层级与中窄屏可读性（2026-11-15）
 
 - FCU 单调时间线每条记录增加动态顺序编号（01/02/03），编号与纵向位置共用同一排序结果；导航、时间同步和事件颜色继续分别绑定各自 family freshness，不用编号或颜色代替状态。
 - 每条记录改为单行横向信息结构：左侧消息名称、右侧固定宽度时间值；时间值使用统一等宽字体并右对齐，保留「FCU +x.xxxxxx s」微秒精度。标签在空间不足时只对自身省略，时间值不省略、不换行。
