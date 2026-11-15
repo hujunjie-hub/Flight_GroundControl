@@ -311,6 +311,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(summaryGrid);
             QVERIFY(summaryBand);
             QVERIFY(topologyCanvas);
+            QVERIFY(!topologyCanvas->property("labelFontFamily").toString().isEmpty());
+            QVERIFY(topologyCanvas->property("labelFontPointSize").toReal() >= 7.0);
             QVERIFY(topologyNodesGrid);
             QVERIFY(topologyLegend);
             QVERIFY(topologyLegendTitle);
@@ -645,13 +647,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 const qreal canvasHeight = topologyCanvas->height();
                 const qreal centerX = canvasWidth / 2.0;
                 const qreal centerY = canvasHeight / 2.0;
-                const qreal scale = qMin(1.0, qMax(0.72, canvasWidth / 480.0));
                 const qreal ringRadius = qMin(qMin(76.0, canvasHeight * 0.42), canvasWidth * 0.16);
                 const qreal nodeX = qMin(canvasWidth * 0.34, ringRadius + 36.0);
                 const qreal nodeY = qMin(canvasHeight * 0.40, ringRadius + 8.0);
-                QFont labelFont;
+                const QString labelFontFamily = topologyCanvas->property("labelFontFamily").toString();
+                const qreal labelFontPointSize = topologyCanvas->property("labelFontPointSize").toReal();
+                if (labelFontFamily.isEmpty() || labelFontPointSize <= 0.0) return false;
+                QFont labelFont(labelFontFamily);
+                labelFont.setPointSizeF(labelFontPointSize);
                 labelFont.setBold(true);
-                labelFont.setPixelSize(qMax(7, qRound(8.0 * scale)));
                 const QFontMetricsF metrics(labelFont);
                 const QString labels[] = {
                     translatedTelemetryText("传感器系统"), translatedTelemetryText("导航定位"),
