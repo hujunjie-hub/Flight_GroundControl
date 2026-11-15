@@ -3705,7 +3705,7 @@ SetupPage {
                         TelemetryGroup {
                             objectName: "flightTelemetry_navigationUtcGroup"
                             titleText: qsTr("UTC 参考")
-                            accentColor: "#52D5B1"
+                            accentColor: "#4FA7BD"
                             MetricReadout {
                                 Layout.fillWidth: true
                                 objectName: "flightTelemetry_navigationUtcValidity"
