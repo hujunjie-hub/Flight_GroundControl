@@ -841,10 +841,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("spacing").toInt(), 12, 3000);
             QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
             QQuickItem* overviewFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
+            QQuickItem* overviewNavigation = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
+            QQuickItem* overviewRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
             QVERIFY(summaryBand);
             QVERIFY(overviewFlight);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(heroFlight->height() - heroNavigation->height()) < 1.0, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(qAbs(heroFlight->height() - heroRcInput->height()) < 1.0, 3000);
+            QVERIFY(overviewNavigation);
+            QVERIFY(overviewRcInput);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewNavigation->height()) < 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewRcInput->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryBand->property("radius").toInt(), 8, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("radius").toInt(), 8, 3000);
             const QString pageGrids[] = {
@@ -1016,6 +1020,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* healthOverview = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview"), 3000);
             QQuickItem* healthMatrixPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix"), 3000);
             QQuickItem* healthSafety = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000);
+            QQuickItem* healthHeadline = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthHeadline"), 3000);
             QQuickItem* healthOverviewBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthOverview_statusBadge"));
             QQuickItem* healthMatrixBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix_statusBadge"));
             QQuickItem* healthSafetyBadge = findItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety_statusBadge"));
@@ -1034,6 +1039,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(healthOverview);
             QVERIFY(healthMatrixPanel);
             QVERIFY(healthSafety);
+            QVERIFY(healthHeadline);
             QVERIFY(healthOverviewBadge);
             QVERIFY(healthMatrixBadge);
             QVERIFY(healthSafetyBadge);
@@ -1049,8 +1055,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(storageDetail);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->property("titleText").toString(),
                                       translatedTelemetryText("遥测域概览"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(healthHeadline->property("color").value<QColor>(),
+                                      QColor("#E2ECEF"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthMatrixPanel->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthSafety->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthOverview->x() < healthMatrixPanel->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixPanel->x() < healthSafety->x(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthOverview->width() >= healthGrid->width() * 0.20, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixPanel->width() >= healthGrid->width() * 0.45, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(healthSafety->width() >= healthGrid->width() * 0.20, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthSafety->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrixPanel->property("titleText").toString(),
@@ -1104,23 +1117,45 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* maintenanceContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceContent"), 3000);
             QVERIFY(maintenanceContent);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
-            const int widths[] = {1000, 700, 400};
-            const int expectedColumns[] = {6, 1, 1};
-            const int expectedHealthMatrixColumns[] = {2, 1, 1};
-            const int expectedMaintenanceColumns[] = {2, 1, 1};
-            for (int widthIndex = 0; widthIndex < 3; ++widthIndex) {
+            const int widths[] = {1000, 900, 700, 400};
+            const int expectedColumns[] = {6, 6, 1, 1};
+            const int expectedHealthMatrixColumns[] = {2, 2, 1, 1};
+            const int expectedMaintenanceColumns[] = {2, 2, 1, 1};
+            const int expectedDetailColumns[] = {6, 6, 1, 1};
+            for (int widthIndex = 0; widthIndex < 4; ++widthIndex) {
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), expectedDetailColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
-                if (widthIndex == 0) {
-                    QTRY_VERIFY_WITH_TIMEOUT(prearmDetail->y() < resourcesDetail->y(), 3000);
-                    QTRY_COMPARE_WITH_TIMEOUT(resourcesDetail->y(), storageDetail->y(), 3000);
-                    QTRY_VERIFY_WITH_TIMEOUT(resourcesDetail->x() < storageDetail->x(), 3000);
+                if (widthIndex < 2) {
+                    QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthMatrixPanel->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthOverview->x() < healthMatrixPanel->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthSafety->y() > healthOverview->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthOverview->width() >= healthGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthMatrixPanel->width() >= healthGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthSafety->width() >= healthGrid->width() * 0.90, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(qAbs(healthOverview->height() - healthMatrixPanel->height()) < 1.0, 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[2]->y(), diagnosticCardItems[3]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[2]->x() < diagnosticCardItems[3]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[4]->y() > diagnosticCardItems[2]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[11]->width() >= dashboardGrid->width() * 0.90, 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[7]->y(), diagnosticCardItems[6]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->x() < diagnosticCardItems[6]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->width() >= dashboardGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[6]->width() >= dashboardGrid->width() * 0.45, 3000);
                 } else {
-                    QTRY_VERIFY_WITH_TIMEOUT(prearmDetail->y() < resourcesDetail->y(), 3000);
-                    QTRY_VERIFY_WITH_TIMEOUT(resourcesDetail->y() < storageDetail->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthOverview->y() < healthMatrixPanel->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthMatrixPanel->y() < healthSafety->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthOverview->width() >= healthGrid->width() * 0.90, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthMatrixPanel->width() >= healthGrid->width() * 0.90, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(healthSafety->width() >= healthGrid->width() * 0.90, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[2]->y() < diagnosticCardItems[3]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[3]->y() < diagnosticCardItems[4]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[4]->y() < diagnosticCardItems[11]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[11]->y() < diagnosticCardItems[7]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->y() < diagnosticCardItems[6]->y(), 3000);
                 }
                 for (int pageIndex = 2; pageIndex <= 3; ++pageIndex) {
                     QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex), 3000);

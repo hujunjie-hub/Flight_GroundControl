@@ -1672,10 +1672,17 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_healthOverview"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 3 : 1
                     eyebrow: "TELEMETRY DOMAIN OVERVIEW"
                     titleText: qsTr("遥测域概览")
-                    QGCLabel { Layout.fillWidth: true; text: root._healthHeadline(); color: root._familyStatusColor("operationAvailable"); typographyRole: "hero"; wrapMode: Text.WordWrap }
+                    QGCLabel {
+                        objectName: "flightTelemetry_healthHeadline"
+                        Layout.fillWidth: true
+                        text: root._healthHeadline()
+                        color: "#E2ECEF"
+                        typographyRole: "hero"
+                        wrapMode: Text.WordWrap
+                    }
                     QGCLabel {
                         Layout.fillWidth: true
                         text: qsTr("已接收 %1 · 超时 %2 · 等待 %3")
@@ -1713,7 +1720,7 @@ SetupPage {
                 HeroPanel {
                     objectName: "flightTelemetry_healthPageMatrix"
                     fillRowHeight: true
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 3 : 1
                     eyebrow: "TELEMETRY FRESHNESS MATRIX"
                     titleText: qsTr("遥测域接收矩阵")
                     GridLayout {
@@ -2250,7 +2257,9 @@ SetupPage {
             GridLayout {
                 objectName: "flightTelemetry_dashboardGrid"
                 Layout.fillWidth: true
-                columns: root._dashboardColumns
+                columns: root._activeDashboardPage === 1
+                         ? (root.availableWidth >= 1280 ? 12 : root.availableWidth >= 760 ? 6 : 1)
+                         : root._dashboardColumns
                 columnSpacing: 12
                 rowSpacing: 12
 
@@ -2330,7 +2339,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "SENSOR HEALTH"
                     statusFamily: "sensorHealthAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 3 : 1
                     title: qsTr("传感器健康")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("sensorHealthAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("sensorHealth") }
@@ -2384,7 +2393,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "CONTROL SYSTEM"
                     statusFamily: "controlAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 3 : 1
                     title: qsTr("控制器状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("controlAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("control") }
@@ -2402,7 +2411,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "ACTUATOR OUTPUT"
                     statusFamily: "actuatorAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 3 : 1
                     title: qsTr("执行器状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("actuatorAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("actuator") }
@@ -2478,7 +2487,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "PRE-ARM CHECKS"
                     statusFamily: "prearmAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 6 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 6 : root.availableWidth >= 760 ? 6 : 1
                     title: qsTr("解锁前检查")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("prearmAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
@@ -2513,7 +2522,8 @@ SetupPage {
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
-                                elide: Text.ElideRight
+                                Layout.minimumWidth: 0
+                                wrapMode: Text.WordWrap
                                 text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
                                       + " · " + qsTr("恢复条件：%1").arg(root._enumValue(modelData.recoveryCondition, [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]))
                             }
@@ -2544,7 +2554,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "REAL-TIME RESOURCES"
                     statusFamily: "resourceAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 3 : 1
                     title: qsTr("实时资源")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("resourceAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("resource") }
@@ -2598,7 +2608,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 1
                     eyebrow: "STORAGE"
                     statusFamily: "storageAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 3 : 1
                     title: qsTr("存储状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("storageAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("storage") }
