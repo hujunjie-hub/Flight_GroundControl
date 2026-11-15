@@ -1389,6 +1389,12 @@ SetupPage {
         }
     }
 
+    function _buildInfoSnapshotText(valueText) {
+        if (!_fact("buildInfoAvailable")) return qsTr("未上报")
+        return _familyStatus("buildInfoAvailable") === qsTr("已接收")
+               ? valueText : qsTr("最近已知：%1").arg(valueText)
+    }
+
     function _schemaCompatibilityText() {
         if (!_fact("buildInfoAvailable")) {
             return qsTr("未收到版本")
@@ -1400,21 +1406,25 @@ SetupPage {
         }
         const major = Number(majorRaw)
         const minor = Number(minorRaw)
-        if (!Number.isInteger(major) || !Number.isInteger(minor)) {
-            return qsTr("无效")
+        let compatibility = qsTr("无效")
+        if (Number.isInteger(major) && Number.isInteger(minor)) {
+            if (major !== 6) compatibility = qsTr("主版本不兼容：%1.%2").arg(major).arg(minor)
+            else if (minor !== 0) compatibility = qsTr("次版本未验证：%1.%2").arg(major).arg(minor)
+            else compatibility = qsTr("兼容：6.0")
         }
-        if (major !== 6) {
-            return qsTr("主版本不兼容：%1.%2").arg(major).arg(minor)
-        }
-        if (minor !== 0) {
-            return qsTr("次版本未验证：%1.%2").arg(major).arg(minor)
-        }
-        return qsTr("兼容：6.0")
+        return _familyStatus("buildInfoAvailable") === qsTr("已接收")
+               ? compatibility : qsTr("最近已知：%1").arg(compatibility)
     }
 
     function _profileCompatibilityText() {
         if (!_fact("operationAvailable") || !_fact("buildInfoAvailable")) {
             return qsTr("未验证")
+        }
+        const operationFreshness = _familyStatus("operationAvailable")
+        const buildInfoFreshness = _familyStatus("buildInfoAvailable")
+        if (operationFreshness !== qsTr("已接收") || buildInfoFreshness !== qsTr("已接收")) {
+            return qsTr("无法确认：操作 %1 · 构建信息 %2")
+                    .arg(operationFreshness).arg(buildInfoFreshness)
         }
         const operationProfile = _fact("opProfileId")
         const buildProfile = _fact("buildProfileId")
@@ -3839,19 +3849,51 @@ SetupPage {
                     statusFamily: "buildInfoAvailable"
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 12 : root._dashboardColumns >= 6 ? 6 : 1
                     title: qsTr("固件与版本")
-                    TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("buildInfoAvailable") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildInfoMessageStatus"
+                        labelText: qsTr("消息")
+                        valueText: root._familyStatus("buildInfoAvailable")
+                    }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("buildInfo") }
-                    TelemetryRow { labelText: qsTr("产品版本"); valueText: root._integer("buildProductRevision") }
-                    TelemetryRow { labelText: qsTr("接口版本"); valueText: root._integer("buildPortRevision") }
-                    TelemetryRow { labelText: qsTr("Schema"); valueText: root._integer("buildSchemaMajor") + "." + root._integer("buildSchemaMinor") }
-                    TelemetryRow { labelText: qsTr("ICD 兼容性"); valueText: root._schemaCompatibilityText() }
-                    TelemetryRow { labelText: qsTr("Profile 匹配"); valueText: root._profileCompatibilityText() }
-                    TelemetryRow { labelText: qsTr("固件 SHA-256"); valueText: root._hashPrefix("firmwareSha256") }
-                    TelemetryRow { labelText: qsTr("核心参数 SHA-256"); valueText: root._hashPrefix("coreParametersSha256") }
-                    TelemetryRow { labelText: qsTr("Profile SHA-256"); valueText: root._hashPrefix("profileSha256") }
-                    TelemetryRow { labelText: qsTr("ABI SHA-256"); valueText: root._hashPrefix("abiSha256") }
-                    TelemetryRow { labelText: qsTr("源码提交"); valueText: root._sourceCommitDisplay() }
-                    TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("buildTimeBootUs") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildProductRevision"
+                        labelText: qsTr("产品版本")
+                        valueText: root._buildInfoSnapshotText(root._integer("buildProductRevision"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildPortRevision"
+                        labelText: qsTr("接口版本")
+                        valueText: root._buildInfoSnapshotText(root._integer("buildPortRevision"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildSchemaVersion"
+                        labelText: qsTr("Schema")
+                        valueText: root._buildInfoSnapshotText(root._integer("buildSchemaMajor") + "." + root._integer("buildSchemaMinor"))
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildSchemaCompatibility"
+                        labelText: qsTr("ICD 兼容性")
+                        valueText: root._schemaCompatibilityText()
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildProfileCompatibility"
+                        labelText: qsTr("Profile 匹配")
+                        valueText: root._profileCompatibilityText()
+                    }
+                    TelemetryRow { labelText: qsTr("固件 SHA-256"); valueText: root._buildInfoSnapshotText(root._hashPrefix("firmwareSha256")) }
+                    TelemetryRow { labelText: qsTr("核心参数 SHA-256"); valueText: root._buildInfoSnapshotText(root._hashPrefix("coreParametersSha256")) }
+                    TelemetryRow { labelText: qsTr("Profile SHA-256"); valueText: root._buildInfoSnapshotText(root._hashPrefix("profileSha256")) }
+                    TelemetryRow { labelText: qsTr("ABI SHA-256"); valueText: root._buildInfoSnapshotText(root._hashPrefix("abiSha256")) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildSourceCommit"
+                        labelText: qsTr("源码提交")
+                        valueText: root._buildInfoSnapshotText(root._sourceCommitDisplay())
+                    }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_buildTimestamp"
+                        labelText: qsTr("FCU 发布时间（启动后）")
+                        valueText: root._buildInfoSnapshotText(root._timestamp("buildTimeBootUs"))
+                    }
                 }
 
             }

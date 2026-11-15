@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.21  
+版本：4.22  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -461,3 +461,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 通信链路详情卡显示新鲜/超时/等待三态实例数量。
 - 每个实例 RSSI/质量/丢包指标按 receiveAgeMs 与 validityMask 门控；超时不显示缓存数值，并采用琥珀色状态。
 - UI Integration 验证新鲜、超时两种状态及链路实例“最近状态”标签；本轮不运行 CI，集中验收时执行，不构成 PASS。
+
+
+### G15 固件构建快照与 Profile 匹配 freshness 补充（2026-11-15）
+
+- 构建信息为启动周期快照；family stale 时保留值并标注「最近已知」，不将其显示为当前新鲜数据。
+- Profile 匹配依赖 operation 与 buildInfo 两个 family；两者必须同时 fresh 才显示当前匹配，任一 stale/等待均显示「无法确认」和两侧状态。
+- MockLink Integration 使用四个 BUILD_INFO digest chunk 验证 fresh、stale、operation 恢复但 buildInfo 仍 stale 的状态；本轮不运行 CI，集中验收时执行，不构成 PASS。

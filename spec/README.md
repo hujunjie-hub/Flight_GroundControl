@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.35
+- 版本 4.36
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -200,3 +200,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 - 2026-11-15 导航时序页增量：第四主面板改为 FCU 单调时间线，按导航/时间/最近事件的真实 time_boot_us 排序；导航与时间标记服从 family freshness，UTC 无效不影响 FCU 单调时间。删除重复的能力/UTC 校验行，原字段仍保留在对应专属面板。新增 MockLink 排序、UTC 独立性、fresh/stale/recovered 和 1600/1000/900/700/400 px 边界断言；本轮未运行 CI，新增回归为 NOT_RUN。
+
+- 2026-11-15 固件构建快照采用「最近已知」显示；Profile 匹配必须同时满足 operation 与 buildInfo freshness，避免运行状态超时后仍显示当前匹配。增加四段 BUILD_INFO MockLink fresh/stale/recovery 断言。本轮未运行 CI，待集中验收。

@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.32
+- 版本：6.33
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；操作/导航/时间详情 freshness 已收口；本轮补齐导航页重复摘要面板与健康维护启动 ID freshness；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；操作/导航/时间详情 freshness 已收口；本轮补齐导航页重复摘要面板与健康维护启动 ID freshness；本轮补齐构建快照最近已知标识及 Profile 匹配双域 freshness 门控；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -883,3 +883,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 保留导航/时间两个独立 freshness 状态单元、四张桌面等宽主视觉面板、现有 KPI/趋势/详情字段和只读边界；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间同步服务或飞控控制行为。
 - MockLink UI Integration 覆盖三个时间标记的真实数值与排序、UTC 无效时单调时间仍有效、time family fresh → stale → recovered，以及 1600/1000/900/700/400 px 下时间线内容不越界。
 - 本轮只更新 GroundControl QML、UI Integration 与 SPEC；按用户要求不运行 CI/Unit/Integration/Windows Release，新增回归状态为 NOT_RUN，等待后续集中验收。
+
+
+## 60. 固件构建快照与 Profile 兼容性双域 freshness（2026-11-15）
+
+- 固件构建信息是本启动周期的快照；构建消息 family 超时后，产品版本、接口版本、Schema、哈希、源码提交和发布时间继续保留，但统一标注「最近已知」，不得冒充当前新鲜上报。
+- ICD/Schema 兼容性结果在 buildInfo family stale 时标注为最近已知；未收到构建快照时保持「未收到版本」。
+- Profile 匹配是 operation 与 buildInfo 两个 family 的交叉结论；只有两者均 fresh 才能显示当前匹配/不匹配，任一等待或超时均显示「无法确认」并分别标出两侧状态。
+- MockLink UI Integration 增加四种 BUILD_INFO digest chunk，验证 fresh 时 schema/profile 匹配；等待/超时后验证构建快照显示最近已知、Profile 匹配无法确认；operation 恢复但 buildInfo 仍 stale 时不得恢复为当前匹配。
+- 仅修改 GroundControl QML、MockLink UI Integration 与 SPEC/G15；不修改 BUILD_INFO 协议、构建快照缓存、Profile ID 定义或飞控控制行为。本轮不运行 CI，新增断言为 NOT_RUN。

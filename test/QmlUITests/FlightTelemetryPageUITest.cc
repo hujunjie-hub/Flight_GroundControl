@@ -223,6 +223,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findItem(_rootItem, QStringLiteral("flightTelemetry_card_eventHistory"));
             QQuickItem* buildInfoCard =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_card_buildInfo"));
+            QQuickItem* buildInfoMessageStatus =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_buildInfoMessageStatus"));
+            QQuickItem* buildProductRevision =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_buildProductRevision"));
+            QQuickItem* buildSchemaCompatibility =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_buildSchemaCompatibility"));
+            QQuickItem* buildProfileCompatibility =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_buildProfileCompatibility"));
             QQuickItem* failsafeRow = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_failsafeValue"), 3000);
             QVERIFY(dashboardHeader);
             QVERIFY(visualTabs);
@@ -289,6 +297,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rcCard);
             QVERIFY(eventHistoryCard);
             QVERIFY(buildInfoCard);
+            QVERIFY(buildInfoMessageStatus);
+            QVERIFY(buildProductRevision);
+            QVERIFY(buildSchemaCompatibility);
+            QVERIFY(buildProfileCompatibility);
             QVERIFY(failsafeRow);
 
             const char* topologyFamilies[] = {
@@ -744,6 +756,26 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendBuildInfoStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint8_t digestKind) {
+                mavlink_fcu_build_info_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = sessionBootId;
+                payload.profile_id = profileId;
+                payload.product_revision = 7;
+                payload.port_revision = 4;
+                payload.schema_major = 6;
+                payload.schema_minor = 0;
+                payload.digest_kind = digestKind;
+                payload.source_commit_valid = 1;
+                for (int index = 0; index < static_cast<int>(sizeof(payload.source_commit)); ++index)
+                    payload.source_commit[index] = 0xAB;
+                for (int index = 0; index < static_cast<int>(sizeof(payload.sha256)); ++index)
+                    payload.sha256[index] = static_cast<uint8_t>(digestKind + 1);
+                mavlink_message_t message{};
+                mavlink_msg_fcu_build_info_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             auto sendControlStatus = [&](uint64_t timeBootUs, uint64_t sessionBootId, uint32_t solveTimeUs) {
                 mavlink_fcu_control_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -825,6 +857,16 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
             sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
             sendEventStatus(1700000, bootId, 4321, 3);
+            for (uint8_t digestKind = 0; digestKind < 4; ++digestKind)
+                sendBuildInfoStatus(1800, bootId, digestKind);
+            QTRY_COMPARE_WITH_TIMEOUT(buildInfoMessageStatus->property("valueText").toString(),
+                                      translatedTelemetryText("已接收"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildProductRevision->property("valueText").toString(),
+                                      QStringLiteral("7"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildSchemaCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("兼容：6.0"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString(),
+                                      translatedTelemetryText("匹配 QUAD_X4"), 3000);
             QQuickItem* rcPageTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);
             QVERIFY(rcPageTab);
             QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
@@ -1499,6 +1541,15 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(navigationPanelAge->property("valueText").toString(), staleText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPanelReason->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthMaintenanceBootId->property("text").toString().contains(staleText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(buildInfoMessageStatus->property("valueText").toString(), staleText, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildProductRevision->property("valueText").toString().contains(
+                                         translatedTelemetryText("最近已知")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildSchemaCompatibility->property("valueText").toString().contains(
+                                         translatedTelemetryText("最近已知")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
+                                         translatedTelemetryText("无法确认")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
+                                         staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
@@ -1526,6 +1577,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(),
                                       translatedTelemetryText("解锁中"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
+                                         translatedTelemetryText("操作 已接收")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
+                                         translatedTelemetryText("构建信息 数据超时")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(),
                                       QStringLiteral("8 / 12"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPanelStateEpoch->property("valueText").toString(),
