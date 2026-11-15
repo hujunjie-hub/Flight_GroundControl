@@ -461,6 +461,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 本轮将当前 Flight 固件的真实参数元数据接入参数域导航，未扩大任何参数写入权限：
 
 - Flight 仓库 tools/generate_qgc_parameter_metadata.py 已成为参数域与机型元数据的可重复生成入口：从 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 生成 FlightParameterFactMetaData.json 与 FlightVehicleModelCatalog.json；参数项携带 domain 和 modelProfiles，注册表包含硬件资格、写入范围、参数域及精确参数清单。生成器新增单元测试，未运行 CI。
+- 生成前强制校验 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 的 profile ID 一致；任一来源机型不匹配即失败，不生成混合机型的参数元数据或注册表。
 
 - FlightParameterFactMetaData.json 的 49 个参数增加显式 domain 字段，原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留。
 - 当前 group → domain 映射为：机体模型 → VEHICLE_MODEL（1 项）；MPC 权重、位置环回退、姿态角速度环、SO3 姿态增益 → CONTROL（47 项）；仿真 → SIMULATION（1 项）。
