@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.55
+版本：4.56
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -628,3 +628,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - FCU 单调时间线只对 family fresh 且处于 JS 安全整数范围内的非负 `time_boot_us` 排序；有效时间戳按早到晚排列，缺失/无效/超时项置后。无效时间戳及其序号/标记使用红色，family stale 使用琥珀，等待/未上报使用中性灰。
 - MockLink `FlightTelemetryPageUITest` 覆盖 discipline 六态、time family stale/recovered，以及 `2^53` 越界事件时间戳的无效显示、红色语义和有效点之后排序。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN。集中验收时执行 exact-HEAD Windows Release、Unit、Integration 和本地 1672×941 / 100%/125%/150% DPI 视觉检查。
+
+### G15 总览告警摘要与事件历史展示范围（2026-11-15）
+
+- 优先告警摘要最多显示 4 条，按严重度降序、同级按地面站本地接收序号降序；事件历史显示最近 8 条，两个展示上限由独立 QML 常量维护。
+- 有事件时显示动态范围说明「优先摘要 X / 总数 条 · 历史最近 Y 条」；无事件时范围说明隐藏，空态不显示伪统计。
+- MockLink UI Integration 注入严重度 3、1、3、2、0 五条事件，验证总数、前 4 条优先摘要顺序、第 5 条仍保留在事件历史，以及 700/400 px 范围说明布局边界。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言状态保持 NOT_RUN。
