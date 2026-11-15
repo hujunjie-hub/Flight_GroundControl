@@ -381,20 +381,28 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_COMPARE_WITH_TIMEOUT(vehicle->gimbalController()->gimbals()->count(), 3, 5000);
             Gimbal *secondGimbal = nullptr;
             Gimbal *legacyGimbal = nullptr;
+            int secondGimbalIndex = -1;
+            int activeGimbalIndex = -1;
             for (int index = 0; index < vehicle->gimbalController()->gimbals()->count(); ++index) {
                 auto *candidate = qobject_cast<Gimbal *>(
                     vehicle->gimbalController()->gimbals()->get(index));
                 if (!candidate) {
                     continue;
                 }
+                if (candidate == activeGimbal) {
+                    activeGimbalIndex = index;
+                }
                 if (candidate->deviceId()->rawValue().toUInt() == secondDeviceId) {
                     secondGimbal = candidate;
+                    secondGimbalIndex = index;
                 } else if (candidate->deviceId()->rawValue().toUInt() == 3) {
                     legacyGimbal = candidate;
                 }
             }
             QVERIFY(secondGimbal);
             QVERIFY(legacyGimbal);
+            QVERIFY(secondGimbalIndex >= 0);
+            QVERIFY(activeGimbalIndex >= 0);
             QCOMPARE(legacyGimbal->managerCompid()->rawValue().toUInt(),
                      static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
             QCOMPARE(legacyGimbal->deviceId()->rawValue().toUInt(), static_cast<uint32_t>(3));
@@ -777,7 +785,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // The other device remains live and selectable while device 154 is offline.
             vehicle->gimbalController()->setActiveGimbal(secondGimbal);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
-            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 1, 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), secondGimbalIndex, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 1000);
             QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() !=
@@ -860,7 +868,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // owner state is fresh, empty, and can be explicitly acquired again.
             vehicle->gimbalController()->setActiveGimbal(activeGimbal);
             QCOMPARE(vehicle->gimbalController()->activeGimbal(), activeGimbal);
-            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), 0, 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(), activeGimbalIndex, 1000);
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 3000);
             QVERIFY(acquire->property("enabled").toBool());
