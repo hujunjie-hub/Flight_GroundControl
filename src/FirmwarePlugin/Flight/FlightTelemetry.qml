@@ -15,6 +15,11 @@ SetupPage {
 
     readonly property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property var _telemetry: _vehicle ? _vehicle.flightTelemetry : null
+    readonly property bool _communicationLost: _vehicle && _vehicle.vehicleLinkManager
+                                               ? _vehicle.vehicleLinkManager.communicationLost : false
+    readonly property color _telemetryHeadlineColor: _communicationLost ? "#F06464"
+                                                                          : _telemetry && _telemetry.telemetryAvailable
+                                                                            ? "#45D39A" : "#8A9A94"
     property int _ageRefreshTick: 0
     readonly property var _receiveAges: _ageRefreshTick >= 0 && _telemetry
                                         ? _telemetry.familyReceiveAgeMs : ({})
@@ -86,6 +91,7 @@ SetupPage {
         { label: qsTr("固件版本"), family: "buildInfo", available: "buildInfoAvailable" }
     ]
     readonly property string _telemetryHeadline: !_vehicle ? qsTr("未连接")
+                                                : _communicationLost ? qsTr("通信丢失")
                                                 : _telemetry && _telemetry.telemetryAvailable
                                                   ? qsTr("已收到 FCU 遥测") : qsTr("等待 FCU 遥测")
 
@@ -435,7 +441,9 @@ SetupPage {
     function _summaryTileDetail(index) {
         if (_activeDashboardPage === 0) {
             switch (index) {
-            case 0: return qsTr("接收不代表所有数据组均新鲜")
+            case 0: return _communicationLost
+                        ? qsTr("链路心跳超时；各遥测域仍按独立新鲜度判定")
+                        : qsTr("接收不代表所有数据组均新鲜")
             case 1: return _familyStatus("operationAvailable") === qsTr("已接收")
                         ? qsTr("控制权：%1 · %2").arg(_enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")]))
                                                .arg(_familyStatus("operationAvailable"))
@@ -483,7 +491,7 @@ SetupPage {
     function _summaryTileColor(index) {
         if (_activeDashboardPage === 0) {
             switch (index) {
-            case 0: return _telemetry && _telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+            case 0: return _telemetryHeadlineColor
             case 1: return _familyStatusColor("operationAvailable")
             case 2: return _failsafeColor()
             case 3: return _navigationMetricColor(_navCapabilityHorizontalPosition)
@@ -1642,8 +1650,8 @@ SetupPage {
                         objectName: "flightTelemetry_readOnlyBadge"
                         Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
                         radius: 7
-                        color: "#092B32"
-                        border.color: "#176B73"
+                        color: root._communicationLost ? "#32151B" : "#092B32"
+                        border.color: root._communicationLost ? "#8C3843" : "#176B73"
                         implicitWidth: readOnlyContent.implicitWidth + 20
                         implicitHeight: readOnlyContent.implicitHeight + 12
                         RowLayout {
@@ -1654,14 +1662,15 @@ SetupPage {
                                 Layout.preferredWidth: 7
                                 Layout.preferredHeight: 7
                                 radius: 4
-                                color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+                                color: root._telemetryHeadlineColor
                             }
                             ColumnLayout {
                                 spacing: 1
                                 QGCLabel { text: qsTr("只读监控"); color: "#BDE8D9"; font.weight: ScreenTools.strongFontWeight }
                                 QGCLabel {
+                                    objectName: "flightTelemetry_connectionStatus"
                                     text: root._telemetryHeadline
-                                    color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
+                                    color: root._telemetryHeadlineColor
                                     font.pointSize: ScreenTools.captionFontPointSize
                                 }
                             }
