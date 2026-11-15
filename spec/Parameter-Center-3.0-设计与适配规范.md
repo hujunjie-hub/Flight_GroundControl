@@ -411,6 +411,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 仅在匹配的 PARAM_VALUE 写入确认成功后发出 parameterWriteConfirmed(componentId, parameterName, confirmedValue)；失败、超时或未授权写入不产生确认事件。
 - 参数确认事件先记录当前 FCU boot ID 与最后一个已接收控制时间戳，随后只在同一 boot ID 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话遥测基线时只显示未关联说明，不伪造曲线标记。
 - 参数标记与曲线样本在 boot ID 变化、时间戳回退或 activeVehicle 切换时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
+- 仿真接口盘点：当前仓库的 `tools/simulation/mock_vehicle.py` 明确不模拟飞行动力学；`run-arducopter-sitl.sh` 启动的是 ArduCopter，不是 Flight SIL；`Flight-UDP-SIL-20261114.md` 记录的是外部 Flight Host SIL 经临时本地转发补丁接入的遥测验证，未提供 GroundControl 可调用的 Flight SIL 启停或参数注入 API。因此参数中心只读已连接 FCU 的真实遥测，不启动/控制仿真进程，也不将 ArduCopter SITL 冒充 Flight 模型仿真。
+- 影响关系盘点：当前 `FlightParameterFactMetaData.json` 提供 name/type/domain/group/范围/默认值/modelProfiles 等字段，未声明 dependencies 或 validationRules；`FlightVehicleModelCatalog.json` 提供机型、域和参数白名单，不包含参数影响图。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
 - 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
 - ParameterEditorController 回归测试增加“非 Flight SIL 未授权写入不得产生 parameterWriteConfirmed 事件”断言；本轮不运行构建、QML UI 测试、单元测试或 CI，新增测试保持 NOT_RUN。
 - 本轮未运行 Windows 构建、QML UI 测试、单元测试或 CI，所有运行时验收保持 NOT_RUN。
