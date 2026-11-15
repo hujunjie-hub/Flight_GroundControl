@@ -2173,6 +2173,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendNavigationStatus(1100, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
             sendControlStatus(1200, nextBootId, 1900);
             sendTimeStatus(1250, nextBootId, 1700000011123456ULL, 1);
+
+            // Equal FCU timestamps retain the explicit navigation -> time -> event domain order.
+            sendNavigationStatus(1300, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
+            sendTimeStatus(1300, nextBootId, 1700000012123456ULL, 1);
+            sendEventStatus(1300, nextBootId, 7777, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationOrder->property("text").toString(),
+                                      QStringLiteral("01"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeOrder->property("text").toString(),
+                                      QStringLiteral("02"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventOrder->property("text").toString(),
+                                      QStringLiteral("03"), 3000);
+
             // 2^53 is outside JavaScript's exact integer range and must never look like a fresh timeline point.
             sendEventStatus(9007199254740992ULL, nextBootId, 7778, 1);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(), QStringLiteral("8877665544332211"),
