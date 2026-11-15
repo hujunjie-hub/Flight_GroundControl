@@ -299,6 +299,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(metricPosition);
             QVERIFY(metricVelocity);
             QVERIFY(metricHeading);
+            QTRY_VERIFY_WITH_TIMEOUT(metricPosition->isVisible() && metricVelocity->isVisible() &&
+                                     metricHeading->isVisible(), 3000);
+            QVERIFY(!summaryTelemetry->isVisible());
+            QVERIFY(!summaryOperation->isVisible());
+            QVERIFY(!summaryFailsafe->isVisible());
+            QVERIFY(!summaryNavigation->isVisible());
+            QVERIFY(!summaryLink->isVisible());
+            QVERIFY(!summaryTime->isVisible());
             QVERIFY(navigationPositionDetail);
             QVERIFY(navigationVelocityDetail);
             QVERIFY(navigationHeadingDetail);
@@ -628,9 +636,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             page->setWidth(1400);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroFlight->width() < heroRcInput->width(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroRcInput->width() < heroNavigation->width(), 3000);
@@ -643,6 +652,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightPriorityItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
@@ -661,6 +671,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
@@ -669,6 +680,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
@@ -679,6 +691,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).y() >=
@@ -2281,6 +2294,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_VERIFY_WITH_TIMEOUT(tabIcon->width() >= 18 && tabIcon->height() >= 18, 3000);
                 QVERIFY(_clickItemAt(tab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_%1").arg(index)));
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), index, 3000);
+                if (index == 0) {
+                    QTRY_VERIFY_WITH_TIMEOUT(metricPosition->isVisible() && metricVelocity->isVisible() &&
+                                             metricHeading->isVisible(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(!summaryOperation->isVisible() &&
+                                             !summaryNavigation->isVisible() && !summaryLink->isVisible(), 3000);
+                } else {
+                    QTRY_VERIFY_WITH_TIMEOUT(!metricPosition->isVisible() && !metricVelocity->isVisible() &&
+                                             !metricHeading->isVisible(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(summaryOperation->isVisible() &&
+                                             summaryNavigation->isVisible() && summaryLink->isVisible(), 3000);
+                }
                 QTRY_COMPARE_WITH_TIMEOUT(tab->property("color").value<QColor>(), QColor("#07545E"), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(title->property("text").toString(), titles[index], 3000);
                 QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[index], 3000);
