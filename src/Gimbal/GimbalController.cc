@@ -554,8 +554,9 @@ void GimbalController::sendPitchBodyYaw(float pitch, float yaw, bool showError)
     }
 
     _rateSenderTimer.stop();
-    _activeGimbal->setAbsolutePitch(0.0f);
+    _activeGimbal->setPitchRate(0.0f);
     _activeGimbal->setYawRate(0.0f);
+    _activeGimbal->setAbsolutePitch(0.0f);
 
     // qCDebug(GimbalControllerLog) << "sendPitch: " << pitch << " BodyYaw: " << yaw;
 
@@ -588,8 +589,9 @@ void GimbalController::sendPitchAbsoluteYaw(float pitch, float yaw, bool showErr
     }
 
     _rateSenderTimer.stop();
-    _activeGimbal->setAbsolutePitch(0.0f);
+    _activeGimbal->setPitchRate(0.0f);
     _activeGimbal->setYawRate(0.0f);
+    _activeGimbal->setAbsolutePitch(0.0f);
 
     if (yaw > 180.0f) {
         yaw -= 360.0f;
@@ -653,7 +655,14 @@ void GimbalController::sendRate()
     const float yawRate = _activeGimbal->supportsYawAxis() ? _activeGimbal->yawRate() : 0.0f;
     _sendGimbalAttitudeRates(pitchRate, yawRate);
 
-    // Stop timeout if both unset.
+    if (!_activeGimbal->supportsPitchAxis()) {
+        _activeGimbal->setPitchRate(0.0f);
+    }
+    if (!_activeGimbal->supportsYawAxis()) {
+        _activeGimbal->setYawRate(0.0f);
+    }
+
+    // Stop timeout if both supported axes are unset.
     if (pitchRate == 0.f && yawRate == 0.f) {
         _rateSenderTimer.stop();
     } else {
@@ -703,7 +712,7 @@ void GimbalController::_sendGimbalAttitudeRates(float pitch_rate_deg_s,
         GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME;   // use vehicle/body frame
 
     // Preserve current yaw-lock state instead of changing it:
-    if (_activeGimbal->yawLock()) {
+    if (_activeGimbal->supportsYawAxis() && _activeGimbal->yawLock()) {
         flags |= GIMBAL_MANAGER_FLAGS_YAW_LOCK;
     }
 
@@ -759,6 +768,9 @@ void GimbalController::sendPitchYawFlags(uint32_t flags)
         qCDebug(GimbalControllerLog) << "sendPitchYawFlags: link, telemetry, or ownership is not ready, refusing command";
         return;
     }
+    _rateSenderTimer.stop();
+    _activeGimbal->setPitchRate(0.0f);
+    _activeGimbal->setYawRate(0.0f);
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
     const float pitchTarget = _activeGimbal->supportsPitchAxis()
                                   ? _activeGimbal->absolutePitch()->rawValue().toFloat() : NAN;
