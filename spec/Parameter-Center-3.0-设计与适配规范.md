@@ -559,8 +559,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、参数详情面板展示、依赖与规则空态、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、真实 dependencies/validationRules、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
-- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、PARAM_VALUE 确认值与请求目标值二次核对、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（schema v2 机型适用性、控制律、tuningPolicy/updatePolicy、sourceFile/sourcePath/sourceKind 参数溯源、参数详情面板展示、依赖与规则空态、依赖引用完整性校验、六类 validationRules 严格 schema 校验、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、经固件源确认的实际 dependencies/validationRules 声明、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、参数依赖可用性门控、GREATER_THAN / GREATER_THAN_OR_EQUAL / LESS_THAN / LESS_THAN_OR_EQUAL / MULTIPLE_OF / REQUIRES_PARAMETER_VALUE 六类元数据规则运行时校验、PARAM_VALUE 确认值与请求目标值二次核对、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控、来源路径显示和策略显示已接入；当前参数源未声明实际依赖/组合规则，实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：PARTIAL（已接入 1280/900 px 响应式断点、紧凑屏参数域选择器、上/下层卡片重排、纵向滚动、状态栏重排，以及 safe mode 参数表工具栏/列宽适配；截图叠加、DPI、Windows 构建、QML/单元测试与 CI 仍 NOT_RUN）。
 
