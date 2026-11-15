@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.1
+- 版本：6.2
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；总览总控、飞行健康、导航时序、遥控与链路四页适配已完成；本轮统一总览复合面板状态语义并补强拓扑 freshness 回归；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；导航时序页已补充 FCU UTC 绝对时间、有效性门控与状态颜色；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -616,3 +616,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - UI Integration 使用 MockLink 发送 FCU_TIME_STATUS，验证 UTC 时间格式、微秒保留、无效时隐藏时间、恢复有效后重新显示，以及时间趋势有效/断点/恢复闭环。
 - 仅修改地面站 QML 展示、UI Integration 回归断言与 SPEC；不修改 FCU_TIME_STATUS 协议、FactGroup 解码、时间服务、飞控时间纪律算法或控制权限。
 - 按用户要求本轮不运行、不触发 CI；新增回归断言保留到集中 CI 执行，未执行前状态为 NOT_RUN。
+
+
+## 33. Phase 2.6 UTC 有效性状态颜色与 freshness 语义统一（2026-11-15）
+
+- 导航时序主面板、跨域状态校验和时间同步明细卡统一使用 UTC 有效性文案与颜色：time family 已接收且 utc_valid=true 为绿色；utc_valid=false 为红色；time family 超时为琥珀色；等待/未上报为中性灰。
+- UTC 有效性文字和 UTC 绝对时间均服从 time family freshness，不再在 time 消息超时后显示旧的“UTC 有效”布尔值或旧时间戳。
+- UTC 不确定度与 UTC 时间戳采用同一状态颜色门控，避免 time family 新鲜但 UTC 无效时仍显示绿色。
+- UI Integration 验证 UTC 有效、无效、恢复三态的文字和颜色，并继续验证 UTC 绝对时间与时间趋势断点。
+- 仅修改 GroundControl 展示层、UI Integration 断言与 SPEC，不修改协议、FactGroup、时间服务或飞控逻辑；本轮 CI 仍后置集中执行。

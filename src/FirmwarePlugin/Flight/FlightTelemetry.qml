@@ -141,17 +141,28 @@ SetupPage {
                ? _enum("rcLinkState", [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("降级"), qsTr("丢失"), qsTr("恢复中")])
                : _familyStatus("rcInputAvailable")
     }
-    function _utcUncertaintyText() {
-        if (_familyStatus("timeAvailable") !== qsTr("已接收")) return _familyStatus("timeAvailable")
-        if (_fact("utcValid") === null) return qsTr("未上报")
-        return _fact("utcValid") ? _number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
-    }
-    function _utcTimestampText() {
+    function _utcValidityText() {
         const familyStatus = _familyStatus("timeAvailable")
         if (familyStatus !== qsTr("已接收")) return familyStatus
         const utcValid = _fact("utcValid")
         if (utcValid === null || utcValid === undefined) return qsTr("未上报")
-        if (utcValid !== true && Number(utcValid) !== 1) return qsTr("无效")
+        return utcValid === true || Number(utcValid) === 1 ? qsTr("是") : qsTr("否")
+    }
+    function _utcValidityColor() {
+        const validity = _utcValidityText()
+        if (validity === qsTr("是")) return "#45D39A"
+        if (validity === qsTr("否")) return "#F06464"
+        if (validity === qsTr("数据超时")) return "#F0B94B"
+        return "#8A9A94"
+    }
+    function _utcUncertaintyText() {
+        const validity = _utcValidityText()
+        if (validity !== qsTr("是")) return validity === qsTr("否") ? qsTr("无效") : validity
+        return _number("utcUncertaintyUs", 0, " μs")
+    }
+    function _utcTimestampText() {
+        const validity = _utcValidityText()
+        if (validity !== qsTr("是")) return validity === qsTr("否") ? qsTr("无效") : validity
 
         const raw = _fact("timeStatusUnixTimeUs")
         if (raw === null || raw === undefined || raw === "") return qsTr("未上报")
@@ -2094,13 +2105,23 @@ SetupPage {
                     statusFamily: "timeAvailable"
                     TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
-                    TelemetryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : root._fact("utcValid") ? qsTr("是") : qsTr("否") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_navigationUtcValidity"
+                        labelText: qsTr("UTC 有效")
+                        valueText: root._utcValidityText()
+                        valueColor: root._utcValidityColor()
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_navigationUtcTimestamp"
                         labelText: qsTr("FCU UTC 时间")
                         valueText: root._utcTimestampText()
+                        valueColor: root._utcValidityColor()
                     }
-                    TelemetryRow { labelText: qsTr("UTC 不确定度"); valueText: root._utcUncertaintyText() }
+                    TelemetryRow {
+                        labelText: qsTr("UTC 不确定度")
+                        valueText: root._utcUncertaintyText()
+                        valueColor: root._utcValidityColor()
+                    }
                     TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
                     TelemetryRow { labelText: qsTr("时钟源映射代次"); valueText: root._integer("sourceMappingEpoch") }
@@ -2141,12 +2162,12 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("垂直速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity) }
                     TelemetryRow { labelText: qsTr("航向能力"); valueText: root._navigationMetricStatus(root._navCapabilityHeading) }
                     TelemetryRow {
+                        objectName: "flightTelemetry_navigationUtcValidityCheck"
                         labelText: qsTr("UTC 状态")
-                        valueText: root._familyStatus("timeAvailable") !== qsTr("已接收")
-                                   ? root._familyStatus("timeAvailable")
-                                   : root._fact("utcValid") === null ? qsTr("未上报")
-                                     : root._fact("utcValid") ? qsTr("有效") : qsTr("无效")
-                        valueColor: root._familyStatusColor("timeAvailable")
+                        valueText: root._utcValidityText() === qsTr("是") ? qsTr("有效")
+                                   : root._utcValidityText() === qsTr("否") ? qsTr("无效")
+                                   : root._utcValidityText()
+                        valueColor: root._utcValidityColor()
                     }
                 }
             }
@@ -2932,17 +2953,22 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                     TelemetryRow { labelText: qsTr("时间质量"); valueText: root._enum("timeQuality", [qsTr("仅本地时钟"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
                     TelemetryRow { labelText: qsTr("本地时钟纪律"); valueText: root._enum("timeDisciplineState", [qsTr("正常"), qsTr("同步中"), qsTr("锁定"), qsTr("保持"), qsTr("降级"), qsTr("无效")]) }
-                    TelemetryRow { labelText: qsTr("UTC 有效"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : (root._fact("utcValid") ? qsTr("是") : qsTr("否")) }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeUtcValidity"
+                        labelText: qsTr("UTC 有效")
+                        valueText: root._utcValidityText()
+                        valueColor: root._utcValidityColor()
+                    }
                     TelemetryRow {
                         objectName: "flightTelemetry_timeUtcTimestamp"
                         labelText: qsTr("FCU UTC 时间")
                         valueText: root._utcTimestampText()
+                        valueColor: root._utcValidityColor()
                     }
                     TelemetryRow {
                         labelText: qsTr("UTC 不确定度")
-                        valueText: root._fact("utcValid") === null ? qsTr("未上报")
-                                   : root._fact("utcValid")
-                                     ? root._number("utcUncertaintyUs", 0, " μs") : qsTr("无效")
+                        valueText: root._utcUncertaintyText()
+                        valueColor: root._utcValidityColor()
                     }
                     TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
