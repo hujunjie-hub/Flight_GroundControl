@@ -822,14 +822,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 4, 3000);
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000));
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000));
+            QQuickItem* maintenanceContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceContent"), 3000);
+            QVERIFY(maintenanceContent);
+            QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
             const int widths[] = {1000, 700};
             const int expectedColumns[] = {6, 1};
             const int expectedHealthMatrixColumns[] = {2, 1};
+            const int expectedMaintenanceColumns[] = {2, 1};
             for (int widthIndex = 0; widthIndex < 2; ++widthIndex) {
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
                 for (int pageIndex = 2; pageIndex <= 3; ++pageIndex) {
                     QQuickItem* tab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_%1").arg(pageIndex), 3000);
                     QVERIFY(tab);
