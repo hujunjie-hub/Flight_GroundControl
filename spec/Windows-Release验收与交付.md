@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.76
+版本：4.77
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -721,3 +721,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 传感器实例、逐项预检、任务资源卡片的外层高度必须包含内容 implicitHeight 与两倍 ScreenTools 缩放内边距；禁止固定像素补偿造成高 DPI 裁切。
 - UI Integration 使用内容容器 objectName 检查实际高度与上下内边距，并在 1600/1000/900/760/759/700/400 px 全断点验证。
 - 新增断言尚未运行；按用户要求 CI/Unit/Integration/Windows Release 继续 NOT_RUN，待集中验收。
+
+
+### G15 总览告警严重度分布实时摘要（2026-11-15）
+
+- 使用完整当前 recentEvents 缓存统计严重、错误、警告、信息、未知五类事件数量；统计不得只使用优先摘要前 4 条或历史展示最近 8 条。
+- severity=3/2/1/0 分别映射严重/错误/警告/信息；负数、超范围、null、缺失或非整数必须计入未知，不得并入信息或严重。
+- 告警 family 非 fresh 或事件缓存为空时不显示实时分布；首条 fresh FCU_EVENT 到达后显示并更新对应类别数量。
+- MockLink UI Integration 覆盖单事件、五条混合严重度事件、未知字段计数和 700/400 px 五个 chip 的父子边界。
+- 本轮按用户要求不运行 CI、Unit、Integration、Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 完整回归。
