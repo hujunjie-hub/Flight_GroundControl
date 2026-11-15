@@ -1273,6 +1273,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const uint8_t componentId = static_cast<uint8_t>(vehicle->compId());
             constexpr uint64_t bootId = 0x1122334455667788ULL;
             constexpr uint32_t profileId = 0x00010001U;
+            const QString waitingText = translatedTelemetryText("等待遥测");
+            const QString receivedText = translatedTelemetryText("已接收");
+            const QString staleText = translatedTelemetryText("数据超时");
 
             auto sendSensorHealthStatus = [&](uint64_t timeBootUs, uint32_t sensorInstanceId,
                                                uint16_t healthState, uint32_t reasonCode) {
@@ -1342,6 +1345,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(tabs);
             QVERIFY(title);
             QVERIFY(dashboardGrid);
+            QVERIFY(diagnosticDetailsTitle);
+            QVERIFY(summaryOperation);
+            QVERIFY(summaryNavigation);
+            QVERIFY(summaryLink);
+            QVERIFY(storageFreeRow);
+            QVERIFY(storageSdState);
+            QVERIFY(storageNorState);
+            const qreal originalPageWidth = page->width();
+            QVERIFY(originalPageWidth > 0);
             const char* diagnosticCards[] = {
                 "flightTelemetry_card_operation",   "flightTelemetry_card_navigation",   "flightTelemetry_card_sensors",
                 "flightTelemetry_card_control",     "flightTelemetry_card_actuator",     "flightTelemetry_card_links",
@@ -1362,6 +1374,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             page->setWidth(1600);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("spacing").toInt(), 12, 3000);
             QQuickItem* summaryBand = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
+            QQuickItem* diagnosticDetailsTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
+            QQuickItem* summaryOperation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryOperation"), 3000);
+            QQuickItem* summaryNavigation =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryNavigation"), 3000);
+            QQuickItem* summaryLink =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryLink"), 3000);
+            QQuickItem* storageFreeRow = findItem(_rootItem, QStringLiteral("flightTelemetry_storageFreeKib"));
+            QQuickItem* storageSdState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageSdState"));
+            QQuickItem* storageNorState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageNorState"));
             QQuickItem* overviewFlight = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
             QQuickItem* overviewNavigation = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* overviewRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
