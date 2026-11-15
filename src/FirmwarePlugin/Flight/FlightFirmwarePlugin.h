@@ -4,6 +4,8 @@
 #include "QGCMAVLink.h"
 #include "FlightTelemetryFactGroup.h"
 
+class QJsonObject;
+
 /// Flight (FMT QUAD_X4) firmware plugin.
 ///
 /// The vehicle reports MAV_AUTOPILOT_GENERIC, but its custom_mode follows the
@@ -73,4 +75,9 @@ protected:
     QString _internalParameterMetaDataFile(const Vehicle *vehicle) const override;
     MAV_AUTOPILOT _autopilotType() const override { return MAV_AUTOPILOT_GENERIC; }
     ParameterMetaData *_createParameterMetaData() override;
+
+private:
+    friend class FlightFirmwarePluginTest;
+    static QVariantList _validatedVehicleModelProfiles(const QJsonObject &catalog,
+                                                        const QJsonObject &parameterMetadata);
 };
