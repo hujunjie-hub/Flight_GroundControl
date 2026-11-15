@@ -508,7 +508,10 @@
         "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens",
         "health_maintenance_sections_render_as_three_dpi_scaled_cards",
         "health_maintenance_card_content_respects_scaled_insets_and_implicit_height",
-        "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths"
+        "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths",
+        "health_maintenance_resource_metrics_use_four_consistent_scaled_tiles",
+        "health_maintenance_metric_tiles_preserve_value_text_freshness_and_color",
+        "health_maintenance_metric_tile_content_fits_at_all_responsive_widths"
       ]
     },
     {
@@ -934,7 +937,10 @@
     "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths",
     "dashboard_header_accent_read_only_badge_padding_and_status_dot_scale_with_screen_tools",
     "dashboard_tabs_scale_height_icon_radius_and_active_indicator_at_100_150_200_percent_ui_scale",
-    "overview_header_tabs_read_only_badge_and_hero_frame_fit_parent_bounds_at_100_150_200_percent_ui_scale"
+    "overview_header_tabs_read_only_badge_and_hero_frame_fit_parent_bounds_at_100_150_200_percent_ui_scale",
+    "health_maintenance_resource_metrics_use_four_consistent_scaled_tiles",
+    "health_maintenance_metric_tiles_preserve_value_text_freshness_and_color",
+    "health_maintenance_metric_tile_content_fits_at_all_responsive_widths"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
