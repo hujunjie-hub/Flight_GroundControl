@@ -272,7 +272,11 @@
         "RC_link_trends_require_link_family_freshness_and_field_validity_masks",
         "per_link_trend_samples_are_rejected_when_instance_receive_age_is_stale",
         "health_trend_samples_are_rejected_when_resource_task_zero_instance_is_stale_or_invalid",
-        "health_maintenance_content_reflows_3_2_1_1_at_1600_1000_700_400_px_without_horizontal_overflow"
+        "health_maintenance_content_reflows_3_2_1_1_at_1600_1000_700_400_px_without_horizontal_overflow",
+        "flight_config_toolbar_uses_56_px_reference_height_brand_lockup_and_dark_teal_skin_without_changing_real_status_actions",
+        "flight_config_sidebar_uses_160_px_reference_width_and_dark_teal_selection_style_without_dead_navigation_entries",
+        "six_summary_kpis_render_in_one_continuous_bordered_band_with_responsive_6_3_2_1_columns",
+        "summary_band_grid_and_all_six_kpi_contents_fit_at_1600_1000_700_400_px"
       ]
     },
     {
@@ -368,7 +372,7 @@
     "unavailable_altitude_hold_mode_is_visible_but_disabled",
     "indicator_expand_button_appears_after_page_expand_capability_is_loaded"
   ],
-  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13. Flight radio transmitter visualization acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio dual-gimbal live-monitor acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio acceptance explicitly exercises Mode 1, Mode 2 and Mode 3 with two distinct RC_CHANNELS frames, centre return and per-stick invalid-channel handling. The invalid-axis UI test respects Vehicle::_handleRCChannels contiguous-channel publication: Mode 1 publishes only CH1-CH3 so left CH4 is unavailable while right CH1/CH3 remain valid.",
+  "spec_sync_policy": "Every current-state claim must identify an exact source HEAD and workflow run. Historical diagnostic evidence remains immutable and must not be promoted to current-main verification. Flight diagnostics dashboard acceptance is defined in spec/Flight-Diagnostics-大屏设计规范.md and enforced by G13. Flight radio transmitter visualization acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio dual-gimbal live-monitor acceptance is defined in spec/Flight-Radio-可视化设计规范.md and enforced by G14. Flight radio acceptance explicitly exercises Mode 1, Mode 2 and Mode 3 with two distinct RC_CHANNELS frames, centre return and per-stick invalid-channel handling. The invalid-axis UI test respects Vehicle::_handleRCChannels contiguous-channel publication: Mode 1 publishes only CH1-CH3 so left CH4 is unavailable while right CH1/CH3 remain valid. The 2026-11-15 visual shell/KPI increment requires the Flight toolbar/sidebar skin and continuous KPI band to pass G15 before FGC-0044 can be closed.",
   "flight_telemetry_dashboard_ui_matrix": [
     "dashboard_header_and_read_only_indicator_render",
     "telemetry_summary_shows_waiting_without_fcu_frames",
@@ -410,7 +414,11 @@
     "page_specific_trend_series_switch_and_create_gaps_for_invalid_samples",
     "four_page_responsive_layouts_use_12_6_1_columns_and_health_matrix_4_2_1_columns",
     "health_trend_series_use_resource_cpu_wcet_stack_storage_with_instance_freshness_and_validity_gates",
-    "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards"
+    "health_maintenance_content_uses_3_2_1_columns_and_keeps_all_text_inside_cards",
+    "flight_config_toolbar_brand_and_real_status_indicators_use_reference_dark_teal_skin",
+    "flight_config_sidebar_uses_reference_width_without_replacing_real_component_navigation",
+    "six_summary_kpis_render_inside_one_continuous_band_with_desktop_dividers",
+    "summary_band_and_kpi_content_fit_all_responsive_breakpoints"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

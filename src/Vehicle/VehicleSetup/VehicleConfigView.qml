@@ -9,7 +9,7 @@ import QGroundControl.Controls
 Rectangle {
     id:             vehicleConfigView
     objectName:     "vehicleConfig_root"
-    color:          _flightLayout ? "#141c1a" : qgcPal.window
+    color:          _flightLayout ? "#031A20" : qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
     // This need to block click event leakage to underlying map.
@@ -426,21 +426,21 @@ Rectangle {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: leftPanel.x + leftPanel.width + 4
-        color: "#253330"
+        color: _flightLayout ? "#061F27" : "#253330"
         visible: _flightLayout
     }
 
     ColumnLayout {
         id:                 leftPanel
-        width:              _flightLayout ? Math.max(102, _defaultTextWidth * 12) :
+        width:              _flightLayout ? 160 :
                                 Math.max(buttonColumn.implicitWidth + _horizontalMargin, _defaultTextWidth * 22)
-        anchors.topMargin:  _flightLayout ? 8 : _verticalMargin
+        anchors.topMargin:  _flightLayout ? 18 : _verticalMargin
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
-        anchors.leftMargin: _flightLayout ? 4 : _horizontalMargin
+        anchors.leftMargin: _flightLayout ? 8 : _horizontalMargin
         anchors.left:       parent.left
         anchors.bottomMargin: _flightLayout ? 7 : 0
-        spacing:            _verticalMargin / 2
+        spacing:            _flightLayout ? 8 : _verticalMargin / 2
 
         QGCTextField {
             id:                 searchField
@@ -465,10 +465,11 @@ Rectangle {
             ColumnLayout {
                 id:         buttonColumn
                 width:      parent.width
-                spacing:    _flightLayout ? 5 : 0
+                spacing:    _flightLayout ? 7 : 0
 
                 // Summary button
                 ConfigButton {
+                    flightStyle: _flightLayout
                     id:                 summaryButton
                     objectName:         "vehicleConfig_summary"
                     icon.source:        "/qmlimages/VehicleSummaryIcon.png"
@@ -513,6 +514,7 @@ Rectangle {
                         visible: vehicleConfigView._componentVisible(comp)
 
                         ConfigButton {
+                            flightStyle: _flightLayout
                             Layout.fillWidth:   true
                             objectName:         "vehicleConfig_comp_" + compColumn.compName.replace(/ /g, "")
                             icon.source:        compColumn.comp ? compColumn.comp.iconResource : ""
@@ -551,8 +553,8 @@ Rectangle {
                                 id:             sectionBtn
                                 objectName:     "vehicleConfig_section_" + modelData.replace(/ /g, "")
                                 Layout.fillWidth: true
-                                padding:        ScreenTools.defaultFontPixelWidth * 0.75
-                                leftPadding:    ScreenTools.defaultFontPixelWidth * 3
+                                padding:        _flightLayout ? 8 : ScreenTools.defaultFontPixelWidth * 0.75
+                                leftPadding:    _flightLayout ? 28 : ScreenTools.defaultFontPixelWidth * 3
                                 hoverEnabled:   !ScreenTools.isMobile
 
                                 property int sectionIndex: index
@@ -579,13 +581,24 @@ Rectangle {
                                     if (typeof panelLoader.item.sectionVisible !== "function") return true
                                     return panelLoader.item.sectionVisible(modelData)
                                 }
-                                property color textColor: sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                property color textColor: _flightLayout
+                                                          ? (sectionChecked || pressed ? "#F0FFFF" : "#BBD4DA")
+                                                          : (sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText)
                                 visible: sectionMatchesSearch && sectionContentVisible
 
                                 background: Rectangle {
-                                    color:   qgcPal.buttonHighlight
-                                    opacity: sectionBtn.sectionChecked || sectionBtn.pressed ? 1 : sectionBtn.enabled && sectionBtn.hovered ? 0.2 : 0
-                                    radius:  ScreenTools.defaultFontPixelWidth / 2
+                                    color: _flightLayout
+                                           ? (sectionBtn.sectionChecked || sectionBtn.pressed ? "#07545E"
+                                              : sectionBtn.hovered ? "#0B343D" : "#08262E")
+                                           : qgcPal.buttonHighlight
+                                    opacity: _flightLayout ? 1
+                                             : sectionBtn.sectionChecked || sectionBtn.pressed ? 1
+                                             : sectionBtn.enabled && sectionBtn.hovered ? 0.2 : 0
+                                    radius: _flightLayout ? 5 : ScreenTools.defaultFontPixelWidth / 2
+                                    border.width: _flightLayout ? 1 : 0
+                                    border.color: _flightLayout
+                                                  ? (sectionBtn.sectionChecked ? "#18DAD4" : "#124E58")
+                                                  : "transparent"
                                 }
 
                                 contentItem: RowLayout {
@@ -618,6 +631,7 @@ Rectangle {
 
                 // Optical Flow (special)
                 ConfigButton {
+                    flightStyle: _flightLayout
                     id:                 opticalFlowButton
                     visible:            _activeVehicle ? _activeVehicle.flowImageIndex > 0 : false
                     text:               qsTr("Optical Flow")
@@ -633,6 +647,7 @@ Rectangle {
                 }
 
                 ConfigButton {
+                    flightStyle: _flightLayout
                     id:                 parametersButton
                     objectName:         "vehicleConfig_parametersButton"
                     // Without a vehicle there is no parameter set to show; advertising the page
@@ -646,6 +661,7 @@ Rectangle {
                 }
 
                 ConfigButton {
+                    flightStyle: _flightLayout
                     id:                 firmwareButton
                     objectName:         "vehicleConfig_firmwareButton"
                     icon.source:        "/qmlimages/FirmwareUpgradeIcon.png"
@@ -662,6 +678,7 @@ Rectangle {
                 }
 
                 ConfigButton {
+                    flightStyle: _flightLayout
                     id:                 flightFirmwareButton
                     objectName:         "vehicleConfig_flightFirmwareButton"
                     icon.source:        "/qmlimages/FirmwareUpgradeIcon.png"

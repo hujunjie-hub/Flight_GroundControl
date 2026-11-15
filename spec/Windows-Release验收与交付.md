@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：2.2  
+版本：2.3  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -33,7 +33,7 @@
 | G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
 | G13 | 飞控诊断大屏 UI（Phase 1） | FlightTelemetryPageUITest、JUnit、页面布局断言 | 标题/摘要/卡片结构存在；12/6/1 列断点正确；UNKNOWN/INVALID/STALE/RECOVERY 语义正确；只读边界保持 |
 | G14 | 遥控器双摇杆 UI | FlightRadioPageUITest、JUnit、MockLink RC_CHANNELS wire-path | Mode 1/2/3 通道映射、PWM/指示点和第二帧实时跟随正确；CH1–CH3 时左摇杆隐藏且校准禁用；恢复至少 4 路连续通道后校准重新启用；不触发校准或飞控命令 |
-| G15 | 飞控诊断指挥中心（Phase 2.4 四参考页） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | 四个页签实际切换独立内容；总览/健康/导航时序/遥控链路四页存在；健康页 13 类矩阵 4/2/1/1 列、13 个单元边界无溢出，维护横条 3/2/1/1 列，且无综合健康分，底部 CPU/WCET/栈/存储趋势使用真实资源实例并校验实例年龄与 validity mask；导航页 capability bit2/3/5+6 与 UTC 有效性门控；RC 双摇杆沿用 FlightRadio Mode1/2/3 映射，Mode 2 marker 位置与四轴读数一致，mask 清除时对应 marker 隐藏；链路 RSSI/质量/丢包同时满足 family freshness、实例 receiveAgeMs 和 validity mask；趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；不虚构卫星/HDOP/CH5–CH8/SNR/RTT；原 14 张卡片保留；只读 |
+| G15 | 飞控诊断指挥中心（Phase 2.4 四参考页） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带容器与网格边界通过；四个页签实际切换独立内容；总览/健康/导航时序/遥控链路四页存在；健康页 13 类矩阵 4/2/1/1 列、13 个单元边界无溢出，维护横条 3/2/1/1 列，且无综合健康分，底部 CPU/WCET/栈/存储趋势使用真实资源实例并校验实例年龄与 validity mask；导航页 capability bit2/3/5+6 与 UTC 有效性门控；RC 双摇杆沿用 FlightRadio Mode1/2/3 映射，Mode 2 marker 位置与四轴读数一致，mask 清除时对应 marker 隐藏；链路 RSSI/质量/丢包同时满足 family freshness、实例 receiveAgeMs 和 validity mask；趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；不虚构卫星/HDOP/CH5–CH8/SNR/RTT；原 14 张卡片保留；只读 |
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 | G17 | 全项目字体系统与渲染一致性 | qml-typography-check --all、TopLevelViewsTest、JUnit、Windows DPI screenshots | 递归检查全部 src/**/*.qml；除 ScreenTools 兼容别名外无旧字号令牌；无固定 font.pixelSize、硬编码字体族和未登记的局部字号乘数；QGCLabel/共享控件统一字体族、Hinting 与抗锯齿；RadioButton 继承正确字体族；中文界面按平台选择已安装 CJK 字体；100%/125%/150% DPI 视觉证据齐全 |
 
@@ -313,3 +313,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 链路趋势采样必须同时校验 link family freshness、实例 receiveAgeMs 和字段 validity mask；过期实例不得继续显示上次 RSSI/质量/丢包值。
 
 - 健康页趋势必须使用 resource taskId=0 的 CPU/WCET/stack 与 storageFreeKib；resource 实例年龄超时或 validity bit 缺失时形成断点，不得沿用旧值。
+
+
+## 15. 飞控诊断大屏视觉验收补充（2026-11-15）
+
+- 使用 1672×941 原始四张参考图作为唯一视觉基准；不要用构建成功或 MockLink 数据正确替代截图验收。
+- 顶栏 56 px、Flight 左导航 160 px；检查品牌锁定区、真实状态指示器和现有导航入口未发生功能回归。
+- 六项 KPI 必须位于单一连续边框带中，桌面 6 等分；在 1600/1000/700/400 px 检查 6/3/2/1 列、内容边界和窄屏说明。
+- 运行截图需分别保存四页，按相同分辨率进行 50% 叠加/差异检查；100/125/150% DPI 另行检查字体、卡片高度和裁切。
+- 只有 exact-HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 通过且本地视觉签收完成，FGC-0044 才可关闭。

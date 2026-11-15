@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 3.4
+- 版本 3.5
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -131,3 +131,10 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - FlightRadioPageUITest：测试把 3 路通道场景误当作允许开始校准，已改为验证 8 路可用、3 路禁用。
 - ToolbarIndicatorUITest：APMCopter RemoteID 展开能力未在原 500 ms 内出现；测试改为等待页面 `_showExpand` 能力并输出组件诊断，待新 HEAD 验证是加载时序还是页面能力问题。
 - 本次旧 HEAD 的失败证据保留，不沿用为新 HEAD 结果；所有修复必须在新 HEAD 重新运行完整 Windows Release。
+
+
+## 9. 飞控诊断大屏视觉构建状态
+
+- 设计基准：四张 1672×941 参考图；当前实现位于 `FlightTelemetry.qml`、`FlyViewToolBar.qml`、`VehicleConfigView.qml` 和 `SettingsButton.qml`。
+- 2026-11-15 本轮增量：Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带、深青蓝卡片令牌；导航仍使用真实组件，不添加死链。
+- 视觉验收仍须使用精确 main HEAD 的 Windows Release 二进制，完成 1672×941 截图叠加和 100/125/150% DPI 检查。

@@ -7,12 +7,15 @@ import QGroundControl.Controls
 
 Button {
     id:             control
-    padding:        ScreenTools.defaultFontPixelWidth * 0.75
+    padding:        flightStyle ? 10 : ScreenTools.defaultFontPixelWidth * 0.75
     hoverEnabled:   !ScreenTools.isMobile
     autoExclusive:  true
     icon.color:     textColor
 
-    property color textColor: checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    property bool flightStyle: false
+    property color textColor: flightStyle
+                               ? (checked || pressed ? "#F0FFFF" : "#C2D9DE")
+                               : (checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText)
     property bool expandable: false
     property bool expanded:   false
 
@@ -24,9 +27,13 @@ Button {
     }
 
     background: Rectangle {
-        color:      qgcPal.buttonHighlight
-        opacity:    checked || pressed ? 1 : enabled && hovered ? .2 : 0
-        radius:     ScreenTools.defaultFontPixelWidth / 2
+        color: flightStyle
+               ? (checked || pressed ? "#07545E" : hovered ? "#0B343D" : "#08262E")
+               : qgcPal.buttonHighlight
+        opacity: flightStyle ? 1 : checked || pressed ? 1 : enabled && hovered ? .2 : 0
+        radius: flightStyle ? 5 : ScreenTools.defaultFontPixelWidth / 2
+        border.width: flightStyle ? 1 : 0
+        border.color: flightStyle ? (checked || pressed ? "#18DAD4" : "#124E58") : "transparent"
     }
 
     contentItem: RowLayout {

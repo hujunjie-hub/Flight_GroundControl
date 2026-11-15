@@ -1094,7 +1094,7 @@ SetupPage {
                         Layout.preferredWidth: 5
                         Layout.fillHeight: true
                         radius: 2
-                        color: "#13B9C2"
+                        color: "#16BCC3"
                     }
                     RowLayout {
                         Layout.fillWidth: true
@@ -1150,7 +1150,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#174D59"
+                color: "#0D5560"
             }
 
 
@@ -1170,9 +1170,9 @@ SetupPage {
                         Layout.fillWidth: true
                         implicitHeight: 46
                         radius: 5
-                        color: root._activeDashboardPage === index ? "#075A63" : "#0B252E"
+                        color: root._activeDashboardPage === index ? "#07545E" : "#0B252E"
                         border.width: 1
-                        border.color: root._activeDashboardPage === index ? "#20D7D8" : "#175665"
+                        border.color: root._activeDashboardPage === index ? "#18DAD4" : "#0D5964"
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
@@ -1209,18 +1209,30 @@ SetupPage {
                     }
                 }
             }
-            GridLayout {
-                objectName: "flightTelemetry_summaryGrid"
+            Rectangle {
+                objectName: "flightTelemetry_summaryBand"
                 Layout.fillWidth: true
-                columns: root._summaryColumns
-                columnSpacing: 10
-                rowSpacing: 10
-                SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0) }
-                SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1) }
-                SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2) }
-                SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3) }
-                SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4) }
-                SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5) }
+                implicitHeight: summaryGrid.implicitHeight + 2
+                radius: 6
+                color: "#06232B"
+                border.width: 1
+                border.color: "#0B6873"
+
+                GridLayout {
+                    id: summaryGrid
+                    objectName: "flightTelemetry_summaryGrid"
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    columns: root._summaryColumns
+                    columnSpacing: 0
+                    rowSpacing: 0
+                    SummaryTile { objectName: "flightTelemetry_summaryTelemetry"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(0); valueText: root._summaryTileValue(0); detailText: root._summaryTileDetail(0); accentColor: root._summaryTileColor(0); iconText: "◉"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryOperation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(1); valueText: root._summaryTileValue(1); detailText: root._summaryTileDetail(1); accentColor: root._summaryTileColor(1); iconText: "◈"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryFailsafe"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(2); valueText: root._summaryTileValue(2); detailText: root._summaryTileDetail(2); accentColor: root._summaryTileColor(2); iconText: "⛨"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryNavigation"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(3); valueText: root._summaryTileValue(3); detailText: root._summaryTileDetail(3); accentColor: root._summaryTileColor(3); iconText: "◎"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryLink"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(4); valueText: root._summaryTileValue(4); detailText: root._summaryTileDetail(4); accentColor: root._summaryTileColor(4); iconText: "⌁"; showDivider: true }
+                    SummaryTile { objectName: "flightTelemetry_summaryTime"; Layout.fillWidth: true; Layout.fillHeight: true; titleText: root._summaryTileTitle(5); valueText: root._summaryTileValue(5); detailText: root._summaryTileDetail(5); accentColor: root._summaryTileColor(5); iconText: "◷"; showDivider: false }
+                }
             }
 
             GridLayout {
@@ -1263,7 +1275,7 @@ SetupPage {
                         Rectangle {
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
-                            color: "#0B303A"
+                            color: "#082E36"
                             border.color: "#1C6B7A"
                             implicitWidth: armStateText.implicitWidth + 22
                             implicitHeight: armStateText.implicitHeight + 16
@@ -1283,7 +1295,7 @@ SetupPage {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: "#16424F"
+                        color: "#104B55"
                     }
 
                     GridLayout {
@@ -1452,7 +1464,7 @@ SetupPage {
                                 Layout.fillWidth: true
                                 implicitHeight: 34
                                 radius: 5
-                                color: "#0B303A"
+                                color: "#082E36"
                                 border.width: 1
                                 border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.42)
                                 RowLayout {
@@ -1600,7 +1612,7 @@ SetupPage {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
-                        color: "#174D59"
+                        color: "#0D5560"
                     }
 
 
@@ -1739,9 +1751,9 @@ SetupPage {
                 Layout.fillWidth: true
                 implicitHeight: maintenanceRow.implicitHeight + 18
                 radius: 8
-                color: "#0A222B"
+                color: "#06232B"
                 border.width: 1
-                border.color: "#1B6675"
+                border.color: "#0B6873"
                 GridLayout {
                     id: maintenanceRow
                     objectName: "flightTelemetry_healthMaintenanceContent"
@@ -1870,8 +1882,8 @@ SetupPage {
                                 Layout.fillWidth: true
                                 implicitHeight: 28
                                 radius: 4
-                                color: stickSettings.mode === index + 1 ? "#075A63" : "#0A2831"
-                                border.color: stickSettings.mode === index + 1 ? "#20D7D8" : "#175665"
+                                color: stickSettings.mode === index + 1 ? "#07545E" : "#0A2831"
+                                border.color: stickSettings.mode === index + 1 ? "#18DAD4" : "#0D5964"
                                 QGCLabel { anchors.centerIn: parent; text: modelData; color: stickSettings.mode === index + 1 ? "#EFFFFF" : "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: stickSettings.mode = index + 1 }
                             }
@@ -1939,7 +1951,7 @@ SetupPage {
                                 color: "#8298A2"
                                 font.pointSize: ScreenTools.microFontPointSize
                             }
-                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#16424F" }
+                            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#104B55" }
                         }
                     }
                 }
@@ -2636,11 +2648,11 @@ SetupPage {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
         implicitWidth: 300
-        implicitHeight: heroColumn.implicitHeight + 26
-        radius: 10
-        color: "#0A222B"
+        implicitHeight: heroColumn.implicitHeight + 22
+        radius: 6
+        color: "#06232B"
         border.width: 1
-        border.color: "#1B6675"
+        border.color: "#0B6873"
 
         Rectangle {
             width: 3
@@ -2655,8 +2667,8 @@ SetupPage {
         ColumnLayout {
             id: heroColumn
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 8
+            anchors.margins: 10
+            spacing: 7
 
             RowLayout {
                 Layout.fillWidth: true
@@ -2699,7 +2711,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#16424F"
+                color: "#104B55"
             }
 
             ColumnLayout {
@@ -2799,8 +2811,8 @@ SetupPage {
             Layout.fillWidth: true
             Layout.preferredHeight: 9
             radius: 5
-            color: "#0A2831"
-            border.color: "#1B6573"
+            color: "#05232B"
+            border.color: "#0B6873"
             clip: true
 
             Rectangle {
@@ -2841,9 +2853,9 @@ SetupPage {
         implicitWidth: 140
         implicitHeight: 174
         radius: 6
-        color: "#0B303A"
+        color: "#082E36"
         border.width: 1
-        border.color: "#1B6675"
+        border.color: "#0B6873"
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 7
@@ -2858,9 +2870,9 @@ SetupPage {
                     height: width
                     anchors.centerIn: parent
                     radius: width / 2
-                    color: "#071E26"
+                    color: "#03171D"
                     border.width: 1
-                    border.color: "#1B7880"
+                    border.color: "#14AEB5"
                     Rectangle { anchors.centerIn: parent; width: parent.width * 0.66; height: parent.height * 0.66; radius: width / 2; color: "transparent"; border.color: "#164C58" }
                     Rectangle { anchors.centerIn: parent; width: parent.width * 0.34; height: parent.height * 0.34; radius: width / 2; color: "transparent"; border.color: "#164C58" }
                     Rectangle { anchors.horizontalCenter: parent.horizontalCenter; width: 1; height: parent.height - 10; color: "#47727B"; opacity: 0.8 }
@@ -2906,10 +2918,10 @@ SetupPage {
 
         implicitWidth: 150
         implicitHeight: 54
-        radius: 7
-        color: "#0C2932"
+        radius: 5
+        color: "#082B33"
         border.width: 1
-        border.color: "#1B6675"
+        border.color: "#0B6873"
 
         Rectangle {
             width: 3
@@ -2983,10 +2995,10 @@ SetupPage {
         Layout.fillWidth: true
         implicitWidth: 230
         implicitHeight: Math.max(126, trendContent.implicitHeight + 16)
-        radius: 8
-        color: "#0C2932"
+        radius: 6
+        color: "#082B33"
         border.width: 1
-        border.color: "#1B6675"
+        border.color: "#0B6873"
 
         ColumnLayout {
             id: trendContent
@@ -3101,38 +3113,46 @@ SetupPage {
         required property string titleText
         required property string valueText
         property string detailText: ""
+        property string iconText: "◉"
+        property bool showDivider: true
         property color accentColor: "#42CFA8"
 
+        Layout.fillWidth: true
+        Layout.fillHeight: true
         implicitWidth: 180
-        implicitHeight: Math.max(76, summaryContent.implicitHeight + 20)
-        radius: 10
-        color: "#0A222B"
-        border.width: 1
-        border.color: "#1B6675"
+        implicitHeight: root.availableWidth < 760 ? 82 : 66
+        radius: 0
+        color: "transparent"
+        border.width: 0
 
         RowLayout {
             anchors.fill: parent
             anchors.margins: 10
-            spacing: 12
+            spacing: 10
 
-            Rectangle {
-                Layout.preferredWidth: 3
-                Layout.fillHeight: true
-                radius: 2
+            QGCLabel {
+                Layout.preferredWidth: 28
+                Layout.alignment: Qt.AlignVCenter
+                text: tile.iconText
                 color: tile.accentColor
+                font.pointSize: ScreenTools.titleFontPointSize
+                horizontalAlignment: Text.AlignHCenter
             }
 
             ColumnLayout {
                 id: summaryContent
                 objectName: tile.objectName + "_content"
                 Layout.fillWidth: true
-                spacing: 4
+                Layout.fillHeight: true
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 2
 
                 QGCLabel {
                     Layout.fillWidth: true
                     text: tile.titleText
-                    color: "#8A9A94"
-                    font.pointSize: ScreenTools.compactBodyFontPointSize
+                    color: "#B5CBD1"
+                    font.pointSize: ScreenTools.captionFontPointSize
+                    elide: Text.ElideRight
                 }
 
                 QGCLabel {
@@ -3146,12 +3166,24 @@ SetupPage {
 
                 QGCLabel {
                     Layout.fillWidth: true
+                    visible: root.availableWidth < 760 && tile.detailText !== ""
                     text: tile.detailText
-                    color: "#AABAB3"
-                    font.pointSize: ScreenTools.secondaryFontPointSize
-                    wrapMode: Text.WordWrap
+                    color: "#8BAEB7"
+                    font.pointSize: ScreenTools.microFontPointSize
+                    elide: Text.ElideRight
                 }
             }
+        }
+
+        Rectangle {
+            visible: root._summaryColumns === 6 && tile.showDivider
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
+            width: 1
+            color: "#0E5560"
         }
     }
 
@@ -3166,11 +3198,11 @@ SetupPage {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
         implicitWidth: 300
-        implicitHeight: cardColumn.implicitHeight + 28
-        radius: 8
-        color: "#0A222B"
+        implicitHeight: cardColumn.implicitHeight + 24
+        radius: 6
+        color: "#06232B"
         border.width: 1
-        border.color: "#1B6675"
+        border.color: "#0B6873"
 
         Rectangle {
             width: 3
@@ -3185,8 +3217,8 @@ SetupPage {
         ColumnLayout {
             id: cardColumn
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 10
+            anchors.margins: 12
+            spacing: 9
 
             RowLayout {
                 Layout.fillWidth: true
@@ -3249,7 +3281,7 @@ SetupPage {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: "#16424F"
+                color: "#104B55"
             }
 
             ColumnLayout {

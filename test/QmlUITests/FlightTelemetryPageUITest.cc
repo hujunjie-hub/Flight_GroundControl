@@ -76,6 +76,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTabs"), 3000);
             QQuickItem* summaryGrid =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000);
+            QQuickItem* summaryBand =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryBand"), 3000);
             QQuickItem* topologyCanvas =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyCanvas"), 3000);
             QQuickItem* alarmList =
@@ -164,6 +166,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(dashboardHeader);
             QVERIFY(visualTabs);
             QVERIFY(summaryGrid);
+            QVERIFY(summaryBand);
             QVERIFY(topologyCanvas);
             QVERIFY(alarmList);
             QVERIFY(diagnosticDetailsTitle);
@@ -223,6 +226,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             };
 
             const auto summaryTilesFit = [&]() {
+                const QPointF gridTopLeft = summaryGrid->mapToItem(summaryBand, 0, 0);
+                if (gridTopLeft.x() < 0 || gridTopLeft.y() < 0 ||
+                    gridTopLeft.x() + summaryGrid->width() > summaryBand->width() + 1.0 ||
+                    gridTopLeft.y() + summaryGrid->height() > summaryBand->height() + 1.0) {
+                    return false;
+                }
                 QQuickItem* summaryTiles[] = {
                     summaryTelemetry, summaryOperation, summaryFailsafe, summaryNavigation, summaryLink, summaryTime};
                 for (int index = 0; index < 6; ++index) {
@@ -260,6 +269,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
                 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
@@ -282,6 +292,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);

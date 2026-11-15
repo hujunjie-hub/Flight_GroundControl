@@ -412,7 +412,7 @@ ApplicationWindow {
         objectName:     "mainView_toolDrawer"
         anchors.fill:   parent
         visible:        false
-        color:          qgcPal.window
+        color:          flightConfig ? "#031A20" : qgcPal.window
 
         property var backIcon
         property string toolTitle
@@ -438,13 +438,21 @@ ApplicationWindow {
             anchors.left:   parent.left
             anchors.right:  parent.right
             anchors.top:    parent.top
-            height:         toolDrawer.flightConfig && !ScreenTools.isMobile ? 48 : ScreenTools.toolbarHeight
-            color:          toolDrawer.flightConfig ? "#141c1a" : qgcPal.toolbarBackground
+            height:         toolDrawer.flightConfig && !ScreenTools.isMobile ? 56 : ScreenTools.toolbarHeight
+            color:          toolDrawer.flightConfig ? "#031A20" : qgcPal.toolbarBackground
 
             Loader {
                 anchors.fill: parent
                 active: toolDrawer.visible && toolDrawer.flightConfig
                 sourceComponent: FlyViewToolBar { configuring: true }
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: toolDrawer.flightConfig ? "#0B6873" : "transparent"
             }
 
             RowLayout {

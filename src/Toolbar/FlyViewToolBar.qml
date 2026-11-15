@@ -9,13 +9,13 @@ import QGroundControl.Controls
 Item {
     id:     control
     width:  parent.width
-    height: ScreenTools.toolbarHeight
+    height: control.configuring ? 56 : ScreenTools.toolbarHeight
 
     property bool configuring: false
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
-    property color  _mainStatusBGColor: qgcPal.brandingPurple
+    property color  _mainStatusBGColor: control.configuring ? "#063640" : qgcPal.brandingPurple
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
 
     function dropMainStatusIndicatorTool() {
@@ -44,13 +44,13 @@ Item {
                     id:         gradientBackground
                     height:     parent.height
                     width:      mainStatusLayout.width
-                    opacity:    qgcPal.windowTransparent.a
+                    opacity:    control.configuring ? 1 : qgcPal.windowTransparent.a
 
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
                         GradientStop { position: 0; color: _mainStatusBGColor }
                         //GradientStop { position: qgcButton.x + qgcButton.width; color: _mainStatusBGColor }
-                        GradientStop { position: 1; color: qgcPal.window }
+                        GradientStop { position: 1; color: control.configuring ? "#031A20" : qgcPal.window }
                     }
                 }
 
@@ -79,6 +79,31 @@ Item {
                             icon.source:        "/res/QGCLogoFull.svg"
                             logo:               true
                             onClicked:          mainWindow.showToolSelectDialog()
+                        }
+
+                        ColumnLayout {
+                            visible: control.configuring
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 1
+                            QGCLabel {
+                                text: qsTr("无人机飞行地面控制站")
+                                color: "#E7F4F6"
+                                font.pointSize: ScreenTools.titleFontPointSize
+                                font.weight: ScreenTools.strongFontWeight
+                            }
+                            QGCLabel {
+                                text: "UAV GROUND CONTROL STATION"
+                                color: "#83B7C0"
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                        }
+
+                        Rectangle {
+                            visible: control.configuring
+                            Layout.preferredWidth: 1
+                            Layout.preferredHeight: 32
+                            Layout.alignment: Qt.AlignVCenter
+                            color: "#0D6670"
                         }
 
                         MainStatusIndicator {
