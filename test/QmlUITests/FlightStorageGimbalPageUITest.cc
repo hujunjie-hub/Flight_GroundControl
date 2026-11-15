@@ -459,6 +459,20 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             vehicle->gimbalController()->sendGimbalRate(8.0f, 12.0f);
             QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentPitch() - pitchBeforeRate) > 1.0, 4000);
             QTRY_VERIFY_WITH_TIMEOUT(std::abs(currentYaw() - yawBeforeRate) > 1.0, 4000);
+
+            // A non-finite rate target must be rejected and actively stop the
+            // previously running rate command rather than leaving the gimbal moving.
+            vehicle->gimbalController()->sendGimbalRate(
+                std::numeric_limits<float>::infinity(), 12.0f);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
+            const double pitchAfterInvalidRate = currentPitch();
+            const double yawAfterInvalidRate = currentYaw();
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
+            QVERIFY(std::abs(currentPitch() - pitchAfterInvalidRate) < 0.5);
+            QVERIFY(std::abs(currentYaw() - yawAfterInvalidRate) < 0.5);
+
             vehicle->gimbalController()->sendGimbalRate(0.0f, 0.0f);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 1000, 2500);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 1000, 6000);
