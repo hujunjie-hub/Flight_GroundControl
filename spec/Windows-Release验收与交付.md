@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.49
+版本：4.50
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -526,6 +526,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - FlightTelemetryPageUITest 通过 MockLink 在 1600/1000/900/700/400 px 下断言 `flightTelemetry_rcStickMonitor_statusBadge` 可见、`flightTelemetry_rcChannelMonitor_statusBadge` 与 `flightTelemetry_card_rcInput_statusBadge` 不可见，并确认两个次级面板的 `statusFamily` 仍为 `rcInputAvailable`。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
 
+- 失控保护 HeroPanel 不显示 `linkAvailable` family 消息状态；通信链路 StatusCard 独占显示该消息状态及逐实例覆盖，避免把消息 freshness 误读为链路健康。
 ### G15 总览整机状态安全优先级（2026-11-15）
 
 - 飞行模式是左侧整机状态主视觉，模式值用中性前景色；operation freshness 另行显示，不混用颜色语义。
