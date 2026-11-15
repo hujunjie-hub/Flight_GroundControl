@@ -267,7 +267,7 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         if (!_handleRequestMessage(request)) {
             return false;
         }
-        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+        _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, ackComponent);
         return true;
 
     case MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW: {
