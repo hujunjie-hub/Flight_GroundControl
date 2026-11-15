@@ -1483,6 +1483,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(), QStringLiteral("70.0 %"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->isVisible() && gcsQualityFill->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->width() > 0 &&
                                          qAbs(gcsQualityFill->width() / gcsQualityTrack->width() - 0.70) < 0.01,
@@ -1534,10 +1535,29 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!gcsQualityTrack->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("text").toString(),
                                       translatedTelemetryText("指标有效性：%1 / 3 · 无效：链路质量").arg(2), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(), invalidText, 3000);
+            QVariant invalidQualityTrendSample;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkTrendSampleValue", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, invalidQualityTrendSample),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral("linkQualityPermille"))),
+                                              Q_ARG(QVariant, QVariant(9)),
+                                              Q_ARG(QVariant, QVariant(10)),
+                                              Q_ARG(QVariant, QVariant(false))));
+            QVERIFY(!invalidQualityTrendSample.isValid() || invalidQualityTrendSample.isNull());
             sendLinkStatus(1700, bootId, 2, -68, 700, 30000, 0x700, 2);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#E6F0F4")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(trendVelocity->property("valueText").toString(), QStringLiteral("70.0 %"), 3000);
+            QVariant restoredQualityTrendSample;
+            QVERIFY(QMetaObject::invokeMethod(page, "_linkTrendSampleValue", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, restoredQualityTrendSample),
+                                              Q_ARG(QVariant, QVariant(QStringLiteral("linkQualityPermille"))),
+                                              Q_ARG(QVariant, QVariant(9)),
+                                              Q_ARG(QVariant, QVariant(10)),
+                                              Q_ARG(QVariant, QVariant(false))));
+            QVERIFY(restoredQualityTrendSample.isValid());
+            QVERIFY(qAbs(restoredQualityTrendSample.toDouble() - 70.0) < 0.0001);
             QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->isVisible() && gcsQualityFill->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->width() > 0 &&
                                          qAbs(gcsQualityFill->width() / gcsQualityTrack->width() - 0.70) < 0.01,
