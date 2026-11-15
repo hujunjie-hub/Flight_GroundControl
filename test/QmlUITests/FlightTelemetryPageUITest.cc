@@ -2681,7 +2681,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const qreal originalPageHeight = page->height();
             QQuickItem* contentRoot = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_contentRoot"), 3000);
+            QQuickItem* compactHeroGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroGrid"), 3000);
+            QQuickItem* compactHeroFlight = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroFlight"), 3000);
+            QQuickItem* compactHeroNavigation = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
+            QQuickItem* compactHeroRcInput = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
             QVERIFY(contentRoot);
+            QVERIFY(compactHeroGrid);
+            QVERIFY(compactHeroFlight);
+            QVERIFY(compactHeroNavigation);
+            QVERIFY(compactHeroRcInput);
 
             // Reference viewport: verify the adaptive vertical density without hiding telemetry.
             page->setWidth(1672);
@@ -2694,6 +2706,30 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTabHeight").toReal(), 42.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTrendMinimumHeight").toReal(), 128.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_dashboardPanelPadding").toReal() < expandedPanelPadding, 3000);
+            const auto compactHeroRowBalanced = [&]() {
+                const QPointF flightPosition = compactHeroFlight->mapToItem(compactHeroGrid, 0, 0);
+                const QPointF navigationPosition = compactHeroNavigation->mapToItem(compactHeroGrid, 0, 0);
+                const QPointF rcPosition = compactHeroRcInput->mapToItem(compactHeroGrid, 0, 0);
+                const bool aligned = qAbs(flightPosition.y() - navigationPosition.y()) < 1.0 &&
+                                     qAbs(navigationPosition.y() - rcPosition.y()) < 1.0 &&
+                                     qAbs(compactHeroFlight->height() - compactHeroNavigation->height()) < 1.0 &&
+                                     qAbs(compactHeroNavigation->height() - compactHeroRcInput->height()) < 1.0;
+                const bool ordered = flightPosition.x() < navigationPosition.x() &&
+                                     navigationPosition.x() < rcPosition.x() &&
+                                     compactHeroFlight->width() < compactHeroRcInput->width() &&
+                                     compactHeroRcInput->width() < compactHeroNavigation->width() &&
+                                     flightPosition.x() + compactHeroFlight->width() <= navigationPosition.x() + 1.0 &&
+                                     navigationPosition.x() + compactHeroNavigation->width() <= rcPosition.x() + 1.0;
+                const bool contained = flightPosition.x() >= -1.0 && navigationPosition.x() >= -1.0 &&
+                                       rcPosition.x() >= -1.0 &&
+                                       flightPosition.y() >= -1.0 && navigationPosition.y() >= -1.0 &&
+                                       rcPosition.y() >= -1.0 &&
+                                       flightPosition.y() + compactHeroFlight->height() <= compactHeroGrid->height() + 1.0 &&
+                                       navigationPosition.y() + compactHeroNavigation->height() <= compactHeroGrid->height() + 1.0 &&
+                                       rcPosition.y() + compactHeroRcInput->height() <= compactHeroGrid->height() + 1.0;
+                return compactHeroGrid->property("columns").toInt() == 12 && aligned && ordered && contained;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(compactHeroRowBalanced(), 3000);
             QQuickItem* compactTab = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
             QQuickItem* compactDetailsEyebrow = findItem(
