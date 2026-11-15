@@ -762,7 +762,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.125F, 0.08F, 0.02F);
                 sendControlStatus(lastOperationTime + 200, bootId, static_cast<uint32_t>(1800 + sample * 100));
                 sendTimeStatus(lastOperationTime + 300, bootId,
-                               1700000000123456ULL + static_cast<uint64_t>(sample) * 1000000ULL, 1)
+                               1700000000123456ULL + static_cast<uint64_t>(sample) * 1000000ULL, 1);
             }
             QQuickItem* navigationTabForUtc =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
