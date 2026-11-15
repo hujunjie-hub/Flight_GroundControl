@@ -6,6 +6,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
 #include <QtCore/QHash>
+#include <QtCore/QSet>
 #include <QtCore/QStringList>
 
 #include <cmath>
@@ -26,6 +27,68 @@ const QStringList &supportedParameterDomains()
         QStringLiteral("SIMULATION")
     };
     return domains;
+}
+
+const QStringList &supportedTuningPolicies()
+{
+    static const QStringList policies {
+        QStringLiteral("READ_ONLY"),
+        QStringLiteral("GROUND_ADJUSTABLE"),
+        QStringLiteral("ONLINE_ADJUSTABLE"),
+        QStringLiteral("FLIGHT_RESTRICTED")
+    };
+    return policies;
+}
+
+const QStringList &supportedUpdatePolicies()
+{
+    static const QStringList policies {
+        QStringLiteral("IMMEDIATE"),
+        QStringLiteral("FIRMWARE_CONFIRMATION"),
+        QStringLiteral("REBOOT_REQUIRED"),
+        QStringLiteral("OFFLINE_ONLY")
+    };
+    return policies;
+}
+
+bool readUniqueStringList(const QJsonValue &value, QStringList &strings, bool allowEmpty = false)
+{
+    if (!value.isArray()) {
+        return false;
+    }
+
+    QSet<QString> seen;
+    for (const QJsonValue &entry : value.toArray()) {
+        if (!entry.isString()) {
+            return false;
+        }
+        const QString raw = entry.toString();
+        const QString normalized = raw.trimmed();
+        if (normalized.isEmpty() || normalized != raw || seen.contains(normalized)) {
+            return false;
+        }
+        seen.insert(normalized);
+        strings.append(normalized);
+    }
+    return allowEmpty || !strings.isEmpty();
+}
+
+bool validRuleArray(const QJsonValue &value, QVariantList &rules)
+{
+    if (!value.isArray()) {
+        return false;
+    }
+    for (const QJsonValue &entry : value.toArray()) {
+        if (!entry.isObject()) {
+            return false;
+        }
+        const QString type = entry.toObject().value(QStringLiteral("type")).toString().trimmed();
+        if (type.isEmpty()) {
+            return false;
+        }
+        rules.append(entry.toObject().toVariantMap());
+    }
+    return true;
 }
 
 bool validNumericField(const QJsonObject &entry, const QString &fieldName)
@@ -50,6 +113,17 @@ FlightParameterMetaData::~FlightParameterMetaData()
 
 void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
 {
+    if (json.value(QStringLiteral("version")).toInt(-1) != 2) {
+        qCWarning(FlightParameterMetaDataLog) << "Unsupported Flight parameter metadata schema version";
+        return;
+    }
+
+    QStringList registeredProfiles;
+    if (!readUniqueStringList(json.value(QStringLiteral("modelProfiles")), registeredProfiles)) {
+        qCWarning(FlightParameterMetaDataLog) << "Flight parameter metadata has no valid model profile list";
+        return;
+    }
+
     const QJsonArray parameters = json.value(QStringLiteral("parameters")).toArray();
 
     // Reject every occurrence of an ambiguous name, not merely the second one.
@@ -94,13 +168,37 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             continue;
         }
 
-        if (!validNumericField(entry, QStringLiteral("min")) ||
+        const QString vehicleFamily = entry.value(QStringLiteral("vehicleFamily")).toString();
+        const QString controlLaw = entry.value(QStringLiteral("controlLaw")).toString();
+        const QString tuningPolicy = entry.value(QStringLiteral("tuningPolicy")).toString();
+        const QString updatePolicy = entry.value(QStringLiteral("updatePolicy")).toString();
+        QStringList modelVariants;
+        QStringList modelProfiles;
+        QStringList dependencies;
+        QVariantList validationRules;
+        const bool validApplicability =
+            !vehicleFamily.trimmed().isEmpty() && vehicleFamily == vehicleFamily.trimmed() &&
+            !controlLaw.trimmed().isEmpty() && controlLaw == controlLaw.trimmed() &&
+            readUniqueStringList(entry.value(QStringLiteral("modelVariants")), modelVariants) &&
+            readUniqueStringList(entry.value(QStringLiteral("modelProfiles")), modelProfiles) &&
+            readUniqueStringList(entry.value(QStringLiteral("dependencies")), dependencies, true) &&
+            validRuleArray(entry.value(QStringLiteral("validationRules")), validationRules);
+        const bool validPolicy =
+            supportedTuningPolicies().contains(tuningPolicy) &&
+            supportedUpdatePolicies().contains(updatePolicy) &&
+            entry.value(QStringLiteral("readOnly")).isBool() &&
+            entry.value(QStringLiteral("readOnly")).toBool() == (tuningPolicy == QStringLiteral("READ_ONLY"));
+        const bool validRebootPolicy =
+            (entry.contains(QStringLiteral("rebootRequired")) &&
+             entry.value(QStringLiteral("rebootRequired")).isBool())
+                ? (entry.value(QStringLiteral("rebootRequired")).toBool()
+                       == (updatePolicy == QStringLiteral("REBOOT_REQUIRED")))
+                : (updatePolicy != QStringLiteral("REBOOT_REQUIRED"));
+
+        if (!validApplicability || !validPolicy || !validRebootPolicy ||
+            !validNumericField(entry, QStringLiteral("min")) ||
             !validNumericField(entry, QStringLiteral("max")) ||
             !validNumericField(entry, QStringLiteral("default")) ||
-            (entry.contains(QStringLiteral("rebootRequired")) &&
-             !entry.value(QStringLiteral("rebootRequired")).isBool()) ||
-            (entry.contains(QStringLiteral("readOnly")) &&
-             !entry.value(QStringLiteral("readOnly")).isBool()) ||
             (entry.contains(QStringLiteral("writeOnly")) &&
              !entry.value(QStringLiteral("writeOnly")).isBool()) ||
             (entry.contains(QStringLiteral("decimalPlaces")) &&
@@ -108,7 +206,22 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
               entry.value(QStringLiteral("decimalPlaces")).toInt(-1) < 0 ||
               entry.value(QStringLiteral("decimalPlaces")).toInt(-1) > 9))) {
             qCWarning(FlightParameterMetaDataLog)
-                << "Ignoring parameter metadata with invalid numeric or boolean fields:" << name;
+                << "Ignoring parameter metadata with invalid applicability, policy, numeric or boolean fields:" << name;
+            continue;
+        }
+
+        for (const QString &profile : modelProfiles) {
+            if (!registeredProfiles.contains(profile)) {
+                qCWarning(FlightParameterMetaDataLog)
+                    << "Ignoring parameter metadata referencing an unregistered model profile:" << name << profile;
+                continue;
+            }
+        }
+
+        if (entry.contains(QStringLiteral("rebootRequired")) &&
+            !entry.value(QStringLiteral("rebootRequired")).isBool()) {
+            qCWarning(FlightParameterMetaDataLog)
+                << "Ignoring parameter metadata with invalid rebootRequired type:" << name;
             continue;
         }
 
@@ -159,7 +272,14 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         } else {
             metaData->setVehicleRebootRequiredKnown(false);
         }
-        metaData->setReadOnly(entry.value(QStringLiteral("readOnly")).toBool(false));
+        metaData->setVehicleFamily(vehicleFamily);
+        metaData->setModelVariants(modelVariants);
+        metaData->setControlLaw(controlLaw);
+        metaData->setTuningPolicy(tuningPolicy);
+        metaData->setUpdatePolicy(updatePolicy);
+        metaData->setDependencies(dependencies);
+        metaData->setValidationRules(validationRules);
+        metaData->setReadOnly(entry.value(QStringLiteral("readOnly")).toBool());
         metaData->setWriteOnly(entry.value(QStringLiteral("writeOnly")).toBool(false));
         _cachedMetaData.insert(name, metaData);
     }
