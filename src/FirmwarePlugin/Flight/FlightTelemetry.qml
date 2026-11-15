@@ -2247,7 +2247,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 2
                     eyebrow: "NAVIGATION"
                     statusFamily: "navigationAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("导航状态")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("navigationAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("navigation") }
@@ -2369,7 +2369,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 3
                     eyebrow: "COMMUNICATION"
                     statusFamily: "linkAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("通信链路")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("linkAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("link") }
@@ -2575,7 +2575,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 2
                     eyebrow: "TIME SYNCHRONIZATION"
                     statusFamily: "timeAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("时间同步")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("timeAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
@@ -2598,7 +2598,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 3
                     eyebrow: "REMOTE CONTROL"
                     statusFamily: "rcInputAvailable"
-                    Layout.columnSpan: root._dashboardColumns >= 12 ? 4 : root._dashboardColumns >= 6 ? 3 : 1
+                    Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("遥控输入")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("rcInput") }

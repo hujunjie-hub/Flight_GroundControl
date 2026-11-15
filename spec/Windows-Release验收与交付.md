@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：2.8  
+版本：2.9  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -33,7 +33,7 @@
 | G12 | 非英语区域设置回归 | environment.json、Unit/Integration 日志 | Unit 宿主和 Qt system locale 为 zh-CN、应用语言为 English；Integration/归档前恢复 en-US |
 | G13 | 飞控诊断大屏 UI（Phase 1） | FlightTelemetryPageUITest、JUnit、页面布局断言 | 标题/摘要/卡片结构存在；12/6/1 列断点正确；UNKNOWN/INVALID/STALE/RECOVERY 语义正确；只读边界保持 |
 | G14 | 遥控器双摇杆 UI | FlightRadioPageUITest、JUnit、MockLink RC_CHANNELS wire-path | Mode 1/2/3 通道映射、PWM/指示点和第二帧实时跟随正确；CH1–CH3 时左摇杆隐藏且校准禁用；恢复至少 4 路连续通道后校准重新启用；不触发校准或飞控命令 |
-| G15 | 飞控诊断指挥中心（Phase 2.4 四参考页） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带容器与网格边界通过；四个页签 SVG 资源路径和 20×20 图标尺寸断言通过；四个页签实际切换独立内容；每个页签 MouseArea hoverEnabled，未选中 hover/idle 颜色和 active 颜色断言通过；标题区英文副标题在 1600/1000/900/700 px 下按桌面/中屏/小屏策略显示且可见元素不越界；四页明细卡可见集合严格为总览 4、健康 6、导航 2、遥控 2，14 张无遗漏/重复；四张趋势卡均存在 64 px 绘图区、较早/最新时间轴和 gap-count 状态，趋势卡/详细卡圆角 8 px、健康矩阵单元圆角 6 px；总览/健康/导航时序/遥控链路四页存在；健康页 13 类矩阵 4/2/1/1 列、13 个单元边界无溢出，维护横条 3/2/1/1 列，且无综合健康分，底部 CPU/WCET/栈/存储趋势使用真实资源实例并校验实例年龄与 validity mask；导航页 capability bit2/3/5+6 与 UTC 有效性门控；RC 双摇杆沿用 FlightRadio Mode1/2/3 映射，Mode 2 marker 位置与四轴读数一致，mask 清除时对应 marker 隐藏；链路 RSSI/质量/丢包同时满足 family freshness、实例 receiveAgeMs 和 validity mask；趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；不虚构卫星/HDOP/CH5–CH8/SNR/RTT；原 14 张卡片保留；只读 |
+| G15 | 飞控诊断指挥中心（Phase 2.4 四参考页） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带容器与网格边界通过；四个页签 SVG 资源路径和 20×20 图标尺寸断言通过；四个页签实际切换独立内容；每个页签 MouseArea hoverEnabled，未选中 hover/idle 颜色和 active 颜色断言通过；标题区英文副标题在 1600/1000/900/700 px 下按桌面/中屏/小屏策略显示且可见元素不越界；四页明细卡可见集合严格为总览 4、健康 6、导航 2、遥控 2，14 张无遗漏/重复；导航/时间、通信/RC 两组卡在桌面同排且各占网格至少 45% 宽度；四张趋势卡均存在 64 px 绘图区、较早/最新时间轴和 gap-count 状态，趋势卡/详细卡圆角 8 px、健康矩阵单元圆角 6 px；总览/健康/导航时序/遥控链路四页存在；健康页 13 类矩阵 4/2/1/1 列、13 个单元边界无溢出，维护横条 3/2/1/1 列，且无综合健康分，底部 CPU/WCET/栈/存储趋势使用真实资源实例并校验实例年龄与 validity mask；导航页 capability bit2/3/5+6 与 UTC 有效性门控；RC 双摇杆沿用 FlightRadio Mode1/2/3 映射，Mode 2 marker 位置与四轴读数一致，mask 清除时对应 marker 隐藏；链路 RSSI/质量/丢包同时满足 family freshness、实例 receiveAgeMs 和 validity mask；趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；不虚构卫星/HDOP/CH5–CH8/SNR/RTT；原 14 张卡片保留；只读 |
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 | G17 | 全项目字体系统与渲染一致性 | qml-typography-check --all、TopLevelViewsTest、JUnit、Windows DPI screenshots | 递归检查全部 src/**/*.qml；除 ScreenTools 兼容别名外无旧字号令牌；无固定 font.pixelSize、硬编码字体族和未登记的局部字号乘数；QGCLabel/共享控件统一字体族、Hinting 与抗锯齿；RadioButton 继承正确字体族；中文界面按平台选择已安装 CJK 字体；100%/125%/150% DPI 视觉证据齐全 |
 

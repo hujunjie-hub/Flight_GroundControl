@@ -882,6 +882,17 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[cardIndex]->isVisible(),
                                               expectedDetailVisibility[index][cardIndex], 3000);
                 }
+                if (index == 2) {
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[1]->y(), diagnosticCardItems[8]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[1]->x() < diagnosticCardItems[8]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[1]->width() >= dashboardGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[8]->width() >= dashboardGrid->width() * 0.45, 3000);
+                } else if (index == 3) {
+                    QTRY_COMPARE_WITH_TIMEOUT(diagnosticCardItems[5]->y(), diagnosticCardItems[12]->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[5]->x() < diagnosticCardItems[12]->x(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[5]->width() >= dashboardGrid->width() * 0.45, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[12]->width() >= dashboardGrid->width() * 0.45, 3000);
+                }
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000));
                 QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_summaryGrid"), 3000));
                 const QString trendNames[] = {
