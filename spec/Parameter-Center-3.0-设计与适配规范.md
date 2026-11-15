@@ -469,7 +469,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
-- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态；由于 GroundControl 尚无独立机型注册目录，本轮不显示伪造的模型下拉选项。跨仓库核查发现 Flight/config/vehicle_model.yaml 只有 QUAD_X4 / SIM_ONLY 合成模型，尚无实机证据；该 profile 不得用于实机模型绑定。模型注册、兼容性阻断和真实模型切换仍是 Phase 2 未完成项。
+- 当前飞行器卡片展示 activeVehicle 的真实类型和构型状态；GroundControl 尚无独立机型注册目录，因此不显示伪造的实机模型下拉选项。跨仓库核查发现 Flight/config/vehicle_model.yaml 只有 QUAD_X4 / SIM_ONLY 合成模型，尚无实机证据；参数中心仅在 gitHash=FLTSIL01 且固件版本 ≥1.9.2（与 FlightFirmwarePlugin::isSilVehicle 一致）时开放该仿真模型域，实机连接时锁定 VEHICLE_MODEL 并显示“实机模型尚未登记”。模型注册、兼容性阻断和真实模型切换仍是 Phase 2 未完成项。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：

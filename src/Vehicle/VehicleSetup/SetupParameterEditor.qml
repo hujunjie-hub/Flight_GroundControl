@@ -10,6 +10,7 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isFlight: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
+    readonly property bool _flightSilModelAvailable: _activeVehicle && _activeVehicle.gitHash === "FLTSIL01" && _activeVehicle.versionCompare(1, 9, 2) >= 0
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
                                               !_activeVehicle.parameterManager.missingParameters
@@ -59,7 +60,7 @@ Item {
 
             function domainCategoryName(domainIndex) {
                 switch (domainIndex) {
-                case 0: return "VEHICLE_MODEL"
+                case 0: return root._flightSilModelAvailable ? "VEHICLE_MODEL" : "__NO_PARAMETER_DOMAIN__"
                 case 1: return "FMS"
                 case 2: return "CONTROL"
                 case 3: return "INS"
@@ -150,7 +151,7 @@ Item {
                                     font.pointSize: ScreenTools.bodyFontPointSize
                                     elide: Text.ElideRight
                                 }
-                                QGCLabel { text: qsTr("ACTIVE"); color: root.cyan; font.pointSize: ScreenTools.microFontPointSize }
+                                QGCLabel { text: root._flightSilModelAvailable ? qsTr("SIM_ONLY") : qsTr("MODEL N/A"); color: root._flightSilModelAvailable ? root.amber : root.mutedText; font.pointSize: ScreenTools.microFontPointSize }
                             }
                         }
                     }
@@ -680,7 +681,9 @@ Item {
                                             Layout.fillWidth: true
                                             text: root.activeDomain === 6
                                                   ? qsTr("在线调参尚未开放")
-                                                  : qsTr("当前参数域暂无参数")
+                                                  : root.activeDomain === 0 && !root._flightSilModelAvailable
+                                                    ? qsTr("实机模型尚未登记")
+                                                    : qsTr("当前参数域暂无参数")
                                             color: root.mainText
                                             font.pointSize: ScreenTools.subtitleFontPointSize
                                             font.weight: ScreenTools.strongFontWeight
@@ -690,7 +693,9 @@ Item {
                                             Layout.fillWidth: true
                                             text: root.activeDomain === 6
                                                   ? qsTr("当前固件尚未声明可在线调参的参数策略。Phase 3 完成安全闭环前，不开放写入操作。")
-                                                  : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他参数或示例数据填充。")
+                                                  : root.activeDomain === 0 && !root._flightSilModelAvailable
+                                                    ? qsTr("当前仅有 QUAD_X4 仿真模型（SIM_ONLY），没有实机验证证据。该参数域保持锁定。")
+                                                    : qsTr("当前 Flight 固件元数据没有登记该参数域。不会用其他参数或示例数据填充。")
                                             color: root.mutedText
                                             font.pointSize: ScreenTools.captionFontPointSize
                                             wrapMode: Text.WordWrap
