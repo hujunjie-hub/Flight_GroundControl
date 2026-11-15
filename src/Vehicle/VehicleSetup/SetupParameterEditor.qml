@@ -160,8 +160,9 @@ Item {
 
             function recordParameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue) {
                 if (lastControlBootId === "" || lastControlTimestamp === "" || lastControlProfileId === "") {
-                    parameterChangeSummary = qsTr("参数 %1 已收到 PARAM_VALUE 确认；当前没有同一启动会话的遥测基线，未标记曲线")
-                                                 .arg(parameterName)
+                    parameterChangeSummary =
+                        qsTr("参数 %1：%2 → %3 已收到 PARAM_VALUE 确认；当前没有同一启动会话的遥测基线，未标记曲线")
+                            .arg(parameterName).arg(String(previousValue)).arg(String(confirmedValue))
                     return
                 }
 
