@@ -5570,51 +5570,6 @@ SetupPage {
         }
     }
 
-    component ResourceMetricTile: Rectangle {
-        id: metricTile
-        required property string titleText
-        required property string valueText
-        required property string valueObjectName
-        required property color valueColor
-        readonly property real tileInset: root._dashboardMetricTileInset
-
-        Layout.fillWidth: true
-        implicitHeight: Math.max(root._dashboardMetricTileMinHeight,
-                                 metricContent.implicitHeight + tileInset * 2)
-        radius: 4
-        color: "#06232B"
-        border.width: 1
-        border.color: "#104B55"
-
-        ColumnLayout {
-            id: metricContent
-            anchors.fill: parent
-            anchors.margins: metricTile.tileInset
-            spacing: root._dashboardMetricTileGap * 0.25
-
-            QGCLabel {
-                objectName: metricTile.objectName + "_label"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                text: metricTile.titleText
-                color: "#8298A2"
-                font.pointSize: ScreenTools.microFontPointSize
-                wrapMode: Text.WordWrap
-            }
-
-            QGCLabel {
-                objectName: metricTile.valueObjectName
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                text: metricTile.valueText
-                color: metricTile.valueColor
-                font.pointSize: ScreenTools.secondaryFontPointSize
-                font.weight: ScreenTools.strongFontWeight
-                wrapMode: Text.WordWrap
-            }
-        }
-    }
-
     component StatusCard: Rectangle {
         id: card
         required property string title
