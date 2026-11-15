@@ -218,8 +218,10 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
 
         // A second manager component with its own device verifies that
         // discovery, command routing and telemetry are isolated by manager ID.
+        // Reuse legacy device ID 3 under manager 2 to verify that the
+        // (manager component, device ID) pair remains the unique device key.
         const bool addedSecondManager = _mockLinkGimbal->addSimulatedManager(
-            2, 156, false, true, true, true, true, false, true);
+            2, 3, false, true, true, true, true, false, true);
         Q_ASSERT(addedSecondManager);
         Q_UNUSED(addedSecondManager);
     }
