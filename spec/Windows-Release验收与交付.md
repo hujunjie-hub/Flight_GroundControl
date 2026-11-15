@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.96
+版本：4.97
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -880,6 +880,6 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - 趋势网格列/行间距、TrendCard 内边距、内部行距和最小高度必须使用 ScreenTools 密度 token；100% 紧凑态基准分别为 8/6/4/128 px，标准垂直密度为 10/8/5/134 px。
 - Canvas 绘图区 100% 基准高度 64 px；150%/200% 应随 UI Scale 增长到 96/128 px。绘图内缩 5 px、网格线宽 1 px、趋势线宽 2 px、断点/样本/最新点半径与 glow blur 均按密度比例缩放。
-- MockLink FlightTelemetryPageUITest 在 100%/150%/200% 下显式选择总览页，检查 trendGrid spacing、TrendCard 内容内边距/行距、Canvas 最小高度、Canvas/时间轴/footer 父子边界与标签不重叠；测试结束恢复原 UI Scale。
+- MockLink FlightTelemetryPageUITest 在 100%/150%/200% 下显式选择总览页，检查顶部三项导航 KPI 的 MetricReadout spacing 比例与 overviewKpisFit、trendGrid spacing、TrendCard 内容内边距/行距、Canvas 最小高度、Canvas/时间轴/footer 父子边界与标签不重叠；测试结束恢复原 UI Scale。
 - 趋势语义保持不变：本地 1 Hz、最多 60 点、有效样本范围、历史断点、最新样本 WAIT/NOW/GAP、Vehicle/boot reset 和 freshness/validity 门控不得变化。
 - 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言 NOT_RUN，集中 exact-HEAD 验收时执行。
