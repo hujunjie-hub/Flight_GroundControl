@@ -1407,7 +1407,6 @@ SetupPage {
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 3 : root._dashboardColumns >= 6 ? 2 : 1
                     eyebrow: "AIRCRAFT STATUS / TELEMETRY"
                     titleText: qsTr("整机状态概览")
-                    statusFamily: "operationAvailable"
 
                     RowLayout {
                         Layout.fillWidth: true

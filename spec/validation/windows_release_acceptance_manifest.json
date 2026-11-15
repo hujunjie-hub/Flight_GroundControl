@@ -312,7 +312,8 @@
         "stale_non_rc_data_link_does_not_fall_back_to_fresh_rc_link",
         "link_trend_title_identifies_the_selected_link_kind",
         "overview_topology_node_cards_fit_grid_bounds_at_1600_1400_1000_900_700_400_widths",
-        "overview_navigation_topology_node_color_tracks_fresh_stale_recovered_states"
+        "overview_navigation_topology_node_color_tracks_fresh_stale_recovered_states",
+        "overview_aircraft_summary_hides_operation_only_badge_for_multi_domain_panel"
       ]
     },
     {
@@ -490,7 +491,8 @@
     "stale_non_rc_data_link_does_not_fall_back_to_fresh_rc_link",
     "link_trend_title_identifies_the_selected_link_kind",
     "overview_topology_node_cards_fit_grid_bounds_at_1600_1400_1000_900_700_400_widths",
-    "overview_navigation_topology_node_color_tracks_fresh_stale_recovered_states"
+    "overview_navigation_topology_node_color_tracks_fresh_stale_recovered_states",
+    "overview_aircraft_summary_hides_operation_only_badge_for_multi_domain_panel"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",

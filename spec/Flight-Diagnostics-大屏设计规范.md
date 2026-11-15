@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.0
+- 版本：6.1
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；导航时序页补充 FCU UTC 绝对时间与有效性断点诊断；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；总览总控、飞行健康、导航时序、遥控与链路四页适配已完成；本轮统一总览复合面板状态语义并补强拓扑 freshness 回归；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -590,8 +590,8 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 六个节点的颜色直接绑定各自 family freshness，节点标签同时显示状态与地面站接收年龄；状态随现有 500 ms 页面年龄刷新同步重绘，不增加轮询频率。
 - 节点网格按内容宽度采用 3/2/3/2 列响应式策略；导航精度指标在宽屏三列、中等窄栏单列、堆叠宽屏三列、小屏单列显示，避免中等宽度下内容挤压。
 - 右侧告警列表按真实严重度降序（严重、错误、警告、信息），同级按事件序号降序；最多显示四条。底层 recentEvents 的最新优先顺序不被修改，事件历史与最新事件详情仍保留原有时间顺序。
-- 总览三栏保持 3:5:4 桌面列宽和同排等高；中等宽度按六列网格重排，窄屏单列堆叠。六项 KPI、四张真实趋势图、四张总览详情卡和全部原始字段继续保留。
-- FlightTelemetryPageUITest 增加告警优先级/同级序号排序断言、六个拓扑域状态/接收年龄节点断言、三栏宽度顺序与边界、拓扑节点高度和 3/2/3/2 响应式断言；本轮进一步验证 1600/1400/1000/900/700/400 px 六档下每个节点均在网格边界内，并验证导航节点 fresh → stale → recovered 的状态颜色变化。
+- 总览三栏保持 3:5:4 桌面列宽和同排等高；中等宽度按六列网格重排，窄屏单列堆叠。六项 KPI、四张真实趋势图、四张总览详情卡和全部原始字段继续保留。左侧「整机状态概览」是多域复合面板，不再以 operationAvailable 单域徽标代表整机状态；飞控操作、传感器、导航、链路、资源和时间仍各自显示真实状态。
+- FlightTelemetryPageUITest 增加告警优先级/同级序号排序断言、六个拓扑域状态/接收年龄节点断言、三栏宽度顺序与边界、拓扑节点高度和 3/2/3/2 响应式断言；本轮进一步验证 1600/1400/1000/900/700/400 px 六档下每个节点均在网格边界内、导航节点 fresh → stale → recovered 的状态颜色变化，并断言整机多域复合面板不显示 operation 单域徽标。
 - 遥测模型、Fact、MAVLink/Flight ICD、family freshness、validity/capability mask、boot/profile 隔离和只读安全边界均不变。
 - 按用户要求，本阶段不运行、不触发 CI；新增回归断言保留，集中 CI 与 Windows 1672×941 / 100%/125%/150% DPI 视觉验收后置。当前测试状态为 NOT_RUN，不宣称 PASS 或像素级验收完成。
 
@@ -608,7 +608,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 本轮不执行 CI；Windows Release、Unit、Integration、Installer 和 1672×941 / 100/125/150% DPI 视觉验收集中后置，未执行前均不得标记 PASS。
 
 
-## 32. Phase 2.6 导航时序 UTC 绝对时间与趋势有效性闭环（2026-11-15）
+## 34. Phase 2.6 导航时序 UTC 绝对时间与趋势有效性闭环（2026-11-15）
 
 - 导航时序主面板和时间同步明细卡增加 FCU UTC 绝对时间，来源仅为 FCU_TIME_STATUS.unix_time_us；按 UTC ISO-8601 形式展示，并保留微秒精度。
 - UTC 时间展示同时受 time family freshness 与 utc_valid 门控：域未接收/超时显示对应状态，utc_valid=false 显示无效，缺少字段显示未上报；不得沿用旧 UTC 时间作为当前值。
