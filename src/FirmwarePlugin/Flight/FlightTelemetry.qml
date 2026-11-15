@@ -2366,6 +2366,8 @@ SetupPage {
                     Canvas {
                         id: topologyCanvas
                         objectName: "flightTelemetry_topologyCanvas"
+                        readonly property string labelFontFamily: ScreenTools.normalFontFamily
+                        readonly property real labelFontPointSize: ScreenTools.microFontPointSize
                         readonly property var familyConnectionStates: root._overviewTopologyFamilies.map(function (family) {
                             return {
                                 family: family.family,
@@ -2380,6 +2382,8 @@ SetupPage {
                         Layout.preferredHeight: 176
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
+                        onLabelFontFamilyChanged: requestPaint()
+                        onLabelFontPointSizeChanged: requestPaint()
                         Component.onCompleted: requestPaint()
                         Connections {
                             target: root
@@ -2520,7 +2524,8 @@ SetupPage {
                             ctx.lineWidth = 2 * scale
                             ctx.strokeRect(cx - 14 * scale, cy - 22 * scale, 28 * scale, 44 * scale)
                             ctx.fillStyle = "#D7FBFD"
-                            ctx.font = "bold " + Math.max(7, Math.round(8 * scale)) + "px sans-serif"
+                            ctx.font = "bold " + topologyCanvas.labelFontPointSize + "pt \"" +
+                                       topologyCanvas.labelFontFamily + "\""
                             ctx.textAlign = "center"
                             ctx.textBaseline = "middle"
                             ctx.fillText("FCU", cx, cy)
@@ -2550,7 +2555,8 @@ SetupPage {
 
                                 // Short domain labels make each spoke readable without duplicating node-card detail.
                                 ctx.fillStyle = "#B8D4DC"
-                                ctx.font = "bold " + Math.max(7, 8 * scale) + "px sans-serif"
+                                ctx.font = "bold " + topologyCanvas.labelFontPointSize + "pt \"" +
+                                           topologyCanvas.labelFontFamily + "\""
                                 ctx.textAlign = node.labelAlign
                                 ctx.textBaseline = "middle"
                                 ctx.fillText(node.state.label,
