@@ -1827,10 +1827,10 @@ SetupPage {
                 objectName: "flightTelemetry_summaryBand"
                 Layout.fillWidth: true
                 implicitHeight: summaryGrid.implicitHeight + 2
-                radius: 8
-                color: "#06232B"
+                radius: root._dashboardPanelRadius
+                color: root._dashboardPanelBackground
                 border.width: 1
-                border.color: "#0B6873"
+                border.color: root._dashboardPanelBorder
 
                 GridLayout {
                     id: summaryGrid
@@ -4700,7 +4700,7 @@ SetupPage {
         radius: 6
         color: "#082B33"
         border.width: 1
-        border.color: "#0B6873"
+        border.color: root._dashboardPanelBorder
 
         Rectangle {
             width: 3
