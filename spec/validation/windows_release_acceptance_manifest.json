@@ -942,7 +942,9 @@
     "overview_header_tabs_read_only_badge_and_hero_frame_fit_parent_bounds_at_100_150_200_percent_ui_scale",
     "health_maintenance_resource_metrics_use_four_consistent_scaled_tiles",
     "health_maintenance_metric_tiles_preserve_value_text_freshness_and_color",
-    "health_maintenance_metric_tile_content_fits_at_all_responsive_widths"
+    "health_maintenance_metric_tile_content_fits_at_all_responsive_widths",
+    "navigation_time_groups_and_monotonic_timeline_scale_at_100_150_200_percent_ui_scale",
+    "navigation_time_status_badges_and_timeline_rows_remain_inside_panels_at_high_dpi"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
