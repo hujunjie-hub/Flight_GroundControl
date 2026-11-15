@@ -5187,6 +5187,7 @@ SetupPage {
         spacing: metric.contentSpacing
 
         QGCLabel {
+            objectName: metric.objectName + "_label"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             text: metric.labelText
@@ -5212,6 +5213,7 @@ SetupPage {
             }
         }
         QGCLabel {
+            objectName: metric.objectName + "_status"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             visible: metric.showStatusText && metric.statusText.length > 0
