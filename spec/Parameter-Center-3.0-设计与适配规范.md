@@ -485,6 +485,14 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 在线调参、参数行与目标值面板联动、仿真曲线和应用/回读闭环仍未实现。
 - 新增 ParameterEditorController categoryFilter 搜索隔离回归测试；测试代码已登记，但本轮未执行 Windows 构建、QML 运行、单元测试或 CI，必须在集中验收阶段验证。
 
+### Phase 2 / Phase 3 安全边界补充
+
+- Flight 参数元数据将 `rebootRequired` 映射到 `FactMetaData::setVehicleRebootRequired`；该字段若存在但不是 JSON 布尔值，则整条元数据拒绝缓存。
+- 同一元数据文档中出现重复参数名时，所有同名条目均拒绝缓存，避免“先到先得”导致不确定的参数范围、单位或描述。
+- 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
+- QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
+- 对应回归测试覆盖重启标志映射、非法重启标志类型和重复参数名拒绝。本轮按集中验收要求未运行构建、单元测试或 CI，结果保持 NOT_RUN。
+
 ### Phase 3 实施记录（首轮 SIL 单参数在线调参闭环）
 
 本轮开始接入在线调参，但不开放实机写入，也不启用试探调参/批量调参：
