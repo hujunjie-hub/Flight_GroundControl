@@ -2235,6 +2235,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
                     QQuickItem* navigationTimeMetricsGrid =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
+                    QQuickItem* navigationTimeMetricRows[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000)};
                     QQuickItem* navigationEstimatePosition =
                         findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000);
                     QQuickItem* navigationEstimateVelocity =
@@ -2274,6 +2280,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(navigationPageGrid);
                     QVERIFY(navigationCapabilitiesGrid);
                     QVERIFY(navigationTimeMetricsGrid);
+                    for (QQuickItem* row : navigationTimeMetricRows) QVERIFY(row);
                     QVERIFY(navigationEstimatePosition);
                     QVERIFY(navigationEstimateVelocity);
                     QVERIFY(navigationEstimateHeading);
@@ -2306,6 +2313,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageGrid->property("columns").toInt(), 12, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGrid->property("columns").toInt(), 4, 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGrid->property("columns").toInt(), 2, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->width() >= navigationTimeMetricRows[0]->width() * 1.8, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeMetricRows[4]->y() > navigationTimeMetricRows[3]->y(), 3000);
+                    const auto navigationTimeMetricFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
+                        const auto topLeft = row->mapToItem(panel, 0, 0);
+                        return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                               topLeft.x() + row->width() <= panel->width() + 1.0 &&
+                               topLeft.y() + row->height() <= panel->height() + 1.0;
+                    };
+                    for (QQuickItem* row : navigationTimeMetricRows) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationTimeMetricFitsInPanel(row, navigationPageTime), 3000);
+                    }
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageOverview->y(), navigationPageCapabilities->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationPageTime->y(), navigationPageChecks->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(navigationPageTime->y() > navigationPageOverview->y(), 3000);
@@ -2823,16 +2843,43 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
                         QQuickItem* navigationTimeMetricsGridAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
+                        QQuickItem* navigationTimeMetricRowsAtWidth[] = {
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000),
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000)};
                         QQuickItem* navigationChecksDomainsAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksDomains"), 3000);
                         for (QQuickItem* panel : navigationPanels) QVERIFY(panel);
                         QVERIFY(navigationCapabilitiesGridAtWidth);
                         QVERIFY(navigationTimeMetricsGridAtWidth);
+                        for (QQuickItem* row : navigationTimeMetricRowsAtWidth) QVERIFY(row);
                         QVERIFY(navigationChecksDomainsAtWidth);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationCapabilitiesGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
+                        if (widthIndex < 2) {
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                navigationTimeMetricRowsAtWidth[4]->width() >= navigationTimeMetricRowsAtWidth[0]->width() * 1.8, 3000);
+                        } else {
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(navigationTimeMetricRowsAtWidth[4]->width() -
+                                     navigationTimeMetricRowsAtWidth[0]->width()) < 1.0, 3000);
+                        }
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationTimeMetricRowsAtWidth[4]->y() > navigationTimeMetricRowsAtWidth[3]->y(), 3000);
+                        const auto navigationTimeMetricFitsInPanelAtWidth = [](QQuickItem* row, QQuickItem* panel) {
+                            const auto topLeft = row->mapToItem(panel, 0, 0);
+                            return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                                   topLeft.x() + row->width() <= panel->width() + 1.0 &&
+                                   topLeft.y() + row->height() <= panel->height() + 1.0;
+                        };
+                        for (QQuickItem* row : navigationTimeMetricRowsAtWidth) {
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                navigationTimeMetricFitsInPanelAtWidth(row, navigationPanels[2]), 3000);
+                        }
                         QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomainsAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
                         QQuickItem* timelineRows[] = {
