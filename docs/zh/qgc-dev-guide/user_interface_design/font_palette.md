@@ -16,7 +16,7 @@ QGCPalette 提供浅色和深色主题的颜色。普通 UI 文字、按钮、�
 
 ## ScreenTools（屏幕工具）
 
-ScreenTools 是全项目字体族和字号的唯一入口：
+ScreenTools 是全项目字体族和字号的唯一入口；QGCApplication 会在 QML 加载前将该字体族设置为应用默认字体，使未显式指定字体的 Qt Quick Text 也继承统一基线：
 
 - `normalFontFamily`：当前界面语言的普通字体族。
 - `fixedFontFamily`：控制台、代码和原始数据使用的等宽字体族。

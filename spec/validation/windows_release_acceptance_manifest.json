@@ -274,6 +274,7 @@
       "required": true,
       "pass": [
         "ScreenTools_exposes_semantic_font_size_and_weight_roles",
+        "QGuiApplication_default_font_family_matches_ScreenTools_normalFontFamily",
         "QGCLabel_uses_typographyRole_and_shared_font_family",
         "shared_text_controls_use_normal_font_family_and_default_hinting",
         "radio_button_content_item_inherits_control_font_family",

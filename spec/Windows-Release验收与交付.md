@@ -291,7 +291,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 ## 14. 全项目字体系统与渲染一致性（FGC-0047）
 
 - 规范入口：[全项目字体系统与渲染规范](UI-字体系统与渲染规范.md)。
-- 修复范围：ScreenTools 语义字号/字重角色、QGCLabel、QGCTextField、QGCRadioButton、QGCCheckBox、QGCComboBox、QGCButton、QGCTabButton、QGCMenuItem、FlightTelemetry 和 FlightRadio。
+- 修复范围：QGCApplication 全局默认字体、ScreenTools 语义字号/字重角色、QGCLabel、QGCTextField、QGCRadioButton、QGCCheckBox、QGCComboBox、QGCButton、QGCTabButton、QGCMenuItem、QGCSlider、QGCMarqueeLabel、FlightTelemetry 和 FlightRadio。
 - 已确认的源码缺陷：`QGCRadioButton.qml` 的 contentItem 曾将 `font.family` 错误绑定到 `control.font.pointSize`；必须绑定 `control.font.family`。
 - 中文界面字体策略：按操作系统选择已安装的 Microsoft YaHei UI / PingFang SC / Noto Sans CJK SC 等字体；未安装时保留 Qt 平台缺字回退。
 - FlightTelemetry 所有页面内字号系数迁移到 ScreenTools 语义令牌；新增 `qml-typography-check` pre-commit 检查。

@@ -66,6 +66,7 @@
 
 统一渲染规则：
 
+- QGCApplication 在 QML 加载前设置应用默认字体族和 Hinting；未显式指定字体的 Qt Quick Text 也继承同一基线。
 - `QGCLabel` 默认使用 `ScreenTools.normalFontFamily`、语义字号、语义字重。
 - 文本控件统一使用 `Font.PreferDefaultHinting`。
 - 普通 UI 文本开启 `antialiasing: true`。

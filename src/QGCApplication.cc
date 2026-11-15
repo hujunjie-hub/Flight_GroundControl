@@ -6,6 +6,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/private/qthread_p.h>
+#include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
 #include <QtQml/QQmlApplicationEngine>
@@ -38,6 +39,7 @@
 #include "QGCLoggingCategoryManager.h"
 #include "QGCNetworkHelper.h"
 #include "SettingsManager.h"
+#include "ScreenToolsController.h"
 #include "Vehicle.h"
 #include "VideoManager.h"
 #include "qgc_version.h"
@@ -248,6 +250,12 @@ void QGCApplication::init()
     if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
+
+    // Set the application-wide default so raw Qt Quick Text items inherit the same UI family.
+    QFont defaultFont = QGuiApplication::font();
+    defaultFont.setFamily(ScreenToolsController::normalFontFamily());
+    defaultFont.setHintingPreference(QFont::PreferDefaultHinting);
+    QGuiApplication::setFont(defaultFont);
 
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test

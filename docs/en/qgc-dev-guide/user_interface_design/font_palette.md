@@ -16,7 +16,7 @@ Map overlays use QGCMapPalette because satellite and street maps require differe
 
 ## ScreenTools
 
-ScreenTools is the single source for UI font families and sizes:
+ScreenTools is the single source for UI font families and sizes. Before QML loads, QGCApplication sets this family as the application default so raw Qt Quick Text items inherit the same baseline:
 
 - `normalFontFamily`: normal UI font for the selected interface language.
 - `fixedFontFamily`: monospaced font for consoles, code, and raw data.

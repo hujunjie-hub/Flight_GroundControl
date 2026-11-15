@@ -94,6 +94,11 @@ def analyze_file(path: Path) -> list[Violation]:
     elif name == "FlightRadio.qml":
         require('typographyRole: "title"' in content, "FlightRadio page title must use the shared title role")
 
+    elif name == "QGCApplication.cc":
+        require("QGuiApplication::setFont(defaultFont)" in content, "application default font family must be set before QML loads")
+        require("ScreenToolsController::normalFontFamily()" in content, "application default font must use ScreenToolsController family")
+        require("QFont::PreferDefaultHinting" in content, "application default font must use shared hinting preference")
+
     elif name == "ScreenToolsController.cc":
         require("QLocale::Chinese" in content, "Chinese UI font selection must be explicit")
         require("QLocale::system().language()" in content, "System language selection must follow the system locale")

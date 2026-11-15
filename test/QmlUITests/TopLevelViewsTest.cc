@@ -6,6 +6,7 @@
 #include <QtGui/QColor>
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
+#include <QtGui/QGuiApplication>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -150,6 +151,7 @@ void TopLevelViewsTest::_testSettingsSidebarTypographyConsistency()
     const QFont pageFont = flyViewLabel->property("font").value<QFont>();
     const QFont sectionFont = sectionLabel->property("font").value<QFont>();
     QCOMPARE(sectionFont.family(), pageFont.family());
+    QCOMPARE(pageFont.family(), QGuiApplication::font().family());
     QVERIFY(!pageFont.family().isEmpty());
     QCOMPARE(sectionFont.pointSizeF(), pageFont.pointSizeF());
     QCOMPARE(sectionFont.weight(), pageFont.weight());
@@ -179,6 +181,8 @@ void TopLevelViewsTest::_testChineseFontFallbackSelection()
 {
     Fact* const language = SettingsManager::instance()->appSettings()->qLocaleLanguage();
     QVERIFY(language);
+
+    QCOMPARE(QGuiApplication::font().family(), ScreenToolsController::normalFontFamily());
 
     const QVariant savedLanguage = language->rawValue();
     [[maybe_unused]] const auto restoreLanguage = qScopeGuard([language, savedLanguage] {

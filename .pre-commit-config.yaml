@@ -270,7 +270,7 @@ repos:
         name: Check shared QML typography contract
         entry: python3 tools/analyzers/qml_typography_check.py
         language: system
-        files: ^(src/QmlControls/(ScreenTools|QGCLabel|QGCTextField|QGCRadioButton|QGCCheckBox|QGCComboBox|QGCButton|QGCTabButton|QGCMenuItem|QGCSlider|QGCMarqueeLabel)\.qml|src/QmlControls/ScreenToolsController\.cc|src/FirmwarePlugin/Flight/(FlightTelemetry|FlightRadio)\.qml)$
+        files: ^(src/QmlControls/(ScreenTools|QGCLabel|QGCTextField|QGCRadioButton|QGCCheckBox|QGCComboBox|QGCButton|QGCTabButton|QGCMenuItem|QGCSlider|QGCMarqueeLabel)\.qml|src/QmlControls/ScreenToolsController\.cc|src/QGCApplication\.cc|src/FirmwarePlugin/Flight/(FlightTelemetry|FlightRadio)\.qml)$
         pass_filenames: true
 
       - id: qt-translate-noop-check
