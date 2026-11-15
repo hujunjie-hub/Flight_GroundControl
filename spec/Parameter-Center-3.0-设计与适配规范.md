@@ -402,7 +402,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 ### Phase 4 实施记录（首轮实测控制遥测趋势）
 
-- 参数中心响应面板开始接入 Vehicle.flightTelemetry 的真实 FCU_CONTROL_STATUS 数据，采集 controlTimeBootUs、controlBootId 和 controlSolveTimeUs。
+- 参数中心响应面板开始接入 Vehicle.flightTelemetry 的真实 FCU_CONTROL_STATUS 数据，采集 controlTimeBootUs、controlBootId、controlProfileId 和 controlSolveTimeUs。
 - FlightTelemetryFactGroup 在每帧 FCU_CONTROL_STATUS 通过 boot/profile/时间戳/字段校验并完成 Fact 更新后发出 controlStatusUpdated；参数中心通过该信号逐帧采样，不再用 100 ms 地面站定时器轮询最新 Fact，避免高频控制遥测被轮询漏采或重复采样旧值。仅在 controlAvailable 为真且 familyStale.control=false 时记录，最多保留最近 120 个有效样本。
 - 控制器 boot ID、controlProfileId 变化、飞控时间戳回退、GroundControl 机型调参上下文切换或活动飞行器切换时清空历史样本，避免跨启动/跨控制配置/跨机型上下文/跨飞行器拼接曲线。相邻有效样本间隔超过 FlightTelemetryFactGroup 的 3 秒 stale threshold 时断开曲线并单独绘制采样点，不跨缺样区间连线。
 - 当前曲线明确标记为“控制求解耗时”，显示最近真实值；控制遥测失效时标注历史样本，样本不足两个时显示等待态。
@@ -411,7 +411,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - FlightTelemetryDispatchTest 增加 controlStatusUpdated 信号回归：合法新帧触发一次，重复时间戳和非法 solver_status 不触发，后续合法新帧继续触发。
 - ParameterEditorController 仅在匹配的 PARAM_VALUE 写入确认成功后发出 parameterWriteConfirmed(componentId, parameterName, previousValue, confirmedValue)，保留飞控确认前后值；失败、超时或未授权写入不产生确认事件。
 - 参数确认事件保留参数写入前值与飞控确认值，先记录当前 FCU boot ID、controlProfileId 与最后一个已接收控制时间戳，随后只在同一 boot ID / controlProfileId 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话/同控制配置遥测基线时只显示未关联说明，不伪造曲线标记。
-- 参数标记与曲线样本在 boot ID 变化、时间戳回退或 activeVehicle 切换时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
+- 参数标记与曲线样本在 boot ID、controlProfileId、时间戳回退、GroundControl 机型调参上下文或 activeVehicle 变化时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
 - 仿真接口盘点：当前仓库的 `tools/simulation/mock_vehicle.py` 明确不模拟飞行动力学；`run-arducopter-sitl.sh` 启动的是 ArduCopter，不是 Flight SIL；`Flight-UDP-SIL-20261114.md` 记录的是外部 Flight Host SIL 经临时本地转发补丁接入的遥测验证，未提供 GroundControl 可调用的 Flight SIL 启停或参数注入 API。因此参数中心只读已连接 FCU 的真实遥测，不启动/控制仿真进程，也不将 ArduCopter SITL 冒充 Flight 模型仿真。
 - 影响关系盘点：当前 `FlightParameterFactMetaData.json` 提供 name/type/domain/group/范围/默认值/modelProfiles 等字段，未声明 dependencies 或 validationRules；`FlightVehicleModelCatalog.json` 提供机型、域和参数白名单，不包含参数影响图。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
 - 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
