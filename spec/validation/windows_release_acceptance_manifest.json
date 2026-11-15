@@ -625,7 +625,8 @@
         "mocklink_device_id_3_and_device_id_155_advertise_independent_capability_flags",
         "gimbal_manager_configure_param7_and_pitchyaw_param7_route_control_to_legacy_device_id_3",
         "position_control_on_legacy_device_id_3_round_trips_through_manager_component_1",
-        "controlling_legacy_device_id_3_does_not_change_device_154_or_device_155_owner_pairs"
+        "controlling_legacy_device_id_3_does_not_change_device_154_or_device_155_owner_pairs",
+        "position_control_on_legacy_device_id_3_does_not_change_peer_device_154_or_155_attitudes"
       ]
     }
   ],
