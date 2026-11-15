@@ -5,6 +5,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonValue>
+#include <QtCore/QHash>
 #include <QtCore/QStringList>
 
 #include <cmath>
@@ -50,6 +51,18 @@ FlightParameterMetaData::~FlightParameterMetaData()
 void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
 {
     const QJsonArray parameters = json.value(QStringLiteral("parameters")).toArray();
+
+    // Reject every occurrence of an ambiguous name, not merely the second one.
+    QHash<QString, int> nameOccurrences;
+    for (const QJsonValue &value : parameters) {
+        if (value.isObject()) {
+            const QString name = value.toObject().value(QStringLiteral("name")).toString().trimmed();
+            if (!name.isEmpty()) {
+                ++nameOccurrences[name];
+            }
+        }
+    }
+
     for (const QJsonValue &value : parameters) {
         if (!value.isObject()) {
             continue;
@@ -57,6 +70,11 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         const QJsonObject entry = value.toObject();
         const QString name = entry.value(QStringLiteral("name")).toString().trimmed();
         if (name.isEmpty()) {
+            continue;
+        }
+        if (nameOccurrences.value(name) > 1) {
+            qCWarning(FlightParameterMetaDataLog)
+                << "Ignoring duplicate Flight parameter metadata name:" << name;
             continue;
         }
 
@@ -79,6 +97,8 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         if (!validNumericField(entry, QStringLiteral("min")) ||
             !validNumericField(entry, QStringLiteral("max")) ||
             !validNumericField(entry, QStringLiteral("default")) ||
+            (entry.contains(QStringLiteral("rebootRequired")) &&
+             !entry.value(QStringLiteral("rebootRequired")).isBool()) ||
             (entry.contains(QStringLiteral("decimalPlaces")) &&
              (!entry.value(QStringLiteral("decimalPlaces")).isDouble() ||
               entry.value(QStringLiteral("decimalPlaces")).toInt(-1) < 0 ||
@@ -130,6 +150,7 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         if (entry.contains(QStringLiteral("decimalPlaces"))) {
             metaData->setDecimalPlaces(entry.value(QStringLiteral("decimalPlaces")).toInt());
         }
+        metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool(false));
         metaData->setReadOnly(false);
         _cachedMetaData.insert(name, metaData);
     }
