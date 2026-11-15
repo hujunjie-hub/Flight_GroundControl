@@ -1358,6 +1358,7 @@ Item {
                                                          : qsTr("存储项"))
                                         color: root.mutedText
                                         font.pointSize: ScreenTools.captionFontPointSize
+                                        wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
