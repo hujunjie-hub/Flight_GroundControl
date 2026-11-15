@@ -1427,8 +1427,9 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     }
     metaData->setQGCRebootRequired(qgcRebootRequired);
 
-    if (json.contains(_rebootRequiredJsonKey)) {
-        metaData->setVehicleRebootRequired(json[_rebootRequiredJsonKey].toBool());
+    const QJsonValue rebootRequiredValue = json.value(_rebootRequiredJsonKey);
+    if (rebootRequiredValue.isBool()) {
+        metaData->setVehicleRebootRequired(rebootRequiredValue.toBool());
     } else {
         metaData->setVehicleRebootRequiredKnown(false);
     }
