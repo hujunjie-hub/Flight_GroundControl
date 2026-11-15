@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.43
+- 版本：6.44
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；总览拓扑连线/节点按六域独立 freshness 着色，多域拓扑面板不再显示导航单域徽标；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例链路聚合徽标；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -962,3 +962,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 仅修改 FlightTelemetry QML、对应 UI Integration、G15 manifest、Windows Release 验收指南和本 SPEC；不修改 MAVLink、FactGroup、Flight ICD、freshness 阈值、VehicleLinkManager 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增回归断言为 NOT_RUN，等待集中验收。
 
+
+
+## 67. Phase 2.21 链路消息与实例接收年龄语义区分（2026-11-15）
+
+- 下方通信详情的 family 级 `linkAvailable` 接收年龄使用「链路状态消息接收年龄」标签，来源为 `_receiveAgeText("link")`，表示地面站最近收到链路状态消息的年龄。
+- 每个链路实例的 `receiveAgeMs` 使用「地面站接收年龄」标签，来源为该实例自身的接收年龄；它与 family 级消息年龄、FCU 上报的 `ageUs`（「FCU 数据年龄」）是三个不同量，不能共用同一标签或互相替代。
+- 为 family 级接收年龄增加稳定 `flightTelemetry_linkDetailFamilyReceiveAge` objectName；原有 per-instance `flightTelemetry_linkDetailReceiveAge_*` 与主视觉 `flightTelemetry_linkMetricAge_*` 保持不变。
+- MockLink UI Integration 分别断言 family 消息年龄、实例接收年龄和 FCU 数据年龄的标签/显示位置；本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc 与本 SPEC；不修改 MAVLink、FactGroup、VehicleLinkManager、Flight ICD 或飞控控制行为。
