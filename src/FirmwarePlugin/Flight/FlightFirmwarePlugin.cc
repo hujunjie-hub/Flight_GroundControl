@@ -190,6 +190,13 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
     const QString catalogSha = parameterCatalog.value(QStringLiteral("sha256")).toString();
     const QString metadataSha = parameterMetadata.value(QStringLiteral("sha256")).toString();
     if (source.value(QStringLiteral("repository")).toString() != QStringLiteral("hujunjie-hub/Flight") ||
+        parameterCatalog.value(QStringLiteral("path")).toString() !=
+            QStringLiteral("middleware/protocol/mavlink/parameters/ground_parameters.json") ||
+        parameterMetadata.value(QStringLiteral("source")).toString() !=
+            QStringLiteral("middleware/protocol/mavlink/parameters/ground_parameters.json") ||
+        source.value(QStringLiteral("vehicleModel")).toString() != QStringLiteral("config/vehicle_model.yaml") ||
+        source.value(QStringLiteral("controllerTuning")).toString() != QStringLiteral("config/controller_tuning.yaml") ||
+        source.value(QStringLiteral("estimatorTuning")).toString() != QStringLiteral("config/estimator_tuning.yaml") ||
         !isSha256(catalogSha) || !isSha256(metadataSha) || catalogSha != metadataSha) {
         return {};
     }
