@@ -107,6 +107,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_topologyLegendTitle"), 3000);
             QQuickItem* alarmPriorityHint =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmPriorityHint"), 3000);
+            QQuickItem* alarmScopeNote =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_alarmScopeNote"));
             QQuickItem* alarmEmptyState =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_alarmEmptyState"), 3000);
             QQuickItem* alarmEmptyTitle =
@@ -294,6 +296,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(topologyLegendTitle->property("text").toString(),
                      translatedTelemetryText("状态图例"));
             QVERIFY(alarmPriorityHint);
+            QVERIFY(alarmScopeNote);
             QVERIFY(alarmEmptyState);
             QVERIFY(alarmEmptyTitle);
             QVERIFY(alarmEmptyDescription);
@@ -878,6 +881,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // No FCU custom telemetry has arrived: the page must not present it as current data.
             QTRY_VERIFY_WITH_TIMEOUT(alarmEmptyState->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!alarmScopeNote->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEmptyTitle->property("text").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEmptyDescription->property("text").toString(),
                                       translatedTelemetryText("收到 FCU_EVENT 后按严重度自动排序"), 3000);
@@ -1429,6 +1433,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("最高优先级"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
                                       translatedTelemetryText("%1 条").arg(1), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(alarmScopeNote->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmScopeNote->property("text").toString(),
+                                      translatedTelemetryText("优先摘要 %1 / %2 条 · 历史最近 %3 条")
+                                          .arg(1).arg(1).arg(1), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!alarmEmptyState->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmEventReason->property("text").toString().contains(
                                          translatedTelemetryText("硬件故障")), 3000);
@@ -1465,6 +1473,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                     <= alarmCard->width() + 1.0 &&
                 alarmEventTime->mapToItem(alarmCard, alarmEventTime->width(), alarmEventTime->height()).y()
                     <= alarmCard->height() + 1.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmScopeNote->property("wrapMode").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                alarmScopeNote->mapToItem(alarmCard, alarmScopeNote->width(), alarmScopeNote->height()).x()
+                    <= alarmCard->width() + 1.0 &&
+                alarmScopeNote->mapToItem(alarmCard, alarmScopeNote->width(), alarmScopeNote->height()).y()
+                    <= alarmCard->height() + 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).x()
                     <= alarmCard->width() + 1.0 &&
@@ -1496,6 +1510,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 alarmEventTime->mapToItem(alarmCard, alarmEventTime->width(), alarmEventTime->height()).x()
                     <= alarmCard->width() + 1.0 &&
                 alarmEventTime->mapToItem(alarmCard, alarmEventTime->width(), alarmEventTime->height()).y()
+                    <= alarmCard->height() + 1.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                alarmScopeNote->mapToItem(alarmCard, alarmScopeNote->width(), alarmScopeNote->height()).x()
+                    <= alarmCard->width() + 1.0 &&
+                alarmScopeNote->mapToItem(alarmCard, alarmScopeNote->width(), alarmScopeNote->height()).y()
                     <= alarmCard->height() + 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 alarmEventReason->mapToItem(alarmCard, alarmEventReason->width(), alarmEventReason->height()).x()
@@ -1789,16 +1808,30 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#45D39A")), 3000);
             // A newer event with the same highest severity must move ahead of the earlier critical event.
             sendEventStatus(lastOperationTime + 700, bootId, 4323, 3);
+            sendEventStatus(lastOperationTime + 710, bootId, 4324, 2);
+            sendEventStatus(lastOperationTime + 720, bootId, 4325, 0);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
             QQuickItem* alarmEventCard2 = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_2"), 3000);
             QQuickItem* alarmEventCard3 = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_3"), 3000);
+            QQuickItem* alarmEventCard4 = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_4"), 3000);
+            QQuickItem* alarmEventCard5 = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_alarmEventCard_5"));
+            QQuickItem* historyEventRow5 = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_eventHistoryRow_5"), 3000);
             QVERIFY(alarmEventCard2);
             QVERIFY(alarmEventCard3);
+            QVERIFY(alarmEventCard4);
+            QVERIFY(!alarmEventCard5);
+            QVERIFY(historyEventRow5);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCount->property("text").toString(),
-                                      translatedTelemetryText("%1 条").arg(3), 3000);
+                                      translatedTelemetryText("%1 条").arg(5), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmScopeNote->property("text").toString(),
+                                      translatedTelemetryText("优先摘要 %1 / %2 条 · 历史最近 %3 条")
+                                          .arg(4).arg(5).arg(5), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(alarmEventCard3->property("isPrimary").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard3->property("severityColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
@@ -1808,6 +1841,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(!alarmEventCard2->property("isPrimary").toBool(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard2->property("severityColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(alarmEventCard4->property("severityColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F08B45")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!alarmEventCard4->property("isPrimary").toBool(), 3000);
 
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("validSampleCount").toInt() >= 2, 4000);
             QTRY_VERIFY_WITH_TIMEOUT(trendVelocity->property("validSampleCount").toInt() >= 2, 3000);
