@@ -1047,6 +1047,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLinkDetailMetrics->property("text").toString(),
                                       translatedTelemetryText("指标有效性：%1 / 3 · 无效：RSSI / 链路质量 / 丢包率")
                                           .arg(0), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(invalidOtherLinkDetailMetrics->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
                                           .arg(3).arg(0).arg(0), 3000);
