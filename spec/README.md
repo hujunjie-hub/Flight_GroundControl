@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 4.85
+- 版本 4.86
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -235,3 +235,5 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 导航/趋势会话边界补强：新 FCU boot epoch 首包允许来自导航等非操作域；operationAvailable/opBootIdHex 被 FactGroup 清空后，趋势采样器在下一次 1 Hz 采样时清除旧会话样本并保持 GAP，直至新操作状态建立会话 ID。新增 MockLink NAV-first 回归和导航/时间/事件旧时间戳门控断言；本轮不运行 CI/Unit/Integration，新增回归 NOT_RUN。
 
 - 2026-11-15 Phase 2.53 飞行健康页高 DPI 与窄屏细节优化：传感器实例头部按 760 px 响应式重排，资源指标卡片抽取为 ScreenTools 缩放组件，预检卡片间距/字号随字体度量；增加1600/1000/900/760/759/700/400 px 内容边界回归，未运行 CI，新增回归 NOT_RUN。
+
+- 2026-11-15 FCU 连续重启隔离补强：退役 Boot ID 缓存由 8 提升为有界 64；新增 12 个连续 NAV-first Boot Epoch 回归，验证所有 11 个退役 ID 即使携带更大 FCU 时间戳也被拒绝，并确认当前会话继续更新。事件域与 BUILD_INFO 域首包切换沿用既有专项测试；本轮不运行 CI/Unit/Integration，集中验收。
