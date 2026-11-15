@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.64
+版本：4.65
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -577,6 +577,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - AxisGauge fresh/valid 数值使用 `#E6F0F4`，validity bit 清零/越界/非有限使用 `#F0B94B`，未上报使用 `#8298A2`；family WAIT 使用 `#8A9A94`，family stale 沿用琥珀 freshness 色。
 - StickVisualizer 两轴均有效时读数为 `#9DD9D0`；任一轴无效或 stale 为 `#F0B94B`；等待/未上报为 `#8A9A94`。Marker 只在两轴都有效时显示。
 - FlightTelemetryPageUITest 通过 MockLink 断言 WAIT、有效、无效三种颜色及摇杆 marker 行为；既有三种手型映射与真实通道驱动断言必须继续通过。
+- Mode 2 下即使 RC validity mask 全置位，横滚归一化值 1.50 仍必须被判为无效：横滚 AxisGauge 显示无效/琥珀色、右摇杆 marker 隐藏且 readout 无效，左摇杆保持可见；恢复到 0.25 后横滚仪表和右摇杆 marker/readout 同步恢复。
 - 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
 
 ### G15 总览 KPI 与三栏信息所有权（2026-11-15）
