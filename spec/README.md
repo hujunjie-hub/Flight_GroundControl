@@ -283,4 +283,4 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - 2026-11-15 飞控配置外壳高 DPI 收口：Flight 配置顶栏高度与 FlyViewToolBar 内容高度同步按 ScreenTools 字体高度缩放，默认仍为 56 px；左侧导航宽度默认 160 px、随 UI Scale 扩展并限制最大 240 px，内边距/导航项间距/按钮 padding 同步缩放。MockLink UI Integration 新增 100%/150%/200% 真实 UI Scale 回归，验证顶栏/侧栏/按钮尺寸并恢复原始设置。本轮未运行 CI，新增验收 NOT_RUN。
 
 
-- 2026-11-16 导航时间同步分层：时钟纪律与 UTC 参考分组呈现，UTC 有效性/时间质量/时钟纪律使用状态徽标；有效 UTC 不确定度和时间戳使用中性数值色；导航与时间 family 在 FCU 单调时序中独立显示状态。新增 840 px 分组重排及 1600/1672×941、1000/900/760/759/700/400 px UI Integration 回归，未运行 CI，新增回归 NOT_RUN。
+- 2026-11-16 导航时间同步分层：时钟纪律与 UTC 参考分组呈现，UTC 有效性/时间质量/时钟纪律使用状态徽标；有效 UTC 不确定度和时间戳使用中性数值色；导航与时间 family 在 FCU 单调时序中独立显示状态。新增 840 px 分组重排及 1600/1672×941、1000/900/840/839/760/759/700/400 px UI Integration 回归，未运行 CI，新增回归 NOT_RUN。
