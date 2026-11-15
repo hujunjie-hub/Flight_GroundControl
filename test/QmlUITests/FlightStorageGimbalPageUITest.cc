@@ -305,6 +305,21 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             vehicle->gimbalController()->setGimbalRetract(false);
             QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->retracted(), 3000);
 
+            // A half-cleared primary or secondary owner pair must not mutate the current owner.
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, 0.0f, -1.0f, -1.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
+
+            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
+                                    false, -1.0f, -1.0f, 0.0f, -1.0f,
+                                    NAN, NAN, MAV_COMP_ID_GIMBAL);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() > 1000, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_managerStatusAgeMs").toInt() < 1000, 6000);
+            QCOMPARE(ownership->property("text").toString(), QStringLiteral("本机控制中"));
+
             // Partial -3 pairs are malformed and cannot release the current owner.
             vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE,
                                     false, -3.0f, -1.0f, -1.0f, -1.0f,
