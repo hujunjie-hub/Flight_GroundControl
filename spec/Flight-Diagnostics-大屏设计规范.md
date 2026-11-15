@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.60
+- 版本：6.61
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -1132,3 +1132,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink `FlightTelemetryPageUITest` 断言通信详情「消息」行存在且正确显示 family 接收状态；失控保护卡不再承担 linkAvailable 消息状态展示职责。
 - 不改变 link family/instance freshness、链路趋势选择、RC failsafe 判定、MAVLink、FlightTelemetryFactGroup、Flight ICD 或飞控控制行为。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待集中验收。
+
+## 84. Phase 2.38 总览告警空态与实时优先级回归收口（2026-11-15）
+
+- 告警空态标题与说明行增加稳定 objectName：flightTelemetry_alarmEmptyTitle、flightTelemetry_alarmEmptyDescription；不改变原有等待/空列表文案及空态可见规则。
+- MockLink UI Integration 在未收到 FCU_EVENT 时验证告警空态可见、标题显示等待遥测、说明明确提示事件接收后按严重度排序；第一条事件到达后验证空态立即隐藏。
+- 在真实 MockLink → MAVLink → Vehicle → FactGroup → QML 路径中注入严重度 3、1、3 三条事件，验证总数更新为 3、最新同级最高严重度事件置顶、同严重度按本地接收序号降序，严重度 1 事件仍按琥珀色显示。
+- 修正 UI Integration 中告警优先级提示的预期文案，使其与页面实际「最高严重度置顶 · 同级按本地接收序号」一致；不改变严重度排序算法、事件序号生成、FCU_EVENT 字段或历史容量。
+- 不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、VehicleLinkManager 或飞控控制行为；总览仍只读，不授予 ARM、FMS、Permit 或执行器权限。
+- 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待后续集中验收。
