@@ -3112,6 +3112,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_healthPrimary_prearm"), 3000);
             QQuickItem* sensorCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_card_sensors"), 3000);
+            QQuickItem* sensorHeaderGrid = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceHeaderGrid_1"), 3000);
+            QQuickItem* sensorTitle = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceTitle_1"), 3000);
+            QQuickItem* sensorAction = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceAction_1"), 3000);
             QQuickItem* sensorInstanceCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
             QQuickItem* sensorState = findVisibleItem(
@@ -3176,6 +3182,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
             QQuickItem* resourceMetricGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            QQuickItem* resourceWcetTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
+            QQuickItem* resourceStackTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
+            QQuickItem* resourceDeadlineTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_deadline_0"), 3000);
+            QQuickItem* resourceAxiTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_axi_0"), 3000);
             QQuickItem* storageDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_storage"), 3000);
             QVERIFY(healthGrid);
             QVERIFY(healthMatrix);
@@ -3186,6 +3200,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(sensorPrimary);
             QVERIFY(prearmPrimary);
             QVERIFY(sensorCard);
+            QVERIFY(sensorHeaderGrid);
+            QVERIFY(sensorTitle);
+            QVERIFY(sensorAction);
             QVERIFY(sensorInstanceCard);
             QVERIFY(sensorState);
             QVERIFY(sensorDetails);
@@ -3193,6 +3210,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(prearmCheckCard);
             QVERIFY(resourceTaskCard);
             QVERIFY(resourceMetricGrid);
+            QVERIFY(resourceWcetTile);
+            QVERIFY(resourceStackTile);
+            QVERIFY(resourceDeadlineTile);
+            QVERIFY(resourceAxiTile);
             QVERIFY(prearmState);
             QVERIFY(prearmDetails);
             QVERIFY(prearmRow);
@@ -3204,6 +3225,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(sensorInstanceCard->property("radius").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmCheckCard->property("radius").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceTaskCard->property("radius").toInt(), 6, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(sensorHeaderGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(prearmMetadataGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceMetricGrid->property("columns").toInt(), 2, 3000);
             QVERIFY(maintenanceEvent);
@@ -3380,11 +3402,23 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_resourceDeadlineMiss_0"), 3000);
             QQuickItem* resourceAxiFree = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
+            resourceWcetTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
+            resourceStackTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
+            resourceDeadlineTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_deadline_0"), 3000);
+            resourceAxiTile = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_axi_0"), 3000);
             QVERIFY(resourceCpu);
             QVERIFY(resourceMetrics);
             QVERIFY(resourceStackFree);
             QVERIFY(resourceDeadlineMiss);
             QVERIFY(resourceAxiFree);
+            QVERIFY(resourceWcetTile);
+            QVERIFY(resourceStackTile);
+            QVERIFY(resourceDeadlineTile);
+            QVERIFY(resourceAxiTile);
             QTRY_COMPARE_WITH_TIMEOUT(resourceCpu->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#49C7E7")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(resourceMetrics->property("color").value<QColor>(),
@@ -3426,6 +3460,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
             resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
             resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            resourceWcetTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
+            resourceStackTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
+            resourceDeadlineTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_deadline_0"), 3000);
+            resourceAxiTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_axi_0"), 3000);
             QVERIFY(resourceCpu);
             QVERIFY(resourceMetrics);
             QVERIFY(resourceStackFree);
@@ -3453,6 +3491,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
             resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
             resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            resourceWcetTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
+            resourceStackTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
+            resourceDeadlineTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_deadline_0"), 3000);
+            resourceAxiTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_axi_0"), 3000);
             QVERIFY(resourceCpu);
             QVERIFY(resourceMetrics);
             QVERIFY(resourceStackFree);
@@ -3573,6 +3615,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
             resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
             resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
+            resourceWcetTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
+            resourceStackTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
+            resourceDeadlineTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_deadline_0"), 3000);
+            resourceAxiTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_axi_0"), 3000);
             QVERIFY(resourceCpu);
             QVERIFY(resourceMetrics);
             QVERIFY(resourceStackFree);
@@ -3580,7 +3626,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(resourceAxiFree);
             QVERIFY(resourceTaskCard);
             QVERIFY(resourceMetricGrid);
+            QVERIFY(resourceWcetTile);
+            QVERIFY(resourceStackTile);
+            QVERIFY(resourceDeadlineTile);
+            QVERIFY(resourceAxiTile);
             QVERIFY(sensorCard);
+            QVERIFY(sensorHeaderGrid);
+            QVERIFY(sensorTitle);
+            QVERIFY(sensorAction);
             QVERIFY(sensorInstanceCard);
             QVERIFY(sensorState);
             QVERIFY(sensorDetails);
@@ -3626,7 +3679,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             };
             const auto healthDetailCardsFit = [&]() {
                 if (!itemFitsInPanel(sensorInstanceCard, sensorCard) ||
-                    !itemFitsInPanel(sensorState, sensorInstanceCard) ||
+                    !itemFitsInPanel(sensorHeaderGrid, sensorInstanceCard) ||
+                    !itemFitsInPanel(sensorTitle, sensorHeaderGrid) ||
+                    !itemFitsInPanel(sensorState, sensorHeaderGrid) ||
+                    !itemFitsInPanel(sensorAction, sensorHeaderGrid) ||
                     !itemFitsInPanel(sensorDetails, sensorInstanceCard) ||
                     !itemFitsInPanel(prearmMetadataGrid, prearmDetail) ||
                     !itemFitsInPanel(prearmCheckCard, prearmDetail) ||
@@ -3636,9 +3692,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     !itemFitsInPanel(prearmDetails, prearmRow) ||
                     !itemFitsInPanel(resourceTaskCard, resourcesDetail) ||
                     !itemFitsInPanel(resourceMetricGrid, resourceTaskCard)) return false;
+                QQuickItem* resourceTiles[] = {resourceWcetTile, resourceStackTile, resourceDeadlineTile, resourceAxiTile};
+                for (QQuickItem* tile : resourceTiles) {
+                    if (!itemFitsInPanel(tile, resourceMetricGrid)) return false;
+                }
                 QQuickItem* resourceValues[] = {resourceMetrics, resourceStackFree, resourceDeadlineMiss, resourceAxiFree};
-                for (QQuickItem* value : resourceValues) {
-                    if (!itemFitsInPanel(value, resourceMetricGrid)) return false;
+                QQuickItem* resourceValueTiles[] = {resourceWcetTile, resourceStackTile, resourceDeadlineTile, resourceAxiTile};
+                for (int index = 0; index < 4; ++index) {
+                    if (!itemFitsInPanel(resourceValues[index], resourceValueTiles[index])) return false;
                 }
                 return true;
             };
@@ -3670,11 +3731,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceResourceGrid->property("columns").toInt(), 2, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(maintenanceResourceMetricsFit(), 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(sensorHeaderGrid->property("columns").toInt(), widthIndex < 2 ? 12 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(prearmMetadataGrid->property("columns").toInt(), widthIndex < 2 ? 2 : 1, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(resourceMetricGrid->property("columns").toInt(), 2, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(healthDetailCardsFit(), 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(resourceWcetTile->height() >= resourceMetrics->height() &&
+                                             resourceStackTile->height() >= resourceStackFree->height() &&
+                                             resourceDeadlineTile->height() >= resourceDeadlineMiss->height() &&
+                                             resourceAxiTile->height() >= resourceAxiFree->height(), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(prearmRow->property("columns").toInt(), widthIndex < 2 ? 12 : 1, 3000);
                 if (widthIndex < 2) {
+                    QTRY_COMPARE_WITH_TIMEOUT(sensorTitle->y(), sensorState->y(), 3000);
+                    QTRY_COMPARE_WITH_TIMEOUT(sensorState->y(), sensorAction->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(sensorTitle->x() < sensorState->x() &&
+                                                 sensorState->x() < sensorAction->x(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(prearmId->y(), prearmState->y(), 3000);
                     QTRY_COMPARE_WITH_TIMEOUT(prearmState->y(), prearmDetails->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(prearmId->x() < prearmState->x() &&
@@ -3695,6 +3765,9 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[7]->width() >= dashboardGrid->width() * 0.45, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(diagnosticCardItems[6]->width() >= dashboardGrid->width() * 0.45, 3000);
                 } else {
+                    QTRY_COMPARE_WITH_TIMEOUT(sensorTitle->y(), sensorState->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(sensorAction->y() > sensorState->y(), 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(sensorAction->width() >= sensorHeaderGrid->width() * 0.90, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(prearmId->y() < prearmState->y() &&
                                                  prearmState->y() < prearmDetails->y(), 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(prearmId->width() >= prearmRow->width() * 0.90 &&
