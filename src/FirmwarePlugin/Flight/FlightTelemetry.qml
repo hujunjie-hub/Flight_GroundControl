@@ -1314,7 +1314,7 @@ SetupPage {
                : qsTr("%1 (%2)").arg(label).arg(value)
     }
 
-    function _eventBootTimeText(timeBootUs) {
+    function _eventBootTimeText(timeBootUs, preserveMicroseconds) {
         if (timeBootUs === null || timeBootUs === undefined || timeBootUs === "") {
             return "FCU · " + qsTr("未上报")
         }
@@ -1323,7 +1323,7 @@ SetupPage {
                 value < 0 || value > 9007199254740991) {
             return "FCU · " + qsTr("无效")
         }
-        return qsTr("FCU +%1 s").arg((value / 1000000).toFixed(3))
+        return qsTr("FCU +%1 s").arg((value / 1000000).toFixed(preserveMicroseconds === true ? 6 : 3))
     }
 
     function _navigationTimelineOrderForData() {
@@ -1364,7 +1364,7 @@ SetupPage {
 
     function _navigationTimelineValueText(availableFact, factName) {
         const status = _familyStatus(availableFact)
-        return status === qsTr("已接收") ? _eventBootTimeText(_fact(factName)) : status
+        return status === qsTr("已接收") ? _eventBootTimeText(_fact(factName), true) : status
     }
 
     function _navigationTimelineColor(availableFact, accentColor) {

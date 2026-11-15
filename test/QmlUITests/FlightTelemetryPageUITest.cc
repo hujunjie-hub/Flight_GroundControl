@@ -856,7 +856,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendLinkStatus(1400, bootId, 1, -42, 900, 10000, 0x700);
             sendLinkStatus(1500, bootId, 2, -68, 700, 30000, 0x700);
             sendLinkStatus(1600, bootId, 4, -20, 1000, 0, 0);
-            sendEventStatus(1700000, bootId, 4321, 3);
+            sendEventStatus(9200, bootId, 4321, 3);
             for (uint8_t digestKind = 0; digestKind < 4; ++digestKind)
                 sendBuildInfoStatus(1800, bootId, digestKind);
             QTRY_COMPARE_WITH_TIMEOUT(buildInfoMessageStatus->property("valueText").toString(),
@@ -1092,7 +1092,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(historyEventDetails);
             QVERIFY(alarmEventMeta);
             QVERIFY(historyEventSequence);
-            const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("1.700"));
+            const QString expectedEventBootTime = translatedTelemetryText("FCU +%1 s").arg(QStringLiteral("0.009"));
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(historyEventTime->property("text").toString(), expectedEventBootTime, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(alarmEventMeta->property("text").toString(),
@@ -1234,13 +1234,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       expectedUtcTimestamp, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineNavigationValue->property("text").toString(),
-                                      QStringLiteral("FCU +0.009 s"), 3000);
+                                      QStringLiteral("FCU +0.009100 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
-                                      QStringLiteral("FCU +0.009 s"), 3000);
+                                      QStringLiteral("FCU +0.009300 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventValue->property("text").toString(),
-                                      QStringLiteral("FCU +1.700 s"), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineTimeRow->y(), 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineTimeRow->y() < navigationTimelineEventRow->y(), 3000);
+                                      QStringLiteral("FCU +0.009200 s"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineEventRow->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineEventRow->y() < navigationTimelineTimeRow->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
                                       translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
@@ -1289,7 +1289,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("否"), 3000);
             // FCU boot-time remains valid even when UTC discipline reports utc_valid=false.
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
-                                      QStringLiteral("FCU +0.009 s"), 3000);
+                                      QStringLiteral("FCU +0.009400 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#F06464")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
@@ -1307,7 +1307,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       QStringLiteral("2023-11-14 22:13:29.123456 UTC"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
-                                      QStringLiteral("FCU +0.010 s"), 3000);
+                                      QStringLiteral("FCU +0.009500 s"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendControl->property("sampleCount").toInt() > invalidTimeTrendSamples, 3000);
@@ -1332,7 +1332,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       QColor(QStringLiteral("#F0B94B")), 3000);
             sendTimeStatus(lastOperationTime + 600, bootId, 1700000010123456ULL, 1);
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineTimeValue->property("text").toString(),
-                                      QStringLiteral("FCU +0.010 s"), 3000);
+                                      QStringLiteral("FCU +0.009600 s"), 3000);
+            sendEventStatus(lastOperationTime + 650, bootId, 4322, 1);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimelineEventValue->property("text").toString(),
+                                      QStringLiteral("FCU +0.009650 s"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineNavigationRow->y() < navigationTimelineTimeRow->y(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimelineTimeRow->y() < navigationTimelineEventRow->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
