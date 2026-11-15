@@ -128,7 +128,8 @@ bool MockLinkGimbal::_handleGimbalManagerSetAttitude(
 {
     if ((request.target_system != 0 && request.target_system != _mockLink->vehicleId()) ||
         (request.target_component != 0 && request.target_component != MAV_COMP_ID_AUTOPILOT1) ||
-        (request.gimbal_device_id != 0 && request.gimbal_device_id != kGimbalCompId)) {
+        (request.gimbal_device_id != 0 && request.gimbal_device_id != kGimbalCompId) ||
+        (request.flags & ~0x7Fu) != 0) {
         return false;
     }
 
@@ -283,6 +284,10 @@ bool MockLinkGimbal::_handleGimbalManagerPitchYaw(const mavlink_command_long_t &
     const uint8_t targetDeviceId = static_cast<uint8_t>(requestedDeviceId);
     if (targetDeviceId != 0 && targetDeviceId != kGimbalCompId) {
         qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW denied for unknown device" << targetDeviceId;
+        return false;
+    }
+    if ((flags & ~0x7Fu) != 0) {
+        qCDebug(MockLinkGimbalLog) << "DO_GIMBAL_MANAGER_PITCHYAW denied for unknown flags" << flags;
         return false;
     }
 
