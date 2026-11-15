@@ -6,6 +6,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QVariant>
 #include <QtGui/QColor>
+#include <QtGui/QFont>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -2142,6 +2143,61 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(overviewFlight);
             QVERIFY(overviewNavigation);
             QVERIFY(overviewRcInput);
+
+            QQuickItem* overviewFlightTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight_title"), 3000);
+            QQuickItem* overviewFlightEyebrow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFlight_eyebrow"), 3000);
+            QQuickItem* operationDetailTitle =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_operation_title"), 3000);
+            QQuickItem* operationDetailEyebrow =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_operation_eyebrow"), 3000);
+            QQuickItem* overviewEventBadge =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput_statusBadge"), 3000);
+            QQuickItem* detailEventBadge =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_latestEvent_statusBadge"), 3000);
+            QQuickItem* overviewEventBadgeText =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput_statusBadge_text"), 3000);
+            QQuickItem* detailEventBadgeText =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_latestEvent_statusBadge_text"), 3000);
+            QVERIFY(overviewFlightTitle);
+            QVERIFY(overviewFlightEyebrow);
+            QVERIFY(operationDetailTitle);
+            QVERIFY(operationDetailEyebrow);
+            QVERIFY(overviewEventBadge);
+            QVERIFY(detailEventBadge);
+            QVERIFY(overviewEventBadgeText);
+            QVERIFY(detailEventBadgeText);
+
+            const auto textStyleMatches = [](QQuickItem* left, QQuickItem* right) {
+                const QFont leftFont = left->property("font").value<QFont>();
+                const QFont rightFont = right->property("font").value<QFont>();
+                return left->property("color").value<QColor>() == right->property("color").value<QColor>() &&
+                       qAbs(leftFont.pointSizeF() - rightFont.pointSizeF()) < 0.01 &&
+                       leftFont.weight() == rightFont.weight();
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(textStyleMatches(overviewFlightTitle, operationDetailTitle), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(textStyleMatches(overviewFlightEyebrow, operationDetailEyebrow), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(textStyleMatches(overviewEventBadgeText, detailEventBadgeText), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("radius").toInt(),
+                                      diagnosticCardItems[0]->property("radius").toInt(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("color").value<QColor>(),
+                                      diagnosticCardItems[0]->property("color").value<QColor>(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelPadding").toInt(),
+                                      diagnosticCardItems[0]->property("panelPadding").toInt(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelSectionSpacing").toInt(),
+                                      diagnosticCardItems[0]->property("panelSectionSpacing").toInt(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewFlight->property("panelBodySpacing").toInt(),
+                                      diagnosticCardItems[0]->property("panelBodySpacing").toInt(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("radius").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(detailEventBadge->property("radius").toInt(), 12, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("implicitHeight").toInt(), 24, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(detailEventBadge->property("implicitHeight").toInt(), 24, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("statusText").toString(),
+                                      detailEventBadge->property("statusText").toString(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(overviewEventBadge->property("statusColor").value<QColor>(),
+                                      detailEventBadge->property("statusColor").value<QColor>(), 3000);
+
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewNavigation->height()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(overviewFlight->height() - overviewRcInput->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryBand->property("radius").toInt(), 8, 3000);
