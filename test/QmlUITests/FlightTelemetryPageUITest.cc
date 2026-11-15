@@ -512,7 +512,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QVariantMap{{QStringLiteral("severity"), 2}, {QStringLiteral("sequence"), 11}},
                 QVariantMap{{QStringLiteral("severity"), 3}, {QStringLiteral("sequence"), 10}},
                 QVariantMap{{QStringLiteral("severity"), 1}, {QStringLiteral("sequence"), 12}},
-                QVariantMap{{QStringLiteral("severity"), -1}, {QStringLiteral("sequence"), 13}}};
+                QVariantMap{{QStringLiteral("severity"), -1}, {QStringLiteral("sequence"), 13}},
+                QVariantMap{{QStringLiteral("severity"), QVariant()}, {QStringLiteral("sequence"), 14}},
+                QVariantMap{{QStringLiteral("sequence"), 15}}};
             QVariant priorityEventOutput;
             QVERIFY(QMetaObject::invokeMethod(page, "_priorityEventsFor", Qt::DirectConnection,
                                               Q_RETURN_ARG(QVariant, priorityEventOutput),
@@ -533,7 +535,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(severityCounts.value(QStringLiteral("error")).toInt(), 1);
             QCOMPARE(severityCounts.value(QStringLiteral("warning")).toInt(), 2);
             QCOMPARE(severityCounts.value(QStringLiteral("info")).toInt(), 0);
-            QCOMPARE(severityCounts.value(QStringLiteral("unknown")).toInt(), 1);
+            QCOMPARE(severityCounts.value(QStringLiteral("unknown")).toInt(), 3);
             QCOMPARE(alarmPriorityHint->property("text").toString(),
                      translatedTelemetryText("最高严重度置顶 · 同级按本地接收序号"));
 
