@@ -390,6 +390,7 @@ bool ParameterEditorController::setSelectedModelProfileId(const QString &profile
     _confirmedValue.clear();
     _previousValue.clear();
     _pendingOriginalValue.clear();
+    _pendingTargetValue.clear();
     _previousValues.clear();
     _hasPreviousValue = false;
     _selectedModelProfileId = profileId;
