@@ -3524,6 +3524,24 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     for (QQuickItem* row : navigationTimeMetricRows) {
                         QTRY_VERIFY_WITH_TIMEOUT(navigationTimeMetricFitsInPanel(row, navigationPageTime), 3000);
                     }
+                    const auto navigationCompactBadgeFits = [](QQuickItem* badge, QQuickItem* metric) {
+                        const auto topLeft = badge->mapToItem(metric, 0, 0);
+                        return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                               topLeft.x() + badge->width() <= metric->width() + 1.0 &&
+                               topLeft.y() + badge->height() <= metric->height() + 1.0;
+                    };
+                    for (int metricIndex = 0; metricIndex < 3; ++metricIndex) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatusBadges[metricIndex]->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationCompactBadgeFits(navigationEstimateStatusBadges[metricIndex],
+                                                       navigationEstimateMetrics[metricIndex]), 3000);
+                    }
+                    for (int metricIndex = 0; metricIndex < 4; ++metricIndex) {
+                        QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityValueBadges[metricIndex]->isVisible(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationCompactBadgeFits(navigationCapabilityValueBadges[metricIndex],
+                                                       navigationCapabilityMetrics[metricIndex]), 3000);
+                    }
                     for (QQuickItem* row : navigationTimelineRows) {
                         QTRY_VERIFY_WITH_TIMEOUT(timelineRowFitsInPanel(row, navigationPageChecks), 3000);
                     }
