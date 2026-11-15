@@ -455,6 +455,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(rightStickMarker);
             QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
+            QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
+            QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
+            QVERIFY(leftStick);
+            QVERIFY(rightStick);
+            QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
+            QVERIFY(mode2Button);
+            QVERIFY(_clickItemAt(mode2Button, 0.5, 0.5, QStringLiteral("flightTelemetry_rcMode_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_stickChannels").toList().value(0).toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStick->property("horizontalValue").toDouble() - 0.50) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(leftStick->property("verticalValue").toDouble() + 0.20) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rightStick->property("horizontalValue").toDouble() - 0.25) < 0.0001, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(qAbs(rightStick->property("verticalValue").toDouble() + 0.25) < 0.0001, 3000);
             QQuickItem* overviewTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
             QVERIFY(overviewTab);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
@@ -626,6 +638,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(axisPitch->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisYaw->property("valid").toBool(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(axisThrottle->property("valid").toBool(), 3000);
+            QVERIFY(_clickItemAt(rcPageTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_3")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(leftStickMarker->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!rightStickMarker->isVisible(), 3000);
+            QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
 
             // The storage family is available, but validity bit 2 is clear: free space must be shown as invalid.
             sendInvalidStorageStatus(1100);

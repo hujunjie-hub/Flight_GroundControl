@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：4.3
+- 版本：4.4
 - 日期：2026-11-15
 - 状态：四张参考图对应的四页面交互与主体布局已提交；等待新 HEAD CI、Windows 本地视觉和运行验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -288,7 +288,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 - 飞行健康页维护信息横条在 1600/1000/700/400 px 下分别使用 3/2/1/1 列，文字换行时自然增高，不允许横向溢出。
 - 页签网格在 1600/1000 px 使用 4 列，在 700/400 px 使用 2 列；KPI 网格分别使用 6/3/2/1 列；趋势网格分别使用 4/2/1/1 列。
 - 页面标题与只读徽标在 760 px 以下纵向排列；KPI、主视觉、趋势、矩阵和详细卡片自然增高，不得裁切长原因或 hash。
-- UI Integration 必须覆盖 1600/1000/700/400 px，验证四页主网格、健康矩阵、维护横条、页签、KPI 和趋势网格列数，并检查 13 个矩阵单元边界。
+- UI Integration 必须覆盖 1600/1000/700/400 px，验证四页主网格、健康矩阵、维护横条、页签、KPI 和趋势网格列数，并检查 13 个矩阵单元边界；RC 页还要验证 Mode 2 下双摇杆读数与逻辑轴一致，以及 roll validity bit 清除后右摇杆 marker 隐藏。
 
 ### 8.4 趋势采样与状态矩阵
 
@@ -443,6 +443,6 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 导航时序页仅使用导航能力、精度、UTC 和时钟纪律字段；不伪造卫星数量、HDOP 或卫星天图。
 - 遥控与链路页使用 FlightRadio 同一 FlightRadio.mode 设置和 Mode 1/2/3 通道映射；仅显示四个逻辑轴和 validityMask 有效的链路指标，不伪造 CH5–CH8、SNR、RTT 或吞吐量。
 - 趋势面板复用现有 1 Hz / 60 点采样器：总览页显示导航/控制指标，健康页显示 resource CPU/WCET/stack 和 storage free，导航页第 4 张切换为 UTC 不确定度，RC 页切换为 RSSI/质量/丢包/RC 接收年龄；resource/link 实例过期时必须断点。
-- UI Integration 对四页切换、各页主要面板、响应式 12/6/1 列、健康矩阵在 1600/1000/700/400 px 下的 4/2/1/1 列与 13 个单元边界、维护横条 3/2/1/1 列、Mode 1/2/3 映射和 RC marker 有效性进行回归。
+- UI Integration 对四页切换、各页主要面板、响应式 12/6/1 列、健康矩阵在 1600/1000/700/400 px 下的 4/2/1/1 列与 13 个单元边界、维护横条 3/2/1/1 列、Mode 1/2/3 映射、Mode 2 双摇杆读数和 RC marker mask 清除行为进行回归。
 - 视觉验收仍需在 Windows x64 实际运行应用，对照四张原图逐页检查 1672×941、100%/125%/150% DPI；CI 布局断言不能替代像素级人工验收。
 - Exact HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地 RUN_ID 证据必须重新执行；未完成前 FGC-0044 保持 RETESTING。
