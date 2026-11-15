@@ -152,7 +152,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     for (const QString &name : rejectedNames) {
         FactMetaData *rejected = metadata.getMetaDataForFact(name, FactMetaData::valueTypeFloat);
         QVERIFY(rejected);
-        QVERIFY(rejected->category().isEmpty());
+        QCOMPARE(rejected->category(), FactMetaData::defaultCategory());
         QVERIFY(rejected->shortDescription().isEmpty());
     }
 }
