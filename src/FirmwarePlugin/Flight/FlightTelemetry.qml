@@ -1086,7 +1086,7 @@ SetupPage {
                     id: headerRow
                     anchors.fill: parent
                     anchors.margins: 5
-                    columns: root.availableWidth < 420 ? 2 : 3
+                    columns: root.availableWidth < 760 ? 2 : 3
                     columnSpacing: 12
                     rowSpacing: 6
                     Rectangle {
@@ -1742,11 +1742,14 @@ SetupPage {
                 color: "#0A222B"
                 border.width: 1
                 border.color: "#1B6675"
-                RowLayout {
+                GridLayout {
                     id: maintenanceRow
+                    objectName: "flightTelemetry_healthMaintenanceContent"
                     anchors.fill: parent
                     anchors.margins: 10
-                    spacing: 12
+                    columns: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 2 : 1
+                    columnSpacing: 12
+                    rowSpacing: 8
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 3
@@ -1754,7 +1757,6 @@ SetupPage {
                         QGCLabel { text: qsTr("MAINTENANCE & RELIABILITY"); color: "#8FB7C0"; font.pointSize: ScreenTools.microFontPointSize }
                         QGCLabel { text: qsTr("启动 ID：%1").arg(String(root._fact("opBootIdHex") || qsTr("未上报"))); color: "#A8BBC3"; font.pointSize: ScreenTools.captionFontPointSize }
                     }
-                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: "#17606B" }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 3
@@ -1762,7 +1764,6 @@ SetupPage {
                         QGCLabel { Layout.fillWidth: true; text: root._latestEventSummaryText(); color: root._familyStatusColor("eventAvailable"); wrapMode: Text.WordWrap }
                         QGCLabel { text: qsTr("接收年龄：%1").arg(root._receiveAgeText("event")); color: "#8298A2"; font.pointSize: ScreenTools.microFontPointSize }
                     }
-                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; color: "#17606B" }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 3
