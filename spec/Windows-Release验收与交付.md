@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.27  
+版本：4.28  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -484,3 +484,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - FCU ageUs 标记为「FCU 数据年龄」并显示在上方实例面板；receiveAgeMs 标记为「地面站接收年龄」并保留在详情上下文，两种年龄必须独立门控、不得混淆。
 - 字段有效性摘要需分别验证 3/3 有效、0/3 无效、部分无效/未上报以及实例 stale；stale 时不能把最近缓存指标显示为当前有效。
 - FlightTelemetryPageUITest 通过 MockLink 原始 MAVLink wire path 验证主视觉数值、FCU 年龄、详情有效性摘要和 stale 颜色；验证原因仅在下方详情卡显示，主视觉不重复原因；地面站接收年龄与 FCU 数据年龄使用独立标签；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN，集中验收时执行。
+
+
+### G15 多实例链路状态禁止聚合徽标（2026-11-15）
+
+- 遥控与链路页上方「链路质量」HeroPanel 与下方「通信链路」StatusCard 的 `statusFamily` 均必须为空；不得使用 `linkAvailable` 为多实例链路面板生成整卡状态徽标或健康色条。
+- 详情卡仍显式展示 linkAvailable 消息接收状态和新鲜/超时/等待实例覆盖；每个实例的状态、原因、字段有效性与地面站接收年龄独立显示，不将 family fresh 等同所有实例健康。
+- FlightTelemetryPageUITest 使用 MockLink 验证链路主视觉、链路详情卡与失控保护面板均不带 family 聚合徽标，并验证 per-instance 状态仍正常显示。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
