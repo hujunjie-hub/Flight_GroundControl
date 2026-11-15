@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.44
+- 版本：6.45
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；链路主视觉与通信详情已按数值/诊断上下文去重，并移除多实例聚合徽标；链路 family 消息年龄与实例接收年龄已明确区分；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -936,6 +936,7 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 下方「通信链路」详情卡不再重复显示 RSSI、质量、丢包率数值；保留 family 消息状态、链路实例新鲜/超时/等待覆盖、实例当前/最近状态、当前/最近原因、指标字段有效性摘要和地面站接收年龄。
 - 指标字段有效性摘要逐实例统计 3 项指标：有效字段显示 N/3；无效字段明确列出 RSSI/链路质量/丢包率；未上报字段单独列出；实例 freshness 等待/超时时显示 freshness 状态，不得把旧指标标记为当前有效。
 - 摘要颜色与实例 freshness/字段值对齐：超时琥珀色、无效字段琥珀色、未上报字段中性灰、有效字段使用中性辅助色。主视觉指标仍保留各字段独立颜色与数值门控。
+- MockLink UI Integration 对全字段无效实例除验证 0/3 与无效字段清单外，还必须断言摘要文字使用警告琥珀色；有效摘要为中性辅助色，实例 stale 仍由 freshness 状态色覆盖。
 - 保留既有 link detail objectName 选择器（包括 flightTelemetry_linkDetailReason_*、flightTelemetry_linkDetailMetrics_*、flightTelemetry_linkDetailReceiveAge_*），避免破坏既有 UI Integration 查找路径；主视觉不再创建重复的实例原因行或原因选择器；linkDetailMetrics 选择器现在承载指标有效性摘要，不再承载重复的指标数值。
 - MockLink UI Integration 经原始 MAVLink wire path 覆盖：新鲜实例 3/3 有效、全字段无效实例 0/3、实例超时后的指标 freshness、FCU 数据年龄从有效值切换为超时状态、主视觉指标数值仍正确显示、原因只在下方详情出现且地面站接收年龄保留独立标签。
 - 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、Windows Release 验收指南与 G15 机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、链路状态生成、飞控判定或控制行为。
