@@ -142,29 +142,31 @@ SetupPage {
     readonly property real _healthMaintenanceSectionSpacing: Math.max(4, ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.22 : 0.28))
     readonly property real _healthMaintenanceCardGap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.65)
     readonly property real _healthMaintenanceMetricInset: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.24)
-    readonly property real _dashboardOuterSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.8 : 1.2)
-    readonly property real _dashboardHeaderInset: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.3 : 0.5)
-    readonly property real _dashboardHeaderExtraHeight: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.6 : 1.0)
-    readonly property real _dashboardHeaderColumnSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 1.0 : 1.2)
-    readonly property real _dashboardHeaderRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.4 : 0.6)
-    readonly property real _dashboardHeaderAccentWidth: ScreenTools.defaultFontPixelWidth * 0.5
-    readonly property real _dashboardHeaderAccentRadius: ScreenTools.defaultFontPixelHeight * 0.2
-    readonly property real _dashboardHeaderTitleSpacing: ScreenTools.defaultFontPixelHeight * 0.2
-    readonly property real _dashboardReadOnlyBadgeHorizontalInset: ScreenTools.defaultFontPixelWidth
-    readonly property real _dashboardReadOnlyBadgeVerticalInset: ScreenTools.defaultFontPixelHeight * 0.6
-    readonly property real _dashboardReadOnlyBadgeRadius: ScreenTools.defaultFontPixelHeight * 0.7
-    readonly property real _dashboardReadOnlyContentSpacing: ScreenTools.defaultFontPixelWidth * 0.7
-    readonly property real _dashboardReadOnlyDotSize: ScreenTools.defaultFontPixelHeight * 0.7
-    readonly property real _dashboardReadOnlyTextSpacing: ScreenTools.defaultFontPixelHeight * 0.1
-    readonly property real _dashboardTabHeight: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 4.2 : 4.6)
-    readonly property real _dashboardTabColumnSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.6 : 0.8)
-    readonly property real _dashboardTabRowSpacing: ScreenTools.defaultFontPixelHeight * (_compactDashboardVertical ? 0.5 : 0.7)
-    readonly property real _dashboardTabInset: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.8 : 1.0)
-    readonly property real _dashboardTabItemSpacing: ScreenTools.defaultFontPixelWidth * (_compactDashboardVertical ? 0.7 : 0.8)
-    readonly property real _dashboardTabIconSize: ScreenTools.defaultFontPixelHeight * 2.0
-    readonly property real _dashboardTabActiveIndicatorHeight: ScreenTools.defaultFontPixelHeight * 0.3
-    readonly property real _dashboardTabRadius: ScreenTools.defaultFontPixelHeight * 0.8
-    readonly property real _dashboardTabIndicatorRadius: ScreenTools.defaultFontPixelHeight * 0.2
+    readonly property real _dashboardVerticalDensityScale: ScreenTools.defaultFontPixelHeight / 16.0
+    readonly property real _dashboardHorizontalDensityScale: ScreenTools.defaultFontPixelWidth / 8.0
+    readonly property real _dashboardOuterSpacing: (_compactDashboardVertical ? 8 : 12) * _dashboardVerticalDensityScale
+    readonly property real _dashboardHeaderInset: (_compactDashboardVertical ? 3 : 5) * _dashboardVerticalDensityScale
+    readonly property real _dashboardHeaderExtraHeight: (_compactDashboardVertical ? 6 : 10) * _dashboardVerticalDensityScale
+    readonly property real _dashboardHeaderColumnSpacing: (_compactDashboardVertical ? 10 : 12) * _dashboardHorizontalDensityScale
+    readonly property real _dashboardHeaderRowSpacing: (_compactDashboardVertical ? 4 : 6) * _dashboardVerticalDensityScale
+    readonly property real _dashboardHeaderAccentWidth: 5 * _dashboardHorizontalDensityScale
+    readonly property real _dashboardHeaderAccentRadius: 2 * _dashboardVerticalDensityScale
+    readonly property real _dashboardHeaderTitleSpacing: 2 * _dashboardVerticalDensityScale
+    readonly property real _dashboardReadOnlyBadgeHorizontalInset: 10 * _dashboardHorizontalDensityScale
+    readonly property real _dashboardReadOnlyBadgeVerticalInset: 6 * _dashboardVerticalDensityScale
+    readonly property real _dashboardReadOnlyBadgeRadius: 7 * _dashboardVerticalDensityScale
+    readonly property real _dashboardReadOnlyContentSpacing: 7 * _dashboardHorizontalDensityScale
+    readonly property real _dashboardReadOnlyDotSize: 7 * _dashboardVerticalDensityScale
+    readonly property real _dashboardReadOnlyTextSpacing: 1 * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabHeight: (_compactDashboardVertical ? 42 : 46) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabColumnSpacing: (_compactDashboardVertical ? 6 : 8) * _dashboardHorizontalDensityScale
+    readonly property real _dashboardTabRowSpacing: (_compactDashboardVertical ? 5 : 7) * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabInset: (_compactDashboardVertical ? 8 : 10) * _dashboardHorizontalDensityScale
+    readonly property real _dashboardTabItemSpacing: (_compactDashboardVertical ? 7 : 8) * _dashboardHorizontalDensityScale
+    readonly property real _dashboardTabIconSize: 20 * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabActiveIndicatorHeight: 3 * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabRadius: 8 * _dashboardVerticalDensityScale
+    readonly property real _dashboardTabIndicatorRadius: 2 * _dashboardVerticalDensityScale
     readonly property real _dashboardSummaryInset: _compactDashboardVertical ? 8 : 10
     readonly property real _dashboardSummarySpacing: _compactDashboardVertical ? 8 : 10
     readonly property real _dashboardSummaryIconSize: _compactDashboardVertical ? 24 : 26
@@ -217,12 +219,12 @@ SetupPage {
     readonly property real _rcAxisGaugeCenterLineWidth: Math.max(1, ScreenTools.defaultFontPixelWidth * 0.1)
     readonly property real _rcAxisGaugeCenterLineOverscan: Math.max(4, ScreenTools.defaultFontPixelHeight * 0.4)
 
-    readonly property real _dashboardPanelRadius: ScreenTools.defaultFontPixelHeight * 0.8
-    readonly property real _dashboardPanelAccentStripeWidth: ScreenTools.defaultFontPixelWidth * 0.3
-    readonly property real _dashboardPanelAccentStripeInset: ScreenTools.defaultFontPixelHeight * 0.1
-    readonly property real _dashboardPanelAccentStripeRadius: ScreenTools.defaultFontPixelHeight * 0.2
-    readonly property real _dashboardPanelHeaderTitleSpacing: ScreenTools.defaultFontPixelHeight * 0.2
-    readonly property real _dashboardPanelDividerHeight: Math.max(1, ScreenTools.defaultFontPixelHeight * 0.1)
+    readonly property real _dashboardPanelRadius: 8 * _dashboardVerticalDensityScale
+    readonly property real _dashboardPanelAccentStripeWidth: 3 * _dashboardHorizontalDensityScale
+    readonly property real _dashboardPanelAccentStripeInset: 1 * _dashboardVerticalDensityScale
+    readonly property real _dashboardPanelAccentStripeRadius: 2 * _dashboardVerticalDensityScale
+    readonly property real _dashboardPanelHeaderTitleSpacing: 2 * _dashboardVerticalDensityScale
+    readonly property real _dashboardPanelDividerHeight: Math.max(1, _dashboardVerticalDensityScale)
     readonly property color _dashboardPanelBackground: "#06232B"
     readonly property color _dashboardPanelBorder: "#0B6873"
     readonly property color _dashboardPanelEyebrow: "#45D6E5"
