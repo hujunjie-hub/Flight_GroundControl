@@ -1534,6 +1534,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("0.125"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricVelocity->property("valueText").toString(), QStringLiteral("0.080"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricHeading->property("valueText").toString(), QStringLiteral("0.020"), 3000);
+            QQuickItem* overviewNavigationMetrics[] = {metricPosition, metricVelocity, metricHeading};
+            for (QQuickItem* metric : overviewNavigationMetrics) {
+                QTRY_COMPARE_WITH_TIMEOUT(metric->property("valueColor").value<QColor>(),
+                                          QColor(QStringLiteral("#E6F0F4")), 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(metric->property("statusColor").value<QColor>(),
+                                          QColor(QStringLiteral("#45D39A")), 3000);
+            }
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(),
                                       QStringLiteral("0.125 m"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationVelocityDetail->property("valueText").toString(),
@@ -1803,6 +1810,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusText").toString(), unavailableCapabilityText,
                                       3000);
             QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueText").toString(), QStringLiteral("—"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#A8BBC3")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusColor").value<QColor>(),
+                                      QColor(QStringLiteral("#8A9A94")), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryNavigation->property("valueText").toString(), unavailableCapabilityText,
                                       3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionDetail->property("valueText").toString(),
@@ -1920,6 +1931,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(buildProfileCompatibility->property("valueText").toString().contains(
                                          staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusColor").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
@@ -1977,6 +1992,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                      !healthMaintenanceBootId->property("text").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(),
                                       QStringLiteral("0.140 m"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("valueColor").value<QColor>(),
+                                      QColor(QStringLiteral("#E6F0F4")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(metricPosition->property("statusColor").value<QColor>(),
+                                      QColor(QStringLiteral("#45D39A")), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#45D39A")),
                 3000);
