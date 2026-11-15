@@ -107,6 +107,9 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         { QStringLiteral("dependencies"), QJsonArray{} },
         { QStringLiteral("validationRules"), QJsonArray{} },
         { QStringLiteral("modelProfiles"), QJsonArray{QStringLiteral("QUAD_X4")} },
+        { QStringLiteral("sourceFile"), QStringLiteral("controller_tuning.yaml") },
+        { QStringLiteral("sourcePath"), QStringLiteral("outer_loop.rate_kp_nm_per_radps[0]") },
+        { QStringLiteral("sourceKind"), QStringLiteral("vector") },
         { QStringLiteral("readOnly"), false },
         { QStringLiteral("writeOnly"), false }
     };
@@ -135,6 +138,10 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QJsonObject invalidValidationRulesEntry = validEntry;
     invalidValidationRulesEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_VALIDATION_RULES"));
     invalidValidationRulesEntry.insert(QStringLiteral("validationRules"), QJsonArray{QJsonObject{}});
+
+    QJsonObject invalidSourceEntry = validEntry;
+    invalidSourceEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_INVALID_SOURCE"));
+    invalidSourceEntry.insert(QStringLiteral("sourcePath"), QStringLiteral(" "));
 
     QJsonObject unknownDomainEntry = validEntry;
     unknownDomainEntry.insert(QStringLiteral("name"), QStringLiteral("TEST_UNKNOWN_DOMAIN"));
@@ -180,6 +187,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     parameters.append(invalidApplicabilityEntry);
     parameters.append(invalidDependenciesEntry);
     parameters.append(invalidValidationRulesEntry);
+    parameters.append(invalidSourceEntry);
     parameters.append(unknownDomainEntry);
     parameters.append(invalidRangeEntry);
     parameters.append(unsupportedTypeEntry);
@@ -211,6 +219,9 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     QCOMPARE(valid->updatePolicy(), QStringLiteral("REBOOT_REQUIRED"));
     QVERIFY(valid->dependencies().isEmpty());
     QVERIFY(valid->validationRules().isEmpty());
+    QCOMPARE(valid->sourceFile(), QStringLiteral("controller_tuning.yaml"));
+    QCOMPARE(valid->sourcePath(), QStringLiteral("outer_loop.rate_kp_nm_per_radps[0]"));
+    QCOMPARE(valid->sourceKind(), QStringLiteral("vector"));
 
     FactMetaData *unknownReboot = metadata.getMetaDataForFact(QStringLiteral("TEST_UNKNOWN_REBOOT"),
                                                                    FactMetaData::valueTypeFloat);
@@ -241,6 +252,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
         QStringLiteral("TEST_INVALID_APPLICABILITY"),
         QStringLiteral("TEST_INVALID_DEPENDENCIES"),
         QStringLiteral("TEST_INVALID_VALIDATION_RULES"),
+        QStringLiteral("TEST_INVALID_SOURCE"),
         QStringLiteral("TEST_DUPLICATE")
     };
     for (const QString &name : rejectedNames) {
