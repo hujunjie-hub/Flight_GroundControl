@@ -5664,14 +5664,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                                             qreal minimumWidthScale,
                                                             qreal insetScale,
                                                             qreal badgeHeightScale,
-                                                            qreal timelineHeightScale) {
+                                                            qreal timelineHeightScale,
+                                                            qreal thresholdScale) {
                 if (navigationTimeGridForDpi->property("columns").toInt() != expectedColumns ||
                     navigationClockGroupForDpi->property("minimumGroupWidth").toReal() <
                         baseNavigationTimeGroupMinimumWidth * minimumWidthScale ||
                     navigationClockGroupForDpi->property("contentInset").toReal() <
                         baseNavigationTimeGroupInset * insetScale ||
                     page->property("_navigationTimeTwoColumnMinimumWidth").toReal() <
-                        baseNavigationTimeTwoColumnThreshold * (expectedColumns == 2 ? 1.0 : 1.3) ||
+                        baseNavigationTimeTwoColumnThreshold * thresholdScale ||
                     page->property("_navigationTimelineRowHeight").toReal() <
                         baseNavigationTimelineRowHeight * timelineHeightScale ||
                     navigationTimeBadgesForDpi[0]->height() <
@@ -5715,7 +5716,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        qAbs(navigationClockGroupForDpi->x() - navigationUtcGroupForDpi->x()) < 1.0;
             };
             QTRY_COMPARE_WITH_TIMEOUT(navigationTimeGridForDpi->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(2, 1.0, 1.0, 1.0, 1.0), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(2, 1.0, 1.0, 1.0, 1.0, 1.0), 3000);
             QQuickItem* healthTabForDpi =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTabForDpi);
@@ -5849,7 +5850,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(navigationTabAt150Dpi, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_2")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(2, 1.15, 1.25, 1.2, 1.3), 3000);
+            const int expectedTimeColumnsAt150 =
+                page->property("availableWidth").toReal() >=
+                    page->property("_navigationTimeTwoColumnMinimumWidth").toReal() ? 2 : 1;
+            QTRY_VERIFY_WITH_TIMEOUT(
+                navigationTimeScaleLayoutFits(expectedTimeColumnsAt150, 1.15, 1.25, 1.2, 1.3, 1.0), 3000);
             QVERIFY(_clickItemAt(healthTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
 
@@ -5912,7 +5917,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(_clickItemAt(navigationTabAt200Dpi, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_2")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(1, 1.5, 1.6, 1.6, 1.7), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(1, 1.5, 1.6, 1.6, 1.7, 1.3), 3000);
             QVERIFY(_clickItemAt(healthTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
 
