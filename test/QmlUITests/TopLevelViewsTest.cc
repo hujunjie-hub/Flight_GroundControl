@@ -1,8 +1,10 @@
 #include "TopLevelViewsTest.h"
 
+#include <QtCore/QLocale>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QColor>
 #include <QtGui/QFont>
+#include <QtGui/QFontDatabase>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
@@ -147,8 +149,15 @@ void TopLevelViewsTest::_testSettingsSidebarTypographyConsistency()
     const QFont pageFont = flyViewLabel->property("font").value<QFont>();
     const QFont sectionFont = sectionLabel->property("font").value<QFont>();
     QCOMPARE(sectionFont.family(), pageFont.family());
+    QVERIFY(!pageFont.family().isEmpty());
     QCOMPARE(sectionFont.pointSizeF(), pageFont.pointSizeF());
     QCOMPARE(sectionFont.weight(), pageFont.weight());
+    QCOMPARE(pageFont.hintingPreference(), QFont::PreferDefaultHinting);
+    QCOMPARE(sectionFont.hintingPreference(), QFont::PreferDefaultHinting);
+    QCOMPARE(flyViewLabel->property("typographyRole").toString(), QStringLiteral("body"));
+    QCOMPARE(sectionLabel->property("typographyRole").toString(), QStringLiteral("body"));
+    QVERIFY(flyViewLabel->property("antialiasing").toBool());
+    QVERIFY(sectionLabel->property("antialiasing").toBool());
     QCOMPARE(sectionLabel->property("color").value<QColor>(), flyViewLabel->property("color").value<QColor>());
 
     // Selected page and selected section must use the same palette highlight text color.
@@ -163,6 +172,56 @@ void TopLevelViewsTest::_testSettingsSidebarTypographyConsistency()
     QTRY_COMPARE(sectionLabel->property("color").value<QColor>(), selectedPageTextColor);
 
     stopUI();
+}
+
+void TopLevelViewsTest::_testChineseFontFallbackSelection()
+{
+    Fact* const language = SettingsManager::instance()->appSettings()->qLocaleLanguage();
+    QVERIFY(language);
+
+    const QVariant savedLanguage = language->rawValue();
+    [[maybe_unused]] const auto restoreLanguage = qScopeGuard([language, savedLanguage] {
+        language->setRawValue(savedLanguage);
+    });
+
+    language->setRawValue(static_cast<int>(QLocale::Chinese));
+
+    const QString selectedFamily = ScreenToolsController::normalFontFamily();
+    QFontDatabase fontDatabase;
+    const QStringList installedFamilies = fontDatabase.families();
+    QVERIFY(installedFamilies.contains(selectedFamily, Qt::CaseInsensitive));
+
+    QStringList preferredFamilies;
+#if defined(Q_OS_WIN)
+    preferredFamilies = {
+        QStringLiteral("Microsoft YaHei UI"),
+        QStringLiteral("Microsoft YaHei"),
+        QStringLiteral("SimHei"),
+        QStringLiteral("SimSun")
+    };
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+    preferredFamilies = {
+        QStringLiteral("PingFang SC"),
+        QStringLiteral("Heiti SC"),
+        QStringLiteral("Songti SC")
+    };
+#elif defined(Q_OS_ANDROID) || defined(Q_OS_LINUX)
+    preferredFamilies = {
+        QStringLiteral("Noto Sans CJK SC"),
+        QStringLiteral("Noto Sans SC"),
+        QStringLiteral("Source Han Sans SC"),
+        QStringLiteral("WenQuanYi Micro Hei")
+    };
+#endif
+
+    QString expectedFamily = QStringLiteral("Open Sans");
+    for (const QString& candidate : preferredFamilies) {
+        if (installedFamilies.contains(candidate, Qt::CaseInsensitive)) {
+            expectedFamily = candidate;
+            break;
+        }
+    }
+    QCOMPARE(selectedFamily, expectedFamily);
 }
 
 void TopLevelViewsTest::_testNavigateViews()

@@ -726,8 +726,8 @@ SetupPage {
                             wrapMode: Text.Wrap
                             text: "FLIGHT DIAGNOSTICS"
                             color: "#57C8DA"
-                            font.pointSize: ScreenTools.defaultFontPointSize * 0.82
-                            font.bold: true
+                            font.pointSize: ScreenTools.secondaryFontPointSize
+                            font.weight: ScreenTools.strongFontWeight
                         }
 
                         QGCLabel {
@@ -736,8 +736,7 @@ SetupPage {
                             wrapMode: Text.Wrap
                             text: qsTr("飞控诊断中心")
                             color: "#E7F0F4"
-                            font.pointSize: ScreenTools.largeFontPointSize * 1.35
-                            font.bold: true
+                            typographyRole: "hero"
                         }
                     }
 
@@ -767,12 +766,12 @@ SetupPage {
                                 QGCLabel {
                                     text: qsTr("只读监控")
                                     color: "#BDE8D9"
-                                    font.bold: true
+                                    font.weight: ScreenTools.strongFontWeight
                                 }
                                 QGCLabel {
                                     text: root._telemetryHeadline
                                     color: root._telemetry && root._telemetry.telemetryAvailable ? "#45D39A" : "#8A9A94"
-                                    font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                                    font.pointSize: ScreenTools.captionFontPointSize
                                 }
                             }
                         }
@@ -872,7 +871,7 @@ SetupPage {
                             QGCLabel {
                                 text: qsTr("当前飞行模式")
                                 color: "#91A8B2"
-                                font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                                font.pointSize: ScreenTools.secondaryFontPointSize
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroFlightMode"
@@ -881,8 +880,7 @@ SetupPage {
                                       ? root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")])
                                       : root._familyStatus("operationAvailable")
                                 color: root._familyStatusColor("operationAvailable")
-                                font.pointSize: ScreenTools.largeFontPointSize * 1.35
-                                font.bold: true
+                                typographyRole: "hero"
                                 elide: Text.ElideRight
                             }
                         }
@@ -901,7 +899,7 @@ SetupPage {
                                       ? root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
                                       : root._familyStatus("operationAvailable")
                                 color: root._familyStatusColor("operationAvailable")
-                                font.bold: true
+                                font.weight: ScreenTools.strongFontWeight
                             }
                         }
                     }
@@ -919,26 +917,26 @@ SetupPage {
                         rowSpacing: 8
                         ColumnLayout {
                             spacing: 2
-                            QGCLabel { text: qsTr("控制权"); color: "#91A8B2"; font.pointSize: ScreenTools.defaultFontPointSize * 0.78 }
+                            QGCLabel { text: qsTr("控制权"); color: "#91A8B2"; font.pointSize: ScreenTools.captionFontPointSize }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroAuthority"
                                 text: root._familyStatus("operationAvailable") === qsTr("已接收")
                                       ? root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")])
                                       : root._familyStatus("operationAvailable")
                                 color: "#E1EDF1"
-                                font.bold: true
+                                font.weight: ScreenTools.strongFontWeight
                             }
                         }
                         ColumnLayout {
                             spacing: 2
-                            QGCLabel { text: qsTr("失效保护"); color: "#91A8B2"; font.pointSize: ScreenTools.defaultFontPointSize * 0.78 }
+                            QGCLabel { text: qsTr("失效保护"); color: "#91A8B2"; font.pointSize: ScreenTools.captionFontPointSize }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroFailsafe"
                                 text: root._familyStatus("operationAvailable") === qsTr("已接收")
                                       ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
                                       : root._familyStatus("operationAvailable")
                                 color: root._failsafeColor()
-                                font.bold: true
+                                font.weight: ScreenTools.strongFontWeight
                             }
                         }
                     }
@@ -984,7 +982,7 @@ SetupPage {
                         Layout.fillWidth: true
                         text: qsTr("显示估计标准差原值；未定义阈值，不推断定位等级")
                         color: "#8298A2"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                        font.pointSize: ScreenTools.captionFontPointSize
                         wrapMode: Text.WordWrap
                     }
                 }
@@ -1057,7 +1055,7 @@ SetupPage {
                     Layout.fillWidth: true
                     text: qsTr("各数据域独立判定；矩阵不构成综合健康评分。传感器/链路/资源实例年龄见下方详情。")
                     color: "#8298A2"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: Text.WordWrap
                 }
             }
@@ -1116,7 +1114,7 @@ SetupPage {
                     Layout.fillWidth: true
                     text: qsTr("地面站本地 1 Hz 采样 · 最多 60 点 · 过期/无效数据断线 · 非 FCU 原生历史")
                     color: "#8298A2"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.76
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: Text.WordWrap
                 }
             }
@@ -1135,7 +1133,7 @@ SetupPage {
                     QGCLabel {
                         text: qsTr("状态说明")
                         color: "#8A9A94"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                        font.pointSize: ScreenTools.secondaryFontPointSize
                     }
 
                     RowLayout {
@@ -1161,7 +1159,7 @@ SetupPage {
                     Layout.fillWidth: true
                     text: qsTr("颜色与文字同时表达状态，不构成安全放行结论")
                     color: "#73857E"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                    font.pointSize: ScreenTools.captionFontPointSize
                     wrapMode: Text.WordWrap
                 }
             }
@@ -1688,15 +1686,15 @@ SetupPage {
                         Layout.fillWidth: true
                         text: hero.eyebrow
                         color: "#57C8DA"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.74
-                        font.bold: true
+                        font.pointSize: ScreenTools.captionFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
                     }
                     QGCLabel {
                         Layout.fillWidth: true
                         text: hero.titleText
                         color: "#E6F0F4"
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        font.bold: true
+                        font.pointSize: ScreenTools.titleFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
                     }
                 }
                 Rectangle {
@@ -1710,8 +1708,8 @@ SetupPage {
                         anchors.centerIn: parent
                         text: root._familyStatus(hero.statusFamily)
                         color: hero.currentStatusColor
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.78
-                        font.bold: true
+                        font.pointSize: ScreenTools.captionFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
                     }
                 }
             }
@@ -1745,7 +1743,7 @@ SetupPage {
             Layout.fillWidth: true
             text: metric.labelText
             color: "#91A8B2"
-            font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+            font.pointSize: ScreenTools.captionFontPointSize
         }
         RowLayout {
             Layout.fillWidth: true
@@ -1754,21 +1752,21 @@ SetupPage {
                 Layout.fillWidth: true
                 text: metric.valueText
                 color: metric.accentColor
-                font.pointSize: ScreenTools.largeFontPointSize * 1.05
-                font.bold: true
+                font.pointSize: ScreenTools.metricFontPointSize
+                font.weight: ScreenTools.strongFontWeight
                 elide: Text.ElideRight
             }
             QGCLabel {
                 text: metric.unitText
                 color: "#A8BBC3"
-                font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                font.pointSize: ScreenTools.secondaryFontPointSize
             }
         }
         QGCLabel {
             Layout.fillWidth: true
             text: metric.statusText
             color: metric.accentColor
-            font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+            font.pointSize: ScreenTools.microFontPointSize
         }
     }
 
@@ -1803,14 +1801,14 @@ SetupPage {
                 Layout.fillWidth: true
                 text: axis.axisName
                 color: "#A8BBC3"
-                font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                font.pointSize: ScreenTools.captionFontPointSize
             }
             QGCLabel {
                 objectName: axis.objectName + "_value"
                 text: axis.displayValue
                 color: axis.valid ? "#E6F0F4" : "#F0B94B"
-                font.pointSize: ScreenTools.defaultFontPointSize * 0.78
-                font.bold: true
+                font.pointSize: ScreenTools.captionFontPointSize
+                font.weight: ScreenTools.strongFontWeight
             }
         }
 
@@ -1883,13 +1881,13 @@ SetupPage {
                     Layout.fillWidth: true
                     text: healthCell.labelText
                     color: "#DCE8ED"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.84
-                    font.bold: true
+                    font.pointSize: ScreenTools.secondaryFontPointSize
+                    font.weight: ScreenTools.strongFontWeight
                 }
                 QGCLabel {
                     text: healthCell.statusText
                     color: healthCell.statusColor
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+                    font.pointSize: ScreenTools.microFontPointSize
                 }
             }
             QGCLabel {
@@ -1898,7 +1896,7 @@ SetupPage {
                       ? qsTr("异步事件 · %1").arg(root._receiveAgeText("event"))
                       : qsTr("接收 %1").arg(root._receiveAgeText(healthCell.familyName))
                 color: "#8298A2"
-                font.pointSize: ScreenTools.defaultFontPointSize * 0.72
+                font.pointSize: ScreenTools.microFontPointSize
             }
         }
     }
@@ -1952,13 +1950,13 @@ SetupPage {
                     text: plotCard.titleText
                     wrapMode: Text.Wrap
                     color: "#A8BBC3"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.78
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
                 QGCLabel {
                     text: plotCard.valueText
                     color: plotCard.lineColor
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.82
-                    font.bold: true
+                    font.pointSize: ScreenTools.secondaryFontPointSize
+                    font.weight: ScreenTools.strongFontWeight
                 }
             }
             Canvas {
@@ -2029,15 +2027,15 @@ SetupPage {
                           : qsTr("采集中 · %1/60 有效点").arg(plotCard.validSampleCount)
                     color: "#8298A2"
                     wrapMode: Text.Wrap
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.70
+                    font.pointSize: ScreenTools.microFontPointSize
                 }
                 QGCLabel {
                     text: plotCard.validSampleCount === 0 ? qsTr("WAIT")
                           : plotCard.lastSampleValid ? qsTr("NOW") : qsTr("GAP")
                     color: plotCard.validSampleCount === 0 ? "#8298A2"
                            : plotCard.lastSampleValid ? "#45D39A" : "#F0B94B"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.70
-                    font.bold: true
+                    font.pointSize: ScreenTools.microFontPointSize
+                    font.weight: ScreenTools.strongFontWeight
                 }
             }
         }
@@ -2082,15 +2080,15 @@ SetupPage {
                     Layout.fillWidth: true
                     text: tile.titleText
                     color: "#8A9A94"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.88
+                    font.pointSize: ScreenTools.compactBodyFontPointSize
                 }
 
                 QGCLabel {
                     Layout.fillWidth: true
                     text: tile.valueText
                     color: tile.accentColor
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    font.bold: true
+                    font.pointSize: ScreenTools.titleFontPointSize
+                    font.weight: ScreenTools.strongFontWeight
                     elide: Text.ElideRight
                 }
 
@@ -2098,7 +2096,7 @@ SetupPage {
                     Layout.fillWidth: true
                     text: tile.detailText
                     color: "#AABAB3"
-                    font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                    font.pointSize: ScreenTools.secondaryFontPointSize
                     wrapMode: Text.WordWrap
                 }
             }
@@ -2150,16 +2148,16 @@ SetupPage {
                         Layout.fillWidth: true
                         text: card.eyebrow
                         color: "#57C8DA"
-                        font.pointSize: ScreenTools.defaultFontPointSize * 0.74
-                        font.bold: true
+                        font.pointSize: ScreenTools.captionFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
                     }
 
                     QGCLabel {
                         Layout.fillWidth: true
                         text: card.title
                         color: "#E2ECE7"
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        font.bold: true
+                        font.pointSize: ScreenTools.titleFontPointSize
+                        font.weight: ScreenTools.strongFontWeight
                     }
                 }
 
@@ -2190,7 +2188,7 @@ SetupPage {
                         QGCLabel {
                             text: root._familyStatus(card.statusFamily)
                             color: card.currentStatusColor
-                            font.pointSize: ScreenTools.defaultFontPointSize * 0.82
+                            font.pointSize: ScreenTools.secondaryFontPointSize
                         }
                     }
                 }

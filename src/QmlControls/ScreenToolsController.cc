@@ -8,6 +8,7 @@
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QInputDevice>
+#include <QtCore/QStringList>
 
 #if defined(Q_OS_IOS)
 #include <sys/utsname.h>
@@ -64,12 +65,51 @@ QString ScreenToolsController::fixedFontFamily()
 
 QString ScreenToolsController::normalFontFamily()
 {
-    //-- See App.SettinsGroup.json for index
-    const int langID = SettingsManager::instance()->appSettings()->qLocaleLanguage()->rawValue().toInt();
-    if (langID == QLocale::Korean) {
+    //-- See App.SettingsGroup.json for the language setting index.
+    QLocale::Language languageId = static_cast<QLocale::Language>(
+        SettingsManager::instance()->appSettings()->qLocaleLanguage()->rawValue().toInt());
+    if (languageId == QLocale::AnyLanguage) {
+        languageId = QLocale::system().language();
+    }
+
+    if (languageId == QLocale::Korean) {
         return QStringLiteral("NanumGothic");
     }
 
+    if (languageId == QLocale::Chinese) {
+        QStringList preferredCjkFamilies;
+#if defined(Q_OS_WIN)
+        preferredCjkFamilies = {
+            QStringLiteral("Microsoft YaHei UI"),
+            QStringLiteral("Microsoft YaHei"),
+            QStringLiteral("SimHei"),
+            QStringLiteral("SimSun")
+        };
+#elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+        preferredCjkFamilies = {
+            QStringLiteral("PingFang SC"),
+            QStringLiteral("Heiti SC"),
+            QStringLiteral("Songti SC")
+        };
+#elif defined(Q_OS_ANDROID) || defined(Q_OS_LINUX)
+        preferredCjkFamilies = {
+            QStringLiteral("Noto Sans CJK SC"),
+            QStringLiteral("Noto Sans SC"),
+            QStringLiteral("Source Han Sans SC"),
+            QStringLiteral("WenQuanYi Micro Hei")
+        };
+#endif
+        const QFontDatabase fontDatabase;
+        const QStringList installedFamilies = fontDatabase.families();
+        for (const QString &family : preferredCjkFamilies) {
+            if (installedFamilies.contains(family, Qt::CaseInsensitive)) {
+                return family;
+            }
+        }
+    }
+
+    // Open Sans remains the Latin UI face. When a CJK family is not selected,
+    // Qt uses the platform's glyph fallback for mixed-language/user-provided text.
     return QStringLiteral("Open Sans");
 }
 

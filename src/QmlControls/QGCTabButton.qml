@@ -17,6 +17,10 @@ Button {
     rightPadding: _horizontalPadding
     focusPolicy: Qt.ClickFocus
     checkable: true
+    font.family: ScreenTools.normalFontFamily
+    font.pointSize: ScreenTools.bodyFontPointSize
+    font.weight: Font.Normal
+    font.hintingPreference: Font.PreferDefaultHinting
 
     property bool primary: false ///< primary button for a group of buttons
     property real pointSize: ScreenTools.defaultFontPointSize ///< Point size for button text
@@ -79,6 +83,8 @@ Button {
             text: control.text
             font.pointSize: control.pointSize
             font.family: ScreenTools.normalFontFamily
+            font.weight: Font.Normal
+            font.hintingPreference: Font.PreferDefaultHinting
             color: _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
             visible: !_showIcon
         }

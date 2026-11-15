@@ -1,19 +1,56 @@
 # 字体和调色板
 
-QGC有一套标准的字体和调色板，应该由所有用户界面使用。
+Flight GroundControl 使用统一的字体族、字号角色和调色板。所有 QML 页面应通过：
 
-```
+```qml
 import QGroundControl.Controls
 ```
 
-## QGCPalette(QGC调色板)
+使用标准控件和 `ScreenTools` 字体令牌，不应在页面中自行定义字体体系。
 
-此项目显示QGC调色板。 这个调色板有两种变体：浅色和深色。 较浅的调色板适合户外使用，黑色调色板适用于室内。 通常，您不应该直接为UI指定颜色，您应该使用调色板中的颜色。 如果不遵循此规则，则您创建的用户界面将无法通过浅色/深色样式更改。 There are two variants of this palette: light and dark. The light palette is meant for outdoor use and the dark palette is for indoor. Normally you should never specify a color directly for UI, you should always use one from the palette. If you don't follow this rule, the user interface you create will not be capable of changing from a light/dark style.
+## QGCPalette（QGC 调色板）
 
-## QGCMapPalette(QGC地图调色板)
+QGCPalette 提供浅色和深色主题的颜色。普通 UI 文字、按钮、边框、选中和禁用状态应使用调色板颜色，不要硬编码颜色覆盖主题状态。
 
-The map palette is used for colors which are used to draw over a map. 地图调色板用于绘制地图的颜色。 由于不同的地图样式，特别是卫星和街道，您需要有不同的颜色来清晰地绘制它们。 卫星地图需要更浅的颜色，而街道地图需要更深的颜色。 QGCMapPalette项目为此提供了一组颜色，以及在地图上切换浅色和深色的功能。 Satellite maps needs lighter colors to be seen whereas street maps need darker colors to be seen. The `QGCMapPalette` item provides a set of colors for this as well as the ability to switch between light and dark colors over maps.
+地图覆盖层使用 QGCMapPalette，因为卫星图和街道图需要不同的对比度。
 
-## ScreenTools (屏幕工具)
+## ScreenTools（屏幕工具）
 
-The ScreenTools item provides values which you can use to specify font sizing. ScreenTools项提供可用于指定字体大小的值。 它还提供有关屏幕大小以及QGC是否在移动设备上运行的信息。
+ScreenTools 是全项目字体族和字号的唯一入口：
+
+- `normalFontFamily`：当前界面语言的普通字体族。
+- `fixedFontFamily`：控制台、代码和原始数据使用的等宽字体族。
+- `defaultFontPointSize`：默认正文 point size，受应用 UI Scale 控制。
+- `microFontPointSize`、`captionFontPointSize`、`secondaryFontPointSize`、`compactBodyFontPointSize`：紧凑信息层级。
+- `bodyFontPointSize`、`subtitleFontPointSize`、`titleFontPointSize`、`metricFontPointSize`、`heroFontPointSize`：正文、标题和主指标层级。
+
+推荐使用 QGCLabel 的语义角色：
+
+```qml
+QGCLabel {
+    text: qsTr("飞控诊断中心")
+    typographyRole: "hero"
+}
+```
+
+可用角色：`micro`、`caption`、`eyebrow`、`secondary`、`compact-body`、`body`、`subtitle`、`title`、`metric`、`hero`。
+
+## 中文与其他语言字体
+
+- 英文默认使用 Open Sans。
+- 韩文使用项目内置 Nanum Gothic。
+- 中文界面优先选择操作系统已安装的 CJK UI 字体：Windows 优先 Microsoft YaHei UI / Microsoft YaHei；macOS 优先 PingFang SC；Linux/Android 优先 Noto Sans CJK SC 等。
+- 当语言设置为“System”时，字体选择跟随系统 locale；明确选择语言时按该界面语言选择。
+- 若没有匹配字体，使用 Open Sans，并由 Qt/操作系统处理缺失字形回退。
+- 页面不得硬编码字体名称。新增内置字体必须检查许可证、包体积和安装包部署。
+
+## 抗锯齿、Hinting 与 DPI
+
+- 标准文字控件使用 `Font.PreferDefaultHinting` 和抗锯齿。
+- 普通文本使用 point size，不要使用固定 pixel size。
+- 100%、125%、150% Windows DPI 使用同一套语义字号角色；布局裁切应通过布局修复，不得通过单独缩小字体掩盖。
+- 完整规则和验收门槛见 [全项目字体系统与渲染规范](../../../../spec/UI-字体系统与渲染规范.md)。
+
+## QGCMapPalette（地图调色板）
+
+QGCMapPalette 用于地图上的文字、标记和覆盖图形。地图底图可能是卫星图或街道图，因此应选择适合底图对比度的地图调色板颜色。

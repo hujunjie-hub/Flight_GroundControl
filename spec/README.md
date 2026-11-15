@@ -1,6 +1,6 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 2.5
+- 版本 2.6
 - 日期 2026-11-15
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
@@ -42,7 +42,8 @@
 12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。FGC-0043 的 EXIF typed-reader 专项验收见 [FGC-0043](validation/FGC-0043/README.md)。
 13. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。
 14. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
-15. [设置侧栏字体与状态颜色规范](UI-设置侧栏字体与颜色规范.md)：一级/二级菜单统一字体规格、QGCPalette 状态颜色和 DPI 验收要求。
+15. [全项目字体系统与渲染规范](UI-字体系统与渲染规范.md)：字体族/中文回退、语义字号与字重、抗锯齿/Hinting、颜色和 DPI 验收。
+16. [设置侧栏字体与状态颜色规范](UI-设置侧栏字体与颜色规范.md)：设置一级/二级菜单的专项规则，服从全项目字体系统规范。
 
 ## 4. 当前固定工程约束
 
@@ -107,7 +108,7 @@ work/validation/
 
 Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚本会将其复制到本轮归档目录。运行证据不提交 Git。每个问题引用发现它的 RUN_ID；修复后再生成新 RUN_ID 作为回归证据。把 ZIP 上传到对应 GitHub Issue；需要 ChatGPT 复核时，也可直接把 ZIP 上传到当前对话。
 
-## 8. 当前工作状态（2026-11-14 快照）
+## 8. 当前工作状态（更新至 2026-11-15；历史 CI 诊断保留原日期）
 
 本轮飞控诊断大屏改造开始时的 main 基线为 `64061a9e49f6d2ddeafcf588e60a4069470f75c6`。该基线的 pre-commit run [43574188042](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188042) 已成功；Windows Release run [43574188036](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188036) 在本轮开始检查时仍为 IN_PROGRESS；Build Results run [43574834468](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574834468) SUCCESS。后续 SPEC/产品提交触发的 CI 必须按新 HEAD 重新核对。
 
@@ -115,7 +116,8 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。
 - FGC-0044（飞控诊断页高级大屏布局与可视化改造）已登记，状态 RETESTING；Phase 2.1 已将 13 类状态矩阵优化为 7/4/2/1 列，并压缩摘要/趋势/主视觉卡片留白。main@866a8fb 的 Windows Release 构建和 Unit 198/198 通过，但 Integration 69/72；FlightTelemetryPageUITest 的 float/double 精确比较失败已定位，修复后等待新 HEAD 复测。
 - FGC-0045（遥控器双摇杆实时监视优化）已登记，状态 RETESTING；三种手型、两帧 RC_CHANNELS、回中和缺失通道场景均已实现。main@866a8fb 的 FlightRadioPageUITest 暴露出测试预期错误：只有 3 路通道时仍要求开始校准 enabled；已按产品至少 4 路通道门控修正测试，生产逻辑不放宽。
-- FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记，状态 IN_PROGRESS；代码检查确认二级分区标签使用默认字号的 0.9 倍，且复用始终启用的外层 palette。按 UI 规范统一两级菜单字体和控件级 palette，并新增 TopLevelViewsTest Integration 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
+- FGC-0046（设置侧栏一级/二级菜单字体亮度不一致）已登记；修复提交 `15b77df` 已统一两级菜单字体和 palette，并新增 TopLevelViewsTest 回归；Windows 100%/125%/150% 实际屏幕观感检查仍需本地完成。
+- FGC-0047（全项目字体体系、中文字体回退与渲染一致性）已登记，状态 IN_PROGRESS；发现 QGCRadioButton 字体族错误绑定、FlightTelemetry 页面散落字号系数和中文 UI 缺少显式平台字体优先策略。当前正在统一 ScreenTools 语义字号、QGC 文本控件 Hinting/抗锯齿、中文字体选择和大屏字号令牌；新 HEAD 的 Windows Release / Unit / Integration 及真实 DPI 视觉验收尚未执行。
 - Flight UDP SIL 原生输出缺口、传感器实例 ID 契约偏差，以及未执行的网络故障注入/H723 实机项目继续单独登记，不以 MockLink 测试替代。
 
 动态 Issue 状态仍以 [GitHub Issues](https://github.com/hujunjie-hub/Flight_GroundControl/issues) 为唯一事实来源；本节只记录有明确 HEAD 和 run ID 的验收快照。每轮从 `origin/main` 同步最新提交。先处理影响本地构建和验收的故障，再按问题严重级别处理其余缺陷。

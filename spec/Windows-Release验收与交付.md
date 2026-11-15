@@ -35,8 +35,9 @@
 | G14 | 遥控器双摇杆 UI | FlightRadioPageUITest、JUnit、MockLink RC_CHANNELS wire-path | Mode 1/2/3 通道映射、PWM/指示点和第二帧实时跟随正确；CH1–CH3 时左摇杆隐藏且校准禁用；恢复至少 4 路连续通道后校准重新启用；不触发校准或飞控命令 |
 | G15 | 飞控诊断指挥中心（Phase 2） | FlightTelemetryPageUITest、JUnit、G15 manifest gate | 飞行态势/导航/RC 面板来自真实 Fact；RC validity mask 正确；导航水平位置 bit3、速度 bit5+bit6、航向 bit2 能力门控正确；13 类 family 独立状态矩阵在 1600/1000/700/400 px 下分别为 7/4/2/1 列且单元不越界；四趋势 1 Hz/60 点/断点/Vehicle 与 boot reset；无虚构姿态仪；原 14 张卡片保留；只读 |
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
+| G17 | 全项目字体系统与渲染一致性 | qml-typography-check、TopLevelViewsTest、JUnit、Windows DPI screenshots | ScreenTools 语义字号/字重角色存在；QGCLabel 和共享文本控件使用统一字体族、Hinting 与抗锯齿；RadioButton contentItem 继承正确字体族；中文界面按平台优先选择已安装 CJK 字体；FlightTelemetry 不含局部字号乘数；100%/125%/150% DPI 视觉证据齐全 |
 
-只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G16 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
+只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G17 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
 ## 3. 单元和集成测试要求
 
@@ -285,3 +286,15 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 修复：两级菜单统一使用 `ScreenTools.normalFontFamily`、`ScreenTools.defaultFontPointSize` 和 `Font.Normal`；二级项改为按自身 `enabled` 选择 QGCPalette 颜色组。层级继续由缩进和布局表达，不再通过缩小字号表达。
 - 回归：新增 `TopLevelViewsTest::_testSettingsSidebarTypographyConsistency`，验证两级菜单字体族、字号、字重、普通文字颜色和选中文字颜色一致。
 - Windows 100%/125%/150% DPI 的真实显示器观感检查不由 CI 字体属性测试代替；本地实测前保持 NOT_RUN。
+
+
+## 14. 全项目字体系统与渲染一致性（FGC-0047）
+
+- 规范入口：[全项目字体系统与渲染规范](UI-字体系统与渲染规范.md)。
+- 修复范围：ScreenTools 语义字号/字重角色、QGCLabel、QGCTextField、QGCRadioButton、QGCCheckBox、QGCComboBox、QGCButton、QGCTabButton、QGCMenuItem、FlightTelemetry 和 FlightRadio。
+- 已确认的源码缺陷：`QGCRadioButton.qml` 的 contentItem 曾将 `font.family` 错误绑定到 `control.font.pointSize`；必须绑定 `control.font.family`。
+- 中文界面字体策略：按操作系统选择已安装的 Microsoft YaHei UI / PingFang SC / Noto Sans CJK SC 等字体；未安装时保留 Qt 平台缺字回退。
+- FlightTelemetry 所有页面内字号系数迁移到 ScreenTools 语义令牌；新增 `qml-typography-check` pre-commit 检查。
+- 现有 TopLevelViewsTest 继续验证设置侧栏两级菜单；本轮扩展字体族、抗锯齿、Hinting 断言。
+- 当前精确 HEAD 的 Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 结果必须重新执行；未执行项目标记 NOT_RUN。
+- Windows 100%/125%/150% DPI 实机视觉检查必须提供截图和环境记录，CI 不得代替，未执行前标记 NOT_RUN。

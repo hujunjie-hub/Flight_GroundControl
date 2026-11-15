@@ -61,6 +61,22 @@ Item {
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10
 
+    // Semantic typography tokens. Keep page-specific hierarchy in roles rather than
+    // repeating point-size multipliers throughout QML.
+    readonly property real microFontPointSize:        Math.max(7.0, defaultFontPointSize * 0.72)
+    readonly property real captionFontPointSize:      Math.max(8.0, defaultFontPointSize * 0.78)
+    readonly property real secondaryFontPointSize:    defaultFontPointSize * 0.84
+    readonly property real compactBodyFontPointSize:  defaultFontPointSize * 0.88
+    readonly property real bodyFontPointSize:         defaultFontPointSize
+    readonly property real subtitleFontPointSize:     mediumFontPointSize
+    readonly property real titleFontPointSize:        largeFontPointSize
+    readonly property real metricFontPointSize:       largeFontPointSize * 1.05
+    readonly property real heroFontPointSize:         largeFontPointSize * 1.35
+
+    readonly property int regularFontWeight:          Font.Normal
+    readonly property int emphasisFontWeight:         Font.DemiBold
+    readonly property int strongFontWeight:           Font.Bold
+
     property real toolbarHeight:            0
 
     property real realPixelDensity: {
@@ -133,6 +149,32 @@ Item {
 
     onRealPixelDensityChanged: {
         _setBasePointSize(defaultFontPointSize)
+    }
+
+    function fontPointSizeForRole(role) {
+        switch (role) {
+        case "micro":        return microFontPointSize
+        case "caption":
+        case "eyebrow":      return captionFontPointSize
+        case "secondary":    return secondaryFontPointSize
+        case "compact-body": return compactBodyFontPointSize
+        case "subtitle":     return subtitleFontPointSize
+        case "title":        return titleFontPointSize
+        case "metric":       return metricFontPointSize
+        case "hero":         return heroFontPointSize
+        default:             return bodyFontPointSize
+        }
+    }
+
+    function fontWeightForRole(role) {
+        switch (role) {
+        case "eyebrow":
+        case "subtitle":
+        case "title":
+        case "metric":       return emphasisFontWeight
+        case "hero":         return strongFontWeight
+        default:             return regularFontWeight
+        }
     }
 
     function printScreenStats() {

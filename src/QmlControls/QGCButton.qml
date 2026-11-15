@@ -30,6 +30,9 @@ Button {
     rightPadding: _horizontalPadding
     focusPolicy: Qt.ClickFocus
     font.family: ScreenTools.normalFontFamily
+    font.pointSize: ScreenTools.bodyFontPointSize
+    font.weight: fontWeight
+    font.hintingPreference: Font.PreferDefaultHinting
     text: ""
 
     property bool _showHighlight: enabled && (pressed | checked)

@@ -15,6 +15,8 @@ T.ComboBox {
     spacing: ScreenTools.defaultFontPixelWidth
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family: ScreenTools.normalFontFamily
+    font.weight: Font.Normal
+    font.hintingPreference: Font.PreferDefaultHinting
     implicitWidth: Math.max(background.implicitWidth,
                             (control.sizeToContents ? _largestTextWidth : contentItem.implicitWidth) + leftPadding + rightPadding + padding)
     implicitHeight: Math.max(background.implicitHeight,
@@ -81,6 +83,8 @@ T.ComboBox {
         contentItem: Text {
             text: _text
             font: control.font
+            antialiasing: true
+            font.hintingPreference: Font.PreferDefaultHinting
             color: control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
             verticalAlignment: Text.AlignVCenter
         }

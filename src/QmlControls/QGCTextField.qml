@@ -14,6 +14,8 @@ TextField {
     antialiasing:       true
     font.pointSize:     ScreenTools.defaultFontPointSize
     font.family:        ScreenTools.normalFontFamily
+    font.weight:        Font.Normal
+    font.hintingPreference: Font.PreferDefaultHinting
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
                             Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
                             Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.
@@ -131,6 +133,7 @@ TextField {
                 text:               control.extraUnitsLabel
                 font.pointSize:     ScreenTools.smallFontPointSize
                 font.family:        ScreenTools.normalFontFamily
+                font.hintingPreference: Font.PreferDefaultHinting
                 antialiasing:       true
                 color:              control.color
                 visible:            control.showUnits && text !== ""

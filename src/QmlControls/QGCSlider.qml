@@ -51,12 +51,11 @@ Slider {
 
         property real _radius: ScreenTools.defaultFontPixelHeight / 2
 
-        Label {
+        QGCLabel {
             text: control.value.toFixed(control.to <= 1 ? 1 : 0)
             visible: control.displayValue
             anchors.centerIn: parent
-            font.family: ScreenTools.normalFontFamily
-            font.pointSize: ScreenTools.smallFontPointSize
+            typographyRole: "caption"
             color: qgcPal.buttonText
         }
     }
@@ -67,7 +66,7 @@ Slider {
         anchors.leftMargin: control.leftPadding
         anchors.bottom: parent.bottom
         text: control.from.toFixed(1)
-        font.pointSize: ScreenTools.smallFontPointSize
+        typographyRole: "caption"
         color: qgcPal.buttonText
         visible: control.showBoundaryValues
     }
@@ -78,7 +77,7 @@ Slider {
         anchors.rightMargin: control.rightPadding
         anchors.bottom: parent.bottom
         text: control.to.toFixed(1)
-        font.pointSize: ScreenTools.smallFontPointSize
+        typographyRole: "caption"
         color: qgcPal.buttonText
         visible: control.showBoundaryValues
     }

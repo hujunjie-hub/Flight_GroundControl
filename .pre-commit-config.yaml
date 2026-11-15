@@ -266,6 +266,13 @@ repos:
         exclude: ^(build/|libs/|test/)
         pass_filenames: true
 
+      - id: qml-typography-check
+        name: Check shared QML typography contract
+        entry: python3 tools/analyzers/qml_typography_check.py
+        language: system
+        files: ^(src/QmlControls/(ScreenTools|QGCLabel|QGCTextField|QGCRadioButton|QGCCheckBox|QGCComboBox|QGCButton|QGCTabButton|QGCMenuItem|QGCSlider|QGCMarqueeLabel)\.qml|src/QmlControls/ScreenToolsController\.cc|src/FirmwarePlugin/Flight/(FlightTelemetry|FlightRadio)\.qml)$
+        pass_filenames: true
+
       - id: qt-translate-noop-check
         name: Check QT_TRANSLATE_NOOP misuse
         entry: python3 tools/analyzers/qt_translate_noop_check.py

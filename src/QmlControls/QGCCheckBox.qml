@@ -9,6 +9,9 @@ CheckBox {
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
     focusPolicy:    Qt.ClickFocus
     leftPadding:    0
+    font.family:    ScreenTools.normalFontFamily
+    font.pointSize: ScreenTools.bodyFontPointSize
+    font.hintingPreference: Font.PreferDefaultHinting
 
     Component.onCompleted: {
         if (_noText) {
@@ -38,8 +41,10 @@ CheckBox {
         verticalAlignment:  Text.AlignVCenter
         text:               control.text
         font.pointSize:     textFontPointSize
-        font.bold:          control.textBold
-        font.family:        ScreenTools.normalFontFamily
+        font.weight:        control.textBold ? Font.DemiBold : Font.Normal
+        font.family:        control.font.family
+        font.hintingPreference: Font.PreferDefaultHinting
+        antialiasing:       true
         color:              control.textColor
     }
 

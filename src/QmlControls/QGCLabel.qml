@@ -5,10 +5,14 @@ import QGroundControl
 import QGroundControl.Controls
 
 Text {
-    font.pointSize: ScreenTools.defaultFontPointSize
-    font.family:    ScreenTools.normalFontFamily
-    color:          qgcPal.text
-    antialiasing:   true
+    property string typographyRole: "body"
+
+    font.pointSize:          ScreenTools.fontPointSizeForRole(typographyRole)
+    font.family:             ScreenTools.normalFontFamily
+    font.weight:             ScreenTools.fontWeightForRole(typographyRole)
+    font.hintingPreference:  Font.PreferDefaultHinting
+    color:                   qgcPal.text
+    antialiasing:            true
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 }

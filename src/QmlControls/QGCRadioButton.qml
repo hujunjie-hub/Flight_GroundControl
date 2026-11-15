@@ -7,7 +7,9 @@ import QGroundControl.Controls
 RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.bodyFontPointSize
+    font.weight: Font.Normal
+    font.hintingPreference: Font.PreferDefaultHinting
 
     property color  textColor:  qgcPal.text
     property bool   _noText:    text === ""
@@ -44,9 +46,11 @@ RadioButton {
 
     contentItem: Text {
         text:               control.text
-        font.family:        control.font.pointSize
+        font.family:        control.font.family
         font.pointSize:     control.font.pointSize
-        font.bold:          control.font.bold
+        font.weight:        control.font.weight
+        font.hintingPreference: Font.PreferDefaultHinting
+        antialiasing:       true
         color:              control.textColor
         verticalAlignment:  Text.AlignVCenter
         leftPadding:        control.indicator.width + (_noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25)

@@ -41,7 +41,7 @@ SetupPage {
 
             QGCLabel {
                 text: qsTr("遥控器配置")
-                font.pointSize: ScreenTools.largeFontPointSize
+                typographyRole: "title"
             }
             QGCLabel {
                 Layout.fillWidth: true

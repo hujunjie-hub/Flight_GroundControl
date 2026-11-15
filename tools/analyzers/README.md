@@ -77,6 +77,25 @@ if (!vehicle) {
 vehicle->doSomething();  // OK - analyzer sees the check above
 ```
 
+## QML Typography Analyzer
+
+Checks the shared QML typography contract for the core text controls and Flight-specific
+screens. It prevents the radio-button font-family regression and raw point-size multipliers
+from returning, and verifies that the semantic ScreenTools roles and CJK locale fallback
+remain present.
+
+```bash
+python3 tools/analyzers/qml_typography_check.py \
+  src/QmlControls/ScreenTools.qml \
+  src/QmlControls/QGCLabel.qml \
+  src/QmlControls/QGCRadioButton.qml \
+  src/QmlControls/QGCSlider.qml \
+  src/QmlControls/QGCMarqueeLabel.qml \
+  src/FirmwarePlugin/Flight/FlightTelemetry.qml
+```
+
+The analyzer is also registered in pre-commit for the shared typography files.
+
 ## Shared Utilities
 
 The analyzers use shared patterns from `tools/common/`:
