@@ -262,7 +262,7 @@ void FlightFirmwarePluginTest::_flightParameterMetadataRejectsInvalidEntries()
     const QVariantMap thresholdRule = valid->validationRules().at(0).toMap();
     QCOMPARE(thresholdRule.value(QStringLiteral("type")).toString(), QStringLiteral("GREATER_THAN"));
     QCOMPARE(thresholdRule.value(QStringLiteral("value")).toDouble(), 0.5);
-    const QVariantMap dependencyRule = valid->validationRules().at(1).toMap();
+    const QVariantMap dependencyRule = valid->validationRules().at(5).toMap();
     QCOMPARE(dependencyRule.value(QStringLiteral("type")).toString(), QStringLiteral("REQUIRES_PARAMETER_VALUE"));
     QCOMPARE(dependencyRule.value(QStringLiteral("parameter")).toString(), QStringLiteral("TEST_DEPENDENCY"));
     QCOMPARE(valid->sourceFile(), QStringLiteral("controller_tuning.yaml"));
