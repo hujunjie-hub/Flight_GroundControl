@@ -440,6 +440,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 数字孪生卡片只读取 Vehicle 已公开的机型、构型和电机数量；未提供的规格明确显示“未提供”。
 - 参数健康度只显示真实连接状态、ParameterManager 参数就绪和待写入状态；不显示未经规则计算的综合分数。
 - 参数表嵌入现有 ParameterEditor，继续使用 ParameterEditorController / Fact / ParameterManager，不建立第二套参数写入路径。
+- 非 Flight 固件继续通过 Loader 回退到原生 ParameterEditor，不改变 PX4 / ArduPilot 等既有参数页布局。
 - 在线调参按钮保持禁用并标明 Phase 3 待接入；响应曲线显示空态，不绘制伪造的实时/仿真数据；影响分析和 AI 建议显示数据不足空态。
 - 原始 1672 × 941 参考图已审阅，但尚未成功写入 Git 仓库二进制资产路径；Phase 0 参考图归档仍待解决。
 

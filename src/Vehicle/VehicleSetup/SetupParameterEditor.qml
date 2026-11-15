@@ -9,6 +9,7 @@ Item {
     id: root
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property bool _isFlight: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
                                               !_activeVehicle.parameterManager.missingParameters
@@ -30,9 +31,23 @@ Item {
     readonly property real gap: Math.max(6, ScreenTools.defaultFontPixelWidth * 0.6)
     property int activeDomain: 0
 
-    Rectangle { anchors.fill: parent; color: root.bg }
+    Loader {
+        anchors.fill: parent
+        sourceComponent: root._isFlight ? dashboardComponent : legacyEditorComponent
+    }
 
-    ColumnLayout {
+    Component {
+        id: legacyEditorComponent
+        ParameterEditor { anchors.fill: parent }
+    }
+
+    Component {
+        id: dashboardComponent
+        Item {
+            anchors.fill: parent
+            Rectangle { anchors.fill: parent; color: root.bg }
+
+            ColumnLayout {
         anchors.fill: parent
         anchors.margins: root.gap
         spacing: root.gap
@@ -797,6 +812,8 @@ Item {
                     font.pointSize: ScreenTools.captionFontPointSize
                 }
             }
+        }
+    }
         }
     }
 }
