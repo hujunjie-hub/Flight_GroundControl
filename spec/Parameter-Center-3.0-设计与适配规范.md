@@ -514,7 +514,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - readOnly 参数允许查看和单参数回读，但禁止在线写入；writeOnly 参数因无法完成 PARAM_VALUE 回读确认，禁止进入在线调参闭环。详情卡片明确显示当前 Fact 的权限类型。
 - 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY、family/variant/controlLaw，以及当前参数名、domain、tuningPolicy 和 updatePolicy；不能只依赖首次绑定时缓存的资格。
 - `FlightFirmwarePlugin::vehicleModelProfiles` 在向 UI 暴露机型前同时读取 schema v2 参数元数据与模型注册表，校验 source/SHA-256、profile ID、vehicleFamily/modelVariants/controlLaw、逐参数 modelProfiles/domain/tuningPolicy/updatePolicy、参数名和依赖引用；任一不匹配、未知依赖或权限字段类型错误时，整个注册表 fail-closed 并返回空列表。
-- 新增模型注册表一致性回归用例，覆盖 SHA 不匹配、未知参数、参数域/适用性/控制律错配、未知依赖、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
+- 新增模型注册表一致性回归用例，覆盖 SHA/来源路径不匹配、未知参数、参数域/适用性/控制律/variant/tuningPolicy 错配、未知或自引用依赖、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
 - 参数工具菜单的飞控重启操作仅在已连接、解除锁定、未飞行且 ParameterManager 无待写入时启用，避免在飞行中、链路异常或参数同步过程中触发重启。
 - C++ 单参数回读资格也检查 `parameterDownloadSkipped`，与写入资格和 QML 页面就绪门控保持一致，避免 UI 隐藏后仍可通过控制器调用回读路径。
 - QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
