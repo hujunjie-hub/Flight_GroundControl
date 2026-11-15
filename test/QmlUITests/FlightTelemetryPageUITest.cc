@@ -610,11 +610,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(originalPageWidth > 0);
             page->setWidth(1600);
             QTRY_VERIFY_WITH_TIMEOUT(
-                headerItemsFit()
-            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
-                                         overviewGridSpacingMatches(heroGrid), 3000); && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
+                headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
                 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(dashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
