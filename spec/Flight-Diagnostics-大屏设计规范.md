@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：5.3
+- 版本：5.4
 - 日期：2026-11-15
-- 状态：四页主体、应用外壳、连续 KPI 带和 SVG 页签已实现；本轮完成趋势图与面板几何精修；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体、应用外壳、连续 KPI 带和 SVG 页签已实现；导航时序页四块主面板等宽等高、跨域 freshness 独立展示和时钟源映射代次已补齐；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -146,9 +146,10 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 
 ### 2.9 导航时序页面
 
-- 主体按导航估计总览、导航能力与定位精度、时间同步、状态校验四块组织。
-- 导航数值只展示 positionStdM、velocityStdMps、headingStdRad 和协议能力掩码；缺少能力位时显示不可用。
-- 时间面板显示 timeQuality、timeDisciplineState、utcValid、utcUncertaintyUs、eventUncertaintyUs、timeEpoch 和接收年龄。
+- 主体按导航估计总览、导航能力与定位精度、时间同步、状态校验四块组织；桌面宽屏采用 12 列网格，四块主面板各占 3 列并同排等高，避免状态校验被压缩成窄侧栏。
+- 导航数值只展示 positionStdM、velocityStdMps、headingStdRad 和协议能力掩码；状态校验区同时显示水平位置、水平速度、垂直速度、航向能力，缺少能力位时显示不可用。
+- 状态校验横跨 navigation 与 time 两个数据域，必须分别显示两域的消息状态和接收年龄，不得使用 navigation 单域徽标代表导航与时间同步整体正常。
+- 时间面板显示 timeQuality、timeDisciplineState、utcValid、utcUncertaintyUs、eventUncertaintyUs、timeEpoch、sourceMappingEpoch 和接收年龄；时间同步明细卡同时保留 FCU 发布时间。
 - 趋势图使用水平位置、速度、航向和 UTC 时间不确定度；UTC 无效/超时产生断点。
 - 当前 FlightTelemetry 未提供卫星数、HDOP、每颗卫星方位/仰角，禁止绘制虚构卫星天图或填入示例值。
 
@@ -174,8 +175,8 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | 420–759 px | 1 列 | 1 列 | 2 列 | 2 列 |
 | <420 px | 1 列 | 1 列 | 1 列 | 2 列 |
 
-- 总览主视觉宽屏使用左 3 / 中 5 / 右 4 列；健康页使用左 3 / 中 6 / 右 3 列；导航和 RC 页按各自四块面板分配 12 列。
-- 1000–1279 px 时总览/明细主网格使用 6 列；760–999 px 时总览/明细使用单列，健康/导航/RC 网格使用 6 列但各主面板全宽换行；低于 760 px 时所有主网格单列。
+- 总览主视觉宽屏使用左 3 / 中 5 / 右 4 列；健康页使用左 3 / 中 6 / 右 3 列；导航时序页四块主面板各占 3 列，RC 页按四块面板分配 12 列。
+- 1000–1279 px 时总览/明细主网格使用 6 列；导航/RC 主面板各占 6 列并全宽纵向排列。760–999 px 时总览/明细使用单列，健康/导航/RC 网格使用 6 列且各主面板全宽换行；低于 760 px 时所有主网格单列。
 - 13 类健康矩阵只在「飞行健康」页面显示，宽屏 4 列、中屏 2 列、窄屏 1 列；总览页不重复显示矩阵。
 - 健康页维护信息横条宽屏 3 列、中屏 2 列、窄屏 1 列，文字换行时自然增高。
 - 页面标题/只读徽标在 760 px 以下纵向排列；KPI、主视觉、趋势、矩阵和明细卡自然增高，不得裁切长原因或 hash。
@@ -548,3 +549,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 飞行健康页遥测域概览、13 域接收矩阵、安全监测三个主面板在桌面宽屏同排等高，避免卡片底边参差。
 - 等高能力通过 HeroPanel 的 fillRowHeight 显式启用，仅作用于上述六个主视觉面板；其他页面与诊断卡保持原有自然高度和顶部对齐。
 - UI Integration 对总览与健康页分别验证三个面板同排、等高；中屏与窄屏继续由现有 6/1 列布局自然堆叠。
+
+
+## 29. Phase 2.5 导航时序主面板平衡与跨域状态校验（2026-11-15）
+
+- 导航时序页桌面主视觉调整为四块等宽面板：导航估计总览、导航能力与定位精度、时间同步、状态校验，各占 12 列网格中的 3 列；通过 HeroPanel.fillRowHeight 保证同排等高。
+- 状态校验面板同时覆盖 navigation 与 time 两个数据域，不再用 navigation 单域徽标代表跨域状态；改为两个独立 HealthCell，分别展示消息可用性与地面站接收年龄，并保留位置/速度/航向能力和 UTC 状态检查。
+- 时间同步面板与详细卡补充 sourceMappingEpoch（时钟源映射代次），与 timeEpoch、FCU 发布时间和接收年龄一起用于观察时钟映射更新，不推导或伪造 UTC 偏差。
+- 12 列桌面下四块主面板同排等宽等高；6 列中等宽度与单列窄屏下按全宽纵向排列。导航状态和时间同步两张详细卡继续遵循 6/6、3/3、1/1 列规则。
+- UI Integration 增加导航页四块主面板同排/等宽/等高、跨域状态单元无单域徽标、sourceMappingEpoch 字段，以及 1600/1000/700/400 px 下主面板与明细卡的排列断言。
+- 仅调整 FlightTelemetry 展示层和 UI Integration 断言，不修改 MAVLink、Flight ICD、FactGroup 数据分发、能力掩码、family freshness 或只读安全边界；按用户要求本轮不触发 CI，后续集中执行正式验证。

@@ -1849,6 +1849,7 @@ SetupPage {
                 rowSpacing: 10
                 HeroPanel {
                     objectName: "flightTelemetry_navigationOverview"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "NAVIGATION OVERVIEW"
                     titleText: qsTr("导航估计总览")
@@ -1860,7 +1861,8 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationCapabilityPanel"
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 4 : root.availableWidth >= 760 ? 6 : 1
+                    fillRowHeight: true
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "NAVIGATION CAPABILITIES"
                     titleText: qsTr("导航能力与定位精度")
                     statusFamily: "navigationAvailable"
@@ -1882,6 +1884,7 @@ SetupPage {
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationTimePanel"
+                    fillRowHeight: true
                     Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "TIME SYNCHRONIZATION"
                     titleText: qsTr("时间同步")
@@ -1892,20 +1895,51 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("UTC 不确定度"); valueText: root._utcUncertaintyText() }
                     TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
+                    TelemetryRow { labelText: qsTr("时钟源映射代次"); valueText: root._integer("sourceMappingEpoch") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("time") }
                 }
                 HeroPanel {
                     objectName: "flightTelemetry_navigationChecksPanel"
-                    Layout.columnSpan: root.availableWidth >= 1280 ? 2 : root.availableWidth >= 760 ? 6 : 1
+                    fillRowHeight: true
+                    Layout.columnSpan: root.availableWidth >= 1280 ? 3 : root.availableWidth >= 760 ? 6 : 1
                     eyebrow: "CONSISTENCY CHECKS"
                     titleText: qsTr("状态校验")
-                    statusFamily: "navigationAvailable"
-                    TelemetryRow { labelText: qsTr("导航数据"); valueText: root._familyStatus("navigationAvailable") }
-                    TelemetryRow { labelText: qsTr("位置能力"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) }
-                    TelemetryRow { labelText: qsTr("速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVelocity) }
+                    // This panel spans navigation and time domains; do not let one family badge
+                    // imply that both domains are healthy.
+                    statusFamily: ""
+                    GridLayout {
+                        objectName: "flightTelemetry_navigationChecksDomains"
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 8
+                        rowSpacing: 8
+                        HealthCell {
+                            objectName: "flightTelemetry_navigationChecksNavigation"
+                            Layout.fillWidth: true
+                            labelText: qsTr("导航数据")
+                            familyName: "navigation"
+                            availableFact: "navigationAvailable"
+                        }
+                        HealthCell {
+                            objectName: "flightTelemetry_navigationChecksTime"
+                            Layout.fillWidth: true
+                            labelText: qsTr("时间同步")
+                            familyName: "time"
+                            availableFact: "timeAvailable"
+                        }
+                    }
+                    TelemetryRow { labelText: qsTr("水平位置能力"); valueText: root._navigationMetricStatus(root._navCapabilityHorizontalPosition) }
+                    TelemetryRow { labelText: qsTr("水平速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVelocity) }
+                    TelemetryRow { labelText: qsTr("垂直速度能力"); valueText: root._navigationMetricStatus(root._navCapabilityVerticalVelocity) }
                     TelemetryRow { labelText: qsTr("航向能力"); valueText: root._navigationMetricStatus(root._navCapabilityHeading) }
-                    TelemetryRow { labelText: qsTr("时间数据"); valueText: root._familyStatus("timeAvailable") }
-                    TelemetryRow { labelText: qsTr("UTC 状态"); valueText: root._fact("utcValid") === null ? qsTr("未上报") : root._fact("utcValid") ? qsTr("有效") : qsTr("无效") }
+                    TelemetryRow {
+                        labelText: qsTr("UTC 状态")
+                        valueText: root._familyStatus("timeAvailable") !== qsTr("已接收")
+                                   ? root._familyStatus("timeAvailable")
+                                   : root._fact("utcValid") === null ? qsTr("未上报")
+                                     : root._fact("utcValid") ? qsTr("有效") : qsTr("无效")
+                        valueColor: root._familyStatusColor("timeAvailable")
+                    }
                 }
             }
 
@@ -2608,6 +2642,11 @@ SetupPage {
                     }
                     TelemetryRow { labelText: qsTr("事件时间不确定度"); valueText: root._number("eventUncertaintyUs", 0, " μs") }
                     TelemetryRow { labelText: qsTr("时间代次"); valueText: root._integer("timeEpoch") }
+                    TelemetryRow {
+                        objectName: "flightTelemetry_timeSourceMappingEpoch"
+                        labelText: qsTr("时钟源映射代次")
+                        valueText: root._integer("sourceMappingEpoch")
+                    }
                     TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("timeStatusTimeBootUs") }
                 }
 
