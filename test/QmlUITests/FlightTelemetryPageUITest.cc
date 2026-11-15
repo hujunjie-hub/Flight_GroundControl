@@ -2385,7 +2385,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const int previousBootTrendSampleCount = trendPosition->property("sampleCount").toInt();
             constexpr uint64_t nextBootId = 0x8877665544332211ULL;
             sendNavigationStatus(1000, nextBootId, 0x7F, 0.20F, 0.10F, 0.04F);
-            // The old trend session must be cleared immediately even while the new OPERATION_STATUS is absent.
+            // The old trend session must be cleared on the next 1 Hz sample, before OPERATION_STATUS returns.
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_trendBootId").toString(), QString(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(trendPosition->property("sampleCount").toInt() < previousBootTrendSampleCount,
                                      3000);
