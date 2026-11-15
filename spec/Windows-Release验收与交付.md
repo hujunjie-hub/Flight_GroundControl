@@ -815,3 +815,13 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 常规 VehicleConfigView 与非 Flight 工具栏维持原有布局；参数中心全屏布局不显示侧栏时不得因缩放 token 改变全屏边距。
 - MockLink FlightTelemetryPageUITest 使用真实 uiScalePercent Fact 验证 100%/150%/200% 顶栏高度、侧栏宽度、参数按钮 padding 和恢复原始 UI Scale；新增验收 NOT_RUN，后续集中验收时执行 exact-HEAD 回归与 Windows 实机截图。
 - 按用户要求本轮不运行、不触发 CI/Build/Unit/Integration/Windows Release。
+
+
+### G16 导航时间同步层级与独立时序状态（2026-11-16）
+
+- 时间同步卡必须明确分组为时钟纪律（时间质量/本地时钟纪律）与 UTC 参考（UTC 有效性/不确定度）；FCU UTC 时间戳作为跨分组全宽行。
+- 时间质量、纪律、UTC 有效性状态徽标必须与原值/状态色一致；UTC 有效时，不确定度数值为中性高对比色、时间戳为中性正文色；UTC 无效/超时/未上报时仍保留原状态色。
+- FCU 单调时序卡的导航数据与时间同步状态必须分别呈现 family 状态徽标，文案、颜色与接收年龄各自独立，不得以单一聚合状态替代。
+- 840 px 及以上两分组并排，低于 840 px 上下堆叠；时间戳始终跨列。覆盖 1600/1672×941 与 1000/900/760/759/700/400 px，验证组卡/指标/时间戳完整落在父卡片内。
+- 保留 FCU 单调时间戳有效值排序、无效值置后、相同时间戳确定性排序和 UTC/FCU 时间基准独立性；不得改变 MAVLink/FactGroup/ICD/枚举/freshness/时间精度。
+- 本轮按用户要求不运行 CI/Build/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 回归与 Windows 100/125/150/200% DPI 实机截图签收。
