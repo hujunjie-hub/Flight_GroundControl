@@ -32,14 +32,14 @@ const QSet<QString> &supportedModelParameterDomains()
     return domains;
 }
 
-bool readUniqueStringSet(const QJsonValue &value, QSet<QString> &strings)
+bool readUniqueStringSet(const QJsonValue &value, QSet<QString> &strings, bool allowEmpty = false)
 {
     if (!value.isArray()) {
         return false;
     }
 
     const QJsonArray array = value.toArray();
-    if (array.isEmpty()) {
+    if (array.isEmpty() && !allowEmpty) {
         return false;
     }
 
@@ -55,6 +55,54 @@ bool readUniqueStringSet(const QJsonValue &value, QSet<QString> &strings)
         strings.insert(normalized);
     }
     return true;
+}
+
+bool validValidationRules(const QJsonValue &value)
+{
+    if (!value.isArray()) {
+        return false;
+    }
+    for (const QJsonValue &entry : value.toArray()) {
+        if (!entry.isObject() ||
+            entry.toObject().value(QStringLiteral("type")).toString().trimmed().isEmpty()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isSupportedVehicleFamily(const QString &value)
+{
+    static const QSet<QString> families {
+        QStringLiteral("MULTIROTOR"),
+        QStringLiteral("FIXED_WING"),
+        QStringLiteral("VTOL"),
+        QStringLiteral("ROVER"),
+        QStringLiteral("GROUND")
+    };
+    return families.contains(value);
+}
+
+bool isSupportedTuningPolicy(const QString &value)
+{
+    static const QSet<QString> policies {
+        QStringLiteral("READ_ONLY"),
+        QStringLiteral("GROUND_ADJUSTABLE"),
+        QStringLiteral("ONLINE_ADJUSTABLE"),
+        QStringLiteral("FLIGHT_RESTRICTED")
+    };
+    return policies.contains(value);
+}
+
+bool isSupportedUpdatePolicy(const QString &value)
+{
+    static const QSet<QString> policies {
+        QStringLiteral("IMMEDIATE"),
+        QStringLiteral("FIRMWARE_CONFIRMATION"),
+        QStringLiteral("REBOOT_REQUIRED"),
+        QStringLiteral("OFFLINE_ONLY")
+    };
+    return policies.contains(value);
 }
 
 bool isSha256(const QString &value)
@@ -113,8 +161,8 @@ FlightFirmwarePlugin::~FlightFirmwarePlugin()
 QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
     const QJsonObject &catalog, const QJsonObject &parameterMetadata)
 {
-    if (catalog.value(QStringLiteral("schema_version")).toInt(-1) != 1 ||
-        parameterMetadata.value(QStringLiteral("version")).toInt(-1) != 1) {
+    if (catalog.value(QStringLiteral("schema_version")).toInt(-1) != 2 ||
+        parameterMetadata.value(QStringLiteral("version")).toInt(-1) != 2) {
         return {};
     }
 
@@ -157,7 +205,14 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
     }
 
     QHash<QString, QString> parameterDomainsByName;
+    QHash<QString, QString> parameterFamiliesByName;
+    QHash<QString, QString> parameterControlLawsByName;
+    QHash<QString, QString> parameterTuningPoliciesByName;
+    QHash<QString, QString> parameterUpdatePoliciesByName;
+    QHash<QString, QSet<QString>> parameterVariantsByName;
     QHash<QString, QSet<QString>> parameterProfilesByName;
+    QHash<QString, QSet<QString>> parameterDependenciesByName;
+
     for (const QJsonValue &value : parameterEntries) {
         if (!value.isObject()) {
             return {};
@@ -166,16 +221,40 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         const QString rawName = parameter.value(QStringLiteral("name")).toString();
         const QString name = rawName.trimmed();
         const QString domain = parameter.value(QStringLiteral("domain")).toString();
+        const QString vehicleFamily = parameter.value(QStringLiteral("vehicleFamily")).toString();
+        const QString controlLaw = parameter.value(QStringLiteral("controlLaw")).toString();
+        const QString tuningPolicy = parameter.value(QStringLiteral("tuningPolicy")).toString();
+        const QString updatePolicy = parameter.value(QStringLiteral("updatePolicy")).toString();
+        const QJsonValue readOnly = parameter.value(QStringLiteral("readOnly"));
+        QSet<QString> parameterVariants;
+        QSet<QString> parameterProfiles;
+        QSet<QString> parameterDependencies;
+
         if (name.isEmpty() || name != rawName || parameterDomainsByName.contains(name) ||
             parameter.value(QStringLiteral("type")).toString() != QStringLiteral("float") ||
-            !supportedModelParameterDomains().contains(domain)) {
+            !supportedModelParameterDomains().contains(domain) ||
+            !isSupportedVehicleFamily(vehicleFamily) ||
+            controlLaw.isEmpty() || controlLaw != controlLaw.trimmed() ||
+            !isSupportedTuningPolicy(tuningPolicy) ||
+            !isSupportedUpdatePolicy(updatePolicy) ||
+            !readOnly.isBool() ||
+            readOnly.toBool() != (tuningPolicy == QStringLiteral("READ_ONLY")) ||
+            !readUniqueStringSet(parameter.value(QStringLiteral("modelVariants")), parameterVariants) ||
+            !readUniqueStringSet(parameter.value(QStringLiteral("modelProfiles")), parameterProfiles) ||
+            !readUniqueStringSet(parameter.value(QStringLiteral("dependencies")), parameterDependencies, true) ||
+            !validValidationRules(parameter.value(QStringLiteral("validationRules")))) {
             return {};
         }
 
-        QSet<QString> parameterProfiles;
-        if (!readUniqueStringSet(parameter.value(QStringLiteral("modelProfiles")), parameterProfiles)) {
+        const QJsonValue rebootRequired = parameter.value(QStringLiteral("rebootRequired"));
+        if ((rebootRequired.isBool() &&
+             rebootRequired.toBool() != (updatePolicy == QStringLiteral("REBOOT_REQUIRED"))) ||
+            (parameter.contains(QStringLiteral("rebootRequired")) && !rebootRequired.isBool()) ||
+            (!parameter.contains(QStringLiteral("rebootRequired")) &&
+             updatePolicy == QStringLiteral("REBOOT_REQUIRED"))) {
             return {};
         }
+
         for (const QString &profileId : parameterProfiles) {
             if (!catalogProfileIds.contains(profileId)) {
                 return {};
@@ -183,7 +262,13 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         }
 
         parameterDomainsByName.insert(name, domain);
+        parameterFamiliesByName.insert(name, vehicleFamily);
+        parameterControlLawsByName.insert(name, controlLaw);
+        parameterTuningPoliciesByName.insert(name, tuningPolicy);
+        parameterUpdatePoliciesByName.insert(name, updatePolicy);
+        parameterVariantsByName.insert(name, parameterVariants);
         parameterProfilesByName.insert(name, parameterProfiles);
+        parameterDependenciesByName.insert(name, parameterDependencies);
     }
 
     QHash<QString, QSet<QString>> profileParameterNames;
@@ -193,8 +278,15 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         const QString status = profile.value(QStringLiteral("status")).toString();
         const QJsonValue hardwareEligible = profile.value(QStringLiteral("hardwareEligible"));
         const QString writeScope = profile.value(QStringLiteral("parameterWriteScope")).toString();
+        const QString vehicleFamily = profile.value(QStringLiteral("vehicleFamily")).toString();
+        const QString controlLaw = profile.value(QStringLiteral("controlLaw")).toString();
+        QSet<QString> modelVariants;
 
-        if (status.isEmpty() || !hardwareEligible.isBool() || writeScope.isEmpty()) {
+        if (status.isEmpty() || !hardwareEligible.isBool() || writeScope.isEmpty() ||
+            !isSupportedVehicleFamily(vehicleFamily) ||
+            controlLaw.isEmpty() || controlLaw != controlLaw.trimmed() ||
+            !readUniqueStringSet(profile.value(QStringLiteral("modelVariants")), modelVariants) ||
+            !modelVariants.contains(profileId)) {
             return {};
         }
         if (status == QStringLiteral("SIM_ONLY")) {
@@ -219,7 +311,10 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         QSet<QString> actualDomains;
         for (const QString &name : parameterNames) {
             if (!parameterDomainsByName.contains(name) ||
-                !parameterProfilesByName.value(name).contains(profileId)) {
+                !parameterProfilesByName.value(name).contains(profileId) ||
+                parameterFamiliesByName.value(name) != vehicleFamily ||
+                parameterControlLawsByName.value(name) != controlLaw ||
+                parameterVariantsByName.value(name) != modelVariants) {
                 return {};
             }
             actualDomains.insert(parameterDomainsByName.value(name));
@@ -230,12 +325,18 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         profileParameterNames.insert(profileId, parameterNames);
     }
 
-    // The metadata and registry must agree in both directions: no parameter may
-    // silently disappear from a profile, and no profile may claim an unlisted Fact.
+    // Metadata and registry must agree in both directions. Dependencies may only
+    // reference parameters registered for the same profile.
     for (auto it = parameterProfilesByName.cbegin(); it != parameterProfilesByName.cend(); ++it) {
         for (const QString &profileId : it.value()) {
             if (!profileParameterNames.value(profileId).contains(it.key())) {
                 return {};
+            }
+            for (const QString &dependency : parameterDependenciesByName.value(it.key())) {
+                if (!parameterDomainsByName.contains(dependency) ||
+                    !parameterProfilesByName.value(dependency).contains(profileId)) {
+                    return {};
+                }
             }
         }
     }
