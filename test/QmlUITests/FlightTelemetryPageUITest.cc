@@ -127,9 +127,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* heroNavigation =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroNavigation"), 3000);
             QQuickItem* heroRcInput = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroRcInput"), 3000);
-            QQuickItem* healthMatrix = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMatrix"), 3000);
-            QQuickItem* healthMatrixGrid =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMatrixGrid"), 3000);
             QQuickItem* trendPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendPanel"), 3000);
             QQuickItem* trendGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trendGrid"), 3000);
             QQuickItem* trendPosition =
@@ -141,9 +138,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QQuickItem* trendControl =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_trend_control"), 3000);
             QQuickItem* healthOperation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_health_operation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_healthPage_operation"));
             QQuickItem* healthNavigation =
-                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_health_navigation"), 3000);
+                findItem(_rootItem, QStringLiteral("flightTelemetry_healthPage_navigation"));
             QQuickItem* heroFailsafe = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_heroFailsafe"), 3000);
             QQuickItem* axisRoll = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_roll"));
             QQuickItem* axisPitch = findItem(_rootItem, QStringLiteral("flightTelemetry_rcPageAxis_pitch"));
@@ -189,8 +186,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(heroFlight);
             QVERIFY(heroNavigation);
             QVERIFY(heroRcInput);
-            QVERIFY(healthMatrix);
-            QVERIFY(healthMatrixGrid);
             QVERIFY(trendPanel);
             QVERIFY(trendGrid);
             QVERIFY(trendPosition);
@@ -205,16 +200,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(axisYaw);
             QVERIFY(axisThrottle);
 
-            const char* healthDomains[] = {"operation", "navigation", "sensorHealth", "control", "actuator",
-                                           "link",      "storage",    "resource",     "time",    "event",
-                                           "prearm",    "rcInput",    "buildInfo"};
-            QQuickItem* healthCells[13]{};
-            for (int index = 0; index < 13; ++index) {
-                const QString objectName =
-                    QStringLiteral("flightTelemetry_health_") + QString::fromLatin1(healthDomains[index]);
-                healthCells[index] = findVisibleItem(_rootItem, objectName, 3000);
-                QVERIFY2(healthCells[index], qPrintable(objectName));
-            }
             QVERIFY(operationCard);
             QVERIFY(prearmCard);
             QVERIFY(latestEventCard);
@@ -256,21 +241,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 return true;
             };
 
-            const auto healthMatrixFits = [&]() {
-                for (QQuickItem* cell : healthCells) {
-                    if (!cell) {
-                        return false;
-                    }
-                    const QPointF topLeft = cell->mapToItem(healthMatrixGrid, 0, 0);
-                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
-                        topLeft.x() + cell->width() > healthMatrixGrid->width() + 1.0 ||
-                        topLeft.y() + cell->height() > healthMatrixGrid->height() + 1.0) {
-                        return false;
-                    }
-                }
-                return true;
-            };
-
             const char* diagnosticCards[] = {
                 "flightTelemetry_card_operation",   "flightTelemetry_card_navigation",   "flightTelemetry_card_sensors",
                 "flightTelemetry_card_control",     "flightTelemetry_card_actuator",     "flightTelemetry_card_links",
@@ -294,8 +264,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroNavigation->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroFlight->y(), heroRcInput->y(), 3000);
@@ -315,7 +283,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 6, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 7, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 4, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(heroNavigation->width() > heroFlight->width(), 3000);
             page->setWidth(1000);
@@ -323,23 +290,18 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 6, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 6, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 4, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 4, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(visualTabs->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 2, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
@@ -350,9 +312,7 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 1, 3000);
-            QTRY_COMPARE_WITH_TIMEOUT(healthMatrixGrid->property("columns").toInt(), 1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
-            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixFits(), 3000);
             page->setWidth(originalPageWidth);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(),
                                       page->property("_dashboardColumns").toInt(), 3000);
@@ -820,15 +780,38 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(healthMatrix);
             QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), 4, 3000);
+            const char* healthDomains[] = {"operation", "navigation", "sensorHealth", "control", "actuator",
+                                           "link",      "storage",    "resource",     "time",    "event",
+                                           "prearm",    "rcInput",    "buildInfo"};
+            QQuickItem* healthCells[13]{};
+            for (int index = 0; index < 13; ++index) {
+                const QString objectName =
+                    QStringLiteral("flightTelemetry_healthPage_") + QString::fromLatin1(healthDomains[index]);
+                healthCells[index] = findVisibleItem(_rootItem, objectName, 3000);
+                QVERIFY2(healthCells[index], qPrintable(objectName));
+            }
+            const auto healthMatrixCellsFit = [&]() {
+                for (QQuickItem* cell : healthCells) {
+                    if (!cell) return false;
+                    const QPointF topLeft = cell->mapToItem(healthMatrix, 0, 0);
+                    if (topLeft.x() < -1.0 || topLeft.y() < -1.0 ||
+                        topLeft.x() + cell->width() > healthMatrix->width() + 1.0 ||
+                        topLeft.y() + cell->height() > healthMatrix->height() + 1.0) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000));
             QVERIFY(findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceGrid"), 3000));
             QQuickItem* maintenanceContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthMaintenanceContent"), 3000);
             QVERIFY(maintenanceContent);
             QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), 3, 3000);
-            const int widths[] = {1000, 700};
-            const int expectedColumns[] = {6, 1};
-            const int expectedHealthMatrixColumns[] = {2, 1};
-            const int expectedMaintenanceColumns[] = {2, 1};
+            const int widths[] = {1000, 700, 400};
+            const int expectedColumns[] = {6, 1, 1};
+            const int expectedHealthMatrixColumns[] = {2, 1, 1};
+            const int expectedMaintenanceColumns[] = {2, 1, 1};
             for (int widthIndex = 0; widthIndex < 2; ++widthIndex) {
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
@@ -846,6 +829,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 }
                 QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
                 QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(healthMatrixCellsFit(), 3000);
             }
             page->setWidth(1600);
             QQuickItem* rcTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_3"), 3000);

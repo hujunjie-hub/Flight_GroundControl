@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：4.0
+- 版本：4.1
 - 日期：2026-11-15
 - 状态：四张参考图对应的四页面交互与主体布局已提交；等待新 HEAD CI、Windows 本地视觉和运行验收
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -100,7 +100,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 
 ### 2.6 完整诊断信息保留区
 
-趋势带下方继续保留完整 13 类遥测域状态矩阵和原有 14 张详细诊断卡片。总览页的详细矩阵作为纵向补充；飞行健康页将 13 类矩阵提升为首屏主视觉。所有页面均可纵向滚动查看完整 14 张诊断卡，不允许删除、折叠丢失或只保留摘要。
+趋势带下方继续保留原有 14 张详细诊断卡片。13 类遥测域状态矩阵只在「飞行健康」页作为首屏主视觉呈现，总览页不重复显示矩阵。所有页面均可纵向滚动查看完整 14 张详细诊断卡片，不允许删除、折叠丢失或只保留摘要。
 
 | 顺序 | 卡片 | 必须保留的内容 |
 |---|---|---|
@@ -119,7 +119,7 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 | 第五组 | 最近事件历史 | 当前 boot epoch 内最近事件，保持有界历史 |
 | 底部 | 固件与版本 | 产品/接口/Schema、ICD 兼容性、Profile 匹配、摘要 hash、源码提交和 FCU 时间 |
 
-13 类 family 矩阵仍逐项显示 operation、navigation、sensor health、control、actuator、link、storage、resource、time、event、pre-arm、RC input、build info 的独立状态和接收年龄。event 是异步域，不使用周期数据超时语义。
+飞行健康页的 13 类 family 矩阵逐项显示 operation、navigation、sensor health、control、actuator、link、storage、resource、time、event、pre-arm、RC input、build info 的独立状态和接收年龄；宽屏/中屏/窄屏分别为 4/2/1 列。event 是异步域，不使用周期数据超时语义。
 
 ### 2.7 信息完整性与安全边界
 
@@ -440,6 +440,6 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 导航时序页仅使用导航能力、精度、UTC 和时钟纪律字段；不伪造卫星数量、HDOP 或卫星天图。
 - 遥控与链路页使用 FlightRadio 同一 FlightRadio.mode 设置和 Mode 1/2/3 通道映射；仅显示四个逻辑轴和 validityMask 有效的链路指标，不伪造 CH5–CH8、SNR、RTT 或吞吐量。
 - 趋势面板复用现有 1 Hz / 60 点采样器：总览页显示导航/控制指标，健康页显示 resource CPU/WCET/stack 和 storage free，导航页第 4 张切换为 UTC 不确定度，RC 页切换为 RSSI/质量/丢包/RC 接收年龄；resource/link 实例过期时必须断点。
-- UI Integration 对四页切换、各页主要面板、响应式 12/6/1 列、健康矩阵 4/2/1 列、Mode 1/2/3 映射和 RC marker 有效性进行回归。
+- UI Integration 对四页切换、各页主要面板、响应式 12/6/1 列、健康矩阵在 1600/1000/700/400 px 下的 4/2/1/1 列与 13 个单元边界、维护横条 3/2/1 列、Mode 1/2/3 映射和 RC marker 有效性进行回归。
 - 视觉验收仍需在 Windows x64 实际运行应用，对照四张原图逐页检查 1672×941、100%/125%/150% DPI；CI 布局断言不能替代像素级人工验收。
 - Exact HEAD Windows Release、Unit、Integration、Installer、clean-install、installed-runtime 和本地 RUN_ID 证据必须重新执行；未完成前 FGC-0044 保持 RETESTING。
