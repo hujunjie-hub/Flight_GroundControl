@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.48
+- 版本：6.49
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -1008,3 +1008,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - MockLink `FlightTelemetryPageUITest` 断言主输入面板徽标可见、逻辑轴面板徽标隐藏，且逻辑轴面板仍绑定 `rcInputAvailable`，防止去重时误删 freshness 语义。
 - 仅修改 `FlightTelemetry.qml`、`FlightTelemetryPageUITest.cc`、本 SPEC、Windows Release 验收指南、G15 manifest 与项目 SPEC 索引；不修改 MAVLink、FlightTelemetryFactGroup、FlightRadio 或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
+
+## 72. Phase 2.26 总览整机状态安全优先级与操作信息分层（2026-11-15）
+
+- 左侧「整机状态概览」以当前飞行模式作为第一视觉焦点；模式值使用中性前景色，operation family freshness 作为独立小状态显示，避免把数据新鲜度误读为飞行模式等级。
+- 解锁状态保留为独立状态胶囊，显示 FCU 原始 arm state 枚举；胶囊描边/底纹只表达 operation family freshness，不根据「已解锁」推断安全或故障。
+- 失效保护等级从原先与控制权并列的普通字段提升为全宽安全状态条；背景、边框、侧边色条和主数值共用 _failsafeColor()，严格映射 FCU 上报的正常/降级/需要动作/终止等级。operation family 等待/超时时，主值只显示等待/超时，颜色回退到 freshness 语义，不展示缓存的旧等级。
+- 控制权下沉为独立次级信息行，保留 FCU authority 枚举；不增加任何地面站推断或控制权修改操作。
+- 六个关键系统 HealthCell 继续按各自 family freshness 显示状态和接收年龄；不计算、不显示综合健康分，也不受 failsafe 等级影响。
+- MockLink UI Integration 验证无遥测 WAIT、fresh 状态下「定点/解锁中/飞手/正常」与正常绿色、operation stale 后整机模式/解锁/控制权/失效保护均显示 stale 且安全条转为琥珀色；验证 1600/1000/400 px 下主视觉、失效保护条、控制权和六域矩阵均不越界。
+- 仅修改 FlightTelemetry QML、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 和机器可读 manifest；不修改 MAVLink、FactGroup、Flight ICD、VehicleLinkManager、状态枚举、freshness 阈值或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增 UI 回归为 NOT_RUN，等待集中验收。
+
