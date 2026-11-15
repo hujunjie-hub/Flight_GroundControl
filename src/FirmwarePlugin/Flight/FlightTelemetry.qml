@@ -4207,6 +4207,7 @@ SetupPage {
                     visible: root._activeDashboardPage === 3
                     eyebrow: "REMOTE CONTROL"
                     statusFamily: "rcInputAvailable"
+                    showStatusBadge: false
                     Layout.columnSpan: root._dashboardColumns >= 12 ? 6 : root._dashboardColumns >= 6 ? 3 : 1
                     title: qsTr("遥控输入")
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("rcInputAvailable") }
@@ -5121,6 +5122,7 @@ SetupPage {
         required property string title
         property string eyebrow: "FCU TELEMETRY"
         property string statusFamily: ""
+        property bool showStatusBadge: true
         readonly property int panelPadding: root._dashboardPanelPadding
         readonly property int panelSectionSpacing: root._dashboardPanelSectionSpacing
         readonly property int panelBodySpacing: root._dashboardPanelBodySpacing
@@ -5181,7 +5183,7 @@ SetupPage {
 
                 FamilyStatusBadge {
                     objectName: card.objectName + "_statusBadge"
-                    visible: card.statusFamily !== ""
+                    visible: card.showStatusBadge && card.statusFamily !== ""
                     Layout.alignment: Qt.AlignVCenter
                     statusText: root._familyStatus(card.statusFamily)
                     statusColor: card.currentStatusColor
