@@ -2337,58 +2337,113 @@ SetupPage {
                     titleText: qsTr("告警事件（优先级）")
                     statusFamily: "eventAvailable"
 
-                    QGCLabel {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: qsTr("当前启动周期内最近事件")
-                        color: "#8EB9C3"
-                        font.pointSize: ScreenTools.captionFontPointSize
+                        spacing: 6
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: qsTr("当前启动周期内最近事件")
+                            color: "#8EB9C3"
+                            font.pointSize: ScreenTools.captionFontPointSize
+                        }
+                        QGCLabel {
+                            objectName: "flightTelemetry_alarmEventCount"
+                            text: root._familyStatus("eventAvailable") === qsTr("已接收")
+                                  ? qsTr("%1 条").arg(root._eventCountText())
+                                  : root._familyStatus("eventAvailable")
+                            color: root._familyStatus("eventAvailable") === qsTr("已接收")
+                                   ? "#C5DDE3" : root._familyStatusColor("eventAvailable")
+                            font.pointSize: ScreenTools.captionFontPointSize
+                            font.weight: ScreenTools.strongFontWeight
+                        }
                     }
                     QGCLabel {
                         objectName: "flightTelemetry_alarmPriorityHint"
                         Layout.fillWidth: true
-                        text: qsTr("严重度优先 · 同级按本地接收序号")
+                        text: qsTr("最高严重度置顶 · 同级按本地接收序号")
                         color: "#6F9DA7"
                         font.pointSize: ScreenTools.microFontPointSize
                     }
-                    QGCLabel {
-                        Layout.fillWidth: true
+                    Rectangle {
+                        objectName: "flightTelemetry_alarmEmptyState"
                         visible: !root._telemetry || root._telemetry.recentEvents.length === 0
-                        text: root._familyStatus("eventAvailable") === qsTr("已接收")
-                              ? qsTr("当前启动周期暂无事件")
-                              : root._familyStatus("eventAvailable")
-                        color: "#8298A2"
-                        font.pointSize: ScreenTools.secondaryFontPointSize
+                        Layout.fillWidth: true
+                        implicitHeight: 58
+                        radius: 6
+                        color: "#082630"
+                        border.width: 1
+                        border.color: "#164A55"
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 9
+                            spacing: 3
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: root._familyStatus("eventAvailable") === qsTr("已接收")
+                                      ? qsTr("当前启动周期暂无事件")
+                                      : root._familyStatus("eventAvailable")
+                                color: "#C1D7DD"
+                                font.pointSize: ScreenTools.secondaryFontPointSize
+                                font.weight: ScreenTools.strongFontWeight
+                            }
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("收到 FCU_EVENT 后按严重度自动排序")
+                                color: "#8298A2"
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                        }
                     }
                     Repeater {
                         objectName: "flightTelemetry_alarmList"
                         model: root._priorityEvents()
                         delegate: Rectangle {
+                            id: alarmEventCard
                             required property var modelData
-                            objectName: "flightTelemetry_alarmEventCard_" + modelData.sequence
+                            required property int index
+                            readonly property bool isPrimary: index === 0
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)
+                            readonly property string reasonText: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                            objectName: "flightTelemetry_alarmEventCard_" + modelData.sequence
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(55, eventContent.implicitHeight + 14)
-                            radius: 5
-                            color: "#0B2A33"
-                            border.width: 1
-                            border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.35)
+                            implicitHeight: Math.max(isPrimary ? 70 : 50, eventContent.implicitHeight + (isPrimary ? 18 : 14))
+                            radius: isPrimary ? 7 : 5
+                            color: isPrimary
+                                   ? Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.10)
+                                   : "#0B2A33"
+                            border.width: isPrimary ? 1.4 : 1
+                            border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b,
+                                                  isPrimary ? 0.72 : 0.35)
+                            Rectangle {
+                                width: isPrimary ? 3 : 2
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 1
+                                radius: 2
+                                color: alarmEventCard.severityColor
+                                opacity: isPrimary ? 1 : 0.62
+                            }
                             RowLayout {
                                 id: eventContent
                                 objectName: "flightTelemetry_alarmEventContent_" + modelData.sequence
                                 anchors.fill: parent
-                                anchors.margins: 7
-                                spacing: 7
+                                anchors.margins: alarmEventCard.isPrimary ? 9 : 7
+                                anchors.leftMargin: alarmEventCard.isPrimary ? 12 : 9
+                                spacing: 8
                                 Rectangle {
-                                    Layout.preferredWidth: 48
-                                    Layout.preferredHeight: 23
+                                    Layout.preferredWidth: alarmEventCard.isPrimary ? 52 : 44
+                                    Layout.preferredHeight: alarmEventCard.isPrimary ? 27 : 22
+                                    Layout.alignment: Qt.AlignTop
                                     radius: 4
-                                    color: Qt.rgba(parent.parent.severityColor.r, parent.parent.severityColor.g,
-                                                   parent.parent.severityColor.b, 0.12)
-                                    border.color: parent.parent.severityColor
+                                    color: Qt.rgba(alarmEventCard.severityColor.r, alarmEventCard.severityColor.g,
+                                                   alarmEventCard.severityColor.b, 0.14)
+                                    border.width: 1
+                                    border.color: alarmEventCard.severityColor
                                     QGCLabel {
                                         anchors.centerIn: parent
                                         text: root._eventSeverityLabel(modelData.severity)
-                                        color: parent.parent.parent.severityColor
+                                        color: alarmEventCard.severityColor
                                         font.pointSize: ScreenTools.microFontPointSize
                                         font.weight: ScreenTools.strongFontWeight
                                     }
@@ -2396,15 +2451,40 @@ SetupPage {
                                 ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    spacing: 2
+                                    spacing: alarmEventCard.isPrimary ? 3 : 2
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 5
+                                        QGCLabel {
+                                            objectName: "flightTelemetry_alarmEventReason_" + modelData.sequence
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            text: alarmEventCard.reasonText
+                                            color: alarmEventCard.isPrimary ? "#F0F6F8" : "#D5E9ED"
+                                            font.pointSize: alarmEventCard.isPrimary
+                                                             ? ScreenTools.secondaryFontPointSize
+                                                             : ScreenTools.captionFontPointSize
+                                            font.weight: alarmEventCard.isPrimary
+                                                         ? ScreenTools.strongFontWeight : Font.Normal
+                                            wrapMode: Text.WordWrap
+                                        }
+                                        QGCLabel {
+                                            objectName: "flightTelemetry_alarmEventPrimaryTag_" + modelData.sequence
+                                            visible: alarmEventCard.isPrimary
+                                            text: qsTr("最高优先级")
+                                            color: alarmEventCard.severityColor
+                                            font.pointSize: ScreenTools.microFontPointSize
+                                            font.weight: ScreenTools.strongFontWeight
+                                        }
+                                    }
                                     QGCLabel {
                                         objectName: "flightTelemetry_alarmEventMeta_" + modelData.sequence
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
                                         text: qsTr("本地序号 #%1 · ID %2 · 来源 %3")
                                               .arg(modelData.sequence).arg(modelData.eventId).arg(modelData.sourceId)
-                                        color: "#D5E9ED"
-                                        font.pointSize: ScreenTools.captionFontPointSize
+                                        color: "#A9C2C9"
+                                        font.pointSize: ScreenTools.microFontPointSize
                                         wrapMode: Text.WordWrap
                                     }
                                     QGCLabel {
@@ -2413,14 +2493,6 @@ SetupPage {
                                         Layout.minimumWidth: 0
                                         text: root._eventBootTimeText(modelData.timeBootUs)
                                         color: "#8298A2"
-                                        font.pointSize: ScreenTools.microFontPointSize
-                                        wrapMode: Text.WordWrap
-                                    }
-                                    QGCLabel {
-                                        Layout.fillWidth: true
-                                        Layout.minimumWidth: 0
-                                        text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
-                                        color: "#8FB1BB"
                                         font.pointSize: ScreenTools.microFontPointSize
                                         wrapMode: Text.WordWrap
                                     }
