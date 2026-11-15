@@ -529,11 +529,35 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             QQuickItem* operationRow =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_operationMessageStatus"), 3000);
+            QQuickItem* operationArmStateDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_operationArmStateDetail"));
+            QQuickItem* operationFlightModeDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_operationFlightModeDetail"));
+            QQuickItem* navigationStateOriginDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationStateOriginDetail"));
+            QQuickItem* navigationPositionStdDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_navigationPositionStd"));
+            QQuickItem* timeQualityDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_timeQualityDetail"));
+            QQuickItem* timeDisciplineDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_timeDisciplineDetail"));
+            QQuickItem* rcFailsafeDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_rcFailsafeDetail"));
+            QQuickItem* rcLinkStateDetail =
+                findItem(_rootItem, QStringLiteral("flightTelemetry_rcLinkStateDetail"));
             QQuickItem* storageFreeRow =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_storageFreeKib"), 3000);
             QQuickItem* storageSdState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageSdState"));
             QQuickItem* storageNorState = findItem(_rootItem, QStringLiteral("flightTelemetry_storageNorState"));
             QVERIFY(operationRow);
+            QVERIFY(operationArmStateDetail);
+            QVERIFY(operationFlightModeDetail);
+            QVERIFY(navigationStateOriginDetail);
+            QVERIFY(navigationPositionStdDetail);
+            QVERIFY(timeQualityDetail);
+            QVERIFY(timeDisciplineDetail);
+            QVERIFY(rcFailsafeDetail);
+            QVERIFY(rcLinkStateDetail);
             QVERIFY(storageFreeRow);
             QVERIFY(storageSdState);
             QVERIFY(storageNorState);
@@ -547,6 +571,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // No FCU custom telemetry has arrived: the page must not present it as current data.
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), waitingText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(), waitingFcuText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(), waitingText, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("valueText").toString(), notReportedText, 3000);
@@ -737,6 +769,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 3, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString(),
                                       translatedTelemetryText("接收机失效保护未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(),
+                                      translatedTelemetryText("未触发"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(),
+                                      translatedTelemetryText("健康"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("valueText").toString(),
                                       translatedTelemetryText("%1 / %2 新鲜").arg(3).arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryLink->property("accentColor").value<QColor>(),
@@ -929,6 +965,14 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             page->setWidth(originalEventHistoryPageWidth);
             QTRY_VERIFY_WITH_TIMEOUT(historyEventMetaGrid->property("columns").toInt() >= 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(),
+                                      translatedTelemetryText("解锁中"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(),
+                                      translatedTelemetryText("定点"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(),
+                                      QStringLiteral("8 / 12"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(),
+                                      QStringLiteral("0.125 m"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(receivedText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
@@ -989,6 +1033,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       expectedUtcTimestamp, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(timeUtcTimestamp->property("valueText").toString(),
                                       expectedUtcTimestamp, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidity->property("valueText").toString(),
                                       translatedTelemetryText("是"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(navigationUtcValidityCheck->property("valueText").toString(),
@@ -1057,6 +1105,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             const int timeFreshnessTick = page->property("_ageRefreshTick").toInt();
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_ageRefreshTick").toInt() > timeFreshnessTick, 1500);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTime->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
@@ -1065,6 +1117,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendTimeStatus(lastOperationTime + 600, bootId, 1700000010123456ULL, 1);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("detailText").toString(),
                                       translatedTelemetryText("UTC 有效"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeDisciplineDetail->property("valueText").toString(),
+                                      translatedTelemetryText("锁定"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(timeQualityDetail->property("valueColor").toString(),
+                                      QStringLiteral("#45D39A"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTime->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#45D39A")), 3000);
             QVERIFY(_clickItemAt(overviewTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_0")));
@@ -1239,6 +1297,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
 
             // The operation frame ages past the page's 1000 ms freshness limit without a new frame.
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), staleText, 5000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationFlightModeDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(), staleText, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryFailsafe->property("detailText").toString().contains(staleText), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryFailsafe->property("accentColor").value<QColor>(),
                                       QColor(QStringLiteral("#F0B94B")), 3000);
@@ -1251,6 +1313,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#F0B94B")),
                 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!trendPosition->property("lastSampleValid").toBool(), 3000);
+            // RC input uses a longer 5500 ms family freshness window.
+            QTRY_COMPARE_WITH_TIMEOUT(rcFailsafeDetail->property("valueText").toString(), staleText, 6500);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueText").toString(), staleText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(rcLinkStateDetail->property("valueColor").toString(),
+                                      QStringLiteral("#F0B94B"), 3000);
 
             // A strictly newer frame restores the fresh state on the same boot epoch.
             lastOperationTime += 1000;
@@ -1258,6 +1325,12 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             sendNavigationStatus(lastOperationTime + 100, bootId, 0x7F, 0.14F, 0.09F, 0.03F);
             sendControlStatus(lastOperationTime + 200, bootId, 2100);
             QTRY_COMPARE_WITH_TIMEOUT(operationRow->property("valueText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(operationArmStateDetail->property("valueText").toString(),
+                                      translatedTelemetryText("解锁中"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationStateOriginDetail->property("valueText").toString(),
+                                      QStringLiteral("8 / 12"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(navigationPositionStdDetail->property("valueText").toString(),
+                                      QStringLiteral("0.140 m"), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
                 topologyNodeItems[1]->property("stateColor").value<QColor>() == QColor(QStringLiteral("#45D39A")),
                 3000);
