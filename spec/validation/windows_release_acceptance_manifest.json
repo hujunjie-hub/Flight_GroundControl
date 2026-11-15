@@ -399,6 +399,7 @@
         "overview_aircraft_priority_content_fits_1600_1000_and_400_px_bounds",
         "rc_input_family_badge_single_owner_is_preserved_across_1600_1000_900_700_400_widths",
         "rc_input_detail_card_badge_is_hidden_while_family_status_accent_remains_across_responsive_widths",
+        "rc_failsafe_panel_does_not_duplicate_link_family_message_state_and_communication_detail_owns_message_row",
         "overview_alarm_event_count_matches_current_boot_epoch_recent_events",
         "overview_alarm_primary_card_emphasizes_highest_known_severity_and_reason",
         "overview_alarm_unknown_severity_is_not_mislabeled_as_highest_priority",
