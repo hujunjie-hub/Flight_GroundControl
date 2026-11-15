@@ -3059,7 +3059,7 @@ SetupPage {
                                 valueColor: root._linkInstanceAgeColor(modelData)
                             }
                             QGCLabel {
-                                objectName: "flightTelemetry_linkDetailReason_" + modelData.linkInstanceId
+                                objectName: "flightTelemetry_linkInstanceReason_" + modelData.linkInstanceId
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 text: root._linkInstanceReasonText(modelData)
