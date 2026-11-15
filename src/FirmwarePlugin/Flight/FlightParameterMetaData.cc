@@ -346,7 +346,12 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         metaData->setControlLaw(controlLaw);
         metaData->setTuningPolicy(tuningPolicy);
         metaData->setUpdatePolicy(updatePolicy);
-        metaData->setDependencies(dependencies);
+        QVariantList dependencyValues;
+        dependencyValues.reserve(dependencies.size());
+        for (const QString &dependency : dependencies) {
+            dependencyValues.append(dependency);
+        }
+        metaData->setDependencies(dependencyValues);
         metaData->setValidationRules(validationRules);
         metaData->setSourceFile(entry.value(QStringLiteral("sourceFile")).toString());
         metaData->setSourcePath(entry.value(QStringLiteral("sourcePath")).toString());
