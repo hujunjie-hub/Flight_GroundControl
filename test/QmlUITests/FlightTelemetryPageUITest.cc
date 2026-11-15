@@ -2698,16 +2698,20 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
             QQuickItem* compactDetailsEyebrow = findItem(
                 _rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsEyebrow"));
+            QQuickItem* compactDetailsTitle = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_diagnosticDetailsTitle"), 3000);
             QQuickItem* compactTrendCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_trend_position"), 3000);
             QQuickItem* compactTrendCanvas = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_trend_position_canvas"), 3000);
             QVERIFY(compactTab);
             QVERIFY(compactDetailsEyebrow);
+            QVERIFY(compactDetailsTitle);
             QVERIFY(compactTrendCard);
             QVERIFY(compactTrendCanvas);
             QTRY_COMPARE_WITH_TIMEOUT(compactTab->property("implicitHeight").toReal(), 42.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDetailsEyebrow->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(compactDetailsTitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(compactTrendCanvas->height() >= 64, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), 4, 3000);
 
