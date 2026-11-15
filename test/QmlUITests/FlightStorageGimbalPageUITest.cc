@@ -662,5 +662,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                                       QStringLiteral("数据超时"), 1000);
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!acquire->property("enabled").toBool());
+
+            // Once the first device is no longer locally controlled, the
+            // operator may select the other fully discovered and fresh device.
+            sendSecondGimbalTelemetry();
+            vehicle->gimbalController()->setActiveGimbal(secondGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), secondGimbal);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(rollValue->property("text").toString() !=
+                                         QStringLiteral("数据超时"), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(!pitchSlider->property("enabled").toBool(), 1000);
         });
 }
