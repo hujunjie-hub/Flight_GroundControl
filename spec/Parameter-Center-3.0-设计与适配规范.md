@@ -64,7 +64,8 @@
 
 规则：
 - 当前参数中心只有一个 active vehicle profile / aircraft model binding。
-- 下拉菜单列出系统实际注册、固件明确支持且元数据完整的机型/构型；不得展示未实现或仅有装饰图片的机型。
+- 下拉菜单列出 FirmwarePlugin 实际注册且当前固件可用的机型/构型；每次只允许选择一个调参 profile，参数表按该 profile 的 parameterNames / parameterDomains 过滤。
+- 选择 profile 只改变参数调优上下文，不创建第二个 Vehicle，也不改变 activeVehicle 对应的真实硬件类型。Flight SIL 可单选注册的 SIM_ONLY / SIL_ONLY profile；实机 profile 必须补齐硬件证据、构型/电机映射、推力曲线和兼容性审查后才能进入可选列表。
 - 当前绑定项显示机型名称与必要的构型标识，例如“多旋翼 · X 型六轴”。
 - 机型切换只切换参数中心的模型上下文，不代表改变真实飞行器硬件、固件类型、混控或飞控控制律。
 - 已连接飞控时，必须将所选模型与当前 Vehicle、FirmwarePlugin、飞控上报能力和参数元数据做兼容性检查；不匹配时阻止参数写入并清楚说明原因。
@@ -472,7 +473,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
-- 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不再在 QML 内硬编码型号或重复判断 gitHash/版本。Flight SIL 只有在插件确认唯一匹配的 QUAD_X4 / SIM_ONLY 注册项时显示该型号；下拉为只读展示，固件尚未报告可区分多机型的 profile id 前不允许手动切换。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
+- 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不在 QML 内硬编码型号或重复判断固件身份。Flight SIL 通过身份校验后，插件返回注册的 SIM_ONLY / SIL_ONLY profiles；用户必须单选一个 profile 作为参数调优上下文，ParameterEditor 只显示该 profile 的参数名与参数域白名单。该选择不改变 activeVehicle 的真实硬件类型。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
@@ -487,7 +488,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 - ParameterEditor 增加参数行选择能力；Flight 参数中心启用 safe mode，参数表值单元格不再直接打开原生写入对话框，重置操作禁用，参数文件仍可导入预览但禁止批量上传。
 - 在线调参控制器复用 ParameterEditorController、Fact、ParameterManager 和既有 MAVLink PARAM_SET 状态机，不建立第二套参数缓存或写入队列。
-- 写入资格必须同时满足：当前 activeVehicle 唯一匹配 FLTSIL01 且固件版本不低于 1.9.2；唯一注册 profile 为 QUAD_X4 / SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名与 domain 均在 profile 注册清单中；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数本身不是只读/只写项。
+- 写入资格必须同时满足：当前 activeVehicle 由 FirmwarePlugin 识别为 Flight SIL；用户当前单选的 profile 必须存在于 vehicleModelProfiles 注册列表，且为 SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名与 domain 均在所选 profile 注册清单中；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数本身不是只读/只写项。
 - 目标值先经 Fact 元数据范围/类型校验，再通过 Fact::setCookedValue 进入原有 ParameterManager PARAM_SET 流程；只有收到匹配参数的 PARAM_VALUE 确认才标记应用成功。
 - confirmedValue 只从 Fact 的 vehicleUpdated（飞控回传）更新，不把 UI 乐观目标值冒充当前确认值；失败后要求回读确认实际值，失败后的下一次写入必须先完成回读。
 - “回读验证”使用 ParameterManager 的单参数 refresh 路径；“恢复上一次”只恢复当前会话内该参数上一次已确认的值，并重新经过相同资格检查、范围校验、写入确认。
@@ -500,8 +501,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 参数域门控和未登记机型锁定已接入；硬件模型注册及兼容性元数据仍未完成；构建与测试 NOT_RUN）。
-- Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型单选下拉、按 profile 参数白名单过滤和未登记机型锁定已接入；硬件模型注册及兼容性元数据仍未完成；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。
 
