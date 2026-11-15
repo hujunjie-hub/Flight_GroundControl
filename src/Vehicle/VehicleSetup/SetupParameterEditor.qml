@@ -10,7 +10,16 @@ Item {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isFlight: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
-    readonly property bool _flightSilModelAvailable: _activeVehicle && _activeVehicle.gitHash === "FLTSIL01" && _activeVehicle.versionCompare(1, 9, 2) >= 0
+    // Explicit version-property dependencies ensure this gate reevaluates when MAVLink version discovery completes.
+    readonly property int _firmwareMajorVersion: _activeVehicle ? _activeVehicle.firmwareMajorVersion : -1
+    readonly property int _firmwareMinorVersion: _activeVehicle ? _activeVehicle.firmwareMinorVersion : -1
+    readonly property int _firmwarePatchVersion: _activeVehicle ? _activeVehicle.firmwarePatchVersion : -1
+    readonly property bool _flightSilModelAvailable: _activeVehicle &&
+                                                     _activeVehicle.gitHash === "FLTSIL01" &&
+                                                     _firmwareMajorVersion >= 0 &&
+                                                     _firmwareMinorVersion >= 0 &&
+                                                     _firmwarePatchVersion >= 0 &&
+                                                     _activeVehicle.versionCompare(1, 9, 2) >= 0
     readonly property bool _linkHealthy: _activeVehicle && !_activeVehicle.vehicleLinkManager.communicationLost
     readonly property bool _parametersReady: _activeVehicle && _activeVehicle.parameterManager.parametersReady &&
                                               !_activeVehicle.parameterManager.missingParameters
