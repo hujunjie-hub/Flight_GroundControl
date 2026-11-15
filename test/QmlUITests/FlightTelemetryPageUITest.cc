@@ -126,6 +126,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 QVERIFY(alarmSeverityLabels[index]);
                 QVERIFY(alarmSeverityCounts[index]);
             }
+            QVERIFY(alarmSeverityGrid);
+            QVERIFY(!alarmSeverityGrid->isVisible());
             QQuickItem* alarmScopeNote =
                 findItem(_rootItem, QStringLiteral("flightTelemetry_alarmScopeNote"));
             QQuickItem* alarmEmptyState =
@@ -1609,7 +1611,6 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(alarmEventCount);
             QVERIFY(historyEventSequence);
             QVERIFY(alarmSeverityGrid);
-            QVERIFY(!alarmSeverityGrid->isVisible());
             QTRY_VERIFY_WITH_TIMEOUT(alarmSeverityGrid->isVisible(), 3000);
             const int firstEventSeverityCounts[] = {1, 0, 0, 0, 0};
             for (int index = 0; index < 5; ++index) {
