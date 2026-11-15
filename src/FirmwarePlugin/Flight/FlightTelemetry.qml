@@ -1589,7 +1589,10 @@ SetupPage {
             })
         }
         items.sort((left, right) => {
-            if (left.hasTimestamp && right.hasTimestamp) return left.timestamp - right.timestamp
+            if (left.hasTimestamp && right.hasTimestamp) {
+                const timestampDelta = left.timestamp - right.timestamp
+                return timestampDelta !== 0 ? timestampDelta : left.order - right.order
+            }
             if (left.hasTimestamp) return -1
             if (right.hasTimestamp) return 1
             return left.order - right.order
