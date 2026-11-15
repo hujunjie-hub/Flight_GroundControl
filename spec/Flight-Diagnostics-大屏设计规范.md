@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.50
+- 版本：6.51
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；集中 CI 与像素级截图/DPI 验收后置
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入面板显示，逻辑轴面板保留 freshness 色条；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -1018,5 +1018,15 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 六个关键系统 HealthCell 继续按各自 family freshness 显示状态和接收年龄；不计算、不显示综合健康分，也不受 failsafe 等级影响。
 - MockLink UI Integration 验证无遥测 WAIT、fresh 状态下「定点/解锁中/飞手/正常」与正常绿色、operation stale 后整机模式/解锁/控制权/失效保护均显示 stale 且安全条转为琥珀色；验证 1600/1000/400 px 下主视觉、失效保护条、控制权和六域矩阵均不越界。
 - 仅修改 FlightTelemetry QML、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 和机器可读 manifest；不修改 MAVLink、FactGroup、Flight ICD、VehicleLinkManager、状态枚举、freshness 阈值或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增 UI 回归为 NOT_RUN，等待集中验收。
+
+## 73. Phase 2.27 总览告警事件首要级别与信息分组（2026-11-15）
+
+- 右侧告警区显示当前启动周期事件总数；优先级规则保持严重度降序、同级按地面站本地接收序号降序，列表最多显示前四项，不改变事件排序或历史记录语义。
+- 排序首项采用主告警卡视觉：severity 色条、较强边框/底纹、放大的严重度徽标、原因主标题和「最高优先级」标识；后续事件采用紧凑卡片，保持同一信息顺序但降低视觉权重。
+- 事件信息按原因、地面站本地序号/FCU event ID/来源 ID、FCU 启动相对时间分组；时间继续使用 FCU + 秒，不标记为 UTC。严重度未知时显示「严重度未知」，不伪装为最高等级。
+- 无事件时显示独立空态，说明当前启动周期暂无事件以及收到 FCU_EVENT 后的排序方式；不生成示例事件或模拟告警。
+- MockLink UI Integration 验证首要事件 isPrimary、严重度颜色、原因主标题、最高优先级标签、事件计数，以及 700/400 px 下原因/元信息/时间/优先级标签边界；既有排序函数和事件历史一致性断言保留。
+- 仅修改 FlightTelemetry 告警区 QML、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 与机器可读 manifest；不修改事件协议、严重度枚举、事件排序规则、FCU_EVENT 时间语义或飞控控制行为。
 - 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；本阶段新增 UI 回归为 NOT_RUN，等待集中验收。
 
