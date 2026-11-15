@@ -568,7 +568,18 @@
         "gimbal_manager_set_attitude_rate_control_moves_and_zero_rate_stops",
         "gimbal_rate_commands_mask_unsupported_axes",
         "mocklink_gimbal_rejects_unknown_device_ids_nonfinite_targets_and_unknown_flags",
-        "mocklink_gimbal_yaw_lock_and_retract_round_trip_in_attitude_status"
+        "mocklink_gimbal_yaw_lock_and_retract_round_trip_in_attitude_status",
+        "storage_drop_counters_show_first_sample_baseline_then_per_frame_positive_delta",
+        "storage_drop_counters_show_no_increment_when_cumulative_values_are_unchanged",
+        "storage_drop_counter_rollback_is_reported_without_negative_delta",
+        "gimbal_rate_control_sends_zero_rates_before_primary_owner_release",
+        "gimbal_attitude_remains_stable_after_rate_control_release",
+        "gimbal_manager_and_attitude_freshness_ages_advance_without_new_status_frames",
+        "gimbal_device_selector_unlocks_after_manager_status_becomes_stale",
+        "gimbal_controller_discovers_multiple_manager_device_pairs",
+        "gimbal_active_device_switch_is_rejected_while_current_device_has_confirmed_local_control",
+        "gimbal_active_device_switch_accepts_only_fully_discovered_devices",
+        "gimbal_active_device_switch_succeeds_after_release_and_selects_fresh_device"
       ]
     }
   ],
