@@ -1844,11 +1844,23 @@ SetupPage {
                         spacing: 12
                         ColumnLayout {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             spacing: 2
-                            QGCLabel {
-                                text: qsTr("当前飞行模式")
-                                color: "#91A8B2"
-                                font.pointSize: ScreenTools.secondaryFontPointSize
+                            RowLayout {
+                                Layout.fillWidth: true
+                                QGCLabel {
+                                    text: qsTr("当前飞行模式")
+                                    color: "#91A8B2"
+                                    font.pointSize: ScreenTools.secondaryFontPointSize
+                                }
+                                Item { Layout.fillWidth: true }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_heroOperationFreshness"
+                                    text: root._familyStatus("operationAvailable")
+                                    color: root._familyStatusColor("operationAvailable")
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                }
                             }
                             QGCLabel {
                                 objectName: "flightTelemetry_heroFlightMode"
@@ -1856,26 +1868,127 @@ SetupPage {
                                 text: root._familyStatus("operationAvailable") === qsTr("已接收")
                                       ? root._enum("flightMode", [qsTr("无"), qsTr("手动角速度"), qsTr("手动姿态"), qsTr("定高"), qsTr("定点"), qsTr("任务"), qsTr("返航"), qsTr("降落"), qsTr("紧急降落")])
                                       : root._familyStatus("operationAvailable")
-                                color: root._familyStatusColor("operationAvailable")
+                                color: "#E6F0F4"
                                 typographyRole: "hero"
                                 elide: Text.ElideRight
                             }
                         }
-                        Rectangle {
+                        ColumnLayout {
                             Layout.alignment: Qt.AlignVCenter
-                            radius: 8
-                            color: "#082E36"
-                            border.color: "#1C6B7A"
-                            implicitWidth: armStateText.implicitWidth + 22
-                            implicitHeight: armStateText.implicitHeight + 16
+                            spacing: 4
                             QGCLabel {
-                                id: armStateText
-                                anchors.centerIn: parent
-                                objectName: "flightTelemetry_heroArmState"
-                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                      ? root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
-                                      : root._familyStatus("operationAvailable")
+                                Layout.fillWidth: true
+                                text: qsTr("解锁状态")
+                                color: "#91A8B2"
+                                font.pointSize: ScreenTools.microFontPointSize
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            Rectangle {
+                                Layout.alignment: Qt.AlignHCenter
+                                radius: 7
+                                color: Qt.rgba(armStateText.stateColor.r, armStateText.stateColor.g,
+                                               armStateText.stateColor.b, 0.09)
+                                border.width: 1
+                                border.color: Qt.rgba(armStateText.stateColor.r, armStateText.stateColor.g,
+                                                      armStateText.stateColor.b, 0.62)
+                                implicitWidth: armStateText.implicitWidth + 22
+                                implicitHeight: armStateText.implicitHeight + 14
+                                QGCLabel {
+                                    id: armStateText
+                                    readonly property color stateColor: root._familyStatusColor("operationAvailable")
+                                    anchors.centerIn: parent
+                                    objectName: "flightTelemetry_heroArmState"
+                                    text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                          ? root._enum("armState", [qsTr("已锁定"), qsTr("解锁中"), qsTr("已解锁"), qsTr("上锁中")])
+                                          : root._familyStatus("operationAvailable")
+                                    color: stateColor === "#8A9A94" ? stateColor : "#E6F0F4"
+                                    font.weight: ScreenTools.strongFontWeight
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: heroFailsafeBand
+                        objectName: "flightTelemetry_heroFailsafeBand"
+                        readonly property color stateColor: root._failsafeColor()
+                        readonly property string stateText: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                                           ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
+                                                           : root._familyStatus("operationAvailable")
+                        Layout.fillWidth: true
+                        implicitHeight: 46
+                        radius: 6
+                        color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.085)
+                        border.width: 1
+                        border.color: Qt.rgba(stateColor.r, stateColor.g, stateColor.b, 0.48)
+                        Rectangle {
+                            width: 3
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 1
+                            radius: 2
+                            color: heroFailsafeBand.stateColor
+                        }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 11
+                            anchors.rightMargin: 9
+                            spacing: 8
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                QGCLabel {
+                                    Layout.fillWidth: true
+                                    text: qsTr("失效保护等级")
+                                    color: "#A9C0C8"
+                                    font.pointSize: ScreenTools.microFontPointSize
+                                }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_heroFailsafe"
+                                    Layout.fillWidth: true
+                                    text: heroFailsafeBand.stateText
+                                    color: heroFailsafeBand.stateColor
+                                    font.pointSize: ScreenTools.metricFontPointSize
+                                    font.weight: ScreenTools.strongFontWeight
+                                    elide: Text.ElideRight
+                                }
+                            }
+                            QGCLabel {
+                                objectName: "flightTelemetry_heroFailsafeFreshness"
+                                text: root._familyStatus("operationAvailable")
                                 color: root._familyStatusColor("operationAvailable")
+                                font.pointSize: ScreenTools.microFontPointSize
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        objectName: "flightTelemetry_heroAuthorityRow"
+                        Layout.fillWidth: true
+                        implicitHeight: 32
+                        radius: 5
+                        color: "#082630"
+                        border.width: 1
+                        border.color: "#104B55"
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 9
+                            anchors.rightMargin: 9
+                            spacing: 8
+                            QGCLabel {
+                                text: qsTr("控制权")
+                                color: "#91A8B2"
+                                font.pointSize: ScreenTools.captionFontPointSize
+                            }
+                            Item { Layout.fillWidth: true }
+                            QGCLabel {
+                                objectName: "flightTelemetry_heroAuthority"
+                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                      ? root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")])
+                                      : root._familyStatus("operationAvailable")
+                                color: root._familyStatus("operationAvailable") === qsTr("已接收")
+                                       ? "#E1EDF1" : root._familyStatusColor("operationAvailable")
                                 font.weight: ScreenTools.strongFontWeight
                             }
                         }
@@ -1885,37 +1998,6 @@ SetupPage {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
                         color: "#104B55"
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: 14
-                        rowSpacing: 8
-                        ColumnLayout {
-                            spacing: 2
-                            QGCLabel { text: qsTr("控制权"); color: "#91A8B2"; font.pointSize: ScreenTools.captionFontPointSize }
-                            QGCLabel {
-                                objectName: "flightTelemetry_heroAuthority"
-                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                      ? root._enum("authority", [qsTr("无"), qsTr("飞手"), qsTr("任务"), qsTr("地面站监督")])
-                                      : root._familyStatus("operationAvailable")
-                                color: "#E1EDF1"
-                                font.weight: ScreenTools.strongFontWeight
-                            }
-                        }
-                        ColumnLayout {
-                            spacing: 2
-                            QGCLabel { text: qsTr("失效保护"); color: "#91A8B2"; font.pointSize: ScreenTools.captionFontPointSize }
-                            QGCLabel {
-                                objectName: "flightTelemetry_heroFailsafe"
-                                text: root._familyStatus("operationAvailable") === qsTr("已接收")
-                                      ? root._enum("failsafeLevel", [qsTr("正常"), qsTr("降级"), qsTr("需要动作"), qsTr("终止")])
-                                      : root._familyStatus("operationAvailable")
-                                color: root._failsafeColor()
-                                font.weight: ScreenTools.strongFontWeight
-                            }
-                        }
                     }
 
                     QGCLabel {
