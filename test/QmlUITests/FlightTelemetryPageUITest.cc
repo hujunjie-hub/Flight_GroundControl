@@ -1377,6 +1377,10 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                       translatedTelemetryText("3 中国手"), 3000);
             QQuickItem* leftStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"));
             QQuickItem* rightStick = findItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"));
+            QQuickItem* leftStickChannelMapping = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLeftStick_channelMapping"));
+            QQuickItem* rightStickChannelMapping = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcRightStick_channelMapping"));
             QTRY_VERIFY_WITH_TIMEOUT(rightStickReadout->isVisible(), 3000);
             QQuickItem* gcsRssiValue = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetricValue_rssi_2"), 3000);
@@ -1426,10 +1430,21 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 _rootItem, QStringLiteral("flightTelemetry_linkMetric_rssi_2"), 3000);
             QQuickItem* gcsQualityMetricCell = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetric_quality_2"), 3000);
+            QQuickItem* gcsQualityTrack = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkQualityTrack_2"));
+            QQuickItem* gcsQualityFill = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkQualityFill_2"));
+            QQuickItem* invalidOtherQualityTrack = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_linkQualityTrack_4"));
             QQuickItem* gcsLossMetricCell = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_linkMetric_loss_2"), 3000);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
+            QVERIFY(leftStickChannelMapping);
+            QVERIFY(rightStickChannelMapping);
+            QVERIFY(gcsQualityTrack);
+            QVERIFY(gcsQualityFill);
+            QVERIFY(invalidOtherQualityTrack);
             QVERIFY(rightStickReadout);
             QVERIFY(gcsRssiValue);
             QVERIFY(gcsQualityValue);
@@ -1464,6 +1479,11 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(rightStickMarker->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsRssiValue->property("text").toString(), QStringLiteral("-68 dBm"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->isVisible() && gcsQualityFill->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->width() > 0 &&
+                                         qAbs(gcsQualityFill->width() / gcsQualityTrack->width() - 0.70) < 0.01,
+                                     3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!invalidOtherQualityTrack->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(gcsLossValue->property("text").toString(), QStringLiteral("3.00 %"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailCoverage->property("valueText").toString(),
                                       translatedTelemetryText("%1 新鲜 · %2 超时 · %3 等待")
@@ -1500,6 +1520,26 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                                           .arg(3).arg(0).arg(0), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("color").value<QColor>(),
                                       QColor(QStringLiteral("#8298A2")), 3000);
+
+            // Link quality is a 0..1000 permille field; an out-of-range value is invalid
+            // even when its validity bit is set, and must not drive the visual bar.
+            sendLinkStatus(1650, bootId, 2, -68, 1200, 30000, 0x700, 2);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), invalidText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#F0B94B")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(!gcsQualityTrack->isVisible(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("text").toString(),
+                                      translatedTelemetryText("指标有效性：%1 / 3 · 无效：链路质量").arg(2), 3000);
+            sendLinkStatus(1700, bootId, 2, -68, 700, 30000, 0x700, 2);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("text").toString(), QStringLiteral("70.0 %"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(gcsQualityValue->property("color").value<QColor>(),
+                                      QColor(QStringLiteral("#E6F0F4")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->isVisible() && gcsQualityFill->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(gcsQualityTrack->width() > 0 &&
+                                         qAbs(gcsQualityFill->width() / gcsQualityTrack->width() - 0.70) < 0.01,
+                                     3000);
+            QTRY_COMPARE_WITH_TIMEOUT(linkDetailMetrics->property("text").toString(),
+                                      translatedTelemetryText("指标有效性：%1 / 3").arg(3), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryOperation->property("valueText").toString(),
                                       translatedTelemetryText("%1 / 4").arg(4), 3000);
             sendRcInputStatus(1750, bootId, 0x0F, 1.50F, -0.25F, 0.50F, 0.40F, 0);
@@ -4347,6 +4387,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_linkDetailMetrics_2"));
             QQuickItem* leftStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcLeftStick"), 3000);
             QQuickItem* rightStick = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcRightStick"), 3000);
+            QQuickItem* leftStickChannelMapping = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcLeftStick_channelMapping"));
+            QQuickItem* rightStickChannelMapping = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_rcRightStick_channelMapping"));
             QQuickItem* leftStickStage = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_rcLeftStick_stage"), 3000);
             QQuickItem* rcAxesGrid = findVisibleItem(
@@ -4364,6 +4408,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(rcFailsafePanel);
             QVERIFY(leftStick);
             QVERIFY(rightStick);
+            QVERIFY(leftStickChannelMapping);
+            QVERIFY(rightStickChannelMapping);
             QVERIFY(leftStickStage);
             QVERIFY(rcAxesGrid);
             QVERIFY(linkMetricsGrid);
@@ -4434,6 +4480,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QStringLiteral("flightTelemetry_rcMode_3")
             };
             const int expectedModes[3][4] = {{3, 1, 0, 2}, {3, 2, 0, 1}, {0, 1, 3, 2}};
+            const QString expectedStickMappings[3][2] = {
+                {translatedTelemetryText("横向 CH4 · 纵向 CH2"), translatedTelemetryText("横向 CH1 · 纵向 CH3")},
+                {translatedTelemetryText("横向 CH4 · 纵向 CH3"), translatedTelemetryText("横向 CH1 · 纵向 CH2")},
+                {translatedTelemetryText("横向 CH1 · 纵向 CH2"), translatedTelemetryText("横向 CH4 · 纵向 CH3")}
+            };
             for (int mode = 0; mode < 3; ++mode) {
                 QQuickItem* modeButton = findVisibleItem(_rootItem, modeNames[mode], 3000);
                 QVERIFY(modeButton);
@@ -4442,6 +4493,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                           expectedModes[mode][0], 3000);
                 const QVariantList channels = page->property("_stickChannels").toList();
                 for (int axis = 0; axis < 4; ++axis) QCOMPARE(channels[axis].toInt(), expectedModes[mode][axis]);
+                QTRY_COMPARE_WITH_TIMEOUT(leftStickChannelMapping->property("text").toString(),
+                                          expectedStickMappings[mode][0], 3000);
+                QTRY_COMPARE_WITH_TIMEOUT(rightStickChannelMapping->property("text").toString(),
+                                          expectedStickMappings[mode][1], 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(leftStickChannelMapping->width() <= leftStick->width() &&
+                                             rightStickChannelMapping->width() <= rightStick->width(),
+                                         3000);
             }
             QQuickItem* mode2Button = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_rcMode_2"), 3000);
             QVERIFY(mode2Button);

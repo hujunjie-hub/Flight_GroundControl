@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.78
+版本：4.79
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -730,3 +730,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 告警 family 非 fresh 或事件缓存为空时不显示实时分布；首条 fresh FCU_EVENT 到达后显示并更新对应类别数量。
 - MockLink UI Integration 覆盖单事件、五条混合严重度事件、未知字段计数，以及 1600/1400/1000/900/700/400 px 五个 chip 的列数与父子边界；六列中屏告警卡使用三列，其余桌面/堆叠布局使用五列。
 - 本轮按用户要求不运行 CI、Unit、Integration、Windows Release；新增断言保持 NOT_RUN，集中验收时执行 exact-HEAD 完整回归。
+
+
+### G15 遥控通道映射标签与链路质量比例条（2026-11-15）
+
+- 左右摇杆卡在 Mode 1/2/3 切换后，分别显示正确的横向/纵向 CH 编号；标签必须来自页面当前共享手型映射，不得硬编码固定模式。
+- 质量条仅在 link family fresh、实例 fresh、validity bit 9 有效且 `linkQualityPermille` 位于 0–1000 时显示；填充宽度 / 轨道宽度必须等于原始 permille / 1000。
+- 以 700 permille 验证 70% 填充；以 validity bit 清零、等待/超时、非有限或 1200 permille 越界验证不显示填充。1200 permille 必须显示无效/琥珀色；恢复到 700 后数字、颜色、条形同步恢复。
+- 质量条只表达 FCU 上报的链路质量字段，不按 RSSI、linkState 或其他实例推导；不得修改链路趋势选源、RC 输入、协议或飞控控制行为。
+- MockLink UI Integration 覆盖三种手型标签和质量条 70% → 越界无效 → 70% 恢复；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。

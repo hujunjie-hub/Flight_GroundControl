@@ -729,6 +729,16 @@ SetupPage {
         if (!Number.isFinite(value) || (!allowNegative && value < 0)) return null
         return value / divisor
     }
+    function _linkInstanceQualityPermille(link) {
+        if (!link || !_linkInstanceFresh(link.receiveAgeMs) ||
+                _rawMaskState(link.validityMask, 9) !== 1) return null
+        const value = Number(link.linkQualityPermille)
+        return Number.isFinite(value) && value >= 0 && value <= 1000 ? value : null
+    }
+    function _linkInstanceQualityFraction(link) {
+        const value = _linkInstanceQualityPermille(link)
+        return value === null ? 0 : value / 1000
+    }
     function _linkInstanceMetricText(link, fieldName, bit, decimals, suffix) {
         if (!link) {
             const familyStatus = _familyStatus("linkAvailable")
@@ -736,7 +746,14 @@ SetupPage {
         }
         const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
         if (freshness !== qsTr("已接收")) return freshness
-        if (bit === 9) return _rawValidPermillePercent(link[fieldName], link.validityMask, bit)
+        if (bit === 9) {
+            const maskState = _rawMaskState(link.validityMask, bit)
+            if (maskState < 0) return qsTr("未上报")
+            if (maskState === 0) return qsTr("无效")
+            const value = Number(link[fieldName])
+            return Number.isFinite(value) && value >= 0 && value <= 1000
+                   ? (value / 10).toFixed(decimals) + suffix : qsTr("无效")
+        }
         if (bit === 10) return _rawValidLossPercent(link[fieldName], link.validityMask, bit)
         return _rawValidValue(link[fieldName], link.validityMask, bit, decimals, suffix)
     }
@@ -747,7 +764,11 @@ SetupPage {
         const freshness = _linkInstanceFreshnessStatus(link.receiveAgeMs)
         if (freshness !== qsTr("已接收")) return _freshnessStatusColor(freshness)
         const state = _rawMaskState(link.validityMask, bit)
-        return state === 1 ? "#E6F0F4" : state === 0 ? "#F0B94B" : "#8A9A94"
+        if (state < 0) return "#8A9A94"
+        if (state === 0) return "#F0B94B"
+        if (bit === 9) return _linkInstanceQualityPermille(link) !== null ? "#E6F0F4" : "#F0B94B"
+        const value = Number(bit === 8 ? link.rssiDbm : link.packetLossPpm)
+        return Number.isFinite(value) ? "#E6F0F4" : "#F0B94B"
     }
     function _linkInstanceMetricValidityText(link) {
         if (!link) {
@@ -3694,7 +3715,7 @@ SetupPage {
                                     objectName: "flightTelemetry_linkMetric_rssi_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    implicitHeight: 52
+                                    implicitHeight: 58
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
@@ -3718,7 +3739,7 @@ SetupPage {
                                     objectName: "flightTelemetry_linkMetric_quality_" + modelData.linkInstanceId
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    implicitHeight: 52
+                                    implicitHeight: 58
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
@@ -3736,6 +3757,22 @@ SetupPage {
                                             font.weight: ScreenTools.strongFontWeight
                                             elide: Text.ElideRight
                                         }
+                                        Rectangle {
+                                            objectName: "flightTelemetry_linkQualityTrack_" + modelData.linkInstanceId
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 4
+                                            radius: 2
+                                            visible: root._linkInstanceQualityPermille(modelData) !== null
+                                            color: "#123B45"
+                                            border.color: "#1B5360"
+                                            Rectangle {
+                                                objectName: "flightTelemetry_linkQualityFill_" + modelData.linkInstanceId
+                                                width: parent.width * root._linkInstanceQualityFraction(modelData)
+                                                height: parent.height
+                                                radius: parent.radius
+                                                color: "#35D4E5"
+                                            }
+                                        }
                                     }
                                 }
                                 Rectangle {
@@ -3743,7 +3780,7 @@ SetupPage {
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
                                     Layout.columnSpan: root.availableWidth >= 420 && root.availableWidth < 760 ? 2 : 1
-                                    implicitHeight: 52
+                                    implicitHeight: 58
                                     radius: 5
                                     color: "#082B33"
                                     border.color: "#0B6873"
@@ -5215,7 +5252,7 @@ SetupPage {
         readonly property real verticalValue: root._rcAxisStickValueForChannel(verticalChannel)
         Layout.fillWidth: true
         implicitWidth: 140
-        implicitHeight: Math.max(174, Math.min(238, width * 0.45 + 64))
+        implicitHeight: Math.max(190, Math.min(252, width * 0.45 + 78))
         radius: root._dashboardPanelRadius
         color: "#082E36"
         border.width: 1
@@ -5225,6 +5262,15 @@ SetupPage {
             anchors.margins: 7
             spacing: 4
             QGCLabel { Layout.fillWidth: true; text: stick.titleText; color: "#DCE8ED"; font.weight: ScreenTools.strongFontWeight; horizontalAlignment: Text.AlignHCenter }
+            QGCLabel {
+                objectName: stick.objectName + "_channelMapping"
+                Layout.fillWidth: true
+                text: qsTr("横向 CH%1 · 纵向 CH%2")
+                      .arg(stick.horizontalChannel + 1).arg(stick.verticalChannel + 1)
+                color: "#59A9B7"
+                font.pointSize: ScreenTools.microFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+            }
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.min(176, Math.max(112, parent.width * 0.45))
