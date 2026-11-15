@@ -196,6 +196,10 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
                 'ctx.arc(currentX, currentY, 5 * density' in content and
                 'ctx.shadowBlur = 6 * density' in content,
                 "FlightTelemetry trend Canvas plot inset, strokes, glow and markers must scale with UI density")
+        require('readonly property real _dashboardMetricReadoutSpacing: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.3)' in content and
+                'readonly property real contentSpacing: root._dashboardMetricReadoutSpacing' in content and
+                'spacing: metric.contentSpacing' in content,
+                "FlightTelemetry overview navigation KPI readout spacing must scale with ScreenTools")
 
 
 
