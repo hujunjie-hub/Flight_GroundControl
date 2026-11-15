@@ -2706,6 +2706,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTabHeight").toReal(), 42.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTrendMinimumHeight").toReal(), 128.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_dashboardPanelPadding").toReal() < expandedPanelPadding, 3000);
+
+            // Verify that increasing the available height restores every shared density token.
+            page->setHeight(1100);
+            QTRY_VERIFY_WITH_TIMEOUT(!page->property("_compactDashboardVertical").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(contentRoot->property("spacing").toReal(), 12.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTabHeight").toReal(), 46.0, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_dashboardTrendMinimumHeight").toReal(), 134.0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                qAbs(page->property("_dashboardPanelPadding").toReal() - expandedPanelPadding) < 0.01, 3000);
+            page->setHeight(941);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_compactDashboardVertical").toBool(), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(contentRoot->property("spacing").toReal(), 8.0, 3000);
+
             const auto compactHeroRowBalanced = [&]() {
                 const QPointF flightPosition = compactHeroFlight->mapToItem(compactHeroGrid, 0, 0);
                 const QPointF navigationPosition = compactHeroNavigation->mapToItem(compactHeroGrid, 0, 0);
