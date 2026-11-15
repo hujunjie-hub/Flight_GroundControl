@@ -674,6 +674,18 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!pitchSlider->property("enabled").toBool());
             QVERIFY(!release->property("enabled").toBool());
 
+            // A broadcast SET_MESSAGE_INTERVAL must fan out to both device
+            // components, and its acknowledgement must come from the manager.
+            QVERIFY(!mockLink->setGimbalDeviceOnlineForTesting(200, false));
+            vehicle->sendMavCommand(0, MAV_CMD_SET_MESSAGE_INTERVAL, false,
+                                    MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
+            QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->attitudeStatusFresh(), 4500);
+            QTRY_VERIFY_WITH_TIMEOUT(!secondGimbal->attitudeStatusFresh(), 4500);
+            vehicle->sendMavCommand(0, MAV_CMD_SET_MESSAGE_INTERVAL, false,
+                                    MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000);
+            QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(secondGimbal->attitudeStatusFresh(), 3000);
+
             // Take only device 154 offline while vehicle heartbeats and device
             // 155 continue normally. This exercises per-device freshness rather
             // than stopping the shared manager message stream for every device.
