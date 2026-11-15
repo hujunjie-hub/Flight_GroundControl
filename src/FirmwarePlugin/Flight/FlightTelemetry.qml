@@ -64,6 +64,42 @@ SetupPage {
     readonly property real _overviewFlightAuthorityContentSpacing: ScreenTools.defaultFontPixelWidth
     readonly property real _overviewFlightStatusStripeWidth: ScreenTools.defaultFontPixelWidth * 0.375
     readonly property real _overviewFlightStatusStripeInset: ScreenTools.defaultFontPixelHeight * 0.0625
+    readonly property real _overviewAlarmHeaderSpacing: ScreenTools.defaultFontPixelWidth * 0.75
+    readonly property real _overviewAlarmSeverityGridColumnSpacing: ScreenTools.defaultFontPixelWidth * 0.625
+    readonly property real _overviewAlarmSeverityGridRowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
+    readonly property real _overviewAlarmSeverityChipMinimumHeight: ScreenTools.defaultFontPixelHeight * 1.5625
+    readonly property real _overviewAlarmSeverityChipHorizontalInset: ScreenTools.defaultFontPixelWidth * 0.875
+    readonly property real _overviewAlarmSeverityChipVerticalInset: ScreenTools.defaultFontPixelHeight * 0.125
+    readonly property real _overviewAlarmSeverityChipContentSpacing: ScreenTools.defaultFontPixelWidth * 0.5
+    readonly property real _overviewAlarmEmptyMinimumHeight: ScreenTools.defaultFontPixelHeight * 3.625
+    readonly property real _overviewAlarmEmptyHorizontalInset: ScreenTools.defaultFontPixelWidth * 1.125
+    readonly property real _overviewAlarmEmptyVerticalInset: ScreenTools.defaultFontPixelHeight * 0.5625
+    readonly property real _overviewAlarmEmptyContentSpacing: ScreenTools.defaultFontPixelHeight * 0.1875
+    readonly property real _overviewAlarmPrimaryMinimumHeight: ScreenTools.defaultFontPixelHeight * 4.375
+    readonly property real _overviewAlarmSecondaryMinimumHeight: ScreenTools.defaultFontPixelHeight * 3.125
+    readonly property real _overviewAlarmPrimaryLeftInset: ScreenTools.defaultFontPixelWidth * 1.5
+    readonly property real _overviewAlarmPrimaryRightInset: ScreenTools.defaultFontPixelWidth * 1.125
+    readonly property real _overviewAlarmPrimaryVerticalInset: ScreenTools.defaultFontPixelHeight * 0.5625
+    readonly property real _overviewAlarmSecondaryLeftInset: ScreenTools.defaultFontPixelWidth * 1.125
+    readonly property real _overviewAlarmSecondaryRightInset: ScreenTools.defaultFontPixelWidth * 0.875
+    readonly property real _overviewAlarmSecondaryVerticalInset: ScreenTools.defaultFontPixelHeight * 0.4375
+    readonly property real _overviewAlarmEventContentSpacing: ScreenTools.defaultFontPixelWidth
+    readonly property real _overviewAlarmPrimaryTextSpacing: ScreenTools.defaultFontPixelHeight * 0.1875
+    readonly property real _overviewAlarmSecondaryTextSpacing: ScreenTools.defaultFontPixelHeight * 0.125
+    readonly property real _overviewAlarmPrimaryBadgeWidth: ScreenTools.defaultFontPixelWidth * 6.5
+    readonly property real _overviewAlarmSecondaryBadgeWidth: ScreenTools.defaultFontPixelWidth * 5.5
+    readonly property real _overviewAlarmPrimaryBadgeHeight: ScreenTools.defaultFontPixelHeight * 1.6875
+    readonly property real _overviewAlarmSecondaryBadgeHeight: ScreenTools.defaultFontPixelHeight * 1.375
+    readonly property real _overviewAlarmBadgeRadius: ScreenTools.defaultFontPixelHeight * 0.25
+    readonly property real _overviewAlarmPrimaryStripeWidth: ScreenTools.defaultFontPixelWidth * 0.375
+    readonly property real _overviewAlarmSecondaryStripeWidth: ScreenTools.defaultFontPixelWidth * 0.25
+    readonly property real _overviewAlarmStripeInset: ScreenTools.defaultFontPixelHeight * 0.0625
+    readonly property real _overviewAlarmPrimaryRadius: ScreenTools.defaultFontPixelHeight * 0.4375
+    readonly property real _overviewAlarmSecondaryRadius: ScreenTools.defaultFontPixelHeight * 0.3125
+    readonly property real _overviewAlarmEmptyRadius: ScreenTools.defaultFontPixelHeight * 0.375
+    readonly property real _overviewEventHistoryRowSpacing: ScreenTools.defaultFontPixelHeight * 0.1875
+    readonly property real _overviewEventHistoryGridColumnSpacing: ScreenTools.defaultFontPixelWidth
+    readonly property real _overviewEventHistoryGridRowSpacing: ScreenTools.defaultFontPixelHeight * 0.1875
     readonly property int _overviewPriorityEventLimit: 4
     readonly property int _eventHistoryDisplayLimit: 8
     readonly property var _overviewEventSeverityCounts:
@@ -2827,16 +2863,21 @@ SetupPage {
                     statusFamily: "eventAvailable"
 
                     RowLayout {
+                        objectName: "flightTelemetry_alarmHeaderRow"
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: root._overviewAlarmHeaderSpacing
                         QGCLabel {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             text: qsTr("当前启动周期内最近事件")
+                            wrapMode: Text.WordWrap
                             color: "#8EB9C3"
                             font.pointSize: ScreenTools.captionFontPointSize
                         }
                         QGCLabel {
                             objectName: "flightTelemetry_alarmEventCount"
+                            Layout.minimumWidth: 0
+                            horizontalAlignment: Text.AlignRight
                             text: root._familyStatus("eventAvailable") === qsTr("已接收")
                                   ? qsTr("%1 条").arg(root._eventCountText())
                                   : root._familyStatus("eventAvailable")
@@ -2849,9 +2890,11 @@ SetupPage {
                     QGCLabel {
                         objectName: "flightTelemetry_alarmPriorityHint"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         text: qsTr("最高严重度置顶 · 同级按本地接收序号")
                         color: "#6F9DA7"
                         font.pointSize: ScreenTools.microFontPointSize
+                        wrapMode: Text.WordWrap
                     }
                     GridLayout {
                         objectName: "flightTelemetry_alarmSeverityGrid"
@@ -2862,8 +2905,8 @@ SetupPage {
                         // The alarm panel is narrow only in the six-column intermediate dashboard.
                         // At desktop and stacked layouts it has enough width for all five severity buckets.
                         columns: root._dashboardColumns === 6 ? 3 : 5
-                        columnSpacing: 5
-                        rowSpacing: 4
+                        columnSpacing: root._overviewAlarmSeverityGridColumnSpacing
+                        rowSpacing: root._overviewAlarmSeverityGridRowSpacing
                         Repeater {
                             model: [
                                 { key: "critical", label: qsTr("严重"), color: "#F06464" },
@@ -2876,17 +2919,26 @@ SetupPage {
                                 required property var modelData
                                 readonly property color severityColor: modelData.color
                                 objectName: "flightTelemetry_alarmSeverityChip_" + modelData.key
+                                readonly property real contentHorizontalInset: root._overviewAlarmSeverityChipHorizontalInset
+                                readonly property real contentVerticalInset: root._overviewAlarmSeverityChipVerticalInset
+                                readonly property real contentSpacing: root._overviewAlarmSeverityChipContentSpacing
+                                readonly property real minimumHeight: root._overviewAlarmSeverityChipMinimumHeight
                                 Layout.fillWidth: true
-                                implicitHeight: 25
-                                radius: 4
+                                implicitHeight: Math.max(minimumHeight,
+                                                         severityChipContent.implicitHeight + 2 * contentVerticalInset)
+                                radius: root._overviewAlarmBadgeRadius
                                 color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.10)
                                 border.width: 1
                                 border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.38)
                                 RowLayout {
+                                    id: severityChipContent
+                                    objectName: "flightTelemetry_alarmSeverityChipContent_" + modelData.key
                                     anchors.fill: parent
-                                    anchors.leftMargin: 7
-                                    anchors.rightMargin: 7
-                                    spacing: 4
+                                    anchors.leftMargin: parent.contentHorizontalInset
+                                    anchors.rightMargin: parent.contentHorizontalInset
+                                    anchors.topMargin: parent.contentVerticalInset
+                                    anchors.bottomMargin: parent.contentVerticalInset
+                                    spacing: parent.contentSpacing
                                     QGCLabel {
                                         objectName: "flightTelemetry_alarmSeverityLabel_" + modelData.key
                                         Layout.fillWidth: true
@@ -2910,17 +2962,27 @@ SetupPage {
                     }
                     Rectangle {
                         objectName: "flightTelemetry_alarmEmptyState"
+                        readonly property real contentHorizontalInset: root._overviewAlarmEmptyHorizontalInset
+                        readonly property real contentVerticalInset: root._overviewAlarmEmptyVerticalInset
+                        readonly property real contentSpacing: root._overviewAlarmEmptyContentSpacing
+                        readonly property real minimumHeight: root._overviewAlarmEmptyMinimumHeight
                         visible: !root._telemetry || root._telemetry.recentEvents.length === 0
                         Layout.fillWidth: true
-                        implicitHeight: 58
-                        radius: 6
+                        implicitHeight: Math.max(minimumHeight,
+                                                 alarmEmptyContent.implicitHeight + 2 * contentVerticalInset)
+                        radius: root._overviewAlarmEmptyRadius
                         color: "#082630"
                         border.width: 1
                         border.color: "#164A55"
                         ColumnLayout {
+                            id: alarmEmptyContent
+                            objectName: "flightTelemetry_alarmEmptyContent"
                             anchors.fill: parent
-                            anchors.margins: 9
-                            spacing: 3
+                            anchors.leftMargin: parent.contentHorizontalInset
+                            anchors.rightMargin: parent.contentHorizontalInset
+                            anchors.topMargin: parent.contentVerticalInset
+                            anchors.bottomMargin: parent.contentVerticalInset
+                            spacing: parent.contentSpacing
                             QGCLabel {
                                 objectName: "flightTelemetry_alarmEmptyTitle"
                                 Layout.fillWidth: true
@@ -2953,10 +3015,36 @@ SetupPage {
                                                                    Number(modelData.severity) <= 3
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)
                             readonly property string reasonText: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
+                            readonly property real contentLeftInset: isPrimary
+                                                                     ? root._overviewAlarmPrimaryLeftInset
+                                                                     : root._overviewAlarmSecondaryLeftInset
+                            readonly property real contentRightInset: isPrimary
+                                                                      ? root._overviewAlarmPrimaryRightInset
+                                                                      : root._overviewAlarmSecondaryRightInset
+                            readonly property real contentVerticalInset: isPrimary
+                                                                         ? root._overviewAlarmPrimaryVerticalInset
+                                                                         : root._overviewAlarmSecondaryVerticalInset
+                            readonly property real contentSpacing: root._overviewAlarmEventContentSpacing
+                            readonly property real textSpacing: isPrimary
+                                                                ? root._overviewAlarmPrimaryTextSpacing
+                                                                : root._overviewAlarmSecondaryTextSpacing
+                            readonly property real minimumHeight: isPrimary
+                                                                   ? root._overviewAlarmPrimaryMinimumHeight
+                                                                   : root._overviewAlarmSecondaryMinimumHeight
+                            readonly property real severityBadgeWidth: isPrimary
+                                                                        ? root._overviewAlarmPrimaryBadgeWidth
+                                                                        : root._overviewAlarmSecondaryBadgeWidth
+                            readonly property real severityBadgeHeight: isPrimary
+                                                                         ? root._overviewAlarmPrimaryBadgeHeight
+                                                                         : root._overviewAlarmSecondaryBadgeHeight
+                            readonly property real statusStripeWidth: isPrimary
+                                                                      ? root._overviewAlarmPrimaryStripeWidth
+                                                                      : root._overviewAlarmSecondaryStripeWidth
                             objectName: "flightTelemetry_alarmEventCard_" + modelData.sequence
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(isPrimary ? 70 : 50, eventContent.implicitHeight + (isPrimary ? 18 : 14))
-                            radius: isPrimary ? 7 : 5
+                            implicitHeight: Math.max(minimumHeight,
+                                                     eventContent.implicitHeight + 2 * contentVerticalInset)
+                            radius: isPrimary ? root._overviewAlarmPrimaryRadius : root._overviewAlarmSecondaryRadius
                             color: isPrimary
                                    ? Qt.rgba(severityColor.r, severityColor.g, severityColor.b, 0.10)
                                    : "#0B2A33"
@@ -2964,12 +3052,13 @@ SetupPage {
                             border.color: Qt.rgba(severityColor.r, severityColor.g, severityColor.b,
                                                   isPrimary ? 0.72 : 0.35)
                             Rectangle {
-                                width: isPrimary ? 3 : 2
+                                objectName: "flightTelemetry_alarmEventStatusStripe_" + modelData.sequence
+                                width: alarmEventCard.statusStripeWidth
                                 anchors.left: parent.left
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
-                                anchors.margins: 1
-                                radius: 2
+                                anchors.margins: root._overviewAlarmStripeInset
+                                radius: alarmEventCard.statusStripeWidth * 0.67
                                 color: alarmEventCard.severityColor
                                 opacity: isPrimary ? 1 : 0.62
                             }
@@ -2977,14 +3066,17 @@ SetupPage {
                                 id: eventContent
                                 objectName: "flightTelemetry_alarmEventContent_" + modelData.sequence
                                 anchors.fill: parent
-                                anchors.margins: alarmEventCard.isPrimary ? 9 : 7
-                                anchors.leftMargin: alarmEventCard.isPrimary ? 12 : 9
-                                spacing: 8
+                                anchors.leftMargin: alarmEventCard.contentLeftInset
+                                anchors.rightMargin: alarmEventCard.contentRightInset
+                                anchors.topMargin: alarmEventCard.contentVerticalInset
+                                anchors.bottomMargin: alarmEventCard.contentVerticalInset
+                                spacing: alarmEventCard.contentSpacing
                                 Rectangle {
-                                    Layout.preferredWidth: alarmEventCard.isPrimary ? 52 : 44
-                                    Layout.preferredHeight: alarmEventCard.isPrimary ? 27 : 22
+                                    objectName: "flightTelemetry_alarmEventSeverityBadge_" + modelData.sequence
+                                    Layout.preferredWidth: alarmEventCard.severityBadgeWidth
+                                    Layout.preferredHeight: alarmEventCard.severityBadgeHeight
                                     Layout.alignment: Qt.AlignTop
-                                    radius: 4
+                                    radius: root._overviewAlarmBadgeRadius
                                     color: Qt.rgba(alarmEventCard.severityColor.r, alarmEventCard.severityColor.g,
                                                    alarmEventCard.severityColor.b, 0.14)
                                     border.width: 1
@@ -3000,10 +3092,10 @@ SetupPage {
                                 ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.minimumWidth: 0
-                                    spacing: alarmEventCard.isPrimary ? 3 : 2
+                                    spacing: alarmEventCard.textSpacing
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        spacing: 5
+                                        spacing: root._overviewAlarmHeaderSpacing
                                         QGCLabel {
                                             objectName: "flightTelemetry_alarmEventReason_" + modelData.sequence
                                             Layout.fillWidth: true
@@ -3020,10 +3112,13 @@ SetupPage {
                                         QGCLabel {
                                             objectName: "flightTelemetry_alarmEventPrimaryTag_" + modelData.sequence
                                             visible: alarmEventCard.isPrimary
+                                            Layout.minimumWidth: 0
                                             text: alarmEventCard.severityKnown ? qsTr("最高优先级") : qsTr("严重度未知")
                                             color: alarmEventCard.severityColor
                                             font.pointSize: ScreenTools.microFontPointSize
                                             font.weight: ScreenTools.strongFontWeight
+                                            wrapMode: Text.WordWrap
+                                            horizontalAlignment: Text.AlignRight
                                         }
                                     }
                                     QGCLabel {
@@ -5077,14 +5172,15 @@ SetupPage {
                             required property var modelData
                             objectName: "flightTelemetry_eventHistoryRow_" + modelData.sequence
                             Layout.fillWidth: true
-                            spacing: 3
+                            spacing: root._overviewEventHistoryRowSpacing
 
                             GridLayout {
                                 objectName: "flightTelemetry_eventHistoryMeta_" + modelData.sequence
                                 Layout.fillWidth: true
+                                Layout.minimumWidth: 0
                                 columns: root.availableWidth >= 520 ? 3 : 2
-                                columnSpacing: 8
-                                rowSpacing: 3
+                                columnSpacing: root._overviewEventHistoryGridColumnSpacing
+                                rowSpacing: root._overviewEventHistoryGridRowSpacing
                                 QGCLabel {
                                     objectName: "flightTelemetry_eventHistorySequence_" + modelData.sequence
                                     Layout.fillWidth: true
