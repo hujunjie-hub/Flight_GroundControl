@@ -428,7 +428,11 @@
         "rc_link_page_medium_760_to_1279_uses_two_rows_3_3_then_4_2_column_spans",
         "rc_receiver_failsafe_color_tracks_triggered_not_triggered_waiting_stale_and_recovered_states",
         "navigation_time_discipline_state_color_tracks_nominal_acquiring_locked_holdover_degraded_invalid_and_family_freshness",
-        "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color"
+        "navigation_timeline_invalid_boot_timestamps_sort_after_valid_values_and_use_invalid_color",
+        "overview_alarm_scope_note_hidden_when_no_events",
+        "overview_alarm_scope_note_reports_priority_summary_and_recent_history_counts",
+        "overview_alarm_summary_shows_top_four_and_history_keeps_fifth_event",
+        "overview_alarm_scope_note_fits_700_and_400_px"
       ]
     },
     {
