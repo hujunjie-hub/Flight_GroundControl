@@ -1,8 +1,8 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.64
+- 版本：6.65
 - 日期：2026-11-15
-- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；接收机失效保护按触发/未触发及 RC family freshness 独立着色；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色
+- 状态：四页主体与应用外壳已实现；四页结构、遥测语义与响应式适配持续完善；事件历史/告警元信息、预检、资源实例与 RC/链路 freshness 已收口；导航时序页与遥控链路页持续完成大屏布局适配；总览页全链路通信丢失提示与恢复颜色已补齐；六域拓扑连线与节点按独立 freshness 着色；趋势卡显式区分有效采样、历史断点与最新样本状态；链路主视觉与通信详情按数值/诊断上下文去重并移除多实例聚合徽标；遥控页 RC family 徽标只在主输入监视面板显示，逻辑轴与下方遥控详情卡隐藏重复徽标并保留 freshness 色条；接收机失效保护按触发/未触发及 RC family freshness 独立着色；失控保护面板不重复显示 linkAvailable 消息状态，通信详情卡是该消息状态唯一呈现位置；整机状态概览已将飞行模式/解锁状态作为主视觉、失效保护作为优先安全状态条、控制权降为次级信息；右侧告警区突出首要严重事件、分离严重度/原因/来源/FCU 启动时间，并提供事件数量和明确空态；空态与首条事件到达/实时严重度重排均有 MockLink 覆盖；总览三栏主视觉沿用桌面 3/5/4、中屏 2/2/2 列宽，桌面/中屏等高对齐、窄屏自然堆叠；总览顶部摘要已改为水平位置σ/速度σ/航向σ三项导航估计 KPI，拓扑区只显示六域 freshness，左/中/右分别聚焦飞行安全、系统拓扑与告警事件；飞行健康页全链路通信丢失时在概览区突出红色提示，并保留各域独立 freshness；飞行健康页预检结果与覆盖率分层、资源快照扩展；集中 CI 与像素级截图/DPI 验收后置；RC 轴读数按 freshness 与字段有效性分层着色，等待/未上报不再误用警告色；总览六域拓扑增加已接收/超时/等待三态图例，图例与节点及连线状态色一致；总览导航标准差 KPI 有效数值使用中性前景色，freshness/capability 状态独立着色；导航时序页补齐本地时钟纪律六态分色与 FCU 时间戳安全整数有效性，时间线标记颜色与排序状态一致。
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
 - 页面：`src/FirmwarePlugin/Flight/FlightTelemetry.qml`
 - 跟踪 Issue：[FGC-0044 飞控诊断页高级大屏布局与可视化改造](https://github.com/hujunjie-hub/Flight_GroundControl/issues/44)
@@ -150,11 +150,11 @@ KPI 是信息索引，不是综合健康评分。任何 family 未收到、超�
 
 ### 2.9 导航时序页面
 
-- 主体按导航估计总览、导航能力与定位精度、时间同步、状态校验四块组织；桌面宽屏采用 12 列网格，四块主面板各占 3 列并同排等高，避免状态校验被压缩成窄侧栏。
-- 导航数值只展示 positionStdM、velocityStdMps、headingStdRad 和协议能力掩码；状态校验区同时显示水平位置、水平速度、垂直速度、航向能力，缺少能力位时显示不可用。
-- 状态校验横跨 navigation 与 time 两个数据域，必须分别显示两域的消息状态和接收年龄，不得使用 navigation 单域徽标代表导航与时间同步整体正常。
-- 时间面板显示 timeQuality、timeDisciplineState、utcValid、FCU unix_time_us 转换的 UTC 绝对时间、utcUncertaintyUs、eventUncertaintyUs、timeEpoch、sourceMappingEpoch 和接收年龄；UTC 绝对时间仅在 time family 新鲜且 utcValid=true 时显示，UTC 无效、未上报或超时不得显示旧时间；时间同步明细卡同时保留 FCU 发布时间。
-- 趋势图使用水平位置、速度、航向和 UTC 时间不确定度；UTC 无效/超时产生断点。
+- 主体按导航估计总览、导航能力状态、时间同步状态、FCU 单调时序四块组织；桌面 12 列网格采用两行不等宽布局：第一行导航估计不确定度 4 列 + 导航能力状态 8 列，第二行时间同步状态 8 列 + FCU 单调时序 4 列；每行内面板等高。760–1279 px 使用 6 列整行逐块堆叠，低于 760 px 单列。
+- 导航估计总览只展示 positionStdM、velocityStdMps、headingStdRad；能力状态区独立展示水平位置、水平速度、垂直速度、航向四项能力状态，按 navigation family freshness → capability mask 顺序门控，缺少能力位显示不可用，不重复展示同一能力状态。
+- FCU 单调时序面板分别显示 navigation 与 time 两个数据域的消息状态和接收年龄；有效 time_boot_us 按 FCU 启动时间升序排列，缺失/无效/超时项置后，不得使用 navigation 单域徽标代表导航与时间同步整体正常。
+- 时间同步主视觉只显示 timeQuality、timeDisciplineState、utcValid、FCU unix_time_us 转换的 UTC 绝对时间和 utcUncertaintyUs；UTC 绝对时间/不确定度仅在 time family 新鲜且 utcValid=true 时显示，UTC 无效、未上报或超时不得显示旧值。eventUncertaintyUs、timeEpoch、sourceMappingEpoch 和地面站接收年龄保留在时间诊断详情；FCU 单调发布时间只在时序面板显示。timeDisciplineState 使用独立于 TimeQuality 的颜色映射：NOMINAL/LOCKED 绿色、ACQUIRING/HOLDOVER/DEGRADED 琥珀、INVALID 红色；time family 等待/超时优先覆盖缓存枚举颜色。
+- FCU 单调时序仅将 family fresh 且处于 JavaScript 安全整数范围内的非负 time_boot_us 作为有效时间点；有效点按升序排列，缺失/无效/超时项置后。有效点使用对应数据域强调色，时间戳无效红色、family 超时琥珀色、等待/未上报中性灰；UTC 无效不影响 FCU 单调时间。趋势图使用水平位置、速度、航向和 UTC 时间不确定度；UTC 无效/超时产生断点。
 - 当前 FlightTelemetry 未提供卫星数、HDOP、每颗卫星方位/仰角，禁止绘制虚构卫星天图或填入示例值。
 
 ### 2.10 遥控与链路页面
@@ -1164,3 +1164,12 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 飞行健康「安全监测」、遥控链路「失控保护」主卡与「遥控输入」详情卡统一使用该颜色映射；不改变接收机 failsafe 事实、RC linkState、operation failsafe 等级或飞控控制逻辑。
 - MockLink `FlightTelemetryPageUITest` 覆盖未触发绿色、触发红色、恢复绿色及 family 超时琥珀色，并同时断言主视觉与详情行颜色一致。
 - 按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归断言保持 NOT_RUN，待集中验收。
+
+## 86. Phase 2.40 导航时序字段有效性与时间纪律颜色闭环（2026-11-15）
+
+- `LocalTimebaseDisciplineState` 独立分色：NOMINAL(0)/LOCKED(2) 绿色，ACQUIRING(1)/HOLDOVER(3)/DEGRADED(4) 琥珀色，INVALID(5) 红色；time family 等待使用中性灰、超时使用琥珀色并覆盖缓存枚举颜色。不得复用 `TimeQuality` 的状态 0 映射，因为 LOCAL_ONLY 与 NOMINAL 语义不同。
+- 导航时序颜色与时间戳有效性一致：family fresh 且非负整数处于 JS 安全整数范围内时使用对应域强调色；缺失/未上报使用中性灰；超出安全整数范围或数值非法使用红色；family 超时使用琥珀色。无效/未上报/超时项不参与有效时间排序并置于有效时间戳之后。
+- 时序说明明确只对有效 FCU `time_boot_us` 按早到晚排序；UTC 有效性与 FCU 单调启动时间保持独立。
+- MockLink Integration 增加 LocalTimebaseDisciplineState 六态颜色、time family waiting/stale/recovered 覆盖，以及 `2^53` 超出 JS 安全整数边界的 FCU_EVENT 时间戳红色标记、置后排序断言。
+- 仅修改 FlightTelemetry.qml、FlightTelemetryPageUITest.cc、本设计 SPEC、SPEC 入口、Windows Release G15 验收指南和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、时间同步服务、freshness 阈值或飞控控制行为。
+- 按用户要求不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言为 NOT_RUN，待后续集中验收。
