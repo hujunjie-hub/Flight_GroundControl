@@ -555,7 +555,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MockLink Configure 遵循 0 清空、-1 保持、-2 设为发送方、-3 owner-pair 校验释放、正整数显式设置；部分 -3/非法 ID 被拒绝。GIMBAL_MANAGER_PITCHYAW 仅允许 primary/secondary owner 发送。
 - 拖动姿态滑块时按 5 Hz 发送目标，松开后提交最后目标并停止 Timer；yaw-lock/retract 控件按设备 capability flags 门控。
 - MockLink Gimbal Manager Configure 的 -3 释放哨兵只允许释放与发送方 system/component ID 匹配的 owner pair，并在共享状态上加锁。
-- MockLink 多设备模拟以同一个 manager component 管理独立的 device 154/155/3；各设备分别维护能力、姿态、速率、消息间隔和 owner pair。设备 155 的姿态状态由 component 155 发布并使用 gimbal_device_id=0；设备 3 的姿态状态由 manager component 发布并携带 gimbal_device_id=3，覆盖 Gimbal v2 两种地址形式。
+- MockLink 多设备模拟以同一个 manager component 管理独立的 device 154/155/3；各设备分别维护能力、姿态、速率、消息间隔和 owner pair。设备 155 的姿态状态由 component 155 发布并使用 gimbal_device_id=0；设备 3 的姿态状态由 manager component 发布并携带 gimbal_device_id=3，覆盖 Gimbal v2 两种地址形式。 UI Integration 还在设备 3 上执行 Configure/PITCHYAW 位置控制回读，确认设备 154/155 的姿态和 owner pair 不受影响。
 - 单台设备可独立离线/恢复；离线时停止该设备的状态流并清空 owner/rate，另一台设备继续工作；恢复时重新发布 information 并恢复状态流，不继承旧控制权。
 - `MAV_CMD_SET_MESSAGE_INTERVAL` 的 component 0 广播应用于所有模拟设备，ACK 使用 manager component；输入 message ID/interval 非有限或非整数时拒绝。
 - FlightStorageGimbalPageUITest 增加真实 MockLink 三设备发现、Gimbal v2 两种设备寻址、姿态/角速度/owner 隔离、未知设备拒绝、广播 interval 停止/恢复与非法参数拒绝、单设备离线/重新发现与重新获取控制权覆盖。按用户要求本轮不运行 CI、Unit、Integration 或 Windows Release；上述新增断言保持 NOT_RUN，集中验收执行后再判 PASS。
