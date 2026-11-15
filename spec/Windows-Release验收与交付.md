@@ -38,7 +38,7 @@
 | G16 | 设置侧栏字体与状态颜色一致性 | TopLevelViewsTest、JUnit、QML font/palette properties | 一级/二级菜单字体族、point size、字重一致；普通和选中颜色遵循相同 QGCPalette 语义；二级按钮按自身 enabled 状态选择 palette；页面导航和分区交互不回归 |
 | G17 | 全项目字体系统与渲染一致性 | qml-typography-check --all、TopLevelViewsTest、JUnit、Windows DPI screenshots | 递归检查全部 src/**/*.qml；除 ScreenTools 兼容别名外无旧字号令牌；无固定 font.pixelSize、硬编码字体族和未登记的局部字号乘数；QGCLabel/共享控件统一字体族、Hinting 与抗锯齿；RadioButton 继承正确字体族；中文界面按平台选择已安装 CJK 字体；100%/125%/150% DPI 视觉证据齐全 |
 | G18 | 旧版 SYS_STATUS 传感器状态 freshness | FlightTelemetryPageUITest、MockLink SYS_STATUS、JUnit | 通信丢失立即使缓存传感器状态 stale；恢复心跳但未收到新 SYS_STATUS 时仍保持 stale；新帧到达后恢复；历史状态只作诊断上下文 |
-| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；Profile ID、原因码、FCU 运行时间与 GCS 接收年龄正确；无虚构容量或日志操作；云台设备发现/姿态回读/显式获取控制权/完整 owner pair 校验/半 owner pair fail-closed/外部 owner 禁止接管/俯仰与偏航轴 capability 门控/5 Hz 目标回读/GIMBAL_MANAGER_SET_ATTITUDE 角速度控制与停止/yaw-lock 与 retract 状态回读/链路恢复/6500 ms manager 与 3500 ms attitude freshness/Configure 0/-1/-2/-3 权限语义/真实 MockLink 多设备发现与独立姿态、角速度、owner 隔离/广播 interval fan-out/单设备离线与重发现/未知设备拒绝；Armed/Flying 可访问 |
+| G19 | Flight 存储与云台配置页 | FlightStorageGimbalPageUITest、MockLink FCU_STORAGE_STATUS / Gimbal Manager、JUnit | 存储等待/有效/无效/通信中断/恢复后新帧门控/5500 ms stale 正确；Profile ID、原因码、FCU 运行时间与 GCS 接收年龄正确；无虚构容量或日志操作；云台设备发现/姿态回读/显式获取控制权/完整 owner pair 校验/半 owner pair fail-closed/外部 owner 禁止接管/俯仰与偏航轴 capability 门控/5 Hz 目标回读/GIMBAL_MANAGER_SET_ATTITUDE 角速度控制与停止/yaw-lock 与 retract 状态回读/链路恢复/6500 ms manager 与 3500 ms attitude freshness/Configure 0/-1/-2/-3 权限语义/真实 MockLink 三设备发现与 Gimbal v2 两种寻址/独立姿态、角速度、owner 隔离/广播 interval fan-out 与非法参数拒绝/单设备离线与重发现/未知设备拒绝；Armed/Flying 可访问 |
 
 只有所有适用 Gate 都 PASS，才允许把本轮标记为 PASS。当前完整 Windows Release 交付要求 G0–G19 全部满足（包括 G14 Flight Radio UI、G15 Flight Diagnostics Phase 2）；仅对本次变更范围适用的专项 Gate 必须有精确 HEAD 证据，不适用项须明确说明。
 
@@ -555,10 +555,10 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MockLink Configure 遵循 0 清空、-1 保持、-2 设为发送方、-3 owner-pair 校验释放、正整数显式设置；部分 -3/非法 ID 被拒绝。GIMBAL_MANAGER_PITCHYAW 仅允许 primary/secondary owner 发送。
 - 拖动姿态滑块时按 5 Hz 发送目标，松开后提交最后目标并停止 Timer；yaw-lock/retract 控件按设备 capability flags 门控。
 - MockLink Gimbal Manager Configure 的 -3 释放哨兵只允许释放与发送方 system/component ID 匹配的 owner pair，并在共享状态上加锁。
-- MockLink 多设备模拟以同一个 manager component 管理独立的 device 154/155；各设备分别维护能力、姿态、速率、消息间隔和 owner pair。设备 155 的姿态状态由 component 155 发布，manager information/status 按设备分别广播。
+- MockLink 多设备模拟以同一个 manager component 管理独立的 device 154/155/3；各设备分别维护能力、姿态、速率、消息间隔和 owner pair。设备 155 的姿态状态由 component 155 发布并使用 gimbal_device_id=0；设备 3 的姿态状态由 manager component 发布并携带 gimbal_device_id=3，覆盖 Gimbal v2 两种地址形式。
 - 单台设备可独立离线/恢复；离线时停止该设备的状态流并清空 owner/rate，另一台设备继续工作；恢复时重新发布 information 并恢复状态流，不继承旧控制权。
 - `MAV_CMD_SET_MESSAGE_INTERVAL` 的 component 0 广播应用于所有模拟设备，ACK 使用 manager component；输入 message ID/interval 非有限或非整数时拒绝。
-- FlightStorageGimbalPageUITest 增加真实 MockLink 双设备发现、姿态/角速度/owner 隔离、未知设备拒绝、广播 interval 停止/恢复、单设备离线/重新发现与重新获取控制权覆盖。按用户要求本轮不运行 CI、Unit、Integration 或 Windows Release；上述新增断言保持 NOT_RUN，集中验收执行后再判 PASS。
+- FlightStorageGimbalPageUITest 增加真实 MockLink 三设备发现、Gimbal v2 两种设备寻址、姿态/角速度/owner 隔离、未知设备拒绝、广播 interval 停止/恢复与非法参数拒绝、单设备离线/重新发现与重新获取控制权覆盖。按用户要求本轮不运行 CI、Unit、Integration 或 Windows Release；上述新增断言保持 NOT_RUN，集中验收执行后再判 PASS。
 - 新增 `FlightStorageGimbalPageUITest` 覆盖存储等待/validity/通信丢失/恢复后新帧门控/stale/无虚构容量、云台空态/设备发现/三轴姿态回读/控制权/能力标志门控/滑块目标与姿态回读/链路恢复/外部 owner/拖动 Timer。按用户要求本轮不运行 CI、Unit、Integration 或 Windows Release；G19 新增断言保持 NOT_RUN，集中验收执行后再判 PASS。
 
 ### G15 总览告警首要事件视觉层级（2026-11-15）
