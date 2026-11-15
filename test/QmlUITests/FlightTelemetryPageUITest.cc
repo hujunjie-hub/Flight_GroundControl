@@ -3216,6 +3216,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_sensorInstanceAction_1"), 3000);
             QQuickItem* sensorInstanceCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
+            QQuickItem* sensorInstanceContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceContent_1"), 3000);
             QQuickItem* sensorState = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_sensorInstanceState_1"), 3000);
             QQuickItem* sensorDetails = findVisibleItem(
@@ -3276,6 +3278,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* resourcesDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_resources"), 3000);
             QQuickItem* resourceTaskCard = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
+            QQuickItem* resourceTaskContent = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_resourceTaskContent_0"), 3000);
             QQuickItem* resourceMetricGrid = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
             QQuickItem* resourceWcetTile = findVisibleItem(
@@ -3300,11 +3304,13 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(sensorTitle);
             QVERIFY(sensorAction);
             QVERIFY(sensorInstanceCard);
+            QVERIFY(sensorInstanceContent);
             QVERIFY(sensorState);
             QVERIFY(sensorDetails);
             QVERIFY(prearmMetadataGrid);
             QVERIFY(prearmCheckCard);
             QVERIFY(resourceTaskCard);
+            QVERIFY(resourceTaskContent);
             QVERIFY(resourceMetricGrid);
             QVERIFY(resourceWcetTile);
             QVERIFY(resourceStackTile);
@@ -3694,6 +3700,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             }
             sensorCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_sensors"), 3000);
             sensorInstanceCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceCard_1"), 3000);
+            sensorInstanceContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceContent_1"), 3000);
             sensorState = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceState_1"), 3000);
             sensorDetails = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_sensorInstanceDetails_1"), 3000);
             prearmDetail = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_card_prearm"), 3000);
@@ -3710,6 +3717,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             resourceDeadlineMiss = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceDeadlineMiss_0"), 3000);
             resourceAxiFree = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceAxiFree_0"), 3000);
             resourceTaskCard = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskCard_0"), 3000);
+            resourceTaskContent = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceTaskContent_0"), 3000);
             resourceMetricGrid = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricGrid_0"), 3000);
             resourceWcetTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_wcet_0"), 3000);
             resourceStackTile = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_resourceMetricTile_stack_0"), 3000);
@@ -3721,6 +3729,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(resourceDeadlineMiss);
             QVERIFY(resourceAxiFree);
             QVERIFY(resourceTaskCard);
+            QVERIFY(resourceTaskContent);
             QVERIFY(resourceMetricGrid);
             QVERIFY(resourceWcetTile);
             QVERIFY(resourceStackTile);
@@ -3731,6 +3740,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(sensorTitle);
             QVERIFY(sensorAction);
             QVERIFY(sensorInstanceCard);
+            QVERIFY(sensorInstanceContent);
             QVERIFY(sensorState);
             QVERIFY(sensorDetails);
             QVERIFY(prearmDetail);
@@ -3773,8 +3783,19 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        topLeft.x() + item->width() <= panel->width() + 1.0 &&
                        topLeft.y() + item->height() <= panel->height() + 1.0;
             };
+            const qreal metricTileInset = page->property("_dashboardMetricTileInset").toReal();
+            const auto detailCardProvidesContentHeight = [metricTileInset](QQuickItem* card, QQuickItem* content) {
+                if (!card || !content) return false;
+                const QPointF contentTopLeft = content->mapToItem(card, 0, 0);
+                return contentTopLeft.y() >= metricTileInset - 1.0 &&
+                       content->height() + 0.5 >= content->implicitHeight() &&
+                       contentTopLeft.y() + content->height() <= card->height() - metricTileInset + 1.0;
+            };
             const auto healthDetailCardsFit = [&]() {
-                if (!itemFitsInPanel(sensorInstanceCard, sensorCard) ||
+                if (!detailCardProvidesContentHeight(sensorInstanceCard, sensorInstanceContent) ||
+                    !detailCardProvidesContentHeight(prearmCheckCard, prearmRow) ||
+                    !detailCardProvidesContentHeight(resourceTaskCard, resourceTaskContent) ||
+                    !itemFitsInPanel(sensorInstanceCard, sensorCard) ||
                     !itemFitsInPanel(sensorHeaderGrid, sensorInstanceCard) ||
                     !itemFitsInPanel(sensorTitle, sensorHeaderGrid) ||
                     !itemFitsInPanel(sensorState, sensorHeaderGrid) ||
