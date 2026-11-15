@@ -475,6 +475,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
 - 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不在 QML 内硬编码型号或重复判断固件身份。Flight SIL 通过身份校验后，插件返回注册的 SIM_ONLY / SIL_ONLY profiles；用户必须单选一个 profile 作为参数调优上下文，ParameterEditor 只显示该 profile 的参数名与参数域白名单。该选择不改变 activeVehicle 的真实硬件类型。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
+- ParameterEditorController::setSelectedModelProfileId 在绑定前校验 profile 状态、SIL_ONLY 写入范围、参数名/参数域非空且唯一、参数域属于七种受支持 domain，并逐项对照当前活动飞行器已完整下载的 Fact 列表；注册参数必须全部存在，且每个 Fact 的实际 category 必须属于 profile 声明的 parameterDomains。参数列表不完整、元数据域不匹配或注册表异常时清空旧绑定、锁定参数列表并显示明确错误，不能沿用上一次机型的参数白名单。
 - 参数 profile 不再在页面启动或 activeVehicle 切换时自动预选首项；必须由操作者显式选择后才创建参数编辑器并解锁该 profile 的参数域。这样可避免把“注册表中存在唯一候选”误认为操作者已确认当前调参对象。无候选时显示“未登记可调机型”，有候选但未选择时显示“请选择机型配置”。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
@@ -503,7 +504,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型单选下拉、按 profile 参数白名单过滤和未登记机型锁定已接入；硬件模型注册及兼容性元数据仍未完成；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
 - Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：NOT_RUN。
 - Phase 5：NOT_RUN。
