@@ -740,6 +740,12 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             vehicle->gimbalController()->sendGimbalRate(0.0f, 0.0f);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            const double secondPitchAfterZeroRate = currentPitch();
+            const double secondYawAfterZeroRate = currentYaw();
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
+            QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
+            QVERIFY(std::abs(currentPitch() - secondPitchAfterZeroRate) < 0.5);
+            QVERIFY(std::abs(currentYaw() - secondYawAfterZeroRate) < 0.5);
             QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
                              firstDevicePitchBeforeSwitch) < 0.5);
 
