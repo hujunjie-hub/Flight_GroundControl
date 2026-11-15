@@ -1330,3 +1330,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - validity bit 缺失/清零、family/实例等待或超时、null/空值、非有限值和超出 0–1000 的质量值均不绘制质量条；超范围或缺失值明确显示「无效」并使用琥珀色，恢复有效值后同步恢复数字、颜色和填充比例。
 - MockLink `FlightTelemetryPageUITest` 主动切换 Mode 1/2/3，验证左右摇杆通道标签；以 700/1000 验证 70% 填充，以 1200/1000 验证无效值隐藏质量条并转为琥珀色，再恢复 70% 验证回归。
 - 不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、RC 输入值/validity mask、链路 freshness 阈值、趋势数据源、飞控控制行为或只读安全边界。按用户要求不运行 CI、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待集中验收。
+
+
+## 105. Phase 2.59 导航时序时间线高 DPI 与紧凑大屏适配（2026-11-15）
+
+- FCU 单调时间线的三条记录不再依赖固定 36 px 行高、38 px 行距、144/124 px 时间列宽；行高、行距、编号/标记尺寸、轨道宽度、时间值列宽和横向间距统一由 `ScreenTools.defaultFontPixelHeight/Width` 派生。默认缩放保留现有紧凑视觉基线，字体或 DPI 放大时同步扩展。
+- 时间线容器高度由三行动态行高与两段行距计算；每条记录的纵向位置由同一动态 row pitch 乘以排序序号，确保排序编号、连接线、行高和时间戳列在缩放后仍保持一致。
+- 时间值列优先保证完整的 `FCU +x.xxxxxx s` 微秒字符串，消息标签仅在空间不足时省略；不降低微秒精度、不把 FCU 单调时间转换为 UTC，也不改变有效/无效/超时排序和颜色语义。
+- MockLink UI Integration 在 1672×941 紧凑模式与 1600/1000/900/700/400 px 宽度下验证时间线动态行高/行距、编号位置、时间值完整显示、标签/时间列不重叠和三行均位于面板边界内。Windows 100%/125%/150% DPI 截图仍作为人工视觉签收项。
+- 仅修改 FlightTelemetry QML、FlightTelemetryPageUITest、设计 SPEC、SPEC 入口、Windows Release G15 验收指南和机器可读 manifest；不修改 MAVLink、FlightTelemetryFactGroup、Flight ICD、freshness 阈值、时间同步服务或飞控控制行为。
+- 按用户要求本轮不运行、不触发 CI/Unit/Integration/Windows Release；新增回归断言状态为 NOT_RUN，等待后续集中验收。
