@@ -382,6 +382,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             Gimbal *secondGimbal = nullptr;
             Gimbal *legacyGimbal = nullptr;
             int secondGimbalIndex = -1;
+            int legacyGimbalIndex = -1;
             int activeGimbalIndex = -1;
             for (int index = 0; index < vehicle->gimbalController()->gimbals()->count(); ++index) {
                 auto *candidate = qobject_cast<Gimbal *>(
@@ -397,11 +398,13 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                     secondGimbalIndex = index;
                 } else if (candidate->deviceId()->rawValue().toUInt() == 3) {
                     legacyGimbal = candidate;
+                    legacyGimbalIndex = index;
                 }
             }
             QVERIFY(secondGimbal);
             QVERIFY(legacyGimbal);
             QVERIFY(secondGimbalIndex >= 0);
+            QVERIFY(legacyGimbalIndex >= 0);
             QVERIFY(activeGimbalIndex >= 0);
             QCOMPARE(legacyGimbal->managerCompid()->rawValue().toUInt(),
                      static_cast<uint32_t>(MAV_COMP_ID_AUTOPILOT1));
@@ -866,6 +869,28 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
                                       QStringLiteral("未取得控制权"), 6000);
             QVERIFY(!secondGimbal->gimbalHaveControl());
+
+            // Exercise manager-routed control for the legacy device ID 3. Its
+            // attitude stream uses component 1 with gimbal_device_id=3.
+            vehicle->gimbalController()->setActiveGimbal(legacyGimbal);
+            QCOMPARE(vehicle->gimbalController()->activeGimbal(), legacyGimbal);
+            QTRY_COMPARE_WITH_TIMEOUT(deviceSelector->property("currentIndex").toInt(),
+                                      legacyGimbalIndex, 1000);
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 3000);
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_acquireControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("本机控制中"), 6000);
+            vehicle->gimbalController()->sendPitchBodyYaw(-12.0f, 24.0f, false);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                std::abs(std::abs(legacyGimbal->absolutePitch()->rawValue().toDouble()) - 12.0) < 3.0,
+                4000);
+            QVERIFY(!activeGimbal->gimbalHaveControl());
+            QVERIFY(!secondGimbal->gimbalHaveControl());
+            QVERIFY(clickButton(QStringLiteral("flightGimbal_releaseControl")));
+            QTRY_COMPARE_WITH_TIMEOUT(ownership->property("text").toString(),
+                                      QStringLiteral("未取得控制权"), 6000);
+            QVERIFY(!legacyGimbal->gimbalHaveControl());
 
             // Switch back to the rediscovered first device and verify that its
             // owner state is fresh, empty, and can be explicitly acquired again.
