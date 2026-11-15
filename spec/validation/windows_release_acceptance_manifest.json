@@ -505,7 +505,10 @@
         "overview_alarm_density_tokens_scale_with_application_ui_scale_at_150_and_200_percent",
         "health_page_cells_use_dedicated_screen_tools_scaled_insets_and_compact_content_height",
         "health_page_primary_summary_cells_fit_and_desktop_panels_keep_3_6_3_ratio",
-        "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens"
+        "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens",
+        "health_maintenance_sections_render_as_three_dpi_scaled_cards",
+        "health_maintenance_card_content_respects_scaled_insets_and_implicit_height",
+        "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths"
       ]
     },
     {
@@ -925,7 +928,10 @@
     "health_page_cells_use_dedicated_screen_tools_scaled_insets_and_compact_content_height",
     "health_page_primary_summary_cells_fit_and_desktop_panels_keep_3_6_3_ratio",
     "health_page_primary_and_matrix_grids_use_dedicated_compact_spacing_tokens",
-    "navigation_time_group_minimum_width_and_two_column_threshold_scale_with_screen_tools_font_width"
+    "navigation_time_group_minimum_width_and_two_column_threshold_scale_with_screen_tools_font_width",
+    "health_maintenance_sections_render_as_three_dpi_scaled_cards",
+    "health_maintenance_card_content_respects_scaled_insets_and_implicit_height",
+    "health_maintenance_cards_remain_inside_responsive_grid_at_all_health_widths"
   ],
   "flight_radio_ui_matrix": [
     "FlightRadio_page_and_dual_gimbal_diagram_render",
