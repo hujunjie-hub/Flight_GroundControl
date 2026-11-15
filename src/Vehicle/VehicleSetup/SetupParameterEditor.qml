@@ -1336,6 +1336,24 @@ Item {
                                     QGCLabel {
                                         Layout.fillWidth: true
                                         text: !dashboardRoot.selectedFact
+                                              ? qsTr("适用范围：—")
+                                              : qsTr("适用范围：%1 · %2")
+                                                .arg(dashboardRoot.selectedFact.vehicleFamily)
+                                                .arg(dashboardRoot.selectedFact.modelVariants.join(", "))
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
+                                              ? qsTr("控制架构：—")
+                                              : qsTr("控制架构：%1").arg(dashboardRoot.selectedFact.controlLaw)
+                                        color: root.mutedText
+                                        font.pointSize: ScreenTools.captionFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
                                               ? qsTr("调参策略：—")
                                               : dashboardRoot.selectedFact.tuningPolicy === "READ_ONLY"
                                                 ? qsTr("调参策略：只读")
