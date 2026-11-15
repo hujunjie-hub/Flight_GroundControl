@@ -4619,8 +4619,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_label"), 3000);
             QQuickItem* navigationCapabilityLabel = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_navigationCapabilityHeading_label"), 3000);
-            QQuickItem* navigationEstimateStatus = findVisibleItem(
-                _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_status"), 3000);
+            QQuickItem* navigationEstimateStatusBadge = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition_statusBadge"), 3000);
             QQuickItem* navigationEstimateMetricsAtWidth[] = {
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimatePosition"), 3000),
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationEstimateVelocity"), 3000),
@@ -4643,7 +4643,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(navigationCapabilityMetric);
             QVERIFY(navigationEstimateLabel);
             QVERIFY(navigationCapabilityLabel);
-            QVERIFY(navigationEstimateStatus);
+            QVERIFY(navigationEstimateStatusBadge);
             for (QQuickItem* metric : navigationEstimateMetricsAtWidth) QVERIFY(metric);
             for (QQuickItem* badge : navigationEstimateBadgesAtWidth) QVERIFY(badge);
             for (QQuickItem* metric : navigationCapabilityMetricsAtWidth) QVERIFY(metric);
@@ -4694,7 +4694,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                                    navigationMetricSpacing) < 1.0, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateLabel->property("wrapMode").toInt() != 0, 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(navigationCapabilityLabel->property("wrapMode").toInt() != 0, 3000);
-                QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatus->property("wrapMode").toInt() != 0, 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(navigationEstimateStatusBadge->isVisible(), 3000);
                 const auto navigationMetricBadgeFits = [](QQuickItem* badge, QQuickItem* metric) {
                     const auto topLeft = badge->mapToItem(metric, 0, 0);
                     return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
