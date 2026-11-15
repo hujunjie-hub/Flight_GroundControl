@@ -340,6 +340,26 @@ void ParameterEditorControllerTest::_categoryFilterRestrictsSearch()
     QTRY_VERIFY(parameterRowCount() >= 1);
 }
 
+void ParameterEditorControllerTest::_onlineTuningRequiresRegisteredSilProfile()
+{
+    ParameterEditorController controller;
+    ParameterManager *const manager = parameterManager();
+    QVERIFY(manager);
+    QVERIFY(manager->parameterExists(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SYS_AUTOSTART")));
+
+    Fact *const fact = manager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SYS_AUTOSTART"));
+    QVERIFY(fact);
+    QVERIFY(controller.selectParameterFact(fact));
+    QCOMPARE(controller.selectedParameterName(), QStringLiteral("SYS_AUTOSTART"));
+
+    // The default MockLink fixture is not the explicitly identified Flight SIL profile.
+    // Selecting a row is allowed, but the online write path must fail closed.
+    QVERIFY(!controller.canApplySelectedValue());
+    QVERIFY(!controller.canReadbackSelectedValue());
+    QVERIFY(!controller.applySelectedValue(QVariant(4002)));
+    QVERIFY(!manager->pendingWrites());
+}
+
 void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure()
 {
     TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
