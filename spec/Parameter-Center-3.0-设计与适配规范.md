@@ -237,8 +237,8 @@
 跨仓库模型资料核查（2026-11-15）：
 - Flight 仓库当前 config/vehicle_model.yaml 仅登记 profile=QUAD_X4，status=SIM_ONLY；文件明确说明这是 synthetic X4 fixture，电机编号和偏航力矩符号没有硬件证据，hardware_thrust_curve 仍为 TBD。
 - FlightFirmwarePlugin 当前只把 gitHash=FLTSIL01 且固件版本不低于 1.9.2 的 Vehicle 识别为 SIL。
-- Flight_GroundControl 当前没有独立 vehicle model catalog / registry。因而 QUAD_X4 不能被当作已验证的实机模型供用户选择，也不能将 SIM_ONLY 参数映射直接开放给硬件飞行。
-- 后续模型下拉框必须来自正式注册的 profile；SIL 专用 profile 只有在 Flight SIL 身份校验通过时才可显示。实机 profile 必须补齐硬件证据、构型/电机映射、推力曲线和兼容性审查后才能开放。
+- Flight_GroundControl 已接入 FlightVehicleModelCatalog.json 注册表，但目前只登记 QUAD_X4 的 SIM_ONLY / SIL_ONLY profile；它仍是 synthetic fixture，不能当作已验证的实机模型，也不能向硬件飞行开放参数写入。
+- 模型下拉框现已来自正式注册的 profile；SIL 专用 profile 只有在 Flight SIL 身份校验通过时才显示。实机 profile 仍须补齐硬件证据、构型/电机映射、推力曲线和兼容性审查后才能注册开放。
 
 ### 6.2 元数据扩展目标
 
@@ -480,28 +480,28 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 本轮将当前 Flight 固件的真实参数元数据接入参数域导航，未扩大任何参数写入权限：
 
-- Flight 仓库 tools/generate_qgc_parameter_metadata.py 已成为参数域与机型元数据的可重复生成入口：从 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 生成 FlightParameterFactMetaData.json 与 FlightVehicleModelCatalog.json；参数项携带 domain 和 modelProfiles，注册表包含硬件资格、写入范围、参数域及精确参数清单。生成器新增单元测试，未运行 CI。
+- Flight 仓库 tools/generate_qgc_parameter_metadata.py 已成为 schema v2 可重复生成入口：从 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 生成 FlightParameterFactMetaData.json 与 FlightVehicleModelCatalog.json；参数项携带 domain/modelProfiles/vehicleFamily/modelVariants/controlLaw/tuningPolicy/updatePolicy/dependencies/validationRules，注册表保存同一 profile 描述与精确参数清单。生成器新增回归用例，未运行测试或 CI。
 - 生成前强制校验 ground_parameters.json、vehicle_model.yaml、controller_tuning.yaml、estimator_tuning.yaml 的 profile ID 一致；任一来源机型不匹配即失败，不生成混合机型的参数元数据或注册表。
 
-- FlightParameterFactMetaData.json 的 49 个参数增加显式 domain 字段，原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留。
+- FlightParameterFactMetaData.json 的 49 个参数使用 schema v2；原有 name、type、group、单位、范围、默认值、描述和来源标识全部保留，并增加机型适用性、控制律、调参/更新策略以及显式空 dependencies / validationRules。
 - 当前 group → domain 映射为：机体模型 → VEHICLE_MODEL（1 项）；MPC 权重、位置环回退、姿态角速度环、SO3 姿态增益 → CONTROL（47 项）；仿真 → SIMULATION（1 项）。
 - 当前 FMS、INS、PLANT、ACTUATOR 在这 49 项 Flight 参数元数据中没有登记参数；页面显示明确空态，不从其他域借用或伪造参数。
-- FlightParameterMetaData::parseParameterJson 对七种受支持 domain 执行 fail-closed 校验，且仅将合法 float 元数据写入缓存；未知 domain、类型不支持、非有限数值、min/max 倒置、default 越界、decimalPlaces 超出 0–9、非法 rebootRequired/readOnly/writeOnly 类型和重复参数名均拒绝缓存并记录警告。通过校验的 domain 写入 FactMetaData.category，rebootRequired/readOnly/writeOnly 分别写入 FactMetaData 对应属性，原始 group 不变；FactMetaData / Fact 增加 vehicleRebootRequiredKnown，缺失字段保持未知。ParameterEditorController 继续按 category / group 组织原生 Fact。
+- FlightParameterMetaData::parseParameterJson 仅接受 schema v2，并对七种 domain、适用性、控制律、tuningPolicy/updatePolicy、依赖/规则数组、rebootRequired/readOnly/writeOnly 和数值范围执行 fail-closed 校验。合法字段映射到 FactMetaData / Fact；FactMetaData / Fact 保留 vehicleRebootRequiredKnown，缺失重启标志保持未知。原始 group 不变，ParameterEditorController 继续按 category / group 组织原生 Fact。
 - ParameterEditor 新增 externalCategoryNavigation、hasCategory、selectCategoryByName：默认 false 时保持原有 PX4 / ArduPilot 等参数页行为；参数中心启用外层参数域选择，原生分组导航只显示当前域的 group，原搜索、全部/已修改/收藏、只读过滤、导入/导出和工具菜单继续保留。
-- 外层参数域导航已联动真实 ParameterEditor category。当前域没有固件参数时显示“当前参数域暂无参数”，不显示其他域参数；在线调参域因没有 tuningPolicy 白名单保持锁定。
+- 外层参数域导航已联动真实 ParameterEditor category。当前域没有固件参数时显示“当前参数域暂无参数”，不显示其他域参数；当前 49 项的 tuningPolicy 为 GROUND_ADJUSTABLE，但 profile 的 SIL_ONLY 范围和解除锁定门控仍然优先，未授权的实机和飞行中写入保持锁定。
 - ParameterEditorController 新增可选 categoryFilter；搜索、已修改、收藏和只读过滤均限制在当前 domain，切换参数域后不会因原生全局搜索而混入其他域参数。categoryFilter 默认为空，其他固件的原生参数编辑行为保持不变。
 - FlightFirmwarePluginTest 新增元数据解析回归用例，覆盖合法 CONTROL 参数、未知 domain、非法 min/max 范围、不支持类型、rebootRequired 已声明/未声明/非法类型和重复参数名；测试代码已登记，本轮不执行构建或测试，集中验收时再运行。
 - ParameterEditorController 通过 FactPanelController 在构造时捕获 activeVehicle；因此 activeVehicleChanged 时重建内部 ParameterEditor，避免切换飞行器后仍操作旧 Vehicle 的 Fact。
 - 修正工具栏标题绑定：toolDrawerLoader 实际加载 VehicleConfigView.qml，标题现在读取其 _parameterCenterFullPage 状态，不再错误地检查外层 Loader 的 source 是否为 SetupParameterEditor.qml。
 - 当前飞行器卡片的模型下拉由 FlightFirmwarePlugin → FirmwarePlugin::vehicleModelProfiles → Vehicle::vehicleModelProfiles 提供，不在 QML 内硬编码型号或重复判断固件身份。Flight SIL 通过身份校验后，插件返回注册的 SIM_ONLY / SIL_ONLY profiles；用户必须单选一个 profile 作为参数调优上下文，ParameterEditor 只显示该 profile 的参数名与参数域白名单。该选择不改变 activeVehicle 的真实硬件类型。实机或身份不明的 Flight 固件返回空注册列表，所有参数域不创建 ParameterEditor 并保持锁定。
-- ParameterEditorController::setSelectedModelProfileId 在绑定前校验 profile 状态、hardwareEligible 必须是布尔 false、SIL_ONLY 写入范围、参数名/参数域非空且唯一、参数域属于七种受支持 domain，并逐项对照当前活动飞行器已完整下载的 Fact 列表；注册参数必须全部存在，且每个 Fact 的实际 category 必须属于 profile 声明的 parameterDomains。参数列表不完整、元数据域不匹配或注册表异常时清空旧绑定、锁定参数列表并显示明确错误，不能沿用上一次机型的参数白名单。
+- ParameterEditorController::setSelectedModelProfileId 在绑定前校验 profile 状态、hardwareEligible 布尔 false、SIL_ONLY 写入范围、vehicleFamily/modelVariants/controlLaw、参数名/参数域和完整 Fact 列表；每个 Fact 的实际 category、family、variants、controlLaw 必须与 profile 及参数元数据一致。参数列表不完整、适用性不匹配或注册表异常时清空旧绑定并锁定参数列表。每次写入还要重新检查当前参数 tuningPolicy/updatePolicy。
 - 参数 profile 不再在页面启动或 activeVehicle 切换时自动预选首项；必须由操作者显式选择后才创建参数编辑器并解锁该 profile 的参数域。这样可避免把“注册表中存在唯一候选”误认为操作者已确认当前调参对象。无候选时显示“未登记可调机型”，有候选但未选择时显示“请选择机型配置”。
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
 - domain 只解决参数归属，不等于机型兼容性。schema v2 已显式登记 vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy；当前 dependencies / validationRules 为空数组，section / tuningLevel 尚待后续接入。
 - 当前 49 项统计仅对应 FlightParameterFactMetaData.json，不代表未来所有机型或固件。
-- 在线调参、参数行与目标值面板联动、仿真曲线和应用/回读闭环仍未实现。
+- SIL 单参数写入、PARAM_VALUE 确认、显式回读和恢复上一次已确认值已接入；实机在线写入、试探/批量调参、Flight SIL 参数注入、真实参数目标/反馈响应曲线仍未实现。
 - 新增 ParameterEditorController categoryFilter 搜索隔离回归测试；测试代码已登记，但本轮未执行 Windows 构建、QML 运行、单元测试或 CI，必须在集中验收阶段验证。
 
 ### Phase 2 / Phase 3 安全边界补充
@@ -512,7 +512,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 同一元数据文档中出现重复参数名时，所有同名条目均拒绝缓存，避免“先到先得”导致不确定的参数范围、单位或描述。
 - 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
 - readOnly 参数允许查看和单参数回读，但禁止在线写入；writeOnly 参数因无法完成 PARAM_VALUE 回读确认，禁止进入在线调参闭环。详情卡片明确显示当前 Fact 的权限类型。
-- 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY，以及当前参数名和参数域仍在注册白名单中；不能只依赖首次绑定时缓存的资格。
+- 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY、family/variant/controlLaw，以及当前参数名、domain、tuningPolicy 和 updatePolicy；不能只依赖首次绑定时缓存的资格。
 - `FlightFirmwarePlugin::vehicleModelProfiles` 在向 UI 暴露机型前同时读取 schema v2 参数元数据与模型注册表，校验 source/SHA-256、profile ID、vehicleFamily/modelVariants/controlLaw、逐参数 modelProfiles/domain/tuningPolicy/updatePolicy、参数名和依赖引用；任一不匹配、未知依赖或权限字段类型错误时，整个注册表 fail-closed 并返回空列表。
 - 新增模型注册表一致性回归用例，覆盖 SHA 不匹配、未知参数、参数域/适用性/控制律错配、未知依赖、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
 - 参数工具菜单的飞控重启操作仅在已连接、解除锁定、未飞行且 ParameterManager 无待写入时启用，避免在飞行中、链路异常或参数同步过程中触发重启。
@@ -520,7 +520,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
 - 参数健康度卡片的“机型参数映射”读取真实 Loader / profile 绑定状态，区分等待选择、等待下载、校验中、校验通过和校验失败；不再显示已过期的“Phase 2 待接入”。
 - 机型 profile 切换在控制器层与 QML 选择器层同时受待写入状态门控；存在单参数写入、回读或参数管理器待写入任务时，不允许切换调参上下文。
-- 对应回归测试覆盖重启标志映射、readOnly/writeOnly 默认标志、非法布尔标志和重复参数名拒绝。本轮按集中验收要求未运行构建、单元测试或 CI，结果保持 NOT_RUN。
+- 对应回归测试覆盖重启标志已声明/未声明/非法类型、适用性与策略字段映射、非法依赖/规则、profile 交叉匹配和未知依赖拒绝。本轮按集中验收要求未运行构建、单元测试或 CI，结果保持 NOT_RUN。
 
 ### Phase 3 实施记录（首轮 SIL 单参数在线调参闭环）
 
@@ -528,7 +528,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 
 - ParameterEditor 增加参数行选择能力；Flight 参数中心启用 safe mode，参数表值单元格不再直接打开原生写入对话框，重置操作禁用，参数文件仍可导入预览但禁止批量上传。
 - 在线调参控制器复用 ParameterEditorController、Fact、ParameterManager 和既有 MAVLink PARAM_SET 状态机，不建立第二套参数缓存或写入队列。
-- 写入资格必须同时满足：当前 activeVehicle 由 FirmwarePlugin 识别为 Flight SIL；用户当前单选的 profile 必须存在于 vehicleModelProfiles 注册列表，且为 SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名与 domain 均在所选 profile 注册清单中；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数本身不是只读/只写项。
+- 写入资格必须同时满足：当前 activeVehicle 由 FirmwarePlugin 识别为 Flight SIL；用户当前单选 profile 为 SIM_ONLY / SIL_ONLY / hardwareEligible=false；参数名/domain/family/variant/controlLaw 与注册表匹配；tuningPolicy 为 GROUND_ADJUSTABLE，updatePolicy 为受支持的在线确认策略；链路正常、参数完整就绪、无待处理写入；飞行器已解除锁定且未飞行；参数不是只读/只写项。
 - 目标值先经 Fact 元数据范围/类型校验，再通过 Fact::setCookedValue 进入原有 ParameterManager PARAM_SET 流程；只有收到匹配参数的 PARAM_VALUE 确认才标记应用成功。
 - confirmedValue 只从 Fact 的 vehicleUpdated（飞控回传）更新，不把 UI 乐观目标值冒充当前确认值；失败后要求回读确认实际值，失败后的下一次写入必须先完成回读。
 - “回读验证”使用 ParameterManager 的单参数 refresh 路径；“恢复上一次”只恢复当前会话内该参数上一次已确认的值，并重新经过相同资格检查、范围校验、写入确认。
