@@ -20,6 +20,8 @@ SetupPage {
                                         ? _telemetry.familyReceiveAgeMs : ({})
     readonly property var _sensorStatuses: _ageRefreshTick >= 0 && _telemetry
                                            ? _telemetry.sensorHealthStatuses : []
+    readonly property var _prearmChecks: _ageRefreshTick >= 0 && _telemetry
+                                          ? _telemetry.prearmChecks : []
     readonly property var _linkStatuses: _ageRefreshTick >= 0 && _telemetry
                                          ? _telemetry.linkStatuses : []
     readonly property var _resourceStatuses: _ageRefreshTick >= 0 && _telemetry
@@ -234,18 +236,49 @@ SetupPage {
         return _resourceMetricText("cpuLoadPermille", 2, 1, " %")
     }
     function _prearmSummaryText() {
-        if (_familyStatus("prearmAvailable") !== qsTr("已接收")) return _familyStatus("prearmAvailable")
-        const checks = _telemetry ? _telemetry.prearmChecks : []
+        const familyStatus = _familyStatus("prearmAvailable")
+        const checks = _prearmChecks
+        if (checks.length === 0) return familyStatus
+        if (familyStatus !== qsTr("已接收")) return qsTr("%1 · 最近 %2 项").arg(familyStatus).arg(checks.length)
+        let fresh = 0, stale = 0, waiting = 0
         let passed = 0, warnings = 0, failed = 0, unknown = 0
         for (let index = 0; index < checks.length; ++index) {
-            switch (Number(checks[index].checkState)) {
+            const check = checks[index]
+            const status = _prearmCheckStatus(check)
+            if (status !== qsTr("已接收")) {
+                if (status === qsTr("数据超时")) ++stale
+                else ++waiting
+                continue
+            }
+            ++fresh
+            switch (Number(check.checkState)) {
             case 1: ++passed; break
             case 2: ++failed; break
             case 3: ++warnings; break
             default: ++unknown; break
             }
         }
-        return qsTr("%1 通过 · %2 警告 · %3 失败 · %4 未知").arg(passed).arg(warnings).arg(failed).arg(unknown)
+        if (stale > 0 || waiting > 0) {
+            return qsTr("%1 有效 · %2 待更新 · %3 通过 · %4 警告 · %5 失败")
+                    .arg(fresh).arg(stale + waiting).arg(passed).arg(warnings).arg(failed)
+        }
+        return qsTr("%1 通过 · %2 警告 · %3 失败 · %4 未知")
+                .arg(passed).arg(warnings).arg(failed).arg(unknown)
+    }
+    function _prearmCheckCoverageText() {
+        const checks = _prearmChecks
+        const familyStatus = _familyStatus("prearmAvailable")
+        if (checks.length === 0) return familyStatus
+        let fresh = 0, stale = 0, waiting = 0
+        for (let index = 0; index < checks.length; ++index) {
+            const status = _prearmCheckStatus(checks[index])
+            if (status === qsTr("已接收")) ++fresh
+            else if (status === qsTr("数据超时")) ++stale
+            else ++waiting
+        }
+        const missing = Math.max(0, 15 - checks.length)
+        return qsTr("%1 / 15 有效 · %2 超时 · %3 未收到")
+                .arg(fresh).arg(stale).arg(waiting + missing)
     }
     function _latestEventSummaryText() {
         if (_familyStatus("eventAvailable") !== qsTr("已接收")) return _familyStatus("eventAvailable")
@@ -672,6 +705,59 @@ SetupPage {
         default: return "#8A9A94"
         }
     }
+    function _freshnessStatusColor(status) {
+        if (status === qsTr("已接收")) return "#45D39A"
+        if (status === qsTr("数据超时")) return "#F0B94B"
+        return "#8A9A94"
+    }
+    function _sensorInstanceStatus(item) {
+        const familyStatus = _familyStatus("sensorHealthAvailable")
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        if (!item) return qsTr("未上报")
+        const ageMs = Number(item.receiveAgeMs)
+        if (!Number.isFinite(ageMs) || ageMs < 0) return qsTr("等待遥测")
+        return ageMs > _familyFreshnessLimitMs("sensorHealth") ? qsTr("数据超时") : qsTr("已接收")
+    }
+    function _sensorInstanceHealthText(item) {
+        const stateText = _enumValue(item ? item.healthState : 0,
+                                     [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"),
+                                      qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")])
+        const status = _sensorInstanceStatus(item)
+        return status === qsTr("已接收") ? stateText : qsTr("%1 · 最近状态：%2").arg(status).arg(stateText)
+    }
+    function _sensorInstanceHealthColor(item) {
+        const status = _sensorInstanceStatus(item)
+        return status === qsTr("已接收")
+               ? _sensorHealthColor(item.healthState, item.receiveAgeMs)
+               : _freshnessStatusColor(status)
+    }
+    function _sensorInstanceActionText(item) {
+        return _sensorInstanceStatus(item) === qsTr("已接收")
+               ? qsTr("动作 %1").arg(item.action) : qsTr("最近动作 %1").arg(item.action)
+    }
+    function _sensorInstanceDetailsText(item) {
+        const status = _sensorInstanceStatus(item)
+        const reason = _reasonText(0, item.reasonCode)
+        if (status === qsTr("已接收")) {
+            return qsTr("原因：%1 · 间隙 %2 / 拒绝 %3")
+                    .arg(reason).arg(item.gapCount).arg(item.rejectCount)
+        }
+        return qsTr("最近上报（%1）：原因 %2 · 间隙 %3 / 拒绝 %4")
+                .arg(status).arg(reason).arg(item.gapCount).arg(item.rejectCount)
+    }
+    function _sensorCoverageText() {
+        const statuses = _sensorStatuses
+        if (statuses.length === 0) return _familyStatus("sensorHealthAvailable")
+        let fresh = 0, stale = 0, waiting = 0
+        for (let index = 0; index < statuses.length; ++index) {
+            const status = _sensorInstanceStatus(statuses[index])
+            if (status === qsTr("已接收")) ++fresh
+            else if (status === qsTr("数据超时")) ++stale
+            else ++waiting
+        }
+        return qsTr("%1 / 4 有效 · %2 超时 · %3 等待")
+                .arg(fresh).arg(stale).arg(waiting + Math.max(0, 4 - statuses.length))
+    }
 
     function _linkStateColor(state, receiveAgeMs) {
         const familyStatus = _familyStatus("linkAvailable")
@@ -694,17 +780,38 @@ SetupPage {
         }
     }
 
-    function _prearmStateColor(state) {
+    function _prearmCheckStatus(item) {
         const familyStatus = _familyStatus("prearmAvailable")
-        if (familyStatus !== qsTr("已接收")) {
-            return _familyStatusColor("prearmAvailable")
-        }
-        switch (Number(state)) {
+        if (familyStatus !== qsTr("已接收")) return familyStatus
+        if (!item) return qsTr("未上报")
+        const ageMs = Number(item.receiveAgeMs)
+        if (!Number.isFinite(ageMs) || ageMs < 0) return qsTr("等待遥测")
+        return ageMs > _familyFreshnessLimitMs("prearm") ? qsTr("数据超时") : qsTr("已接收")
+    }
+    function _prearmCheckResultText(item) {
+        const result = _enumValue(item ? item.checkState : 0,
+                                  [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")])
+        const status = _prearmCheckStatus(item)
+        return status === qsTr("已接收") ? result : qsTr("%1 · 最近结果：%2").arg(status).arg(result)
+    }
+    function _prearmCheckStateColor(item) {
+        const status = _prearmCheckStatus(item)
+        if (status !== qsTr("已接收")) return _freshnessStatusColor(status)
+        switch (Number(item.checkState)) {
         case 1: return "#45D39A"
         case 2: return "#F06464"
         case 3: return "#F0B94B"
         default: return "#8A9A94"
         }
+    }
+    function _prearmCheckDetailsText(item) {
+        const status = _prearmCheckStatus(item)
+        const reason = _reasonText(item.reasonNamespace, item.reasonCode)
+        const recovery = _enumValue(item.recoveryCondition,
+                                    [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"),
+                                     qsTr("本地维护"), qsTr("显式新请求")])
+        if (status === qsTr("已接收")) return qsTr("%1 · 恢复条件：%2").arg(reason).arg(recovery)
+        return qsTr("最近上报（%1）：%2 · 恢复条件：%3").arg(status).arg(reason).arg(recovery)
     }
 
     function _rcLinkStateColor(state) {
@@ -2646,9 +2753,8 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("消息"); valueText: root._familyStatus("sensorHealthAvailable") }
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("sensorHealth") }
                     TelemetryRow {
-                        labelText: qsTr("传感器实例")
-                        valueText: root._fact("sensorHealthAvailable") && root._telemetry
-                                   ? String(root._sensorStatuses.length) + " / 4" : qsTr("未上报")
+                        labelText: qsTr("实例新鲜度")
+                        valueText: root._sensorCoverageText()
                     }
                     QGCLabel {
                         Layout.fillWidth: true
@@ -2668,19 +2774,21 @@ SetupPage {
                                     text: qsTr("传感器实例 %1").arg(modelData.sensorInstanceId)
                                 }
                                 QGCLabel {
+                                    objectName: "flightTelemetry_sensorInstanceState_" + modelData.sensorInstanceId
                                     Layout.fillWidth: true
-                                    text: root._enumValue(modelData.healthState, [qsTr("未知"), qsTr("初始化"), qsTr("健康"), qsTr("可疑"), qsTr("降级"), qsTr("隔离"), qsTr("故障"), qsTr("恢复观察")])
-                                    color: root._sensorHealthColor(modelData.healthState, modelData.receiveAgeMs)
+                                    text: root._sensorInstanceHealthText(modelData)
+                                    color: root._sensorInstanceHealthColor(modelData)
                                 }
-                                QGCLabel { text: qsTr("动作 %1").arg(modelData.action) }
+                                QGCLabel {
+                                    objectName: "flightTelemetry_sensorInstanceAction_" + modelData.sensorInstanceId
+                                    text: root._sensorInstanceActionText(modelData)
+                                }
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_sensorInstanceDetails_" + modelData.sensorInstanceId
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
-                                text: qsTr("原因：%1 · 间隙 %2 / 拒绝 %3")
-                                      .arg(root._reasonText(0, modelData.reasonCode))
-                                      .arg(modelData.gapCount)
-                                      .arg(modelData.rejectCount)
+                                text: root._sensorInstanceDetailsText(modelData)
                             }
                             QGCLabel {
                                 Layout.fillWidth: true
@@ -2795,20 +2903,23 @@ SetupPage {
                     TelemetryRow { labelText: qsTr("地面站接收年龄"); valueText: root._receiveAgeText("prearm") }
                     TelemetryRow { labelText: qsTr("检查代次"); valueText: root._integer("prearmCheckEpoch") }
                     TelemetryRow {
-                        labelText: qsTr("已接收检查项")
-                        valueText: root._fact("prearmAvailable") && root._telemetry
-                                   ? String(root._telemetry.prearmChecks.length) + " / 15" : qsTr("未上报")
+                        labelText: qsTr("检查项新鲜度")
+                        valueText: root._prearmCheckCoverageText()
                     }
                     TelemetryRow { labelText: qsTr("适用模式掩码"); valueText: root._mask("prearmModeMask") }
-                    TelemetryRow { labelText: qsTr("最新检查原因"); valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode")) }
+                    TelemetryRow {
+                        labelText: root._familyStatus("prearmAvailable") === qsTr("已接收")
+                                   ? qsTr("最新检查原因") : qsTr("最近检查原因")
+                        valueText: root._reasonText(root._fact("prearmReasonNamespace"), root._fact("prearmReasonCode"))
+                    }
                     TelemetryRow { labelText: qsTr("FCU 发布时间（启动后）"); valueText: root._timestamp("prearmTimeBootUs") }
                     QGCLabel {
                         Layout.fillWidth: true
-                        visible: !root._telemetry || root._telemetry.prearmChecks.length === 0
+                        visible: root._prearmChecks.length === 0
                         text: qsTr("当前检查代次暂无逐项结果")
                     }
                     Repeater {
-                        model: root._telemetry ? root._telemetry.prearmChecks : []
+                        model: root._prearmChecks
                         delegate: RowLayout {
                             required property var modelData
                             Layout.fillWidth: true
@@ -2818,16 +2929,18 @@ SetupPage {
                                 text: root._enumValue(modelData.checkId, [qsTr("平台就绪"), qsTr("IMU 就绪"), qsTr("姿态估计"), qsTr("位置估计"), qsTr("RC 输入"), qsTr("执行器输出"), qsTr("电池能量"), qsTr("气压高度"), qsTr("GNSS / Home / Origin"), qsTr("罗盘航向"), qsTr("控制模型"), qsTr("控制求解器"), qsTr("安全包线"), qsTr("地理围栏"), qsTr("存储与事件日志")])
                             }
                             QGCLabel {
-                                Layout.preferredWidth: 56
-                                text: root._enumValue(modelData.checkState, [qsTr("未知"), qsTr("通过"), qsTr("失败"), qsTr("警告")])
-                                color: root._prearmStateColor(modelData.checkState)
+                                objectName: "flightTelemetry_prearmCheckState_" + modelData.checkId
+                                Layout.preferredWidth: 150
+                                wrapMode: Text.WordWrap
+                                text: root._prearmCheckResultText(modelData)
+                                color: root._prearmCheckStateColor(modelData)
                             }
                             QGCLabel {
+                                objectName: "flightTelemetry_prearmCheckDetails_" + modelData.checkId
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
                                 wrapMode: Text.WordWrap
-                                text: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
-                                      + " · " + qsTr("恢复条件：%1").arg(root._enumValue(modelData.recoveryCondition, [qsTr("无"), qsTr("等待新样本"), qsTr("地面重新校准"), qsTr("本地维护"), qsTr("显式新请求")]))
+                                text: root._prearmCheckDetailsText(modelData)
                             }
                         }
                     }

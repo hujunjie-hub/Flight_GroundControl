@@ -1,6 +1,6 @@
 # 飞控诊断高级大屏设计规范
 
-- 版本：6.3
+- 版本：6.4
 - 日期：2026-11-15
 - 状态：四页主体与应用外壳已实现；导航时序页已补充 FCU UTC 绝对时间、freshness 门控、无效断点与状态颜色；总览总控、飞行健康、遥控与链路页适配已完成；集中 CI 与像素级截图/DPI 验收后置
 - 适用仓库：`hujunjie-hub/Flight_GroundControl`
@@ -625,3 +625,13 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - UTC 不确定度与 UTC 时间戳采用同一状态颜色门控，避免 time family 新鲜但 UTC 无效时仍显示绿色。
 - UI Integration 验证 UTC 有效、无效、恢复三态的文字和颜色，并继续验证 UTC 绝对时间与时间趋势断点。
 - 仅修改 GroundControl 展示层、UI Integration 断言与 SPEC，不修改协议、FactGroup、时间服务或飞控逻辑；本轮 CI 仍后置集中执行。
+
+
+## 36. Phase 2.7 传感器与解锁前检查逐实例新鲜度（2026-11-15）
+
+- 传感器实例状态、动作、原因和 gap/reject 计数明确区分当前有效值与最近一次上报值；实例超过 sensorHealth freshness 窗口后显示「数据超时 · 最近状态：…」，原因/动作改为「最近上报」，保留诊断上下文但不冒充当前状态。
+- 传感器实例覆盖率只将 family 与实例 receiveAgeMs 均新鲜的数据计为有效，并单独显示超时和等待实例数；不再把已缓存实例数量直接等同于当前健康实例数。
+- FCU_PREARM_STATUS 按 checkId 独立记录本地 receiveElapsedMs；FactGroup getter 动态导出 receiveAgeMs，QML 使用既有 500 ms age tick 刷新逐项年龄，不新增定时器或通信轮询。
+- 解锁前检查每项独立执行 prearm freshness 门控；过期结果显示「数据超时 · 最近结果：通过/失败/警告」，原因与恢复条件明确标注为最近上报；摘要与覆盖率只统计当前新鲜项，分别报告超时和未收到项。
+- MockLink Integration 注入真实 FCU_SENSOR_HEALTH 与 FCU_PREARM_STATUS 帧，验证 per-instance/per-check receiveAgeMs、fresh/stale 文案、健康/通过结果、原因与恢复条件、1/4 传感器覆盖率和 1/15 预检覆盖率。
+- 本阶段仅调整 GroundControl 接收时间记录与飞行健康页展示；不改变 MAVLink 字段、飞控检查判定、预检恢复条件、安全权限、传感器健康策略或其他三个诊断页面。

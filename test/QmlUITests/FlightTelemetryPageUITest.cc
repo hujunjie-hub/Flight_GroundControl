@@ -631,6 +631,43 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                 mockLink->respondWithMavlinkMessage(message);
             };
 
+            auto sendSensorHealthStatus = [&](uint64_t timeBootUs, uint32_t sensorInstanceId,
+                                               uint16_t healthState, uint32_t reasonCode) {
+                mavlink_fcu_sensor_health_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.sensor_instance_id = sensorInstanceId;
+                payload.policy_epoch = 1;
+                payload.health_state = healthState;
+                payload.action = 1;
+                payload.reason_code = reasonCode;
+                payload.gap_count = 2;
+                payload.reject_count = 3;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_sensor_health_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
+            auto sendPrearmStatus = [&](uint64_t timeBootUs, uint32_t checkEpoch, uint16_t checkId,
+                                        uint8_t checkState, uint16_t recoveryCondition) {
+                mavlink_fcu_prearm_status_t payload{};
+                payload.time_boot_us = timeBootUs;
+                payload.boot_id = bootId;
+                payload.profile_id = profileId;
+                payload.check_epoch = checkEpoch;
+                payload.evidence_time_us = timeBootUs;
+                payload.check_id = checkId;
+                payload.check_state = checkState;
+                payload.mode_mask = 0xFFFFFFFFU;
+                payload.reason_namespace = 0;
+                payload.reason_code = 0;
+                payload.recovery_condition = recoveryCondition;
+                mavlink_message_t message{};
+                mavlink_msg_fcu_prearm_status_encode(systemId, componentId, &message, &payload);
+                mockLink->respondWithMavlinkMessage(message);
+            };
+
             auto sendInvalidStorageStatus = [&](uint64_t timeBootUs) {
                 mavlink_fcu_storage_status_t payload{};
                 payload.time_boot_us = timeBootUs;
@@ -1273,6 +1310,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QTRY_COMPARE_WITH_TIMEOUT(trend->property("valueKey").toString(), trendKeys[index][trendIndex], 3000);
                 }
             }
+            sendSensorHealthStatus(1700, 1, 2, 0);
+            sendPrearmStatus(1800, 1, 1, 1, 0);
             QQuickItem* healthTab = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
             QVERIFY(healthTab);
             QVERIFY(_clickItemAt(healthTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
@@ -1282,6 +1321,18 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* healthMatrixPanel = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthPageMatrix"), 3000);
             QQuickItem* healthSafety = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthSafety"), 3000);
             QQuickItem* healthHeadline = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_healthHeadline"), 3000);
+            QQuickItem* sensorPrimary = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthPrimary_sensorHealth"), 3000);
+            QQuickItem* prearmPrimary = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthPrimary_prearm"), 3000);
+            QQuickItem* sensorState = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceState_1"), 3000);
+            QQuickItem* sensorDetails = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_sensorInstanceDetails_1"), 3000);
+            QQuickItem* prearmState = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_prearmCheckState_1"), 3000);
+            QQuickItem* prearmDetails = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_prearmCheckDetails_1"), 3000);
             QQuickItem* actuatorPrimary = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_healthPrimary_actuator"), 3000);
             QQuickItem* safetyActuatorMask = findVisibleItem(
@@ -1305,6 +1356,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(healthMatrixPanel);
             QVERIFY(healthSafety);
             QVERIFY(healthHeadline);
+            QVERIFY(sensorPrimary);
+            QVERIFY(prearmPrimary);
+            QVERIFY(sensorState);
+            QVERIFY(sensorDetails);
+            QVERIFY(prearmState);
+            QVERIFY(prearmDetails);
             QVERIFY(actuatorPrimary);
             QVERIFY(safetyActuatorMask);
             QVERIFY(healthOverviewBadge);
@@ -1324,6 +1381,77 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       translatedTelemetryText("遥测域概览"), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthHeadline->property("color").value<QColor>(),
                                       QColor("#E2ECEF"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(sensorPrimary->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmPrimary->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(sensorState->property("text").toString(),
+                                      translatedTelemetryText("健康"), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmState->property("text").toString(),
+                                      translatedTelemetryText("通过"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(sensorDetails->property("text").toString().contains(
+                                         translatedTelemetryText("原因：")), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(prearmDetails->property("text").toString().contains(
+                                         translatedTelemetryText("恢复条件：")), 3000);
+
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_sensorStatuses").toList().size(), 1, 3000);
+            const QVariantList sensorStatusRecords = page->property("_sensorStatuses").toList();
+            QVERIFY(sensorStatusRecords.first().toMap().contains(QStringLiteral("receiveAgeMs")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_prearmChecks").toList().size(), 1, 3000);
+            const QVariantList prearmCheckRecords = page->property("_prearmChecks").toList();
+            QVERIFY(prearmCheckRecords.first().toMap().contains(QStringLiteral("receiveAgeMs")));
+
+            const QVariantMap staleSensorSample{
+                {QStringLiteral("healthState"), 2}, {QStringLiteral("receiveAgeMs"), 6000}};
+            QVariant staleSensorText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_sensorInstanceHealthText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, staleSensorText),
+                                              Q_ARG(QVariant, QVariant::fromValue(staleSensorSample))));
+            QVERIFY(staleSensorText.toString().contains(staleText));
+            QVERIFY(staleSensorText.toString().contains(translatedTelemetryText("最近状态")));
+            QVERIFY(staleSensorText.toString().contains(translatedTelemetryText("健康")));
+
+            const QVariantMap stalePrearmSample{
+                {QStringLiteral("checkState"), 1}, {QStringLiteral("receiveAgeMs"), 1500}};
+            QVariant stalePrearmText;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmCheckResultText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, stalePrearmText),
+                                              Q_ARG(QVariant, QVariant::fromValue(stalePrearmSample))));
+            QVERIFY(stalePrearmText.toString().contains(staleText));
+            QVERIFY(stalePrearmText.toString().contains(translatedTelemetryText("最近结果")));
+            QVERIFY(stalePrearmText.toString().contains(translatedTelemetryText("通过")));
+
+            QTRY_VERIFY_WITH_TIMEOUT(
+                page->property("_prearmChecks").toList().first().toMap()
+                    .value(QStringLiteral("receiveAgeMs")).toInt() > 1050, 2500);
+            sendPrearmStatus(1900, 1, 2, 1, 0);
+            QTRY_COMPARE_WITH_TIMEOUT(prearmPrimary->property("statusText").toString(), receivedText, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_prearmChecks").toList().size(), 2, 3000);
+            QQuickItem* stalePrearmState = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_prearmCheckState_1"), 3000);
+            QQuickItem* freshPrearmState = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_prearmCheckState_2"), 3000);
+            QQuickItem* stalePrearmDetails = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_prearmCheckDetails_1"), 3000);
+            QVERIFY(stalePrearmState);
+            QVERIFY(freshPrearmState);
+            QVERIFY(stalePrearmDetails);
+            QTRY_VERIFY_WITH_TIMEOUT(stalePrearmState->property("text").toString().contains(staleText), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(stalePrearmState->property("text").toString().contains(
+                                         translatedTelemetryText("最近结果")), 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(freshPrearmState->property("text").toString(),
+                                      translatedTelemetryText("通过"), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(stalePrearmDetails->property("text").toString().contains(
+                                         translatedTelemetryText("最近上报")), 3000);
+
+            QVariant prearmCoverage;
+            QVERIFY(QMetaObject::invokeMethod(page, "_prearmCheckCoverageText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, prearmCoverage)));
+            QCOMPARE(prearmCoverage.toString(),
+                     translatedTelemetryText("%1 / 15 有效 · %2 超时 · %3 未收到").arg(1).arg(1).arg(13));
+            QVariant sensorCoverage;
+            QVERIFY(QMetaObject::invokeMethod(page, "_sensorCoverageText", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, sensorCoverage)));
+            QCOMPARE(sensorCoverage.toString(),
+                     translatedTelemetryText("%1 / 4 有效 · %2 超时 · %3 等待").arg(1).arg(0).arg(3));
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthMatrixPanel->y(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(healthOverview->y(), healthSafety->y(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(healthOverview->x() < healthMatrixPanel->x(), 3000);

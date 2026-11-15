@@ -199,10 +199,15 @@ QVariantList FlightTelemetryFactGroup::recentEvents() const
 
 QVariantList FlightTelemetryFactGroup::prearmChecks() const
 {
+    const qint64 nowMs = _receiveClock.elapsed();
     QVariantList checks;
     checks.reserve(_prearmChecksById.size());
     for (auto it = _prearmChecksById.cbegin(); it != _prearmChecksById.cend(); ++it) {
-        checks.append(it.value());
+        QVariantMap check = it.value();
+        const qint64 receivedAtMs = check.take(QStringLiteral("receiveElapsedMs")).toLongLong();
+        check.insert(QStringLiteral("receiveAgeMs"),
+                     receivedAtMs < 0 ? -1 : qMax<qint64>(0, nowMs - receivedAtMs));
+        checks.append(check);
     }
     return checks;
 }
@@ -941,6 +946,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         check.insert(QStringLiteral("checkEpoch"), value.check_epoch);
         check.insert(QStringLiteral("evidenceTimeUs"), QVariant::fromValue<qulonglong>(value.evidence_time_us));
         check.insert(QStringLiteral("timeBootUs"), QVariant::fromValue<qulonglong>(value.time_boot_us));
+        check.insert(QStringLiteral("receiveElapsedMs"), _receiveClock.elapsed());
         _prearmChecksById.insert(value.check_id, check);
         emit prearmChecksChanged();
 
