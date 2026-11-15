@@ -188,12 +188,12 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             supportedUpdatePolicies().contains(updatePolicy) &&
             entry.value(QStringLiteral("readOnly")).isBool() &&
             entry.value(QStringLiteral("readOnly")).toBool() == (tuningPolicy == QStringLiteral("READ_ONLY"));
-        const bool validRebootPolicy =
-            (entry.contains(QStringLiteral("rebootRequired")) &&
-             entry.value(QStringLiteral("rebootRequired")).isBool())
-                ? (entry.value(QStringLiteral("rebootRequired")).toBool()
-                       == (updatePolicy == QStringLiteral("REBOOT_REQUIRED")))
-                : (updatePolicy != QStringLiteral("REBOOT_REQUIRED"));
+        const bool hasRebootRequirement = entry.contains(QStringLiteral("rebootRequired"));
+        const QJsonValue rebootRequirement = entry.value(QStringLiteral("rebootRequired"));
+        const bool validRebootPolicy = hasRebootRequirement
+            ? (rebootRequirement.isBool() &&
+               rebootRequirement.toBool() == (updatePolicy == QStringLiteral("REBOOT_REQUIRED")))
+            : (updatePolicy != QStringLiteral("REBOOT_REQUIRED"));
 
         if (!validApplicability || !validPolicy || !validRebootPolicy ||
             !validNumericField(entry, QStringLiteral("min")) ||
