@@ -1029,7 +1029,7 @@ SetupPage {
         ColumnLayout {
             objectName: "flightTelemetry_contentRoot"
             width: availableWidth
-            spacing: 10
+            spacing: 12
 
             Rectangle {
                 objectName: "flightTelemetry_dashboardHeader"
@@ -1213,7 +1213,7 @@ SetupPage {
                 objectName: "flightTelemetry_summaryBand"
                 Layout.fillWidth: true
                 implicitHeight: summaryGrid.implicitHeight + 2
-                radius: 6
+                radius: 8
                 color: "#06232B"
                 border.width: 1
                 border.color: "#0B6873"
@@ -2648,8 +2648,8 @@ SetupPage {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
         implicitWidth: 300
-        implicitHeight: heroColumn.implicitHeight + 22
-        radius: 6
+        implicitHeight: heroColumn.implicitHeight + 20
+        radius: 8
         color: "#06232B"
         border.width: 1
         border.color: "#0B6873"
@@ -2667,7 +2667,7 @@ SetupPage {
         ColumnLayout {
             id: heroColumn
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: 9
             spacing: 7
 
             RowLayout {
@@ -2717,7 +2717,7 @@ SetupPage {
             ColumnLayout {
                 id: bodyColumn
                 Layout.fillWidth: true
-                spacing: 9
+                spacing: 7
             }
         }
     }
