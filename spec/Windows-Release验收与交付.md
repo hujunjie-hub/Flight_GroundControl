@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.71
+版本：4.72
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -693,8 +693,8 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 ### G15 Phase 2.53 飞行健康页高 DPI 与窄屏细节优化（2026-11-15）
 
-- 传感器实例头部在 760 px 及以上为编号/状态/动作同一行，760 px 以下为编号与状态并排、动作占满第二行。
+- 传感器实例头部在 760 px 及以上为编号/状态/动作同一行，759 px 及以下为编号与状态并排、动作占满第二行；UI 回归精确覆盖 760/759 px。
 - 资源 WCET、栈剩余、截止期错过、AXI 四项指标共用 ScreenTools 缩放的 ResourceMetricTile；内边距、间距、最小高度跟随字体像素高度，数值使用 secondary 字号并允许换行。
 - 预检检查项名称/结果/说明采用一致的 ScreenTools 字体层级和缩放间距。
-- MockLink UI Integration 验证 1600/1000/900/700/400 px 传感器头部重排、四项指标卡片与值标签的父子边界；新增断言未运行。
+- MockLink UI Integration 验证 1600/1000/900/760/759/700/400 px 传感器头部重排、四项指标卡片与值标签的父子边界；新增断言未运行。
 - 按用户要求不运行 CI/Unit/Integration/Windows Release；新增回归保持 NOT_RUN，待集中验收。
