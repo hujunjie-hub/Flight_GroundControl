@@ -2946,6 +2946,49 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(primaryGrid), 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(detailGrid), 3000);
                 QTRY_VERIFY_WITH_TIMEOUT(pageTrendCanvas->height() >= 64, 3000);
+                if (pageIndex == 2) {
+                    QQuickItem* navigationTimelinePanel = findVisibleItem(
+                        _rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000);
+                    QQuickItem* navigationTimeline = findVisibleItem(
+                        _rootItem, QStringLiteral("flightTelemetry_navigationTimeline"), 3000);
+                    QQuickItem* navigationTimelineRows[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"), 3000)};
+                    QQuickItem* navigationTimelineOrders[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_navigation"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_time"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_order_event"), 3000)};
+                    QQuickItem* navigationTimelineValues[] = {
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_navigation"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"), 3000),
+                        findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"), 3000)};
+                    QVERIFY(navigationTimelinePanel);
+                    QVERIFY(navigationTimeline);
+                    const qreal rowHeight = page->property("_navigationTimelineRowHeight").toReal();
+                    const qreal rowPitch = page->property("_navigationTimelineRowPitch").toReal();
+                    const qreal timelineHeight = page->property("_navigationTimelineHeight").toReal();
+                    QTRY_VERIFY_WITH_TIMEOUT(navigationTimeline->height() + 1.0 >= timelineHeight, 3000);
+                    const auto compactTimelineRowFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
+                        const auto topLeft = row->mapToItem(panel, 0, 0);
+                        return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                               topLeft.x() + row->width() <= panel->width() + 1.0 &&
+                               topLeft.y() + row->height() <= panel->height() + 1.0;
+                    };
+                    for (int rowIndex = 0; rowIndex < 3; ++rowIndex) {
+                        QVERIFY(navigationTimelineRows[rowIndex]);
+                        QVERIFY(navigationTimelineOrders[rowIndex]);
+                        QVERIFY(navigationTimelineValues[rowIndex]);
+                        const int order = navigationTimelineOrders[rowIndex]->property("text").toString().toInt() - 1;
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationTimelineRows[rowIndex]->height() - rowHeight) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(qAbs(navigationTimelineRows[rowIndex]->y() - order * rowPitch) < 1.0, 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationTimelineValues[rowIndex]->width() + 1.0 >=
+                                navigationTimelineValues[rowIndex]->implicitWidth(), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            compactTimelineRowFitsInPanel(navigationTimelineRows[rowIndex], navigationTimelinePanel), 3000);
+                    }
+                }
             }
             QQuickItem* compactOverviewTab = findVisibleItem(
                 _rootItem, QStringLiteral("flightTelemetry_visualTab_0"), 3000);
@@ -3220,7 +3263,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QVERIFY(timeSourceMappingEpoch);
                     QTRY_COMPARE_WITH_TIMEOUT(navigationChecksDomains->property("columns").toInt(), 2, 3000);
                     QTRY_VERIFY_WITH_TIMEOUT(!navigationChecksBadge->isVisible(), 3000);
-                    QTRY_VERIFY_WITH_TIMEOUT(navigationTimeline->height() >= 114, 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(
+                        navigationTimeline->height() + 1.0 >= page->property("_navigationTimelineHeight").toReal(), 3000);
                     const auto timelineRowFitsInPanel = [](QQuickItem* row, QQuickItem* panel) {
                         const auto topLeft = row->mapToItem(panel, 0, 0);
                         return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
@@ -4123,6 +4167,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_navigation"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"), 3000)};
+                        QQuickItem* navigationTimelineAtWidth = findVisibleItem(
+                            _rootItem, QStringLiteral("flightTelemetry_navigationTimeline"), 3000);
+                        QVERIFY(navigationTimelineAtWidth);
+                        const qreal timelineRowHeight = page->property("_navigationTimelineRowHeight").toReal();
+                        const qreal timelineRowPitch = page->property("_navigationTimelineRowPitch").toReal();
+                        QTRY_VERIFY_WITH_TIMEOUT(
+                            navigationTimelineAtWidth->height() + 1.0 >=
+                                page->property("_navigationTimelineHeight").toReal(), 3000);
                         for (int rowIndex = 0; rowIndex < 3; ++rowIndex) {
                             QVERIFY(timelineRows[rowIndex]);
                             QVERIFY(timelineOrders[rowIndex]);
@@ -4144,6 +4196,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineOrders[rowIndex], timelineRows[rowIndex]), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineLabels[rowIndex], timelineRows[rowIndex]), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(timelineItemFitsInRow(timelineValues[rowIndex], timelineRows[rowIndex]), 3000);
+                            const int timelineOrder = timelineOrders[rowIndex]->property("text").toString().toInt() - 1;
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(timelineRows[rowIndex]->height() - timelineRowHeight) < 1.0, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(timelineRows[rowIndex]->y() - timelineOrder * timelineRowPitch) < 1.0, 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(timelineTextColumnsDoNotOverlap(
                                                          timelineLabels[rowIndex], timelineValues[rowIndex], timelineRows[rowIndex]), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
