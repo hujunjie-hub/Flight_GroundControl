@@ -3263,11 +3263,15 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->x() < rcPanels[1]->x(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->width() >= grid->width() * 0.45 &&
                                                          rcPanels[1]->width() >= grid->width() * 0.45, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(rcPanels[0]->width() - rcPanels[1]->width()) < 1.0, 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[0]->y() < rcPanels[2]->y(), 3000);
                             QTRY_COMPARE_WITH_TIMEOUT(rcPanels[2]->y(), rcPanels[3]->y(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[2]->x() < rcPanels[3]->x(), 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(rcPanels[2]->width() >= grid->width() * 0.60 &&
                                                          rcPanels[3]->width() >= grid->width() * 0.25, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(rcPanels[2]->width() / rcPanels[3]->width() > 1.9 &&
+                                                         rcPanels[2]->width() / rcPanels[3]->width() < 2.1, 3000);
                             QTRY_COMPARE_WITH_TIMEOUT(axesGridAtWidth->property("columns").toInt(), 2, 3000);
                         } else {
                             for (int panelIndex = 1; panelIndex < 4; ++panelIndex) {
