@@ -2402,6 +2402,9 @@ SetupPage {
                             required property var modelData
                             required property int index
                             readonly property bool isPrimary: index === 0
+                            readonly property bool severityKnown: Number.isInteger(Number(modelData.severity)) &&
+                                                                   Number(modelData.severity) >= 0 &&
+                                                                   Number(modelData.severity) <= 3
                             readonly property color severityColor: root._eventSeverityColor(modelData.severity)
                             readonly property string reasonText: root._reasonText(modelData.reasonNamespace, modelData.reasonCode)
                             objectName: "flightTelemetry_alarmEventCard_" + modelData.sequence
@@ -2471,7 +2474,7 @@ SetupPage {
                                         QGCLabel {
                                             objectName: "flightTelemetry_alarmEventPrimaryTag_" + modelData.sequence
                                             visible: alarmEventCard.isPrimary
-                                            text: qsTr("最高优先级")
+                                            text: alarmEventCard.severityKnown ? qsTr("最高优先级") : qsTr("严重度未知")
                                             color: alarmEventCard.severityColor
                                             font.pointSize: ScreenTools.microFontPointSize
                                             font.weight: ScreenTools.strongFontWeight
