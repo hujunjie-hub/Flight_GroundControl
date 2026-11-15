@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.74
+版本：4.75
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -705,3 +705,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 保持左/中/右宽度顺序 3/4/5，12 列桌面结构不因纵向密度模式改变；同时验证 1672×1100 标准垂直模式恢复。
 - 在同一 1672×941 紧凑模式下依次切换总览、飞行健康、导航时序、遥控与链路，逐页断言主视觉网格与详情网格为 12 列、趋势网格为 4 列、共享间距与紧凑 token 一致、趋势绘图区至少 64 px；最后恢复总览页。
 - 该断言与 1672×941 垂直密度、页签、趋势绘图区和详情标题保留断言共同执行；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
+
+
+### G15 连续多次 FCU 重启退役会话隔离（2026-11-15）
+
+- 使用 MockLink 连续发送 12 个不同 Boot ID 的 FCU_NAV_STATUS，逐个建立新会话，时间戳每次从低值重新开始。
+- 随后按旧会话顺序重放前 11 个 Boot ID，故意使用大于当前会话的 FCU 时间戳；所有退役会话帧必须被拒绝，当前导航时间戳不得回滚或切换。
+- 验证最后一个活动 Boot ID 仍可正常更新；退役集合保持 64 个 ID 的有界容量。
+- 事件域与 BUILD_INFO 域仍需通过各自首包触发 epoch 切换，并拒绝退役会话的事件/构建分块。
+- 本轮按用户要求不运行 CI/Unit/Integration/Windows Release；集中验收时执行 exact-HEAD 完整回归。
