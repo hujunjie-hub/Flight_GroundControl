@@ -655,6 +655,7 @@ void FlightTelemetryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_mes
         _solverStatus.setRawValue(value.solver_status);
         _controlAvailable.setRawValue(true);
         _setTelemetryAvailable(true);
+        emit controlStatusUpdated();
         break;
     }
     case MAVLINK_MSG_ID_FCU_ACTUATOR_STATUS: {
