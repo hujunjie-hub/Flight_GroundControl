@@ -236,47 +236,106 @@ bool ParameterEditorController::_flightParameterCenterSafeMode() const
            _vehicle->firmwarePlugin()->flightConfigurationLayout();
 }
 
+bool ParameterEditorController::setSelectedModelProfileId(const QString &profileId)
+{
+    if (!_flightParameterCenterSafeMode() || !_vehicle ||
+        _tuningBusy || _readbackPending || _writeFailureNeedsReadback) {
+        return false;
+    }
+
+    QVariantMap selectedProfile;
+    if (!profileId.isEmpty()) {
+        for (const QVariant &value : _vehicle->vehicleModelProfiles()) {
+            const QVariantMap candidate = value.toMap();
+            if (candidate.value(QStringLiteral("id")).toString() != profileId) {
+                continue;
+            }
+            if (candidate.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
+                candidate.value(QStringLiteral("hardwareEligible")).toBool() ||
+                candidate.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
+                return false;
+            }
+            selectedProfile = candidate;
+            break;
+        }
+        if (selectedProfile.isEmpty()) {
+            return false;
+        }
+    }
+
+    QStringList parameterNames;
+    QStringList parameterDomains;
+    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterNames")).toList()) {
+        if (!value.toString().isEmpty()) {
+            parameterNames.append(value.toString());
+        }
+    }
+    for (const QVariant &value : selectedProfile.value(QStringLiteral("parameterDomains")).toList()) {
+        if (!value.toString().isEmpty()) {
+            parameterDomains.append(value.toString());
+        }
+    }
+    if (!profileId.isEmpty() && (parameterNames.isEmpty() || parameterDomains.isEmpty())) {
+        return false;
+    }
+
+    if (_selectedModelProfileId == profileId &&
+        _selectedModelParameterNames == parameterNames &&
+        _selectedModelParameterDomains == parameterDomains) {
+        return true;
+    }
+
+    if (_selectedFact) {
+        disconnect(_selectedFact, &Fact::vehicleUpdated,
+                   this, &ParameterEditorController::_selectedFactVehicleUpdated);
+    }
+    _selectedFact = nullptr;
+    _confirmedValue.clear();
+    _previousValue.clear();
+    _pendingOriginalValue.clear();
+    _previousValues.clear();
+    _hasPreviousValue = false;
+    _selectedModelProfileId = profileId;
+    _selectedModelParameterNames = parameterNames;
+    _selectedModelParameterDomains = parameterDomains;
+    _tuningStatus = profileId.isEmpty()
+        ? tr("未选择机型调参配置")
+        : tr("已绑定机型配置：%1").arg(selectedProfile.value(QStringLiteral("displayName")).toString());
+    _tuningError.clear();
+
+    _buildLists();
+    if (!_searchText.isEmpty() || _showModifiedOnly || _showFavoritesOnly) {
+        _performSearch();
+    }
+    emit selectedFactChanged();
+    emit tuningStateChanged();
+    return true;
+}
+
 bool ParameterEditorController::_profileAllowsSelectedParameter() const
 {
-    if (!_vehicle || !_selectedFact || !_parameterMgr ||
-        _vehicle->gitHash() != QStringLiteral("FLTSIL01") ||
-        _vehicle->versionCompare(1, 9, 2) < 0) {
+    if (!_vehicle || !_selectedFact || !_parameterMgr || _selectedModelProfileId.isEmpty() ||
+        !_selectedModelParameterNames.contains(_selectedFact->name()) ||
+        !_selectedModelParameterDomains.contains(_selectedFact->category())) {
         return false;
     }
 
-    const QVariantList profiles = _vehicle->vehicleModelProfiles();
-    if (profiles.size() != 1) {
-        return false;
-    }
-
-    const QVariantMap profile = profiles.first().toMap();
-    if (profile.value(QStringLiteral("id")).toString() != QStringLiteral("QUAD_X4") ||
-        profile.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
-        profile.value(QStringLiteral("hardwareEligible")).toBool() ||
-        profile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
-        return false;
-    }
-
-    bool parameterRegistered = false;
-    for (const QVariant &value : profile.value(QStringLiteral("parameterNames")).toList()) {
-        if (value.toString() == _selectedFact->name()) {
-            parameterRegistered = true;
+    QVariantMap selectedProfile;
+    for (const QVariant &value : _vehicle->vehicleModelProfiles()) {
+        const QVariantMap candidate = value.toMap();
+        if (candidate.value(QStringLiteral("id")).toString() == _selectedModelProfileId) {
+            selectedProfile = candidate;
             break;
         }
     }
-    if (!parameterRegistered) {
+    if (selectedProfile.isEmpty() ||
+        selectedProfile.value(QStringLiteral("status")).toString() != QStringLiteral("SIM_ONLY") ||
+        selectedProfile.value(QStringLiteral("hardwareEligible")).toBool() ||
+        selectedProfile.value(QStringLiteral("parameterWriteScope")).toString() != QStringLiteral("SIL_ONLY")) {
         return false;
     }
 
-    bool domainRegistered = false;
-    for (const QVariant &value : profile.value(QStringLiteral("parameterDomains")).toList()) {
-        if (value.toString() == _selectedFact->category()) {
-            domainRegistered = true;
-            break;
-        }
-    }
-
-    return domainRegistered && !_selectedFact->readOnly() && !_selectedFact->writeOnly();
+    return !_selectedFact->readOnly() && !_selectedFact->writeOnly();
 }
 
 QString ParameterEditorController::_tuningBlockReason() const
@@ -304,7 +363,7 @@ QString ParameterEditorController::_tuningBlockReason() const
         return tr("在线调参仅允许飞行器解除锁定且未飞行时执行。");
     }
     if (!_profileAllowsSelectedParameter()) {
-        return tr("仅注册的 QUAD_X4 SIL 参数开放在线调参；实机写入保持锁定。");
+        return tr("所选机型配置未通过 SIL-only 注册检查；实机写入保持锁定。");
     }
     return {};
 }
@@ -531,6 +590,9 @@ void ParameterEditorController::_parameterReadFailed(int componentId, const QStr
 void ParameterEditorController::_buildListsForComponent(int compId)
 {
     for (const QString& factName: _parameterMgr->parameterNames(compId)) {
+        if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(factName)) {
+            continue;
+        }
         Fact* fact = _parameterMgr->getParameter(compId, factName);
 
         if (_hideReadOnly && fact->readOnly()) {
@@ -621,6 +683,9 @@ void ParameterEditorController::_buildLists(void)
 
 void ParameterEditorController::_factAdded(int compId, Fact* fact)
 {
+    if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(fact->name())) {
+        return;
+    }
     if (_hideReadOnly && fact->readOnly()) {
         return;
     }
@@ -1023,6 +1088,9 @@ void ParameterEditorController::resetAllToVehicleConfiguration(void)
 
 bool ParameterEditorController::_shouldShow(Fact* fact) const
 {
+    if (!_selectedModelParameterNames.isEmpty() && !_selectedModelParameterNames.contains(fact->name())) {
+        return false;
+    }
     if (_hideReadOnly && fact->readOnly()) {
         return false;
     }
