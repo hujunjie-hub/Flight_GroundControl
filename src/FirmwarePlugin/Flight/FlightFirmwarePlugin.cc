@@ -249,6 +249,9 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
         const QString controlLaw = parameter.value(QStringLiteral("controlLaw")).toString();
         const QString tuningPolicy = parameter.value(QStringLiteral("tuningPolicy")).toString();
         const QString updatePolicy = parameter.value(QStringLiteral("updatePolicy")).toString();
+        const QString sourceFile = parameter.value(QStringLiteral("sourceFile")).toString();
+        const QString sourcePath = parameter.value(QStringLiteral("sourcePath")).toString();
+        const QString sourceKind = parameter.value(QStringLiteral("sourceKind")).toString();
         const QJsonValue readOnly = parameter.value(QStringLiteral("readOnly"));
         const QJsonValue writeOnly = parameter.value(QStringLiteral("writeOnly"));
         QSet<QString> parameterVariants;
@@ -262,6 +265,10 @@ QVariantList FlightFirmwarePlugin::_validatedVehicleModelProfiles(
             !isControlLawId(controlLaw) ||
             !isSupportedTuningPolicy(tuningPolicy) ||
             !isSupportedUpdatePolicy(updatePolicy) ||
+            sourceFile.isEmpty() || sourceFile != sourceFile.trimmed() ||
+            sourcePath.isEmpty() || sourcePath != sourcePath.trimmed() ||
+            (sourceKind != QStringLiteral("scalar") && sourceKind != QStringLiteral("vector") &&
+             sourceKind != QStringLiteral("matrix") && sourceKind != QStringLiteral("stored")) ||
             !readOnly.isBool() ||
             readOnly.toBool() != (tuningPolicy == QStringLiteral("READ_ONLY")) ||
             (parameter.contains(QStringLiteral("writeOnly")) &&
