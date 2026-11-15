@@ -112,7 +112,10 @@ SetupPage {
     function _fcuUptimeText() {
         if (!_storageFresh)
             return _statusText()
-        const timeBootUs = Number(_factValue("storageTimeBootUs"))
+        const rawTimeBootUs = _factValue("storageTimeBootUs")
+        if (rawTimeBootUs === null || rawTimeBootUs === undefined)
+            return "—"
+        const timeBootUs = Number(rawTimeBootUs)
         if (!Number.isFinite(timeBootUs) || timeBootUs < 0)
             return "—"
 
