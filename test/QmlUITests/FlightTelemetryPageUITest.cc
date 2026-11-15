@@ -471,6 +471,13 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
                        qAbs(heroNavigation->height() - heroRcInput->height()) < 1.0;
             };
 
+            const auto overviewGridSpacingMatches = [&](QQuickItem* grid) {
+                const qreal expected = page->property("_dashboardGridSpacing").toReal();
+                return grid &&
+                       qAbs(grid->property("columnSpacing").toReal() - expected) < 0.01 &&
+                       qAbs(grid->property("rowSpacing").toReal() - expected) < 0.01;
+            };
+
             const auto flightPriorityItemsFit = [&]() {
                 for (QQuickItem* item : {heroFlightMode, heroArmState, heroFailsafeBand,
                                          heroAuthorityRow, heroAuthority}) {
@@ -603,7 +610,9 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QVERIFY(originalPageWidth > 0);
             page->setWidth(1600);
             QTRY_VERIFY_WITH_TIMEOUT(
-                headerItemsFit() && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
+                headerItemsFit()
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000); && readOnlyBadge->mapToItem(dashboardHeader, 0, 0).x() >=
                                         dashboardTitle->mapToItem(dashboardHeader, dashboardTitle->width(), 0).x(),
                 3000);
             QTRY_VERIFY_WITH_TIMEOUT(dashboardSubtitle->isVisible(), 3000);
@@ -635,6 +644,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(buildInfoCard->y() > eventHistoryCard->y(), 3000);
             page->setWidth(1400);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 12, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(heroGrid->property("columns").toInt(), 12, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryBand->height() >= 64, 3000);
@@ -648,6 +659,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_VERIFY_WITH_TIMEOUT(topologyNodesFit(), 3000);
             page->setWidth(1000);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(compactDashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 3, 3000);
@@ -663,6 +676,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(900);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(compactDashboardSubtitle->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(headerItemsFit(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), 1, 3000);
@@ -676,6 +691,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
             QTRY_VERIFY_WITH_TIMEOUT(!dashboardSubtitle->isVisible(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!compactDashboardSubtitle->isVisible(), 3000);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 2, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
@@ -689,6 +706,8 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QTRY_COMPARE_WITH_TIMEOUT(trendGrid->property("columns").toInt(), 1, 3000);
             page->setWidth(400);
             QTRY_COMPARE_WITH_TIMEOUT(summaryGrid->property("columns").toInt(), 1, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(overviewGridSpacingMatches(dashboardGrid) &&
+                                         overviewGridSpacingMatches(heroGrid), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(!summaryLinkDetail->isVisible(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(summaryTilesFit(), 3000);
             QTRY_VERIFY_WITH_TIMEOUT(overviewKpisFit(), 3000);
@@ -2134,6 +2153,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QQuickItem* title = findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardTitle"), 3000);
             QQuickItem* dashboardGrid =
                 findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_dashboardGrid"), 3000);
+            const qreal expectedDashboardGridSpacing = page->property("_dashboardGridSpacing").toReal();
+            const auto dashboardGridSpacingMatches = [expectedDashboardGridSpacing](QQuickItem* grid) {
+                return grid &&
+                       qAbs(grid->property("columnSpacing").toReal() - expectedDashboardGridSpacing) < 0.01 &&
+                       qAbs(grid->property("rowSpacing").toReal() - expectedDashboardGridSpacing) < 0.01;
+            };
             QVERIFY(page);
             QVERIFY(tabs);
             QVERIFY(title);
@@ -2309,6 +2334,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 QTRY_COMPARE_WITH_TIMEOUT(title->property("text").toString(), titles[index], 3000);
                 QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[index], 3000);
                 QVERIFY2(grid, qPrintable(QStringLiteral("Missing active dashboard page %1").arg(index)));
+                QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(grid), 3000);
                 if (index > 0) QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), 12, 3000);
                 const QString detailTitles[] = {
                     translatedTelemetryText("飞行操作与事件详情"),
@@ -2905,6 +2931,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 page->setWidth(widths[widthIndex]);
                 QTRY_COMPARE_WITH_TIMEOUT(tabs->property("columns").toInt(), widthIndex == 0 ? 4 : 2, 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthGrid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(healthGrid), 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(dashboardGrid->property("columns").toInt(), expectedDetailColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(healthMatrix->property("columns").toInt(), expectedHealthMatrixColumns[widthIndex], 3000);
                 QTRY_COMPARE_WITH_TIMEOUT(maintenanceContent->property("columns").toInt(), expectedMaintenanceColumns[widthIndex], 3000);
@@ -2954,6 +2981,7 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     QQuickItem* grid = findVisibleItem(_rootItem, pageGrids[pageIndex], 3000);
                     QVERIFY(grid);
                     QTRY_COMPARE_WITH_TIMEOUT(grid->property("columns").toInt(), expectedColumns[widthIndex], 3000);
+                    QTRY_VERIFY_WITH_TIMEOUT(dashboardGridSpacingMatches(grid), 3000);
                     if (pageIndex == 2) {
                         QQuickItem* navigationPanels[] = {
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationOverview"), 3000),
