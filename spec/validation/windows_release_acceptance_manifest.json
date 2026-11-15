@@ -582,7 +582,20 @@
         "gimbal_controller_discovers_multiple_manager_device_pairs",
         "gimbal_active_device_switch_is_rejected_while_current_device_has_confirmed_local_control",
         "gimbal_active_device_switch_accepts_only_fully_discovered_devices",
-        "gimbal_active_device_switch_succeeds_after_release_and_selects_fresh_device"
+        "gimbal_active_device_switch_succeeds_after_release_and_selects_fresh_device",
+        "mocklink_multi_gimbal_option_creates_device_154_and_device_155_without_manual_telemetry_injection",
+        "mocklink_multiple_gimbal_devices_share_manager_component_but_keep_distinct_device_ids",
+        "mocklink_manager_information_request_emits_one_information_frame_per_device",
+        "mocklink_manager_status_stream_reports_each_device_owner_pair_independently",
+        "mocklink_device_155_attitude_status_uses_device_component_id_and_zero_embedded_device_id",
+        "mocklink_manager_status_interval_updates_all_devices_and_attitude_interval_routes_by_device_component",
+        "gimbal_manager_configure_param7_routes_owner_changes_to_the_selected_device_only",
+        "gimbal_pitchyaw_param7_routes_position_commands_to_the_selected_device_only",
+        "gimbal_manager_set_attitude_device_id_routes_rate_commands_to_the_selected_device_only",
+        "gimbal_device_155_has_independent_pitch_yaw_capabilities_without_yaw_lock_or_retract",
+        "acquiring_and_moving_device_155_does_not_change_device_154_attitude_or_owner_pair",
+        "unknown_gimbal_device_id_is_denied_without_mutating_any_device",
+        "gimbal_device_155_release_clears_only_device_155_owner_pair"
       ]
     }
   ],
