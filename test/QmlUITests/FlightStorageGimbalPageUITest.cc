@@ -1,5 +1,6 @@
 #include "FlightStorageGimbalPageUITest.h"
 
+#include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QPoint>
