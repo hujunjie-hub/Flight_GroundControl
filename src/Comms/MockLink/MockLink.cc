@@ -208,6 +208,13 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
             155, false, true, true, true, false, false, true);
         Q_ASSERT(added);
         Q_UNUSED(added);
+
+        // Device ID 3 exercises the MAVLink Gimbal v2 legacy addressing form:
+        // its attitude status is emitted by the manager component with ID 3.
+        const bool addedLegacyDevice = _mockLinkGimbal->addSimulatedDevice(
+            3, false, true, true, true, true, true, true);
+        Q_ASSERT(addedLegacyDevice);
+        Q_UNUSED(addedLegacyDevice);
     }
 
     if (_mockConfig->startArmed()) {
