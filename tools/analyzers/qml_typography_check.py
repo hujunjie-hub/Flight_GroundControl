@@ -157,6 +157,14 @@ def _contract_violations(path: Path, content: str) -> list[Violation]:
                 'armStateText.implicitWidth + horizontalInset * 2' in content and
                 'root._overviewFlightStatusStripeWidth' in content,
                 "FlightTelemetry left flight safety badge and status stripe must use ScreenTools density tokens")
+        require('columnSpacing: root._overviewAlarmSeverityGridColumnSpacing' in content and
+                'severityChipContent.implicitHeight + 2 * contentVerticalInset' in content and
+                'alarmEmptyContent.implicitHeight + 2 * contentVerticalInset' in content,
+                "FlightTelemetry alarm severity chips and empty state must use ScreenTools-scaled content geometry")
+        require('eventContent.implicitHeight + 2 * contentVerticalInset' in content and
+                'root._overviewAlarmPrimaryLeftInset' in content and
+                'root._overviewEventHistoryGridColumnSpacing' in content,
+                "FlightTelemetry alarm cards and history rows must use ScreenTools-scaled content geometry")
 
 
 
