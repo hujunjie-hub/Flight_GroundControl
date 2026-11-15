@@ -18,6 +18,7 @@ class MockLink;
 ///   MAV_CMD_SET_MESSAGE_INTERVAL (GIMBAL_MANAGER_STATUS, GIMBAL_DEVICE_ATTITUDE_STATUS)
 ///   MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW
 ///   MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE
+///   MAVLINK_MSG_ID_GIMBAL_MANAGER_SET_ATTITUDE (rate control)
 ///   Periodic sending of GIMBAL_MANAGER_STATUS and GIMBAL_DEVICE_ATTITUDE_STATUS
 ///
 class MockLinkGimbal
@@ -55,6 +56,10 @@ private:
     bool _handleGimbalManagerPitchYaw(const mavlink_command_long_t &request,
                                       uint8_t sourceSysid, uint8_t sourceCompid);
 
+    /// Handle GIMBAL_MANAGER_SET_ATTITUDE rate commands.
+    bool _handleGimbalManagerSetAttitude(const mavlink_gimbal_manager_set_attitude_t &request,
+                                         uint8_t sourceSysid, uint8_t sourceCompid);
+
     /// Handle MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE to configure gimbal manager.
     /// @return true if the command was handled
     bool _handleGimbalManagerConfigure(const mavlink_command_long_t &request,
@@ -81,6 +86,9 @@ private:
     bool      _manualControl = false;  // true when under external control command
     bool      _yawLock = false;
     bool      _retracted = false;
+    bool      _rateControl = false;
+    float     _pitchRateDegS = 0.0f;
+    float     _yawRateDegS = 0.0f;
     /// Protects gimbal state and intervals from race conditions between:
     ///   - Main thread: _handleSetMessageInterval() and _handleGimbalManagerPitchYaw() modifying state
     ///   - Worker thread: run1HzTasks() reading intervals and auto-updating attitude every 1s
