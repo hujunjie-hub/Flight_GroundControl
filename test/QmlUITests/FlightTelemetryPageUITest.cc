@@ -2819,6 +2819,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                          rcAxisPanel->width() >= rcGrid->width() * 0.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() >= rcGrid->width() * 0.60 &&
                                          rcFailsafePanel->width() >= rcGrid->width() * 0.25, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() / rcFailsafePanel->width() > 1.9 &&
+                                         rcLinkPanel->width() / rcFailsafePanel->width() < 2.1, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcStickPanel->height() - rcAxisPanel->height()) < 1.0, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(rcLinkPanel->height() - rcFailsafePanel->height()) < 1.0, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcAxesGrid->property("columns").toInt(), 2, 3000);
@@ -2833,6 +2835,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                          rcAxisPanel->width() >= rcGrid->width() * 0.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() >= rcGrid->width() * 0.60 &&
                                          rcFailsafePanel->width() >= rcGrid->width() * 0.25, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(rcLinkPanel->width() / rcFailsafePanel->width() > 1.9 &&
+                                         rcLinkPanel->width() / rcFailsafePanel->width() < 2.1, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(rcAxesGrid->property("columns").toInt(), 2, 3000);
             QTRY_COMPARE_WITH_TIMEOUT(linkMetricsGrid->property("columns").toInt(), 2, 3000);
             page->setWidth(700);
