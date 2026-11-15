@@ -91,6 +91,15 @@ Item {
             property bool parameterDomainAvailable: false
             property string targetValueText: ""
             readonly property var selectedFact: parameterEditorLoader.item ? parameterEditorLoader.item.selectedFact : null
+            readonly property bool targetValueValid: {
+                if (!selectedFact || targetValueText.trim() === "") {
+                    return false
+                }
+                const candidate = Number(targetValueText)
+                return Number.isFinite(candidate) &&
+                       candidate >= Number(selectedFact.min) &&
+                       candidate <= Number(selectedFact.max)
+            }
             readonly property var confirmedValue: parameterEditorLoader.item ? parameterEditorLoader.item.confirmedValue : undefined
             readonly property bool tuningBusy: parameterEditorLoader.item ? parameterEditorLoader.item.tuningBusy : false
             readonly property bool modelProfileBound: parameterEditorLoader.item ? parameterEditorLoader.item.modelProfileBound : false
@@ -1002,6 +1011,20 @@ Item {
                                     }
                                     QGCLabel {
                                         Layout.fillWidth: true
+                                        text: !dashboardRoot.selectedFact
+                                              ? qsTr("请先选择参数")
+                                              : dashboardRoot.targetValueText.trim() === ""
+                                                ? qsTr("请输入目标值")
+                                                : dashboardRoot.targetValueValid
+                                                  ? qsTr("目标值符合参数元数据范围")
+                                                  : qsTr("目标值格式无效或超出允许范围")
+                                        color: !dashboardRoot.selectedFact || dashboardRoot.targetValueText.trim() === ""
+                                               ? root.mutedText
+                                               : dashboardRoot.targetValueValid ? root.green : root.red
+                                        font.pointSize: ScreenTools.microFontPointSize
+                                    }
+                                    QGCLabel {
+                                        Layout.fillWidth: true
                                         text: dashboardRoot.tuningError !== ""
                                               ? dashboardRoot.tuningError : dashboardRoot.tuningStatus
                                         color: dashboardRoot.tuningError !== "" ? root.red : root.amber
@@ -1015,7 +1038,7 @@ Item {
                                         QGCButton {
                                             Layout.fillWidth: true
                                             text: qsTr("应用到飞控")
-                                            enabled: dashboardRoot.canApplySelectedValue && dashboardRoot.targetValueText.trim() !== ""
+                                            enabled: dashboardRoot.canApplySelectedValue && dashboardRoot.targetValueValid
                                             onClicked: dashboardRoot.applySelectedValue()
                                         }
                                         QGCButton {
