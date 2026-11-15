@@ -536,6 +536,27 @@ void FlightTelemetryPageUITest::_testUnknownInvalidAndStaleStatesAreRendered()
             QCOMPARE(severityCounts.value(QStringLiteral("warning")).toInt(), 2);
             QCOMPARE(severityCounts.value(QStringLiteral("info")).toInt(), 0);
             QCOMPARE(severityCounts.value(QStringLiteral("unknown")).toInt(), 3);
+            QVariant severitySummaryVisibleOutput;
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventSeveritySummaryVisibleFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, severitySummaryVisibleOutput),
+                                              Q_ARG(QVariant, QVariant(translatedTelemetryText("已接收"))),
+                                              Q_ARG(QVariant, QVariant(1))));
+            QVERIFY(severitySummaryVisibleOutput.toBool());
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventSeveritySummaryVisibleFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, severitySummaryVisibleOutput),
+                                              Q_ARG(QVariant, QVariant(translatedTelemetryText("数据超时"))),
+                                              Q_ARG(QVariant, QVariant(1))));
+            QVERIFY(!severitySummaryVisibleOutput.toBool());
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventSeveritySummaryVisibleFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, severitySummaryVisibleOutput),
+                                              Q_ARG(QVariant, QVariant(translatedTelemetryText("已接收"))),
+                                              Q_ARG(QVariant, QVariant(0))));
+            QVERIFY(!severitySummaryVisibleOutput.toBool());
+            QVERIFY(QMetaObject::invokeMethod(page, "_eventSeveritySummaryVisibleFor", Qt::DirectConnection,
+                                              Q_RETURN_ARG(QVariant, severitySummaryVisibleOutput),
+                                              Q_ARG(QVariant, QVariant(translatedTelemetryText("等待遥测"))),
+                                              Q_ARG(QVariant, QVariant(2))));
+            QVERIFY(!severitySummaryVisibleOutput.toBool());
             QCOMPARE(alarmPriorityHint->property("text").toString(),
                      translatedTelemetryText("最高严重度置顶 · 同级按本地接收序号"));
 
