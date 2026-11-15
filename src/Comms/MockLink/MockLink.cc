@@ -201,6 +201,14 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
 {
     qCDebug(MockLinkLog) << this;
 
+    if (_enableGimbal && _mockConfig->enableMultipleGimbals()) {
+        // Device 155 intentionally advertises fewer optional capabilities than
+        // the default device so tests can verify per-device capability isolation.
+        const bool added = _mockLinkGimbal->addSimulatedDevice(
+            155, false, true, true, true, false, false, true);
+        Q_ASSERT(added);
+    }
+
     if (_mockConfig->startArmed()) {
         setArmed(true);
     }
@@ -2709,7 +2717,9 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setVehicleType(vehicleType);
     mockConfig->setSendStatusText(options.testFlag(MockConfiguration::OptionSendStatusText));
     mockConfig->setEnableCamera(options.testFlag(MockConfiguration::OptionEnableCamera));
-    mockConfig->setEnableGimbal(options.testFlag(MockConfiguration::OptionEnableGimbal));
+    const bool enableMultipleGimbals = options.testFlag(MockConfiguration::OptionEnableMultipleGimbals);
+    mockConfig->setEnableGimbal(options.testFlag(MockConfiguration::OptionEnableGimbal) || enableMultipleGimbals);
+    mockConfig->setEnableMultipleGimbals(enableMultipleGimbals);
     mockConfig->setEnableProximity(options.testFlag(MockConfiguration::OptionEnableProximity));
     mockConfig->setPreloadMission(options.testFlag(MockConfiguration::OptionPreloadMission));
     mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
