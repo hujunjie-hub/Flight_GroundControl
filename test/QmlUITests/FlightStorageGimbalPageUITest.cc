@@ -699,8 +699,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             auto sendBroadcastAttitudeInterval = [vehicle](float messageId, float intervalUs) {
                 auto sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
                 if (!sharedLink) {
-                    QFAIL("Primary link disappeared while testing broadcast interval routing");
-                    return;
+                    return false;
                 }
                 mavlink_message_t command{};
                 mavlink_msg_command_long_pack_chan(
@@ -715,25 +714,25 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
                     messageId,
                     intervalUs,
                     NAN, NAN, NAN, NAN, NAN);
-                QVERIFY(vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), command));
+                return vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), command);
             };
             const int expectedBroadcastAckCount = broadcastAckCount + 1;
-            sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1);
+            QVERIFY(sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, -1));
             QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedBroadcastAckCount, 1000);
             QCOMPARE(broadcastAckComponent, static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1));
             QTRY_VERIFY_WITH_TIMEOUT(!activeGimbal->attitudeStatusFresh(), 4500);
             QTRY_VERIFY_WITH_TIMEOUT(!secondGimbal->attitudeStatusFresh(), 4500);
 
             const int expectedFractionalIdAckCount = broadcastAckCount + 1;
-            sendBroadcastAttitudeInterval(
-                static_cast<float>(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) + 0.5f, 1000000);
+            QVERIFY(sendBroadcastAttitudeInterval(
+                static_cast<float>(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS) + 0.5f, 1000000));
             QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedFractionalIdAckCount, 1000);
             QCOMPARE(broadcastAckResult, static_cast<uint8_t>(MAV_RESULT_UNSUPPORTED));
             QVERIFY(!activeGimbal->attitudeStatusFresh());
             QVERIFY(!secondGimbal->attitudeStatusFresh());
 
             const int expectedNonFiniteIntervalAckCount = broadcastAckCount + 1;
-            sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, NAN);
+            QVERIFY(sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, NAN));
             QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedNonFiniteIntervalAckCount, 1000);
             QCOMPARE(broadcastAckResult, static_cast<uint8_t>(MAV_RESULT_UNSUPPORTED));
             QTest::qWait(1500);
@@ -741,7 +740,7 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             QVERIFY(!secondGimbal->attitudeStatusFresh());
 
             const int expectedResumeAckCount = broadcastAckCount + 1;
-            sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000);
+            QVERIFY(sendBroadcastAttitudeInterval(MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS, 1000000));
             QTRY_VERIFY_WITH_TIMEOUT(broadcastAckCount >= expectedResumeAckCount, 1000);
             QCOMPARE(broadcastAckComponent, static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1));
             QTRY_VERIFY_WITH_TIMEOUT(activeGimbal->attitudeStatusFresh(), 3000);
