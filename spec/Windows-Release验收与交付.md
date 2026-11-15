@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.33  
+版本：4.34  
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -329,6 +329,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 ### G15 遥控与链路页专项补充（2026-11-15）
 
 - 桌面宽屏采用两行主视觉：第一行遥控输入监视/逻辑轴输入各 6/12，第二行链路质量/失控保护分别 8/12、4/12；1000 px 中屏使用 3/3 与 4/2 列跨度，700/400 px 四面板单列堆叠。
+- 1600 px 与 1000 px 均须断言链路质量面板宽度约为失控保护面板的 2 倍；不得因布局调整削弱链路实例指标的主视觉优先级。
 - 失控保护和多实例链路质量面板不得用 operation/link 单域徽标冒充整张面板的综合状态；各数据行/链路实例分别显示真实状态。
 - 左右摇杆的轴读数保留 RC family freshness 和逐轴 validity 语义；清除某个逻辑轴 validity bit 后对应 marker 隐藏，读数显示“无效”，不能显示成零。
 - 每个链路实例的 RSSI、质量、丢包率分别显示，字段值分别服从 validity mask 与实例 receiveAgeMs；无效字段不得显示原始数值。
