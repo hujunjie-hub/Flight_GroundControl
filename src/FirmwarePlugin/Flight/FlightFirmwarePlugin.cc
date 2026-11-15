@@ -54,7 +54,7 @@ FlightFirmwarePlugin::~FlightFirmwarePlugin()
 
 QVariantList FlightFirmwarePlugin::vehicleModelProfiles(const Vehicle *vehicle) const
 {
-    // Only the explicitly identified Flight SIL may consume the current SIM_ONLY profile.
+    // Only explicitly identified Flight SIL may select from registered SIM_ONLY tuning profiles.
     if (!isSilVehicle(vehicle)) {
         return {};
     }
@@ -89,9 +89,9 @@ QVariantList FlightFirmwarePlugin::vehicleModelProfiles(const Vehicle *vehicle) 
         compatibleProfiles.append(profile);
     }
 
-    // Firmware identity alone cannot distinguish multiple model variants. Fail closed until
-    // the firmware reports an explicit model-profile id.
-    return compatibleProfiles.size() == 1 ? compatibleProfiles : QVariantList{};
+    // The operator selects exactly one profile in the parameter-center UI. This selects a
+    // tuning/configuration context only; it does not change the active Vehicle hardware identity.
+    return compatibleProfiles;
 }
 
 FactGroup *FlightFirmwarePlugin::createFactGroup(Vehicle *vehicle) const
