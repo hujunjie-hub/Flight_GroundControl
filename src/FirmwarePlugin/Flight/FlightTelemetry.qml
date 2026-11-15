@@ -1014,19 +1014,35 @@ SetupPage {
                         const ctx = getContext("2d")
                         if (!ctx) return
                         ctx.clearRect(0, 0, width, height)
-                        ctx.strokeStyle = "rgba(18, 196, 205, 0.24)"
+                        ctx.strokeStyle = "rgba(18, 196, 205, 0.30)"
                         ctx.lineWidth = 1
-                        for (let row = 0; row < 4; ++row) {
+                        const ridge = [0.78, 0.70, 0.83, 0.58, 0.69, 0.28, 0.61, 0.47, 0.16, 0.56, 0.35, 0.72, 0.24]
+                        const columns = ridge.length - 1
+                        const rows = 4
+                        for (let column = 0; column <= columns; ++column) {
+                            const x = width * column / columns
+                            const peakY = height * ridge[column]
                             ctx.beginPath()
-                            ctx.moveTo(0, height * (0.32 + row * 0.17))
-                            ctx.lineTo(width, height * (0.18 + row * 0.20))
+                            ctx.moveTo(x, peakY)
+                            ctx.lineTo(x, height)
                             ctx.stroke()
-                        }
-                        for (let column = 0; column < 9; ++column) {
-                            ctx.beginPath()
-                            ctx.moveTo(width * column / 8, height)
-                            ctx.lineTo(width * (0.34 + column * 0.045), 0)
-                            ctx.stroke()
+                            if (column < columns) {
+                                const nextX = width * (column + 1) / columns
+                                const nextY = height * ridge[column + 1]
+                                ctx.beginPath()
+                                ctx.moveTo(x, peakY)
+                                ctx.lineTo(nextX, nextY)
+                                ctx.stroke()
+                                for (let row = 1; row <= rows; ++row) {
+                                    const ratio = row / rows
+                                    const y = peakY + (height - peakY) * ratio
+                                    const nextRowY = nextY + (height - nextY) * ratio
+                                    ctx.beginPath()
+                                    ctx.moveTo(x, y)
+                                    ctx.lineTo(nextX, nextRowY)
+                                    ctx.stroke()
+                                }
+                            }
                         }
                     }
                 }
@@ -1989,7 +2005,7 @@ SetupPage {
 
             StatusCard {
                 objectName: "flightTelemetry_healthMatrix"
-                visible: root._activeDashboardPage === 0
+                visible: false // Primary 13-domain matrix is presented on the dedicated Flight Health page.
                 eyebrow: "TELEMETRY DOMAIN STATUS"
                 title: qsTr("遥测域状态矩阵")
                 GridLayout {
