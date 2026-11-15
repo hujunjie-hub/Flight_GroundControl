@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.87
+版本：4.88
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -806,3 +806,12 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - 150%/200% UI Scale 场景同时检查传感器实例、预检、任务资源详情卡内容高度和 ScreenTools 缩放内边距；传感器标题/状态/动作、预检编号/结果/详情及资源数值均不得越界。
 - 维护横条 CPU/WCET/栈/存储四项指标必须位于资源网格边界内；200% 单列和长中文异常摘要不得导致维护面板裁切。
 - 本轮新增断言未运行，按用户要求不执行 CI/Build/Unit/Integration/Windows Release；等待集中 exact-HEAD 验收。
+
+
+### G15 飞控配置外壳高 DPI 缩放（2026-11-15）
+
+- Flight 配置顶栏与 FlyViewToolBar 内容高度在 100% UI Scale 下为 56 px；125%/150%/200% 下按 ScreenTools.defaultFontPixelHeight * 5.6 同步增长，二者高度必须一致。
+- Flight 左侧导航在 100% 下宽度为 160 px，125% 为 200 px，150%/200% 上限 240 px；导航项间距、分组间距、顶部/左右/底部内边距和按钮 padding/leftPadding 按 ScreenTools 字体度量缩放。
+- 常规 VehicleConfigView 与非 Flight 工具栏维持原有布局；参数中心全屏布局不显示侧栏时不得因缩放 token 改变全屏边距。
+- MockLink FlightTelemetryPageUITest 使用真实 uiScalePercent Fact 验证 100%/150%/200% 顶栏高度、侧栏宽度、参数按钮 padding 和恢复原始 UI Scale；新增验收 NOT_RUN，后续集中验收时执行 exact-HEAD 回归与 Windows 实机截图。
+- 按用户要求本轮不运行、不触发 CI/Build/Unit/Integration/Windows Release。
