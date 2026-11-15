@@ -106,7 +106,7 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
             (entry.contains(QStringLiteral("rebootRequired")) &&
              !entry.value(QStringLiteral("rebootRequired")).isBool())) {
             qCWarning(FlightParameterMetaDataLog)
-                << "Ignoring parameter metadata with invalid numeric fields:" << name;
+                << "Ignoring parameter metadata with invalid numeric or boolean fields:" << name;
             continue;
         }
 
@@ -152,7 +152,6 @@ void FlightParameterMetaData::parseParameterJson(const QJsonObject &json)
         if (entry.contains(QStringLiteral("decimalPlaces"))) {
             metaData->setDecimalPlaces(entry.value(QStringLiteral("decimalPlaces")).toInt());
         }
-        metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool(false));
         metaData->setVehicleRebootRequired(entry.value(QStringLiteral("rebootRequired")).toBool(false));
         metaData->setReadOnly(false);
         _cachedMetaData.insert(name, metaData);
