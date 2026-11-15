@@ -5562,6 +5562,145 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             };
 
             uiScaleFact->setRawValue(100);
+            page->setWidth(1600);
+            page->setHeight(941);
+            QQuickItem* navigationTabForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_2"), 3000);
+            QVERIFY(navigationTabForDpi);
+            QVERIFY(_clickItemAt(navigationTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_2")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 2, 3000);
+            QQuickItem* navigationTimePanelForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimePanel"), 3000);
+            QQuickItem* navigationChecksPanelForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksPanel"), 3000);
+            QQuickItem* navigationTimeGridForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
+            QQuickItem* navigationClockGroupForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationClockGroup"), 3000);
+            QQuickItem* navigationUtcGroupForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcGroup"), 3000);
+            QQuickItem* navigationTimeMetricRowsForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcUncertainty"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp"), 3000)};
+            QQuickItem* navigationTimeBadgesForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality_valueBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline_valueBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcValidity_valueBadge"), 3000)};
+            QQuickItem* navigationTimeBadgeMetricsForDpi[] = {
+                navigationTimeMetricRowsForDpi[0], navigationTimeMetricRowsForDpi[1],
+                navigationTimeMetricRowsForDpi[2]};
+            QQuickItem* navigationUtcTimestampValueForDpi = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_navigationUtcTimestamp_value"), 3000);
+            QQuickItem* navigationDomainCellsForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksNavigation"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksTime"), 3000)};
+            QQuickItem* navigationDomainBadgesForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksNavigation_statusBadge"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationChecksTime_statusBadge"), 3000)};
+            QQuickItem* navigationTimelineForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline"), 3000);
+            QQuickItem* navigationTimelineRowsForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_navigation"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_time"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_row_event"), 3000)};
+            QQuickItem* navigationTimelineValuesForDpi[] = {
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_navigation"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_time"), 3000),
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeline_value_event"), 3000)};
+            QVERIFY(navigationTimePanelForDpi);
+            QVERIFY(navigationChecksPanelForDpi);
+            QVERIFY(navigationTimeGridForDpi);
+            QVERIFY(navigationClockGroupForDpi);
+            QVERIFY(navigationUtcGroupForDpi);
+            for (QQuickItem* item : navigationTimeMetricRowsForDpi) QVERIFY(item);
+            for (QQuickItem* item : navigationTimeBadgesForDpi) QVERIFY(item);
+            QVERIFY(navigationUtcTimestampValueForDpi);
+            for (QQuickItem* item : navigationDomainCellsForDpi) QVERIFY(item);
+            for (QQuickItem* item : navigationDomainBadgesForDpi) QVERIFY(item);
+            QVERIFY(navigationTimelineForDpi);
+            for (QQuickItem* item : navigationTimelineRowsForDpi) QVERIFY(item);
+            for (QQuickItem* item : navigationTimelineValuesForDpi) QVERIFY(item);
+            const auto navigationDpiItemFits = [](QQuickItem* item, QQuickItem* parent) {
+                if (!item || !parent || !item->isVisible()) return false;
+                const QPointF topLeft = item->mapToItem(parent, 0, 0);
+                return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                       topLeft.x() + item->width() <= parent->width() + 1.0 &&
+                       topLeft.y() + item->height() <= parent->height() + 1.0;
+            };
+            const qreal baseNavigationTimeGroupInset =
+                navigationClockGroupForDpi->property("contentInset").toReal();
+            const qreal baseNavigationTimeGroupMinimumWidth =
+                navigationClockGroupForDpi->property("minimumGroupWidth").toReal();
+            const qreal baseNavigationTimeTwoColumnThreshold =
+                page->property("_navigationTimeTwoColumnMinimumWidth").toReal();
+            const qreal baseNavigationTimeBadgeHeight = navigationTimeBadgesForDpi[0]->height();
+            const qreal baseNavigationDomainBadgeHeight = navigationDomainBadgesForDpi[0]->height();
+            const qreal baseNavigationTimelineRowHeight =
+                page->property("_navigationTimelineRowHeight").toReal();
+            const auto navigationTimeScaleLayoutFits = [&](int expectedColumns,
+                                                            qreal minimumWidthScale,
+                                                            qreal insetScale,
+                                                            qreal badgeHeightScale,
+                                                            qreal timelineHeightScale) {
+                if (navigationTimeGridForDpi->property("columns").toInt() != expectedColumns ||
+                    navigationClockGroupForDpi->property("minimumGroupWidth").toReal() <
+                        baseNavigationTimeGroupMinimumWidth * minimumWidthScale ||
+                    navigationClockGroupForDpi->property("contentInset").toReal() <
+                        baseNavigationTimeGroupInset * insetScale ||
+                    page->property("_navigationTimeTwoColumnMinimumWidth").toReal() <
+                        baseNavigationTimeTwoColumnThreshold * (expectedColumns == 2 ? 1.0 : 1.3) ||
+                    page->property("_navigationTimelineRowHeight").toReal() <
+                        baseNavigationTimelineRowHeight * timelineHeightScale ||
+                    navigationTimeBadgesForDpi[0]->height() <
+                        baseNavigationTimeBadgeHeight * badgeHeightScale ||
+                    navigationDomainBadgesForDpi[0]->height() <
+                        baseNavigationDomainBadgeHeight * badgeHeightScale) {
+                    return false;
+                }
+                if (!navigationDpiItemFits(navigationClockGroupForDpi, navigationTimePanelForDpi) ||
+                    !navigationDpiItemFits(navigationUtcGroupForDpi, navigationTimePanelForDpi) ||
+                    !navigationDpiItemFits(navigationTimeMetricRowsForDpi[0], navigationClockGroupForDpi) ||
+                    !navigationDpiItemFits(navigationTimeMetricRowsForDpi[1], navigationClockGroupForDpi) ||
+                    !navigationDpiItemFits(navigationTimeMetricRowsForDpi[2], navigationUtcGroupForDpi) ||
+                    !navigationDpiItemFits(navigationTimeMetricRowsForDpi[3], navigationUtcGroupForDpi) ||
+                    !navigationDpiItemFits(navigationTimeMetricRowsForDpi[4], navigationTimePanelForDpi) ||
+                    !navigationDpiItemFits(navigationUtcTimestampValueForDpi, navigationTimeMetricRowsForDpi[4]) ||
+                    !navigationDpiItemFits(navigationTimelineForDpi, navigationChecksPanelForDpi) ||
+                    navigationTimelineForDpi->height() + 1.0 <
+                        page->property("_navigationTimelineHeight").toReal()) {
+                    return false;
+                }
+                for (int index = 0; index < 3; ++index) {
+                    if (!navigationDpiItemFits(navigationTimeBadgesForDpi[index],
+                                               navigationTimeBadgeMetricsForDpi[index])) return false;
+                    if (!navigationDpiItemFits(navigationTimelineRowsForDpi[index],
+                                               navigationChecksPanelForDpi) ||
+                        !navigationDpiItemFits(navigationTimelineValuesForDpi[index],
+                                               navigationTimelineRowsForDpi[index]) ||
+                        navigationTimelineRowsForDpi[index]->height() + 1.0 <
+                            page->property("_navigationTimelineRowHeight").toReal()) return false;
+                }
+                for (int index = 0; index < 2; ++index) {
+                    if (!navigationDpiItemFits(navigationDomainBadgesForDpi[index],
+                                               navigationDomainCellsForDpi[index])) return false;
+                }
+                if (expectedColumns == 2) {
+                    return qAbs(navigationClockGroupForDpi->y() - navigationUtcGroupForDpi->y()) < 1.0 &&
+                           navigationClockGroupForDpi->x() < navigationUtcGroupForDpi->x();
+                }
+                return navigationUtcGroupForDpi->y() > navigationClockGroupForDpi->y() &&
+                       qAbs(navigationClockGroupForDpi->x() - navigationUtcGroupForDpi->x()) < 1.0;
+            };
+            QTRY_COMPARE_WITH_TIMEOUT(navigationTimeGridForDpi->property("columns").toInt(), 2, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(navigationTimeScaleLayoutFits(2, 1.0, 1.0, 1.0, 1.0), 3000);
+            QQuickItem* healthTabForDpi =
+                findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
+            QVERIFY(healthTabForDpi);
+            QVERIFY(_clickItemAt(healthTabForDpi, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 1, 3000);
             const qreal expectedBasePanelPadding =
                 originalDpiPanelPadding * 100.0 / qMax(1, originalUiScale.toInt());
             QTRY_VERIFY_WITH_TIMEOUT(
