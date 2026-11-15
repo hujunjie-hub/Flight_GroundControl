@@ -373,7 +373,8 @@
         "rc_link_primary_panel_owns_fcu_instance_age_and_separately_labels_ground_station_receive_age",
         "rc_link_detail_card_uses_metric_validity_summary_without_repeating_primary_numeric_metrics",
         "per_link_metric_validity_summary_distinguishes_valid_invalid_and_unreported_fields",
-        "stale_link_instance_gates_primary_fcu_age_and_detail_metric_validity_summary"
+        "stale_link_instance_gates_primary_fcu_age_and_detail_metric_validity_summary",
+        "rc_link_primary_and_detail_reason_and_receive_age_selectors_remain_unique_and_stable"
       ]
     },
     {
