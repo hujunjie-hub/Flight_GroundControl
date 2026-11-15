@@ -3397,6 +3397,25 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                 summaryTelemetry->property("detailText").toString(),
                 translatedTelemetryText("链路心跳超时；各遥测域仍按独立新鲜度判定"), commLossTimeoutMs);
 
+            QQuickItem* healthLossTab = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_visualTab_1"), 3000);
+            QVERIFY(healthLossTab);
+            QVERIFY(_clickItemAt(healthLossTab, 0.5, 0.5, QStringLiteral("flightTelemetry_visualTab_1")));
+            QQuickItem* healthLossHeadline = findVisibleItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthHeadline"), 3000);
+            QQuickItem* healthLossNote = findItem(
+                _rootItem, QStringLiteral("flightTelemetry_healthCommunicationNote"));
+            QVERIFY(healthLossHeadline);
+            QVERIFY(healthLossNote);
+            QTRY_COMPARE_WITH_TIMEOUT(healthLossHeadline->property("text").toString(),
+                                      translatedTelemetryText("通信丢失"), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(healthLossHeadline->property("color").value<QColor>(),
+                                      QColor("#F06464"), commLossTimeoutMs);
+            QTRY_VERIFY_WITH_TIMEOUT(healthLossNote->isVisible(), commLossTimeoutMs);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                healthLossNote->property("text").toString().contains(
+                    translatedTelemetryText("各遥测域仍按独立接收年龄判定")), commLossTimeoutMs);
+
             mockLink->setCommLost(false);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("valueText").toString(),
                                       translatedTelemetryText("已收到 FCU 遥测"), commLossTimeoutMs);
@@ -3404,5 +3423,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                       translatedTelemetryText("已收到 FCU 遥测"), commLossTimeoutMs);
             QTRY_COMPARE_WITH_TIMEOUT(summaryTelemetry->property("accentColor").value<QColor>(),
                                       QColor("#45D39A"), commLossTimeoutMs);
+            QTRY_VERIFY_WITH_TIMEOUT(
+                healthLossHeadline->property("text").toString() != translatedTelemetryText("通信丢失"),
+                commLossTimeoutMs);
+            QTRY_VERIFY_WITH_TIMEOUT(!healthLossNote->isVisible(), commLossTimeoutMs);
+            QTRY_COMPARE_WITH_TIMEOUT(healthLossHeadline->property("color").value<QColor>(),
+                                      QColor("#E2ECEF"), commLossTimeoutMs);
         });
 }
