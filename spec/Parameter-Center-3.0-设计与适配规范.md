@@ -232,7 +232,7 @@
 - SO3 姿态增益：3
 - 仿真：1
 
-当前元数据包含 name、type、group、shortDescription、longDescription、units、min、max、default、decimalPlaces 和 domain。`rebootRequired` 仅在固件源目录明确声明时输出；缺失表示未知，不得用默认 false 冒充“无需重启”。Phase 2 首轮尚未提供完整的机型适用性、控制律和在线调参策略；不能仅根据参数名前缀或 domain 猜测所有机型兼容性。
+参数元数据已升级到 schema v2，包含 name/type/group/描述/单位/范围/默认值/domain/modelProfiles，以及 vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 和 readOnly。`rebootRequired` 仅在固件源目录明确声明时输出；缺失表示未知，不得用默认 false 冒充“无需重启”。当前 QUAD_X4 的适用性与控制律由 vehicle_model.yaml 显式声明，不能从参数名前缀或 domain 推断。
 
 跨仓库模型资料核查（2026-11-15）：
 - Flight 仓库当前 config/vehicle_model.yaml 仅登记 profile=QUAD_X4，status=SIM_ONLY；文件明确说明这是 synthetic X4 fixture，电机编号和偏航力矩符号没有硬件证据，hardware_thrust_curve 仍为 TBD。
@@ -242,7 +242,7 @@
 
 ### 6.2 元数据扩展目标
 
-保留现有字段，向后兼容地增加以下字段（仅在源码/固件真实支持并完成审查后启用）：
+保留原始参数身份、group、单位、范围和默认值；当前 schema v2 已接入下列适用性与调参策略字段。未明确声明的依赖或组合规则保持空数组，不推断：
 
 | 字段 | 含义 |
 |---|---|
@@ -250,14 +250,14 @@
 | vehicleFamily | 适用飞行器大类 |
 | modelVariants | 适用的具体构型 |
 | controlLaw | 适用控制算法/控制架构 |
-| section | 参数域内的功能分组 |
-| tuningLevel | 基础 / 高级 / 专家 |
+| section | 参数域内的功能分组（待接入） |
+| tuningLevel | 基础 / 高级 / 专家（待接入） |
 | tuningPolicy | 只读 / 地面可调 / 在线可调 / 受限飞行中可调 |
 | updatePolicy | 即时生效 / 需飞控确认 / 需重启 / 仅离线 |
 | dependencies | 已定义的参数依赖关系 |
 | validationRules | 单参数及组合校验规则 |
 
-- 未提供适用性信息的参数默认不跨机型推断，不允许因此扩大写入范围。
+- 未提供适用性信息的参数默认不跨机型推断，不允许因此扩大写入范围。当前 schema v2 对缺失的 vehicleFamily/modelVariants/controlLaw/tuningPolicy/updatePolicy 执行 fail-closed。
 - 机型、控制律或固件能力未知时，相关参数显示为未知/未验证，默认只读。
 - 参数域分类与原始 group 是不同概念；不得为了新界面破坏原始 group 和参数标识。
 - 不删除现有 49 个参数，不更改参数名、单位、默认值、范围或来源协议，除非另有独立需求和证据。
@@ -353,7 +353,7 @@
 - ParameterEditor.qml 使用 ParameterEditorController，现有 UI 包含搜索、全部/已修改/收藏筛选、隐藏只读、导入、工具菜单、刷新、默认值恢复、导出和参数差异预览等能力。
 - ParameterEditorController 按 Fact 的 category / group 构建分类和分组，暴露 searchText、currentCategory、currentGroup、showModifiedOnly、showFavoritesOnly、hideReadOnly、favoriteParameterNames 等属性；参数文件差异发送最终通过 Fact::setRawValue 进入现有参数写入路径。
 - ParameterManager 已提供 parametersReady、missingParameters、pendingWrites、loadProgress、parameterDownloadSkipped 等状态，以及参数刷新、批量刷新、读取、默认值恢复和现有 MAVLink 参数管理路径。当前参数写入确认等待常量为 1000 ms；新 UI 必须沿用现有 ParameterManager 行为，不能另建写入通道。
-- FlightParameterMetaData::parseParameterJson 当前仅接受 float 类型和七种受支持 domain（VEHICLE_MODEL / FMS / CONTROL / INS / PLANT / ACTUATOR / SIMULATION），并校验 min/max/default 的有限数值、范围顺序、默认值边界、0–9 位 decimalPlaces 及 rebootRequired/readOnly/writeOnly 布尔类型；缺失/未知 domain、不支持的类型、非法数值/范围、非法布尔标志和重复参数名均拒绝写入元数据缓存并输出警告。合法 rebootRequired、readOnly、writeOnly 分别映射到 FactMetaData 对应属性；缺失 rebootRequired 时保留“未知”状态，不解释为无需重启。实时参数本身仍可由 ParameterMetaData 的通用 fallback 创建，但不会获得有效 domain，因此不会混入参数中心的域过滤列表。vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 仍待后续接入。
+- FlightParameterMetaData::parseParameterJson 仅接受 schema v2、float 类型和七种受支持 domain；同时校验 vehicleFamily/modelVariants/controlLaw、tuningPolicy/updatePolicy、modelProfiles、dependencies、validationRules、readOnly/writeOnly/rebootRequired 与数值范围。非法或缺失的必需策略字段、未注册 profile、非法依赖、错误布尔类型、重复参数名均拒绝缓存并输出警告。通过校验的适用性、调参策略和更新策略映射到 FactMetaData / Fact，供控制器与 QML 读取；缺失 rebootRequired 保留未知态。实时参数仍可由通用 fallback 创建，但不会获得有效 domain，因此不会混入参数中心域过滤列表。
 - FlightParameterFactMetaData.json 当前包含 49 个 Flight 参数，源文件标识为 middleware/protocol/mavlink/parameters/ground_parameters.json；group 分布为机体模型 1、MPC 权重 21、位置环回退 6、姿态角速度环 17、SO3 姿态增益 3、仿真 1。
 - 当前唯一机型上下文应优先复用 activeVehicle 与对应 FirmwarePlugin / 参数元数据；页面下拉框不得创建第二套 Vehicle 选择/管理机制，也不得把切换 UI 模型误当作改变飞控硬件类型。
 
@@ -413,7 +413,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 参数确认事件保留参数写入前值与飞控确认值，先记录当前 FCU boot ID、controlProfileId 与最后一个已接收控制时间戳，随后只在同一 boot ID / controlProfileId 下的下一帧更新 FCU_CONTROL_STATUS 到达时落为琥珀色时间标记；没有同会话/同控制配置遥测基线时只显示未关联说明，不伪造曲线标记。
 - 参数标记与曲线样本在 boot ID、controlProfileId、时间戳回退、GroundControl 机型调参上下文或 activeVehicle 变化时一并清空；标记仅表示 PARAM_VALUE 确认与后续控制遥测的时间先后关系，不证明参数变化导致控制求解耗时变化。
 - 仿真接口盘点：当前仓库的 `tools/simulation/mock_vehicle.py` 明确不模拟飞行动力学；`run-arducopter-sitl.sh` 启动的是 ArduCopter，不是 Flight SIL；`Flight-UDP-SIL-20261114.md` 记录的是外部 Flight Host SIL 经临时本地转发补丁接入的遥测验证，未提供 GroundControl 可调用的 Flight SIL 启停或参数注入 API。因此参数中心只读已连接 FCU 的真实遥测，不启动/控制仿真进程，也不将 ArduCopter SITL 冒充 Flight 模型仿真。
-- 影响关系盘点：当前 `FlightParameterFactMetaData.json` 提供 name/type/domain/group/范围/默认值/modelProfiles 等字段，未声明 dependencies 或 validationRules；`FlightVehicleModelCatalog.json` 提供机型、域和参数白名单，不包含参数影响图。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
+- 影响关系盘点：schema v2 已提供 dependencies 与 validationRules 字段，但当前 49 项均为空数组，尚无经审核的参数依赖图或组合规则；`FlightVehicleModelCatalog.json` 提供机型、适用性、控制律、域和参数白名单。影响分析继续显示依据不足空态，不从参数名称或 group 推断依赖关系。
 - 当前曲线仍只表示控制计算耗时，不冒充参数目标/反馈误差响应曲线；真实目标/反馈量、参数变化前后统计检验、仿真预测、仿真接口、参数影响关系和 AI 建议仍待后续实现。
 - ParameterEditorController 回归测试增加“非 Flight SIL 未授权写入不得产生 parameterWriteConfirmed 事件”断言；本轮不运行构建、QML UI 测试、单元测试或 CI，新增测试保持 NOT_RUN。
 
@@ -499,7 +499,7 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 通信丢失时 ParameterEditor 禁止交互并显示链路异常遮罩；参数未就绪时不创建编辑器并显示等待状态。未改变现有 Fact / ParameterManager / FirmwarePlugin 写入路径。
 
 当前局限与验收状态：
-- domain 只解决参数归属，不等于机型兼容性。vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy、dependencies、validationRules 尚未补齐。
+- domain 只解决参数归属，不等于机型兼容性。schema v2 已显式登记 vehicleFamily、modelVariants、controlLaw、tuningPolicy、updatePolicy；当前 dependencies / validationRules 为空数组，section / tuningLevel 尚待后续接入。
 - 当前 49 项统计仅对应 FlightParameterFactMetaData.json，不代表未来所有机型或固件。
 - 在线调参、参数行与目标值面板联动、仿真曲线和应用/回读闭环仍未实现。
 - 新增 ParameterEditorController categoryFilter 搜索隔离回归测试；测试代码已登记，但本轮未执行 Windows 构建、QML 运行、单元测试或 CI，必须在集中验收阶段验证。
@@ -513,8 +513,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - 参数中心将 `ParameterManager::parameterDownloadSkipped` 视为参数未就绪；参数下载被主动跳过时，不创建可编辑的参数表。
 - readOnly 参数允许查看和单参数回读，但禁止在线写入；writeOnly 参数因无法完成 PARAM_VALUE 回读确认，禁止进入在线调参闭环。详情卡片明确显示当前 Fact 的权限类型。
 - 每次写入前再次从当前 Vehicle 的 profile 注册表核对 SIM_ONLY、hardwareEligible=false、SIL_ONLY，以及当前参数名和参数域仍在注册白名单中；不能只依赖首次绑定时缓存的资格。
-- `FlightFirmwarePlugin::vehicleModelProfiles` 在向 UI 暴露机型前同时读取参数元数据与模型注册表，校验两份文件的 schema/source、64 个十六进制字符的 SHA-256、顶层 profile ID、逐参数 modelProfiles、参数名、参数域和写入资格；参数目录 SHA 不一致、重复/缺失/未知参数、域不匹配或权限字段类型错误时，整个注册表 fail-closed 并返回空列表，不向参数中心暴露可选 profile。
-- 新增模型注册表一致性回归用例，覆盖 SHA 不匹配、未知参数、参数域错配、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
+- `FlightFirmwarePlugin::vehicleModelProfiles` 在向 UI 暴露机型前同时读取 schema v2 参数元数据与模型注册表，校验 source/SHA-256、profile ID、vehicleFamily/modelVariants/controlLaw、逐参数 modelProfiles/domain/tuningPolicy/updatePolicy、参数名和依赖引用；任一不匹配、未知依赖或权限字段类型错误时，整个注册表 fail-closed 并返回空列表。
+- 新增模型注册表一致性回归用例，覆盖 SHA 不匹配、未知参数、参数域/适用性/控制律错配、未知依赖、逐参数 profile 错配、重复参数名和非法 hardwareEligible 类型；测试已登记但按集中验收要求保持 NOT_RUN。
 - 参数工具菜单的飞控重启操作仅在已连接、解除锁定、未飞行且 ParameterManager 无待写入时启用，避免在飞行中、链路异常或参数同步过程中触发重启。
 - C++ 单参数回读资格也检查 `parameterDownloadSkipped`，与写入资格和 QML 页面就绪门控保持一致，避免 UI 隐藏后仍可通过控制器调用回读路径。
 - QML 编辑入口同时要求机型 profile 已成功绑定；profile 校验失败时，参数域过滤到空集并保持编辑锁定。
@@ -541,8 +541,8 @@ Phase 0 尚未完全结束：用户确认的原始 1672 × 941 PNG 尚未归档�
 - SPEC：已定义，持续与实现同步。
 - Phase 0：PARTIAL（源码盘点已完成；原始参考图已审阅，仓库二进制归档待完成）。
 - Phase 1：PARTIAL（首轮布局移植已提交；Windows 构建 / QML 运行 / 截图比对 NOT_RUN）。
-- Phase 2：PARTIAL（Flight 参数元数据生成、模型注册表、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、参数元数据与模型注册表 SHA/参数名/domain 双向一致性校验、重启要求未知态保留、元数据 fail-closed 校验、profile 与活动飞行器完整参数列表逐项交叉校验、失败时清空旧绑定并锁定参数列表已接入；硬件模型注册及完整兼容性元数据仍未完成；构建与测试 NOT_RUN）。
-- Phase 3：PARTIAL（SIL-only 单参数在线调参 UI、单机型 profile 绑定、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复及 C++/QML 双层批量写入保护已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
+- Phase 2：PARTIAL（schema v2 机型适用性与控制律元数据、tuningPolicy/updatePolicy、依赖与规则空态、模型注册表双向一致性校验、Vehicle/FirmwarePlugin 动态绑定、SIL-only 机型显式单选、重启要求未知态保留、元数据 fail-closed 和参数白名单交叉校验已接入；硬件模型注册、真实 dependencies/validationRules、section/tuningLevel 仍未完成；构建与测试 NOT_RUN）。
+- Phase 3：PARTIAL（SIL-only 单参数调参闭环、参数选择、目标值范围校验、PARAM_VALUE 确认、显式回读、上一次已确认值恢复、C++/QML 双层批量写入保护，以及 family/variant/controlLaw/tuningPolicy/updatePolicy 双层门控和策略显示已接入；实机/试探/批量调参未开放；构建与测试 NOT_RUN）。
 - Phase 4：PARTIAL（已接入基于 controlStatusUpdated 逐帧采样的真实控制求解耗时趋势、FCU 时间轴、3 秒缺样断线、遥测 freshness 门控、样本统计，以及携带参数前后值、按 boot ID/controlProfileId 隔离的 PARAM_VALUE 确认时间标记；boot/控制配置/机型上下文/时间戳/活动飞行器变化时清空历史；真实参数目标/反馈响应、Flight SIL 启停与参数注入、影响关系和 AI 建议未完成；构建与测试 NOT_RUN）。
 - Phase 5：PARTIAL（已接入 1280/900 px 响应式断点、紧凑屏参数域选择器、上/下层卡片重排、纵向滚动和状态栏重排；截图叠加、DPI、Windows 构建、QML/单元测试与 CI 仍 NOT_RUN）。
 
