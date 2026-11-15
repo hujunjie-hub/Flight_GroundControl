@@ -764,7 +764,7 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 
 - 导航页 FCU UTC 时间必须采用独立全宽堆叠行，值区固定宽度字体、自然换行，不得省略或截断日期、时分秒、六位微秒或 UTC 后缀。
 - 双列时间同步网格中 UTC 时间戳行横跨两列；UTC 有效性与 UTC 不确定度并排；窄屏单列下时间戳仍占满内容宽度。
-- MockLink UI Integration 覆盖 1600/1000/900/700/400 px，验证时间戳行和值标签宽度、内容高度、UTC 时间同步卡片边界及原有 freshness/utc_valid 状态。
+- MockLink UI Integration 覆盖 1672×941 紧凑垂直模式与 1600/1000/900/700/400 px，验证四块导航主视觉比例/等高/边界、时间戳行和值标签宽度、内容高度、UTC 时间同步卡片边界及原有 freshness/utc_valid 状态。
 - 不改变 FCU_TIME_STATUS、时间服务、MAVLink、FactGroup、UTC 有效性和 freshness 语义；本轮按用户要求不运行 CI/Unit/Integration/Windows Release，新增断言保持 NOT_RUN。
 
 
