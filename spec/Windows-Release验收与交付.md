@@ -1,6 +1,6 @@
 # Windows Release 验收与交付指南
 
-版本：4.48
+版本：4.49
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
@@ -594,3 +594,11 @@ This run is diagnostic evidence for the failed HEAD only. The fixes require a fr
 - MockLink 触发 VehicleLinkManager.communicationLost 后，飞行健康页概览 headline 必须优先显示红色「通信丢失」，说明行明确指出各遥测域仍按独立接收年龄判定。
 - 通信丢失不能把 13 个 family 的 freshness 统一改写为 stale；矩阵继续显示各自真实状态。链路恢复后提示隐藏，headline 回到 family freshness 汇总。
 - Integration 覆盖丢失、恢复两个状态，检查 headline 文案/颜色和说明行可见性；本轮不运行 CI/Unit/Integration/Windows Release，新增断言为 NOT_RUN。
+
+### G15 总览导航标准差 KPI 数值与 freshness 状态分色（2026-11-15）
+
+- 总览顶部水平位置 σ、速度 σ、航向 σ三项 KPI 在 family fresh 且 capability 具备时，数值使用中性前景色 #E6F0F4；状态文字独立使用 freshness 绿色 #45D39A。
+- navigation family stale 时不得显示缓存标准差数值，数值/状态提示使用琥珀色 #F0B94B；capability 未具备或等待时数值占位为中性灰 #A8BBC3，状态文字按 capability/freshness 语义显示。
+- FlightTelemetryPageUITest 使用 MockLink 覆盖 fresh、capability unavailable、stale、recovered 四种状态，检查 valueColor/statusColor 分离；三项 KPI 共享同一颜色规则。
+- 不增加导航精度阈值，不推断定位等级，不修改 capability mask、family freshness、趋势采样或飞控控制行为。
+- 按用户要求本轮不运行 CI/Unit/Integration/Windows Release；新增断言保持 NOT_RUN，集中验收时执行。
