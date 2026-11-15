@@ -4741,6 +4741,10 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationCapabilitiesGrid"), 3000);
                         QQuickItem* navigationTimeMetricsGridAtWidth =
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeMetricsGrid"), 3000);
+                        QQuickItem* navigationClockGroupAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationClockGroup"), 3000);
+                        QQuickItem* navigationUtcGroupAtWidth =
+                            findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationUtcGroup"), 3000);
                         QQuickItem* navigationTimeMetricRowsAtWidth[] = {
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeQuality"), 3000),
                             findVisibleItem(_rootItem, QStringLiteral("flightTelemetry_navigationTimeDiscipline"), 3000),
@@ -4754,6 +4758,8 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                         for (QQuickItem* panel : navigationPanels) QVERIFY(panel);
                         QVERIFY(navigationCapabilitiesGridAtWidth);
                         QVERIFY(navigationTimeMetricsGridAtWidth);
+                        QVERIFY(navigationClockGroupAtWidth);
+                        QVERIFY(navigationUtcGroupAtWidth);
                         for (QQuickItem* row : navigationTimeMetricRowsAtWidth) QVERIFY(row);
                         QVERIFY(navigationUtcTimestampValueAtWidth);
                         QVERIFY(navigationChecksDomainsAtWidth);
@@ -4761,16 +4767,34 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                                   widthIndex < 2 ? 2 : 1, 3000);
                         QTRY_COMPARE_WITH_TIMEOUT(navigationTimeMetricsGridAtWidth->property("columns").toInt(),
                                                   widthIndex < 2 ? 2 : 1, 3000);
+                        const auto timeGroupFitsAtWidth = [](QQuickItem* group, QQuickItem* panel) {
+                            const auto topLeft = group->mapToItem(panel, 0, 0);
+                            return topLeft.x() >= -1.0 && topLeft.y() >= -1.0 &&
+                                   topLeft.x() + group->width() <= panel->width() + 1.0 &&
+                                   topLeft.y() + group->height() <= panel->height() + 1.0;
+                        };
+                        QTRY_VERIFY_WITH_TIMEOUT(timeGroupFitsAtWidth(navigationClockGroupAtWidth, navigationPanels[2]), 3000);
+                        QTRY_VERIFY_WITH_TIMEOUT(timeGroupFitsAtWidth(navigationUtcGroupAtWidth, navigationPanels[2]), 3000);
                         if (widthIndex < 2) {
+                            QTRY_COMPARE_WITH_TIMEOUT(navigationClockGroupAtWidth->y(), navigationUtcGroupAtWidth->y(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(navigationClockGroupAtWidth->x() < navigationUtcGroupAtWidth->x(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(navigationClockGroupAtWidth->width() - navigationUtcGroupAtWidth->width()) < 1.0, 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
                                 navigationTimeMetricRowsAtWidth[4]->width() >= navigationTimeMetricRowsAtWidth[0]->width() * 1.8, 3000);
                         } else {
+                            QTRY_VERIFY_WITH_TIMEOUT(navigationUtcGroupAtWidth->y() > navigationClockGroupAtWidth->y(), 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(navigationClockGroupAtWidth->x() - navigationUtcGroupAtWidth->x()) < 1.0, 3000);
+                            QTRY_VERIFY_WITH_TIMEOUT(
+                                qAbs(navigationClockGroupAtWidth->width() - navigationUtcGroupAtWidth->width()) < 1.0, 3000);
                             QTRY_VERIFY_WITH_TIMEOUT(
                                 qAbs(navigationTimeMetricRowsAtWidth[4]->width() -
                                      navigationTimeMetricRowsAtWidth[0]->width()) < 1.0, 3000);
                         }
                         QTRY_VERIFY_WITH_TIMEOUT(
-                            navigationTimeMetricRowsAtWidth[4]->y() > navigationTimeMetricRowsAtWidth[3]->y(), 3000);
+                            navigationTimeMetricRowsAtWidth[4]->mapToItem(navigationTimeMetricsGridAtWidth, 0, 0).y() >
+                            navigationTimeMetricRowsAtWidth[3]->mapToItem(navigationTimeMetricsGridAtWidth, 0, 0).y(), 3000);
                         QTRY_VERIFY_WITH_TIMEOUT(
                             navigationTimeMetricRowsAtWidth[4]->width() >= navigationPanels[2]->width() * 0.82, 3000);
                         QTRY_VERIFY_WITH_TIMEOUT(
