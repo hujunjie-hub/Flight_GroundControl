@@ -547,7 +547,7 @@ Item {
                 anchors.fill: parent
                 // In parameter-center safe mode, the table is a read-only selector.
                 // The dedicated tuning panel is the only path to a single guarded write.
-                visible:      column === 1 || column === 2
+                visible:      parameterCenterSafeMode ? (column === 1 || column === 2) : column === 2
                 cursorShape:  parameterCenterSafeMode || column === 2
                                ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: {
