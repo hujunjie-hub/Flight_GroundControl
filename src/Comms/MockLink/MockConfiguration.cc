@@ -17,6 +17,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _apmStartFreshParams(copy->apmStartFreshParams())
     , _enableCamera(copy->enableCamera())
     , _enableGimbal(copy->enableGimbal())
+    , _enableMultipleGimbals(copy->enableMultipleGimbals())
     , _enableProximity(copy->enableProximity())
     , _failureMode(copy->failureMode())
     , _incrementVehicleId(copy->incrementVehicleId())
@@ -61,6 +62,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setApmStartFreshParams(mockLinkSource->apmStartFreshParams());
     setEnableCamera(mockLinkSource->enableCamera());
     setEnableGimbal(mockLinkSource->enableGimbal());
+    setEnableMultipleGimbals(mockLinkSource->enableMultipleGimbals());
     setEnableProximity(mockLinkSource->enableProximity());
     setIncrementVehicleId(mockLinkSource->incrementVehicleId());
     setFailureMode(mockLinkSource->failureMode());
