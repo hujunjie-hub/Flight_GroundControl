@@ -822,12 +822,16 @@ void FlightStorageGimbalPageUITest::_testGimbalOwnershipDragAndReleaseFlow()
             // An explicit unknown device ID must be denied without routing the
             // command to either the default or the currently selected device.
             const QString secondPitchBeforeUnknownDevice = pitchValue->property("text").toString();
+            const double firstPitchBeforeUnknownDevice =
+                activeGimbal->absolutePitch()->rawValue().toDouble();
             vehicle->sendMavCommand(
                 MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW, false,
                 35.0f, 70.0f, NAN, NAN, attitudeFlags, 0, 200);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() > 800, 2500);
             QTRY_VERIFY_WITH_TIMEOUT(page->property("_attitudeStatusAgeMs").toInt() < 800, 3000);
             QCOMPARE(pitchValue->property("text").toString(), secondPitchBeforeUnknownDevice);
+            QVERIFY(std::abs(activeGimbal->absolutePitch()->rawValue().toDouble() -
+                             firstPitchBeforeUnknownDevice) < 0.5);
 
             vehicle->sendMavCommand(
                 MAV_COMP_ID_AUTOPILOT1, MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE, false,
