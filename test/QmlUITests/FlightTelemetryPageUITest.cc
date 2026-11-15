@@ -5566,6 +5566,22 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                        itemFitsInParent(dashboardOverviewTabIcon, dashboardOverviewTab) &&
                        itemFitsInParent(dashboardOverviewTabIndicator, dashboardOverviewTab) &&
                        itemFitsInParent(overviewHeroAccent, overviewHeroPanel) &&
+                       itemFitsInParent(trendGrid, trendPanel) &&
+                       itemFitsInParent(trendPosition, trendGrid) &&
+                       itemFitsInParent(trendPositionCanvas, trendPosition) &&
+                       trendFooterItemsFit() &&
+                       qAbs(trendGrid->property("columnSpacing").toReal() -
+                            page->property("_dashboardTrendGridSpacing").toReal()) < 1.0 &&
+                       qAbs(trendGrid->property("rowSpacing").toReal() -
+                            page->property("_dashboardTrendGridSpacing").toReal()) < 1.0 &&
+                       qAbs(trendPosition->property("contentInset").toReal() -
+                            page->property("_dashboardTrendInset").toReal()) < 1.0 &&
+                       qAbs(trendPosition->property("contentSpacing").toReal() -
+                            page->property("_dashboardTrendSpacing").toReal()) < 1.0 &&
+                       qAbs(trendPosition->property("minimumCanvasHeight").toReal() -
+                            page->property("_dashboardTrendCanvasMinimumHeight").toReal()) < 1.0 &&
+                       trendPositionCanvas->height() + 1.0 >=
+                           page->property("_dashboardTrendCanvasMinimumHeight").toReal() &&
                        qAbs(dashboardOverviewTab->height() -
                             page->property("_dashboardTabHeight").toReal()) < 1.0 &&
                        qAbs(dashboardReadOnlyDot->width() -
@@ -5822,6 +5838,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             const qreal baseDashboardPanelRadius = page->property("_dashboardPanelRadius").toReal();
             const qreal baseDashboardPanelAccentWidth =
                 page->property("_dashboardPanelAccentStripeWidth").toReal();
+            const qreal baseTrendGridSpacing = page->property("_dashboardTrendGridSpacing").toReal();
+            const qreal baseTrendInset = page->property("_dashboardTrendInset").toReal();
+            const qreal baseTrendSpacing = page->property("_dashboardTrendSpacing").toReal();
+            const qreal baseTrendMinimumHeight = page->property("_dashboardTrendMinimumHeight").toReal();
+            const qreal baseTrendCanvasMinimumHeight =
+                page->property("_dashboardTrendCanvasMinimumHeight").toReal();
             QVERIFY(baseDashboardHeaderInset > 0.0);
             QVERIFY(baseDashboardHeaderAccentWidth > 0.0);
             QVERIFY(baseReadOnlyHorizontalInset > 0.0);
@@ -5832,6 +5854,11 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
             QVERIFY(baseDashboardTabIndicatorHeight > 0.0);
             QVERIFY(baseDashboardPanelRadius > 0.0);
             QVERIFY(baseDashboardPanelAccentWidth > 0.0);
+            QVERIFY(baseTrendGridSpacing > 0.0);
+            QVERIFY(baseTrendInset > 0.0);
+            QVERIFY(baseTrendSpacing > 0.0);
+            QVERIFY(baseTrendMinimumHeight > 0.0);
+            QVERIFY(baseTrendCanvasMinimumHeight > 0.0);
             QTRY_VERIFY_WITH_TIMEOUT(qAbs(baseDashboardHeaderInset - 3.0) < 1.0 &&
                                          qAbs(baseDashboardHeaderAccentWidth - 5.0) < 1.0 &&
                                          qAbs(baseReadOnlyHorizontalInset - 10.0) < 1.0 &&
@@ -5841,7 +5868,12 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                                          qAbs(baseDashboardTabIconSize - 20.0) < 1.0 &&
                                          qAbs(baseDashboardTabIndicatorHeight - 3.0) < 1.0 &&
                                          qAbs(baseDashboardPanelRadius - 8.0) < 1.0 &&
-                                         qAbs(baseDashboardPanelAccentWidth - 3.0) < 1.0, 3000);
+                                         qAbs(baseDashboardPanelAccentWidth - 3.0) < 1.0 &&
+                                         qAbs(baseTrendGridSpacing - 8.0) < 1.0 &&
+                                         qAbs(baseTrendInset - 6.0) < 1.0 &&
+                                         qAbs(baseTrendSpacing - 4.0) < 1.0 &&
+                                         qAbs(baseTrendMinimumHeight - 128.0) < 1.0 &&
+                                         qAbs(baseTrendCanvasMinimumHeight - 64.0) < 1.0, 3000);
             QVERIFY(_clickItemAt(dashboardOverviewTab, 0.5, 0.5,
                                  QStringLiteral("flightTelemetry_visualTab_0")));
             QTRY_COMPARE_WITH_TIMEOUT(page->property("_activeDashboardPage").toInt(), 0, 3000);
@@ -5891,7 +5923,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     baseDashboardTabIndicatorHeight * 1.35 &&
                 page->property("_dashboardPanelRadius").toReal() >= baseDashboardPanelRadius * 1.35 &&
                 page->property("_dashboardPanelAccentStripeWidth").toReal() >=
-                    baseDashboardPanelAccentWidth * 1.35, 3000);
+                    baseDashboardPanelAccentWidth * 1.35 &&
+                page->property("_dashboardTrendGridSpacing").toReal() >= baseTrendGridSpacing * 1.35 &&
+                page->property("_dashboardTrendInset").toReal() >= baseTrendInset * 1.35 &&
+                page->property("_dashboardTrendSpacing").toReal() >= baseTrendSpacing * 1.35 &&
+                page->property("_dashboardTrendMinimumHeight").toReal() >=
+                    baseTrendMinimumHeight * 1.35 &&
+                page->property("_dashboardTrendCanvasMinimumHeight").toReal() >=
+                    baseTrendCanvasMinimumHeight * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.35, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
@@ -5960,7 +5999,14 @@ void FlightTelemetryPageUITest::_testFourReferencePagesAndResponsiveLayouts()
                     baseDashboardTabIndicatorHeight * 1.8 &&
                 page->property("_dashboardPanelRadius").toReal() >= baseDashboardPanelRadius * 1.8 &&
                 page->property("_dashboardPanelAccentStripeWidth").toReal() >=
-                    baseDashboardPanelAccentWidth * 1.8, 3000);
+                    baseDashboardPanelAccentWidth * 1.8 &&
+                page->property("_dashboardTrendGridSpacing").toReal() >= baseTrendGridSpacing * 1.8 &&
+                page->property("_dashboardTrendInset").toReal() >= baseTrendInset * 1.8 &&
+                page->property("_dashboardTrendSpacing").toReal() >= baseTrendSpacing * 1.8 &&
+                page->property("_dashboardTrendMinimumHeight").toReal() >=
+                    baseTrendMinimumHeight * 1.8 &&
+                page->property("_dashboardTrendCanvasMinimumHeight").toReal() >=
+                    baseTrendCanvasMinimumHeight * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightConfigToolbar->height() >= baseFlightToolbarHeight * 1.8, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(flightSidebar->width() >= baseFlightSidebarWidth * 1.45, 3000);
             QTRY_VERIFY_WITH_TIMEOUT(
