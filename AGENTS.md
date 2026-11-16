@@ -1,128 +1,95 @@
 # AGENTS.md
 
-Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundControl.
+Repository-wide instructions for AI coding agents working on Flight_GroundControl (QGroundControl).
 
-## Flight_GroundControl Project Workflow (Mandatory)
+## 0. Mandatory instruction entrypoint
 
-**Before changing code, read [`spec/README.md`](spec/README.md) and follow [`spec/AGENT-操作指南.md`](spec/AGENT-操作指南.md).** Use PowerShell 7 and validate Windows x64 MSVC 2022 Release locally on `main` before pushing. GitHub Actions checks the pushed commit. Local validation evidence belongs under `work/validation/` and must not be committed.
+Before editing any file, read and follow:
 
-## Quick References
+1. [AI execution and task-closure contract](spec/AI-执行与任务闭环规范.md) — instruction priority, autonomous execution, phase gates, process safety and definition of done.
+2. [Project specification index](spec/README.md) — current project phase and authoritative specification map.
+3. [Agent operation guide](spec/AGENT-操作指南.md) — repository workflow, issue handling and delivery.
+4. The task-specific specification(s) referenced by the index.
 
-- [CODING_STYLE.md](CODING_STYLE.md) — Naming, formatting, C++20 features, QML style, logging
-- [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) — Architecture patterns (Fact System, Multi-Vehicle, FirmwarePlugin)
-- [tools/README.md](tools/README.md) — Development scripts and tooling
-- [test/README.md](test/README.md) — Test framework, base classes, CTest labels, MultiSignalSpy, coverage
-- [.github/ci-overview.md](.github/ci-overview.md) — CI workflow/action/script layout and conventions
-- [.pre-commit-config.yaml](.pre-commit-config.yaml) — All enforced linters (clang-format, clang-tidy, ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy, vehicle-null-check, check-no-qassert, check-no-qtest-ignore-message)
+`CLAUDE.md` delegates to this file. GitHub Copilot and Cursor have thin adapter files that point to the same contract. Do not create competing agent workflows.
 
-## Golden Rules (enforced — violations fail CI)
+## 1. Instruction priority
 
-These are the non-negotiables. The first four are QGC's core architecture patterns; the rest are
-enforced by pre-commit hooks, so ignoring them wastes a build cycle. Full list with code examples:
-[.github/CONTRIBUTING.md#architecture-patterns](.github/CONTRIBUTING.md#architecture-patterns) and
-[CODING_STYLE.md#common-pitfalls](CODING_STYLE.md#common-pitfalls).
+The latest explicit user instruction for the current task takes precedence over generic defaults in this repository. Earlier user decisions remain in force unless superseded. Follow the central AI execution contract for all other behavior.
 
-- **Fact System** — ALL vehicle parameters flow through Facts; never create custom parameter storage.
-- **Multi-Vehicle** — ALWAYS null-check `activeVehicle()` / `Vehicle*` before dereferencing (`vehicle-null-check`).
-- **Firmware Plugin** — use `vehicle->firmwarePlugin()` for firmware-specific behavior, not `if (px4)` branches.
-- **QML Integration** — register types with `QML_ELEMENT`/`QML_SINGLETON`/`QML_UNCREATABLE`; expose state via `Q_PROPERTY`.
-- **No `Q_ASSERT` in production code** — use defensive checks with early returns (`check-no-qassert`).
-- **No `QTest::ignoreMessage`** in tests — use `expectLogMessage`/`ignoreLogMessage` (`check-no-qtest-ignore-message`).
-- **No fixed-delay `QTest::qWait(<n>)`** — use `QTRY_*_WITH_TIMEOUT` or `QSignalSpy::wait` (`check-no-fixed-qwait`).
+If the user has already made a clear decision, execute it; do not reopen the decision or ask the user to repeat it. Stop only for a genuine ambiguity, a destructive action requiring authorization, or a safety-critical conflict.
 
-## Critical Files (Read First!)
+## 2. Current execution phase
 
-1. `src/FactSystem/Fact.h` — Parameter system foundation
-2. `src/Vehicle/Vehicle.h` — Core vehicle model
-3. `src/FirmwarePlugin/FirmwarePlugin.h` — Firmware abstraction
+The active phase is recorded in [spec/README.md](spec/README.md). As of 2026-11-16, the active work is the four-page Flight Diagnostics dashboard rebuild and visual alignment.
 
-## Code Structure
+During this development phase:
 
-Key modules (full tree under `src/` — ~33 subdirectories):
+- Do not trigger GitHub Actions, CI, workflow_dispatch, Unit, Integration or UI automation tests.
+- Do not run `ctest` or dashboard UI test executables.
+- Do not turn a focused UI change into a full build/test/package acceptance cycle.
+- Lightweight source review, Git diff inspection and non-test static checks are allowed when useful.
+- Report tests and CI that were not run as `NOT_RUN`; never imply they passed.
+- Preserve existing tests by default. Remove dashboard-scoped test files and their build registrations only when the user's explicit task requires that cleanup; do not touch unrelated tests.
 
-```text
-src/
-├── Vehicle/          # Vehicle state/comms
-├── Comms/            # Link layer (serial, UDP, TCP, Bluetooth)
-├── FactSystem/       # Parameter management
-├── FirmwarePlugin/   # PX4/ArduPilot abstraction
-├── AutoPilotPlugins/ # Vehicle setup UI
-├── MissionManager/   # Mission planning
-├── MAVLink/          # Protocol handling
-├── VideoManager/     # Video pipeline (GStreamer)
-├── FlyView/          # In-flight UI
-├── PlanView/         # Mission planning UI
-├── QmlControls/      # Reusable QML components
-└── Settings/         # Persistent settings
-```
+When the user explicitly switches to centralized validation, follow the full Windows Release acceptance guide.
 
-## Build & Test Scope (Mandatory)
+## 3. Required execution behavior
 
-**The only active product build/test/package target is Windows x64 MSVC 2022 Release.**
-Do not run Linux x64, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows Debug, or other
-platform/configuration product builds, CMake configure steps, Unit/Integration test suites,
-package generation, or executable/install verification.
+- Treat each user request as an end-to-end delivery task, not a request for a plan.
+- Inspect current HEAD, branch, working tree and existing implementation before editing.
+- Convert every explicit requirement into an internal checklist; complete all items in scope.
+- Implement the requested change in the actual repository. Do not substitute explanations, pseudo-code or partial styling changes for implementation.
+- Complete necessary related changes across pages, shared components, data bindings, styles, resources, CMake registration and documentation.
+- Preserve existing behavior, telemetry, data fields, safety semantics and user-approved design decisions unless the user explicitly asks to change them.
+- Do not stop after one subtask while other in-scope work remains. “Continue” means resume from the latest repository state and finish the outstanding checklist.
+- Do not repeatedly ask for confirmation on decisions already made.
+- Review the final diff and report only changes and checks that actually occurred.
 
-Platform-independent repository checks (for example actionlint, formatting/lint, Python
-CI-script tests, documentation, CodeQL, and PR metadata checks) may use Ubuntu-hosted
-runners. These checks must not configure, build, test, or package the Linux QGroundControl
-product.
+## 4. Quick references
 
-In particular, do not run Linux, macOS, Android, iOS, ARM64, Docker, Flatpak, Windows
-Debug, or other non-Windows-x64-Release build/test jobs. Do not spend time fixing or
-reporting failures from those environments as part of this task.
+- [AI execution contract](spec/AI-执行与任务闭环规范.md)
+- [Agent operation guide](spec/AGENT-操作指南.md)
+- [Project specifications](spec/README.md)
+- [Coding style](CODING_STYLE.md)
+- [Architecture and contribution patterns](.github/CONTRIBUTING.md)
+- [Tools](tools/README.md)
+- [Test framework](test/README.md) — consult when the user authorizes testing.
+- [CI overview](.github/ci-overview.md) — consult when the user authorizes CI or centralized validation.
+- [Pre-commit configuration](.pre-commit-config.yaml)
 
-The required validation sequence is:
+## 5. Golden rules
 
-1. Configure with the Windows x64 MSVC 2022 toolchain in **Release** mode.
-2. Build the Release target successfully.
-3. Run the **Unit** test suite and record the actual executed test count.
-4. Run the **Integration** test suite and record the actual executed test count.
-5. Treat missing test reports, CTest errors, skipped/cancelled test steps, and zero executed
-   tests as failures. A successful build alone is not a successful validation.
-6. Verify the generated Windows x64 Release executable.
-7. Build the Windows installer, install it in a clean temporary directory, and verify the
-   installed executable and required runtime/plugin dependencies.
-8. Run applicable platform-independent static checks (for example, formatting and lint)
-   when relevant to the changed files. These checks do not authorize builds or tests on
-   another platform.
+These QGroundControl architecture rules remain mandatory:
 
-Use the repository's `just` recipes and scripts only where they select the required
-Windows x64 Release toolchain. See [tools/README.md](tools/README.md) and
-[.github/ci-overview.md](.github/ci-overview.md) for command details; do not follow
-generic examples that would invoke another platform or configuration.
+- **Fact System** — all vehicle parameters flow through Facts; never create parallel custom parameter storage.
+- **Multi-Vehicle** — null-check `activeVehicle()` and `Vehicle*` before dereferencing.
+- **Firmware Plugin** — use `vehicle->firmwarePlugin()` for firmware-specific behavior, not scattered `if (px4)` branches.
+- **QML Integration** — register types with `QML_ELEMENT`, `QML_SINGLETON` or `QML_UNCREATABLE`; expose state via `Q_PROPERTY`.
+- **No production `Q_ASSERT`** — use defensive checks and early returns.
+- **Tests** — do not use `QTest::ignoreMessage` or fixed-delay `QTest::qWait(<n>)`; use the repository's log and asynchronous wait helpers when testing is authorized.
 
-- **Build incrementally** — rebuild after focused groups of C++/Qt changes and fix errors
-  before continuing.
-- **Tight test loops** — use a focused test filter while iterating, then run both complete
-  Unit and Integration labels for final Windows Release validation.
-- **Test-count gate** — Unit and Integration must each execute at least one test; zero is
-  always a failure, even if the test command exits successfully.
-- **No platform expansion** — do not add or restore CI jobs for other operating systems,
-  architectures, or build configurations for this validation scope.
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md#architecture-patterns) and [CODING_STYLE.md](CODING_STYLE.md#common-pitfalls) for examples.
 
-## Definition of Done
+## 6. Product build and validation boundaries
 
-Before considering a change complete:
+When validation is authorized, the only product build target is **Windows x64 / Visual Studio 2022 MSVC / Release**. Do not configure, build, test or package Linux, macOS, Android, iOS, ARM64, Windows Debug, Docker or Flatpak product targets.
 
-1. Windows x64 MSVC 2022 **Release** configuration and build succeed.
-2. Unit tests execute and pass with a non-zero recorded test count.
-3. Integration tests execute and pass with a non-zero recorded test count.
-4. Windows x64 Release executable verification succeeds.
-5. Windows installer creation, clean installation, and installed-runtime verification succeed.
-6. Applicable platform-independent lint/format checks pass.
-7. Commit message follows Conventional Commits (below).
+The complete validation sequence, test-count gates, executable verification and installer verification are defined in [spec/Windows-Release验收与交付.md](spec/Windows-Release验收与交付.md). That guide applies to the centralized acceptance phase, not automatically to every development change.
 
-## Commit & Review Conventions
+## 7. Definition of done
 
-Commit messages follow **Conventional Commits** — the type drives release automation
-(`.releaserc.json` → semantic-release). Use: `feat`, `fix`, `perf`, `revert` (release-triggering);
-`docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` (no release). Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`.
+A task may be reported complete only when:
 
-Your output will be reviewed by another AI agent before being accepted. Keep changes focused and
-minimal, use clear naming, and leave explanatory commit messages. Avoid unrelated changes,
-commented-out code, or ambiguous TODOs.
+1. Every explicit in-scope requirement has an implemented result or a clearly documented genuine blocker.
+2. All affected pages/components and required related files have been handled; no easy subset is presented as the whole task.
+3. Existing user data, telemetry fields, interactions and safety semantics have not been silently removed.
+4. The final diff has been reviewed for omissions and unrelated changes.
+5. Visual tasks have been compared against the supplied reference at the available target viewport; otherwise visual verification is `UNVERIFIED`.
+6. Tests/CI are reported according to the active phase. During dashboard development they are `NOT_RUN`, not PASS.
 
----
+A plan, promise, partial edit, successful tool call or test process that is still running is not task completion.
 
-**Key Principle**: Match the style of code you're editing. See [CODING_STYLE.md](CODING_STYLE.md) for conventions and [CODING_STYLE.md#examples](CODING_STYLE.md#examples) for canonical Vehicle/Fact/QML snippets.
+## 8. Commit conventions
+
+Use Conventional Commits when a commit is requested or required by the active task workflow. Do not create a commit for every small intermediate edit. Never force-push, rewrite another contributor's history or overwrite user changes. Follow the active phase's CI restrictions before pushing.

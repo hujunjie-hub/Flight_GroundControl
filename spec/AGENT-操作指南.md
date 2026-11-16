@@ -1,6 +1,6 @@
 # 本地 Agent 操作总指南（Flight_GroundControl）
 
-- 版本 1.1
+- 版本 1.2
 - 对齐基线（SPEC 同步前）：`main@77563b118f8757c12e091ce9427ea369e0b9638d`
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前开发分支 `main`
@@ -14,28 +14,29 @@
 按顺序读取：
 
 1. 根目录 `AGENTS.md`。
-2. `spec/README.md`。
-3. 本文件 `spec/AGENT-操作指南.md`。
-4. [Windows 本地开发、构建与调试指南](本地Windows开发与调试指南.md)。
-5. [Windows Release 验收与交付指南](Windows-Release验收与交付.md)。
-6. [问题登记与闭环规范](quality/ISSUE_WORKFLOW.md)、[问题关闭清单](quality/ISSUE_CLOSURE_CHECKLIST.md) 和 [机器可读状态定义](quality/issue-workflow.json)。
-7. [机器可读验收清单](validation/windows_release_acceptance_manifest.json)。
-8. [本地验收报告模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)。
-9. 根据任务读取 `doc/gcs/FCU_TELEMETRY.md`、`test/README.md`、`tools/README.md`、`.github/ci-overview.md` 及相关源码、测试和接口文件。
+2. [AI 执行与任务闭环规范](AI-执行与任务闭环规范.md)。
+3. `spec/README.md`。
+4. 本文件 `spec/AGENT-操作指南.md`。
+5. [Windows 本地开发、构建与调试指南](本地Windows开发与调试指南.md)。
+6. [Windows Release 验收与交付指南](Windows-Release验收与交付.md)。
+7. [问题登记与闭环规范](quality/ISSUE_WORKFLOW.md)、[问题关闭清单](quality/ISSUE_CLOSURE_CHECKLIST.md) 和 [机器可读状态定义](quality/issue-workflow.json)。
+8. [机器可读验收清单](validation/windows_release_acceptance_manifest.json)。
+9. [本地验收报告模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)。
+10. 根据任务读取 `doc/gcs/FCU_TELEMETRY.md`、`test/README.md`、`tools/README.md`、`.github/ci-overview.md` 及相关源码、测试和接口文件。
 
 Agent 只收到“扫描 spec 并继续”的指令时，也必须读取本列表，不得跳过。
 
-## 2. 文档权威性和存放约定
+## 2. 文档权威性和指令优先级
 
-- `spec/` 是项目正式技术约束、验收标准、Agent 操作和问题闭环规则的唯一版本化入口。
-- `spec/README.md` 是文档地图；本文件是 Agent 执行入口。
-- `spec/quality/` 只维护问题管理规则，不维护动态问题台账。
+- 根目录 `AGENTS.md` 是所有代码 Agent 的统一入口；`CLAUDE.md`、`.github/copilot-instructions.md` 和 `.cursor/rules/flight-groundcontrol.mdc` 只引用统一规范，不得另写冲突规则。
+- [AI 执行与任务闭环规范](AI-执行与任务闭环规范.md) 是 Agent 行为、任务闭环、阶段门禁和交付报告的唯一权威规范。
+- `spec/README.md` 是专项文档地图和当前开发阶段的唯一状态入口。
+- 各专项 SPEC 定义产品功能、接口、安全边界和视觉验收，不得被 Agent 自行弱化。
 - GitHub Issues 是动态问题状态的唯一台账；不得另建第二份 Markdown/CSV/Excel 问题状态表。
-- `spec/validation/` 保存版本化验收门槛和机器可读 manifest。历史诊断文档保留当时的证据边界，不得把旧 HEAD/run 结果改写成当前主线结果；只在其顶部/结尾追加新的状态快照。
-- `work/validation/` 保存本地日志、报告和证据 ZIP，已加入 Git 忽略规则，不提交运行产物。
-- GitHub Issue 模板位于 `.github/ISSUE_TEMPLATE/`；本地归档工具位于 `tools/validation/`。
+- `spec/validation/` 保存版本化验收门槛和机器可读 manifest。历史诊断文档保留当时的证据边界，不得把旧 HEAD/run 结果改写成当前主线结果。
+- `work/validation/` 保存本地日志、报告和证据 ZIP，不提交运行产物。
 
-规范冲突时先停止有争议的修改，报告冲突文件、段落、受影响接口和风险；不得自行选择更宽松的约束。
+发生冲突时，按“当前任务最新明确用户指令 → 仍有效的用户决策 → 根目录 AGENTS/AI 执行规范 → 专项 SPEC → Agent 默认习惯”执行。用户指令明确时直接执行，不得机械地停下来要求用户再次确认。只有真实歧义、不可逆操作授权或安全冲突才暂停。
 
 ## 3. 每次任务开始前的仓库预检查
 
@@ -69,35 +70,45 @@ git pull --ff-only origin main
 
 如果工作区有用户修改，先保护这些文件。如果远端有新提交，先检查差异，保留双方的提交，再验证更新后的源码。
 
-## 4. 固定构建和测试范围
+## 4. 开发阶段与集中验收阶段
 
-**唯一产品构建目标：Windows x64 + MSVC 2022 + Release。**
+**产品正式构建目标仍然只有 Windows x64 + MSVC 2022 + Release。** 但这不表示每次开发改动都必须运行完整验收。
 
-严禁执行以下产品构建/测试：
+### 4.1 当前开发阶段（默认遵循用户最新要求）
 
-- Linux x64、macOS、iOS、Android、ARM64。
-- Windows Debug、RelWithDebInfo 或其他非 Release 配置。
-- Linux AppImage、Docker、Flatpak、VM 等产品包构建。
+当前大屏重构按用户明确要求推进：完成总览总控、飞行健康、导航时序、遥控与链路四个页面的整体重构和视觉适配；开发过程中不触发 CI，不运行 Unit、Integration、UI 自动化测试或完整产品验收。
 
-平台无关的文档、Python CI 脚本、actionlint、pre-commit、CodeQL 等检查可以运行，但不得触发 Linux QGroundControl 产品 configure/build/test/package。
+- 禁止主动触发 GitHub Actions、workflow_dispatch、CI、`ctest`、`FlightTelemetryPageUITest` 和其他测试套件。
+- 允许必要的源码审查、Git diff、QML/C++ 静态检查和不触发测试的格式检查。
+- 测试未执行时标记 `NOT_RUN`，不得声称测试通过。
+- 默认保留测试文件。只有用户明确要求清理某一专项测试时，才一次性删除该范围的测试源文件、CMake/build 登记及对应文档引用；不得影响其他模块测试，也不得以删测试掩盖缺陷。
+- 不得为了“验收”启动安装包制作、完整 Unit/Integration 或其他平台产品构建。
 
-当前依赖版本以 `.github/build-config.json` 为准，禁止在文档或脚本里另维护一份会漂移的版本清单。当前配置为 Qt 6.11.1、GStreamer Windows 1.28.4、CMake 最低 3.25、MSVC 2022 x64。
+### 4.2 集中验收阶段
 
-## 5. 标准本地开发循环
+只有用户明确要求“集中测试”“开始 CI”或“进入验收”后，才执行 [Windows Release 验收与交付指南](Windows-Release验收与交付.md)：
 
-每轮按以下顺序执行，不要每次修改后都等待完整 CI：
+- Windows x64、MSVC 2022、Release。
+- Release 构建、Unit、Integration、可执行文件和 Installer 验证。
+- 记录实际测试数量、失败/跳过数量、JUnit、日志、RUN_ID 和精确 HEAD。
+- 不得执行 Linux、macOS、Android、iOS、ARM64、Windows Debug、Docker、Flatpak 等产品构建/测试。
 
-1. **扫描与定位**：阅读需求、接口、调用链、相关测试、当前失败日志；先确认根因。
-2. **登记问题**：发现可独立跟踪的问题时，按 Issue 规范登记，记录 commit、测试名、日志和复现方式。
-3. **小批量修改**：一次聚焦一个根因或一个紧密相关的变更组；不得顺手重构无关模块。
-4. **静态检查**：先执行与变更文件相关的格式、lint、类型/接口检查。
-5. **聚焦编译**：使用 Windows Release 构建目录增量编译；编译失败先修复，不继续包装成测试通过。
-6. **聚焦测试**：先运行变更对应的单个测试或测试组；确认通过后再进行完整测试。
-7. **完整验收**：执行 Release 完整构建、Unit、Integration、可执行文件启动验证、Installer 安装验证。
-8. **证据归档**：生成 RUN_ID，保存日志、JUnit XML、环境和 commit 指纹、报告、SHA-256。
-9. **代码提交**：按 Conventional Commits 提交到本地 `main`，引用问题 ID 或说明对应任务。
-10. **推送和复核**：核对本地验收提交和准备推送的源码，随后正常推送 `main`，检查同一提交的 CI。
-11. **输出交付报告**：使用模板列出实际执行项目、数量、结果、证据路径、提交和未解决问题。
+### 4.3 阶段切换
+
+当前阶段以用户最新指令和 `spec/README.md` 为准。专项验收规范定义的是集中验收门槛，不是每次代码编辑的默认动作。
+
+## 5. 标准任务执行闭环（不得提前停止）
+
+1. **读取指令**：读取根目录 `AGENTS.md`、AI 执行规范、`spec/README.md` 和任务专项 SPEC。
+2. **检查仓库**：确认仓库、分支、HEAD、工作区状态、目标文件和最近相关提交；保护用户已有修改。
+3. **建立内部清单**：逐项列出用户明确要求、涉及页面/组件/数据源/资源/文档及验收条件，不要求用户逐项确认。
+4. **扫描现状**：追踪调用链和已有实现，避免重复开发；对已确定的布局和方案直接执行，不重新设计。
+5. **连续实施**：完成整个任务范围和必要关联修改，不只修改最容易的部分，不以计划或代码片段代替实际编辑。
+6. **完整自检**：检查 diff、页面覆盖、数据/功能保留、资源路径、构建登记和文档一致性；按当前阶段执行允许的静态检查。
+7. **继续收口**：仍有明确可执行的范围内工作时继续处理；用户说“继续”时从当前 HEAD 和未完成项恢复，不重新解释、不要求重复指令。
+8. **统一汇报**：任务完成或遇到真实阻碍后集中报告。不要每完成一个小步骤就停止等待用户。
+
+对参考图重构，参考图是目标而不是灵感；必须完成所有指定页面的布局、层级、比例和内容迁移，保留真实数据与原有功能。只完成图标、颜色或局部卡片调整不能算完成整体重构。
 
 ## 6. 编码和测试规则
 
@@ -182,37 +193,36 @@ pwsh -File .\\tools\\validation\\Archive-WindowsReleaseRun.ps1 -RunId $RunId -Re
 
 ## 10. 提交和分支规则
 
-- 在 `main` 上执行本地构建、验证和交付；当前仓库采用 main-only 策略，不创建长期功能分支，除非用户明确要求。
-- Conventional Commit 示例：`fix(Telemetry): reject stale FCU samples`、`test(Vehicle): cover FCU reconnect dispatch`、`docs(spec): add local Windows validation workflow`。
-- 每个 commit 说明修改内容；涉及 Issue 时在正文或提交说明中引用 FGC ID / GitHub Issue。
-- 推送前检查本地验收结果及待推送的修改，使用 `git push origin main`。
-- 保留远端历史，禁止 force push、改写他人提交或删除分支。
-- 不能仅为了 CI 变绿而删测试、跳过失败、屏蔽错误、放宽断言或改变协议定义。
-- 如果需要改 CI，只能保持 Windows x64 Release 产品验证目标；Linux Job 不得恢复，也不得成为 Windows 门禁依赖。
+- 在用户指定的分支和仓库上工作；本仓库当前采用 main-only 策略，未经用户要求不创建长期功能分支。
+- 写入前检查工作区，保留用户未提交修改；禁止 `reset --hard`、`clean -fd`、强制推送和改写他人提交。
+- 同一任务范围先完整实施，再形成一个清晰、可审阅的提交；不得每改一小处就提交。
+- 是否提交和推送按用户当前指令及本轮工作流执行。开发阶段明确禁止 CI 时，不得普通 push 意外触发 CI；只有确认 skip-CI 机制对该触发器有效时才可使用，否则不要推送。
+- Conventional Commit 示例：`fix(Telemetry): reject stale FCU samples`、`test(Vehicle): cover FCU reconnect dispatch`、`docs(spec): unify AI execution rules`。
+- 禁止 force push、覆盖远端提交或删除分支。
 
-## 11. Agent 每轮必须输出
+## 11. 最终交付报告
 
-严格按以下结构报告：
+任务完成或遇到真实阻碍时，集中输出一份简洁报告：
 
-1. 仓库、分支、HEAD。
-2. 本轮目标与完成情况。
-3. 修改文件及每项修改原因。
-4. 实际执行的命令（不要只写“已测试”）。
-5. 编译结果、Unit 数量、Integration 数量、失败/跳过数量。
-6. Installer 生成、安装、启动验证结果。
-7. 新建/更新的 FGC Issue、状态及链接。
-8. 验收 commit SHA、推送 commit SHA 和远端状态。
-9. RUN_ID、证据 ZIP 路径和 SHA-256。
-10. 未解决问题、阻塞项、NOT_RUN / UNVERIFIED 项和下一步。
+1. 本轮目标，以及每项用户要求的完成状态。
+2. 实际修改的文件和关键变化。
+3. 实际执行的检查/命令及真实结果。
+4. 测试与 CI 状态；开发阶段未执行时明确写 `NOT_RUN` 和原因。
+5. 未完成项、阻塞原因和需要用户决策的事项。
+6. commit SHA、推送状态和 RUN_ID（仅在真实发生时填写）。
 
-未执行的项目必须显式写 `NOT_RUN`；证据不足必须写 `UNVERIFIED`。不得使用“全部完成”“全部通过”等笼统表述掩盖未执行项。
+不得使用“全部完成”“全部通过”等笼统表述掩盖未执行、未验证或未完成的项目。
 
 ## 12. 禁止事项
 
-- 不得构建/测试非 Windows x64 Release 产品目标。
-- 不得推送未完成本地验收的代码或强制改写远端历史。
-- 不得覆盖用户工作区或清理未知文件。
-- 不得伪造测试结果、数量、RUN_ID、Issue ID、SHA-256、CI 状态。
+- 不得只给方案、重复解释需求或把任务拆成大量等待用户确认的小步骤。
+- 不得在仍有明确可执行工作时提前停止并要求用户说“继续”。
+- 不得把承诺继续、工具调用成功、部分修改或进程仍在运行说成任务完成。
+- 不得违反当前阶段擅自运行 CI、Unit、Integration、UI 测试或完整验收。
+- 不得伪造测试结果、测试数量、RUN_ID、Issue ID、SHA-256、CI 状态或视觉验收结论。
+- 不得为了得到 PASS 删除测试、跳过失败、放宽断言、屏蔽错误或改变协议/安全定义。
+- 不得未经用户明确要求删除测试文件；若明确要求清理，必须完整清理指定范围的测试文件和构建登记。
+- 不得覆盖用户工作区、删除未知文件或终止用户启动的进程。
 - 不得把 MockLink Host 测试描述成真实 Flight UDP SIL 或 H723 实机测试。
 - 不得把遥测诊断显示当作飞控安全授权或飞行放行。
-- 不得为得到 PASS 删除失败用例、跳过测试、放宽协议或安全断言。
+- 不得执行非 Windows x64 Release 产品构建/测试。

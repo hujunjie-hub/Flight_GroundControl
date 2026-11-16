@@ -1,12 +1,14 @@
 # Windows Release 验收与交付指南
 
-版本：4.99
+版本：5.00
 适用仓库：Flight_GroundControl  
 目标：Windows x64 / MSVC 2022 / Release only
 
 ## 1. 验收总原则
 
-本指南定义 GroundControl 当前阶段的本地和 CI 验收闭环。验收必须以当前代码 commit 和本轮运行证据为准。
+本指南定义 GroundControl **集中验收阶段**的本地和 CI 验收闭环。它不是每次开发改动的默认步骤；只有用户明确要求“集中测试”“开始 CI”或“进入验收”后才执行本指南的完整门禁。验收必须以当前代码 commit 和本轮运行证据为准。
+
+开发/构建阶段遵循 [AI 执行与任务闭环规范](AI-执行与任务闭环规范.md)：用户明确要求不运行 CI/测试时，不得触发 GitHub Actions、Unit、Integration、UI 自动化测试或完整产品验收；未执行项目标记为 `NOT_RUN`，不得误报 PASS。
 
 - 编译通过不代表 Unit/Integration 通过。
 - Unit/Integration 通过不代表 Installer 安装通过。

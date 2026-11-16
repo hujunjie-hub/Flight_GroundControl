@@ -1,51 +1,65 @@
 # Flight_GroundControl 项目规范入口
 
-- 版本 5.25
+- 版本 5.26
 - 日期 2026-11-16
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
 
 ## 1. 给本地 Agent 的第一条指令
 
-把下面这段直接交给本地 Codex / Claude Code / 其他代码 Agent：
+把下面这段直接交给本地 Codex / Claude Code / GitHub Copilot / Cursor 或其他代码 Agent：
 
-> 请先完整读取仓库根目录 `AGENTS.md` 和本文件引用的规范。用 PowerShell 7 同步 `main`，检查 Git 状态并保留用户修改。在本地完成 Windows x64 MSVC Release 配置、构建、Unit、Integration、可执行文件和 Installer 验证，按 RUN_ID 归档。记录实际结果并提交，验收通过后直接推送 `main`。GitHub Actions 用于复核推送的提交。
+> 先读取根目录 `AGENTS.md`、[AI 执行与任务闭环规范](AI-执行与任务闭环规范.md)、本文件和任务专项 SPEC。检查仓库最新状态并保留用户修改；把用户要求拆成内部清单，直接完成全部范围及必要关联修改。当前开发阶段不要运行 CI、Unit、Integration 或 UI 自动化测试；只有用户明确切换到集中验收阶段才执行 Windows Release 验收。任务未完成不得提前汇报完成。
+
 
 ## 2. 项目交付原则
 
-本仓库采用本地 Windows 构建与验收，验证通过后直接交付到 `main`。
+本仓库采用**阶段化执行**：开发构建与集中验收分开管理，当前阶段由用户最新明确指令决定。
 
-- 本地 Agent：扫描代码、定位根因、修改实现和测试、本地编译、运行测试、生成证据、提交修复。
-- 用户：在 Windows 开发机运行 Agent，审阅 Agent 的修改和提交；必要时上传证据 ZIP。
-- ChatGPT：负责架构与协议审查、验收标准、复杂问题分析、回归证据复核和阶段放行建议。
-- GitHub：保存代码、提交和动态问题状态，并对已推送的提交执行 CI。
-- `spec/`：保存正式规范、验收标准、问题闭环流程、Agent 操作指南。
-- `work/validation/`：保存本地运行日志和临时报告，不提交 Git。
+- AI Agent：负责检查现状、理解完整范围、直接修改实现、处理关联模块、维护 SPEC、自检并完成交付；不能只提供计划。
+- 用户：确定目标、优先级和关键产品决策，不承担逐步催促、重复解释和日常任务调度。
+- ChatGPT/其他审查 Agent：负责架构与协议审查、复杂问题分析、验收标准和证据复核；不得用分析代替实施。
+- GitHub：保存代码、提交、Issue 和经授权触发的 CI。
+- `spec/`：保存正式规范、当前阶段、验收标准、Agent 操作指南和问题闭环规则。
+- `work/validation/`：保存集中验收阶段的本地日志和证据，不提交运行产物。
 
-**不要再把每一个编译错误都等待远程 CI 才开始修复。** 本地 Release 编译和聚焦测试是主要快速反馈回路；GitHub Actions 用于提交后的独立复核。
+### 2.1 当前执行阶段（2026-11-16）
+
+当前工作为飞控诊断四个大屏页面的整体重构与视觉对齐：总览总控、飞行健康、导航时序、遥控与链路。
+
+- 开发期间不触发 GitHub Actions/CI，不运行 Unit、Integration、UI 自动化测试或完整产品验收。
+- 允许源码审查、diff 检查和不触发测试的静态检查。
+- 所有未执行测试标记为 `NOT_RUN`，不得表述为测试通过。
+- 默认保留测试文件；只有用户明确要求清理某专项测试时，才完整清理该专项的测试源文件、构建登记和相关引用，保留其他模块测试。
+- 四个页面必须按既定参考图和专项 SPEC 完成整体布局与视觉迁移；不得只做局部图标/颜色/卡片调整，不得删减原有真实数据、遥测字段或功能。
+- 完成后统一汇报，不要每完成一小步就等待用户再次说“继续”。
+
+### 2.2 集中验收阶段
+
+只有用户明确要求“集中测试”“开始 CI”或“进入验收”后，才按 [Windows Release 验收与交付指南](Windows-Release验收与交付.md) 执行 Windows x64 / MSVC 2022 / Release 的完整构建、Unit、Integration、可执行文件和 Installer 验证。该验收规范不要求在开发阶段逐次运行。
 
 ## 3. 规范文件地图
 
 按以下顺序阅读：
 
-1. [Agent 操作总指南](AGENT-操作指南.md)：Agent 每次接手任务的强制步骤。
-2. [Windows 本地开发、构建与调试指南](本地Windows开发与调试指南.md)：拉代码、安装依赖、配置 MSVC/Qt/GStreamer、编译和调试。
-3. [Windows Release 验收与交付指南](Windows-Release验收与交付.md)：完整验收矩阵、通过条件和交付物。
-4. [问题登记与闭环规范](quality/ISSUE_WORKFLOW.md)：问题 ID、类型、严重级别、状态和证据要求。
-5. [问题关闭清单](quality/ISSUE_CLOSURE_CHECKLIST.md)：问题关闭前的强制核对。
-6. [机器可读验收清单](validation/windows_release_acceptance_manifest.json)：供 Agent 和脚本读取的验收门槛。
-7. [本地验收报告模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)：每轮开发和验收结果必须按此输出。
-8. [FCU 遥测接口说明](../doc/gcs/FCU_TELEMETRY.md)：13 类遥测消息、FactGroup、有效性、边界和当前固件发布端限制。
-9. 根目录 [AGENTS.md](../AGENTS.md)、[test/README.md](../test/README.md)、[tools/README.md](../tools/README.md) 和 [.github/ci-overview.md](../.github/ci-overview.md)：代码风格、测试框架和 CI 实现细节。
-10. [主线评估与优化路线图](主线评估与优化路线图.md)：合并后的基线、优先级、实施顺序和验收标准。
-11. [Flight ↔ GroundControl UDP SIL 验证记录](validation/Flight-UDP-SIL-20261114.md)：跨仓库互操作的实际结果与未执行矩阵。
-12. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。FGC-0043 的 EXIF typed-reader 专项验收见 [FGC-0043](validation/FGC-0043/README.md)。
-13. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。
-14. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
-15. [全项目字体系统与渲染规范](UI-字体系统与渲染规范.md)：字体族/中文回退、语义字号与字重、抗锯齿/Hinting、颜色和 DPI 验收。
-16. [设置侧栏字体与状态颜色规范](UI-设置侧栏字体与颜色规范.md)：设置一级/二级菜单的专项规则，服从全项目字体系统规范。
-17. [参数中心 3.0 设计与适配规范](Parameter-Center-3.0-设计与适配规范.md)：单机型唯一绑定、参数域工作台、在线调参、响应验证和分阶段像素级移植。
-18. [Flight 存储与云台配置页规范](Flight-存储与云台功能设计规范.md)：存储 Profile/原因码/FCU 运行时间与遥测新鲜度、云台完整控制权配对校验、轴 capability 门控、SET_ATTITUDE 角速度控制、yaw-lock/retract 回读、MockLink 多 Manager 发现调度、重复设备 ID 隔离与独立控制及设备离线重发现、广播 interval 与参数边界验收（v2.2）。
+2. [Agent 操作总指南](AGENT-操作指南.md)：Agent 每次接手任务的强制步骤。
+3. [Windows 本地开发、构建与调试指南](本地Windows开发与调试指南.md)：拉代码、安装依赖、配置 MSVC/Qt/GStreamer、编译和调试。
+4. [Windows Release 验收与交付指南](Windows-Release验收与交付.md)：完整验收矩阵、通过条件和交付物。
+5. [问题登记与闭环规范](quality/ISSUE_WORKFLOW.md)：问题 ID、类型、严重级别、状态和证据要求。
+6. [问题关闭清单](quality/ISSUE_CLOSURE_CHECKLIST.md)：问题关闭前的强制核对。
+7. [机器可读验收清单](validation/windows_release_acceptance_manifest.json)：供 Agent 和脚本读取的验收门槛。
+8. [本地验收报告模板](templates/LOCAL_VALIDATION_REPORT_TEMPLATE.md)：每轮开发和验收结果必须按此输出。
+9. [FCU 遥测接口说明](../doc/gcs/FCU_TELEMETRY.md)：13 类遥测消息、FactGroup、有效性、边界和当前固件发布端限制。
+10. 根目录 [AGENTS.md](../AGENTS.md)、[test/README.md](../test/README.md)、[tools/README.md](../tools/README.md) 和 [.github/ci-overview.md](../.github/ci-overview.md)：代码风格、测试框架和 CI 实现细节。
+11. [主线评估与优化路线图](主线评估与优化路线图.md)：合并后的基线、优先级、实施顺序和验收标准。
+12. [Flight ↔ GroundControl UDP SIL 验证记录](validation/Flight-UDP-SIL-20261114.md)：跨仓库互操作的实际结果与未执行矩阵。
+13. `validation/FGC-*`：按 Issue 保存的专项诊断/回归证据；R17/R18 superseded 与 ASan/Qt 源码审计等历史材料保持原样，当前状态以各目录 README 的最新快照为准。FGC-0043 的 EXIF typed-reader 专项验收见 [FGC-0043](validation/FGC-0043/README.md)。
+14. [飞控诊断高级大屏设计规范](Flight-Diagnostics-大屏设计规范.md)：飞控诊断页信息架构、视觉令牌、响应式布局、状态语义和 UI 验收标准。
+15. [遥控器双摇杆实时监视设计规范](Flight-Radio-可视化设计规范.md)：原有双圆形摇杆示意图、实时 RC 数据跟随、手型映射和调试读数。
+16. [全项目字体系统与渲染规范](UI-字体系统与渲染规范.md)：字体族/中文回退、语义字号与字重、抗锯齿/Hinting、颜色和 DPI 验收。
+17. [设置侧栏字体与状态颜色规范](UI-设置侧栏字体与颜色规范.md)：设置一级/二级菜单的专项规则，服从全项目字体系统规范。
+18. [参数中心 3.0 设计与适配规范](Parameter-Center-3.0-设计与适配规范.md)：单机型唯一绑定、参数域工作台、在线调参、响应验证和分阶段像素级移植。
+19. [Flight 存储与云台配置页规范](Flight-存储与云台功能设计规范.md)：存储 Profile/原因码/FCU 运行时间与遥测新鲜度、云台完整控制权配对校验、轴 capability 门控、SET_ATTITUDE 角速度控制、yaw-lock/retract 回读、MockLink 多 Manager 发现调度、重复设备 ID 隔离与独立控制及设备离线重发现、广播 interval 与参数边界验收（v2.2）。
 
 ## 4. 当前固定工程约束
 
@@ -58,8 +72,8 @@
 | Qt | 以 `.github/build-config.json` 为准；当前 6.11.1，MSVC 2022 x64 |
 | GStreamer | 以 `.github/build-config.json` 为准；当前 Windows 1.28.4 |
 | 构建系统 | CMake + Ninja |
-| 测试 | Unit + Integration，记录实际执行数量 |
-| 安装包 | Windows Installer，必须安装并验证 |
+| 测试 | 开发阶段按用户要求不运行；集中验收阶段执行 Unit + Integration 并记录实际数量 |
+| 安装包 | 仅集中验收阶段生成、安装并验证 Windows Installer |
 | 开发和交付分支 | `main`，本地验收通过后正常推送 |
 
 Linux、macOS、Android、iOS、ARM64、Windows Debug、AppImage、Docker、Flatpak 等不属于本阶段产品构建和测试目标。Ubuntu runner 仍可执行纯文档、脚本、CodeQL、pre-commit 等与 Linux 产品构建无关的质量检查。
@@ -137,6 +151,8 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 
 
 ## 9. 飞控诊断大屏视觉构建状态
+
+**当前阶段门禁（2026-11-16）：** 本轮四页整体重构按用户要求不运行 CI、Unit、Integration 或 UI 自动化测试；相关测试状态保持 `NOT_RUN`，集中验收时统一执行。Agent 必须先完成四页整体视觉迁移和内容保留，不得把局部修改或进度汇报当作完成。
 
 - 设计基准：四张 1672×941 参考图；当前实现位于 `FlightTelemetry.qml`、`FlyViewToolBar.qml`、`VehicleConfigView.qml` 和 `SettingsButton.qml`。
 - 2026-11-15 本轮增量：Flight 配置顶栏 56 px、左导航 160 px、连续六项 KPI 带、深青蓝卡片令牌；导航仍使用真实组件，不添加死链。
