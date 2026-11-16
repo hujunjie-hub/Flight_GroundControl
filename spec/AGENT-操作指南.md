@@ -81,7 +81,7 @@ git pull --ff-only origin main
 - 禁止主动触发 GitHub Actions、workflow_dispatch、CI、`ctest`、`FlightTelemetryPageUITest` 和其他测试套件。
 - 允许必要的源码审查、Git diff、QML/C++ 静态检查和不触发测试的格式检查。
 - 测试未执行时标记 `NOT_RUN`，不得声称测试通过。
-- 默认保留测试文件。只有用户明确要求清理某一专项测试时，才一次性删除该范围的测试源文件、CMake/build 登记及对应文档引用；不得影响其他模块测试，也不得以删测试掩盖缺陷。
+- 本轮用户已明确要求清理大屏专项测试：必须完整清理所有仅覆盖这四个大屏页面的测试源文件、CMake/build 登记及仅服务这些测试的引用，不能只删除单个 FlightTelemetryPageUITest 后就宣称完成；保留其他功能模块测试。开发期间不运行任何测试。清理测试不得用于掩盖产品缺陷，也不得放宽生产代码的安全边界。
 - 不得为了“验收”启动安装包制作、完整 Unit/Integration 或其他平台产品构建。
 
 ### 4.2 集中验收阶段

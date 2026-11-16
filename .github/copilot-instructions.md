@@ -10,6 +10,6 @@ Before changing this repository, read and follow:
 
 The root AGENTS.md and the central AI execution contract are authoritative. Do not invent a separate workflow or override the user's latest explicit instructions.
 
-Current phase (2026-11-16): complete the four Flight Diagnostics dashboard pages and visual alignment. Do not trigger CI, Unit, Integration, UI automation tests or full product acceptance during this development phase. Keep unrun checks as NOT_RUN. Only enter centralized validation when the user explicitly authorizes it.
+Current phase (2026-11-16): complete the four Flight Diagnostics dashboard pages and visual alignment. The user has explicitly requested cleanup of all dashboard-specific test files and their build registrations; do not delete tests for unrelated product areas. Do not trigger CI, Unit, Integration, UI automation tests or full product acceptance during this development phase. Keep unrun checks as NOT_RUN. Only enter centralized validation when the user explicitly authorizes it.
 
 Execute the complete requested scope in one continuous task. Do not return a plan instead of code changes, stop after a small subset, ask the user to repeat settled decisions, or claim completion without reviewing the actual diff. Preserve existing telemetry, data, behavior, safety boundaries and approved design decisions.

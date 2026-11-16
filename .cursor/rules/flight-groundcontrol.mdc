@@ -7,6 +7,6 @@ Read and follow `/AGENTS.md`, `/spec/AI-执行与任务闭环规范.md`, `/spec/
 
 The latest explicit user instruction has priority. Execute the complete requested scope in the repository; do not substitute plans, promises or partial edits for delivery. Do not stop while clear in-scope work remains.
 
-Current phase (2026-11-16): four-page Flight Diagnostics dashboard rebuild. Do not run CI, Unit, Integration, UI automation tests or full product acceptance during this phase. Keep unrun checks as `NOT_RUN`. Only run centralized Windows Release validation after explicit user authorization.
+Current phase (2026-11-16): four-page Flight Diagnostics dashboard rebuild. The user has explicitly requested cleanup of all dashboard-specific test files and their build registrations; preserve tests for unrelated product areas. Do not run CI, Unit, Integration, UI automation tests or full product acceptance during this phase. Keep unrun checks as `NOT_RUN`. Only run centralized Windows Release validation after explicit user authorization.
 
 Treat reference screenshots as the visual target. Preserve existing real telemetry, fields, functions, responsive behavior and safety semantics. Review the final diff and report only verified work.

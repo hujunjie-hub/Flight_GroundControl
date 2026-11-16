@@ -30,7 +30,7 @@ During this development phase:
 - Do not turn a focused UI change into a full build/test/package acceptance cycle.
 - Lightweight source review, Git diff inspection and non-test static checks are allowed when useful.
 - Report tests and CI that were not run as `NOT_RUN`; never imply they passed.
-- Preserve existing tests by default. Remove dashboard-scoped test files and their build registrations only when the user's explicit task requires that cleanup; do not touch unrelated tests.
+- The current dashboard task explicitly includes cleaning all dashboard-specific test files and their build registrations; do not stop after deleting only one test file. Preserve tests for unrelated product areas. Do not run the removed or remaining test suites during this development phase.
 
 When the user explicitly switches to centralized validation, follow the full Windows Release acceptance guide.
 
