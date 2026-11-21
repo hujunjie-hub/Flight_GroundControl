@@ -81,6 +81,8 @@ SetupPage {
             return qsTr("未连接")
         if (!_linkHealthy)
             return qsTr("数据中断")
+        if (Number(_vehicle.messagesReceived) <= 0)
+            return qsTr("未上报")
         const value = Number(_vehicle.mavlinkLossPercent)
         return Number.isFinite(value) ? value.toFixed(1) + "%" : qsTr("未上报")
     }
