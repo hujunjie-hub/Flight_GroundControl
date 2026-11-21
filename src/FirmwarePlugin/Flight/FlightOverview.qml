@@ -76,6 +76,14 @@ SetupPage {
             return "—"
         return String(_telemetry.recentEvents.length)
     }
+    function _mavlinkLossText() {
+        if (!_vehicle)
+            return qsTr("未连接")
+        if (!_linkHealthy)
+            return qsTr("数据中断")
+        const value = Number(_vehicle.mavlinkLossPercent)
+        return Number.isFinite(value) ? value.toFixed(1) + "%" : qsTr("未上报")
+    }
 
     Component {
         id: pageComponent
@@ -259,17 +267,11 @@ SetupPage {
 
                 DashboardPanel {
                     objectName: "flightOverview_systemPanel"
-                    titleText: qsTr("系统状态")
+                    titleText: qsTr("飞控健康")
                     Layout.columnSpan: overviewGrid.columns >= 12 ? 4 :
                                        overviewGrid.columns >= 6 ? 3 : 1
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
-                    StatusRow {
-                        labelText: qsTr("飞控连接")
-                        valueText: !root._vehicle ? qsTr("未连接") :
-                                   root._linkHealthy ? qsTr("正常") : qsTr("通信中断")
-                        valueColor: root._linkHealthy ? "#37DF8A" : "#E9B34F"
-                    }
                     StatusRow {
                         labelText: qsTr("传感器健康")
                         valueText: !root._vehicle ? qsTr("未连接") :
@@ -279,21 +281,14 @@ SetupPage {
                         valueColor: root._vehicle && root._vehicle.allSensorsHealthy ? "#37DF8A" : "#E9B34F"
                     }
                     StatusRow {
-                        labelText: qsTr("GNSS 卫星")
-                        valueText: !root._vehicle ? qsTr("未连接") :
-                                   !root._linkHealthy ? qsTr("数据中断") :
-                                   root._gpsAvailable ? String(root._vehicle.gps.count.valueString) : qsTr("未上报")
-                        valueColor: root._gpsAvailable ? "#37DF8A" : "#E9B34F"
+                        labelText: qsTr("MAVLink 丢包率")
+                        valueText: root._mavlinkLossText()
+                        valueColor: root._linkHealthy ? "#18DDE2" : "#E9B34F"
                     }
                     StatusRow {
                         labelText: qsTr("最近事件")
                         valueText: root._eventCount()
                         valueColor: root._linkHealthy && root._telemetry && root._telemetry.telemetryAvailable ? "#18DDE2" : "#91ADB6"
-                    }
-                    StatusRow {
-                        labelText: qsTr("电池状态")
-                        valueText: root._batteryPercent()
-                        valueColor: root._battery ? "#37DF8A" : "#91ADB6"
                     }
                     QGCLabel {
                         Layout.fillWidth: true

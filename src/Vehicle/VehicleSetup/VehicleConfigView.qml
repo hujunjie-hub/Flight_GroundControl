@@ -41,28 +41,12 @@ Rectangle {
     property bool   _fullParameterVehicleAvailable: _activeVehicle && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !_activeVehicle.parameterManager.missingParameters
     readonly property bool _flightLayout: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
     readonly property bool _flightNavigation: _flightLayout && _fullParameterVehicleAvailable
-    readonly property var _flightBattery: _activeVehicle && _activeVehicle.batteries.count > 0
-                                           ? _activeVehicle.batteries.get(0) : null
     readonly property string _flightLinkText: !_activeVehicle ? qsTr("未连接") :
                                                _activeVehicle.vehicleLinkManager && _activeVehicle.vehicleLinkManager.communicationLost
                                                ? qsTr("通信中断") : qsTr("已连接")
-    readonly property string _flightGpsText: {
-        if (!_activeVehicle || !_activeVehicle.vehicleLinkManager ||
-            _activeVehicle.vehicleLinkManager.communicationLost || !_activeVehicle.gps.telemetryAvailable)
-            return qsTr("GNSS —")
-        const gps = _activeVehicle.gps
-        const hdop = Number(gps.hdop.rawValue)
-        return qsTr("GNSS %1 · HDOP %2").arg(gps.count.valueString)
-                .arg(Number.isFinite(hdop) ? hdop.toFixed(1) : "—")
-    }
-    readonly property string _flightBatteryText: {
-        if (!_flightBattery || !_activeVehicle || !_activeVehicle.vehicleLinkManager ||
-            _activeVehicle.vehicleLinkManager.communicationLost)
-            return qsTr("电池 —")
-        const percent = Number(_flightBattery.percentRemaining.rawValue)
-        return Number.isFinite(percent) && percent >= 0 && percent <= 100
-                ? qsTr("电池 %1%").arg(Math.round(percent)) : qsTr("电池 —")
-    }
+    readonly property string _flightVehicleLabel: _activeVehicle
+                                                   ? qsTr("载具 #%1").arg(_activeVehicle.id)
+                                                   : qsTr("未选择载具")
     readonly property string _flightClockText: {
         _clockRefreshTick
         return Qt.formatDateTime(new Date(), "hh:mm:ss")
@@ -567,6 +551,12 @@ Rectangle {
                 font.pointSize: ScreenTools.subtitleFontPointSize
             }
             Item { Layout.fillWidth: true }
+            QGCLabel {
+                text: _flightVehicleLabel
+                visible: appHeader.width >= 900
+                color: "#9FC4CC"
+                font.pointSize: ScreenTools.captionFontPointSize
+            }
             Rectangle {
                 radius: 16
                 color: _activeVehicle && _flightLinkText === qsTr("已连接") ? "#0B382F" : "#3A2028"
@@ -581,18 +571,6 @@ Rectangle {
                     color: _activeVehicle && _flightLinkText === qsTr("已连接") ? "#54E0AC" : "#FF8792"
                     font.weight: Font.DemiBold
                 }
-            }
-            QGCLabel {
-                text: _flightGpsText
-                visible: appHeader.width >= 1120
-                color: "#9FC4CC"
-                font.pointSize: ScreenTools.captionFontPointSize
-            }
-            QGCLabel {
-                text: _flightBatteryText
-                visible: appHeader.width >= 960
-                color: "#9FC4CC"
-                font.pointSize: ScreenTools.captionFontPointSize
             }
             QGCLabel {
                 text: _flightClockText
