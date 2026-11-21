@@ -557,6 +557,7 @@ Rectangle {
             }
             QGCLabel {
                 text: qsTr("飞行地面控制系统")
+                visible: appHeader.width >= 980
                 color: "#C8DCE1"
                 font.pointSize: ScreenTools.subtitleFontPointSize
             }
@@ -578,16 +579,19 @@ Rectangle {
             }
             QGCLabel {
                 text: _flightGpsText
+                visible: appHeader.width >= 1120
                 color: "#9FC4CC"
                 font.pointSize: ScreenTools.captionFontPointSize
             }
             QGCLabel {
                 text: _flightBatteryText
+                visible: appHeader.width >= 960
                 color: "#9FC4CC"
                 font.pointSize: ScreenTools.captionFontPointSize
             }
             QGCLabel {
                 text: _flightClockText
+                visible: appHeader.width >= 820
                 color: "#E8F4F6"
                 font.family: ScreenTools.fixedFontFamily
                 font.pointSize: ScreenTools.bodyFontPointSize

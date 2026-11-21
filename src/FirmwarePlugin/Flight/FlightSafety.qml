@@ -39,7 +39,13 @@ SetupPage {
                         labelText: qsTr("电池剩余")
                         valueText: root.battery && Number.isFinite(root.battery.percentRemaining.rawValue)
                                    && root.battery.percentRemaining.rawValue >= 0
+                                   && root.battery.percentRemaining.rawValue <= 100
                                    ? root.battery.percentRemaining.valueString + " %" : qsTr("未上报")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("电池电压")
+                        valueText: root.battery && Number.isFinite(root.battery.voltage.rawValue)
+                                   ? root.battery.voltage.valueString + " V" : qsTr("未上报")
                     }
                     QGCLabel {
                         Layout.fillWidth: true

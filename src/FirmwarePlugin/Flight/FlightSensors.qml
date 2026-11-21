@@ -177,6 +177,7 @@ SetupPage {
                                 anchors.margins: 10
                                 spacing: 12
                                 Image {
+                                    id: calibrationVehicleImage
                                     Layout.preferredWidth: 104
                                     Layout.preferredHeight: 92
                                     source: root._vehicle ? root._vehicle.vehicleImageOpaque : ""
@@ -184,8 +185,8 @@ SetupPage {
                                     fillMode: Image.PreserveAspectFit
                                     mipmap: true
                                     transform: Rotation {
-                                        origin.x: parent.width / 2
-                                        origin.y: parent.height / 2
+                                        origin.x: calibrationVehicleImage.width / 2
+                                        origin.y: calibrationVehicleImage.height / 2
                                         angle: root._vehicle ? (Number(root._vehicle.heading.rawValue) || 0) : 0
                                     }
                                 }
