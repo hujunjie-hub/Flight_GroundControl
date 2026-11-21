@@ -27,16 +27,20 @@ SetupPage {
                                                  !_vehicle.parameterManager.missingParameters
     readonly property bool _linkHealthy: !!_vehicle && _vehicle.vehicleLinkManager &&
                                          !_vehicle.vehicleLinkManager.communicationLost
-    readonly property bool _gpsAvailable: !!_vehicle && _vehicle.gps &&
+    readonly property bool _gpsAvailable: !!_vehicle && _linkHealthy && _vehicle.gps &&
                                           _vehicle.gps.telemetryAvailable
 
     function _factText(fact, decimals, unit) {
-        if (!fact)
+        if (!fact || !_linkHealthy)
             return "—"
         const value = Number(fact.rawValue)
         return Number.isFinite(value) ? value.toFixed(decimals) + unit : "—"
     }
     function _batteryPercent() {
+        if (!_vehicle)
+            return qsTr("未连接")
+        if (!_linkHealthy)
+            return qsTr("数据中断")
         if (!_battery)
             return qsTr("未上报")
         const value = Number(_battery.percentRemaining.rawValue)
@@ -44,6 +48,10 @@ SetupPage {
                 ? Math.round(value) + "%" : qsTr("未上报")
     }
     function _gpsSummary() {
+        if (!_vehicle)
+            return qsTr("未连接")
+        if (!_linkHealthy)
+            return qsTr("数据中断")
         if (!_gpsAvailable)
             return qsTr("等待定位")
         const fix = _vehicle.gps.lock.enumStringValue
@@ -53,11 +61,17 @@ SetupPage {
     function _prearmSummary() {
         if (!_vehicle)
             return qsTr("未连接")
+        if (!_linkHealthy)
+            return qsTr("数据中断")
         if (!_vehicle.readyToFlyAvailable)
             return qsTr("未上报")
         return _vehicle.readyToFly ? qsTr("检查通过") : qsTr("需检查")
     }
     function _eventCount() {
+        if (!_vehicle)
+            return qsTr("未连接")
+        if (!_linkHealthy)
+            return qsTr("数据中断")
         if (!_telemetry || !_telemetry.telemetryAvailable || !_telemetry.recentEvents)
             return "—"
         return String(_telemetry.recentEvents.length)
@@ -114,21 +128,23 @@ SetupPage {
                 MetricTile {
                     objectName: "flightOverview_mode"
                     titleText: qsTr("飞行模式")
-                    valueText: root._vehicle ? root._vehicle.flightMode : "—"
+                    valueText: !root._vehicle ? "—" : root._linkHealthy ? root._vehicle.flightMode : qsTr("数据中断")
                     detailText: qsTr("当前飞控模式")
                     accentColor: "#18DDE2"
                 }
                 MetricTile {
                     objectName: "flightOverview_armed"
                     titleText: qsTr("解锁状态")
-                    valueText: root._vehicle ? (root._vehicle.armed ? qsTr("已解锁") : qsTr("已锁定")) : "—"
+                    valueText: !root._vehicle ? "—" : root._linkHealthy
+                               ? (root._vehicle.armed ? qsTr("已解锁") : qsTr("已锁定")) : qsTr("数据中断")
                     detailText: root._vehicle && root._vehicle.armed ? qsTr("电机解锁") : qsTr("飞控锁定")
                     accentColor: root._vehicle && root._vehicle.armed ? "#E9B34F" : "#37DF8A"
                 }
                 MetricTile {
                     objectName: "flightOverview_flightState"
                     titleText: qsTr("飞行状态")
-                    valueText: root._vehicle ? (root._vehicle.flying ? qsTr("飞行中") : qsTr("地面")) : "—"
+                    valueText: !root._vehicle ? "—" : root._linkHealthy
+                               ? (root._vehicle.flying ? qsTr("飞行中") : qsTr("地面")) : qsTr("数据中断")
                     detailText: root._vehicle && root._vehicle.flying ? qsTr("飞行器正在空中") : qsTr("当前未检测到飞行")
                     accentColor: "#18DDE2"
                 }
@@ -185,7 +201,7 @@ SetupPage {
                             id: vehicleImage
                             Layout.preferredWidth: Math.min(104, parent.width * 0.36)
                             Layout.preferredHeight: 104
-                            source: root._vehicle ? root._vehicle.vehicleImageOpaque : ""
+                            source: root._linkHealthy ? root._vehicle.vehicleImageOpaque : ""
                             sourceSize.width: width
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
@@ -257,19 +273,22 @@ SetupPage {
                     StatusRow {
                         labelText: qsTr("传感器健康")
                         valueText: !root._vehicle ? qsTr("未连接") :
+                                   !root._linkHealthy ? qsTr("数据中断") :
                                    root._vehicle.sensorsPresentBits === 0 ? qsTr("未上报") :
                                    root._vehicle.allSensorsHealthy ? qsTr("正常") : qsTr("需检查")
                         valueColor: root._vehicle && root._vehicle.allSensorsHealthy ? "#37DF8A" : "#E9B34F"
                     }
                     StatusRow {
                         labelText: qsTr("GNSS 卫星")
-                        valueText: root._gpsAvailable ? String(root._vehicle.gps.count.valueString) : qsTr("未上报")
+                        valueText: !root._vehicle ? qsTr("未连接") :
+                                   !root._linkHealthy ? qsTr("数据中断") :
+                                   root._gpsAvailable ? String(root._vehicle.gps.count.valueString) : qsTr("未上报")
                         valueColor: root._gpsAvailable ? "#37DF8A" : "#E9B34F"
                     }
                     StatusRow {
                         labelText: qsTr("最近事件")
                         valueText: root._eventCount()
-                        valueColor: root._telemetry && root._telemetry.telemetryAvailable ? "#18DDE2" : "#91ADB6"
+                        valueColor: root._linkHealthy && root._telemetry && root._telemetry.telemetryAvailable ? "#18DDE2" : "#91ADB6"
                     }
                     StatusRow {
                         labelText: qsTr("电池状态")
@@ -350,6 +369,26 @@ SetupPage {
                                 }
                             }
                         }
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.margins: 8
+                            visible: !!root._vehicle && !root._linkHealthy
+                            color: "#D904151D"
+                            radius: 5
+                            border.width: 1
+                            border.color: "#9B4652"
+                            width: staleMapLabel.implicitWidth + 20
+                            height: staleMapLabel.implicitHeight + 12
+                            QGCLabel {
+                                id: staleMapLabel
+                                anchors.centerIn: parent
+                                text: qsTr("通信中断 · 位置为最后一次上报")
+                                color: "#FFB4BB"
+                                font.pointSize: ScreenTools.captionFontPointSize
+                            }
+                        }
+
                         Rectangle {
                             anchors.centerIn: parent
                             visible: !root._vehicle || !root._vehicle.coordinate.isValid

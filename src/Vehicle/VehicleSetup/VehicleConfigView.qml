@@ -47,7 +47,8 @@ Rectangle {
                                                _activeVehicle.vehicleLinkManager && _activeVehicle.vehicleLinkManager.communicationLost
                                                ? qsTr("通信中断") : qsTr("已连接")
     readonly property string _flightGpsText: {
-        if (!_activeVehicle || !_activeVehicle.gps.telemetryAvailable)
+        if (!_activeVehicle || !_activeVehicle.vehicleLinkManager ||
+            _activeVehicle.vehicleLinkManager.communicationLost || !_activeVehicle.gps.telemetryAvailable)
             return qsTr("GNSS —")
         const gps = _activeVehicle.gps
         const hdop = Number(gps.hdop.rawValue)
@@ -55,7 +56,8 @@ Rectangle {
                 .arg(Number.isFinite(hdop) ? hdop.toFixed(1) : "—")
     }
     readonly property string _flightBatteryText: {
-        if (!_flightBattery)
+        if (!_flightBattery || !_activeVehicle || !_activeVehicle.vehicleLinkManager ||
+            _activeVehicle.vehicleLinkManager.communicationLost)
             return qsTr("电池 —")
         const percent = Number(_flightBattery.percentRemaining.rawValue)
         return Number.isFinite(percent) && percent >= 0 && percent <= 100

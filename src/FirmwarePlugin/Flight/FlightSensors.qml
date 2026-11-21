@@ -30,6 +30,8 @@ SetupPage {
     function _angleText(fact) {
         if (!fact)
             return "—"
+        if (root._vehicle && root._vehicle.vehicleLinkManager.communicationLost)
+            return qsTr("数据中断")
         const value = Number(fact.rawValue)
         return Number.isFinite(value) ? value.toFixed(1) + "°" : "—"
     }
@@ -180,7 +182,8 @@ SetupPage {
                                     id: calibrationVehicleImage
                                     Layout.preferredWidth: 104
                                     Layout.preferredHeight: 92
-                                    source: root._vehicle ? root._vehicle.vehicleImageOpaque : ""
+                                    source: root._vehicle && !root._vehicle.vehicleLinkManager.communicationLost
+                                            ? root._vehicle.vehicleImageOpaque : ""
                                     sourceSize.width: width
                                     fillMode: Image.PreserveAspectFit
                                     mipmap: true

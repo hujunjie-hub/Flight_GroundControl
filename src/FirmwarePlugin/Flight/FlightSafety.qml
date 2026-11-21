@@ -12,6 +12,7 @@ SetupPage {
 
     function sensorStatus(bit) {
         if (!vehicle) return qsTr("未连接")
+        if (vehicle.vehicleLinkManager.communicationLost) return qsTr("数据中断")
         if (!(vehicle.sensorsPresentBits & bit)) return qsTr("未上报")
         if (!(vehicle.sensorsEnabledBits & bit)) return qsTr("未启用")
         return vehicle.sensorsHealthBits & bit ? qsTr("正常") : qsTr("异常")
@@ -37,14 +38,18 @@ SetupPage {
                     title: qsTr("电池保护")
                     VehicleSummaryRow {
                         labelText: qsTr("电池剩余")
-                        valueText: root.battery && Number.isFinite(root.battery.percentRemaining.rawValue)
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") :
+                                   root.battery && Number.isFinite(root.battery.percentRemaining.rawValue)
                                    && root.battery.percentRemaining.rawValue >= 0
                                    && root.battery.percentRemaining.rawValue <= 100
                                    ? root.battery.percentRemaining.valueString + " %" : qsTr("未上报")
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("电池电压")
-                        valueText: root.battery && Number.isFinite(root.battery.voltage.rawValue)
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") :
+                                   root.battery && Number.isFinite(root.battery.voltage.rawValue)
                                    ? root.battery.voltage.valueString + " V" : qsTr("未上报")
                     }
                     QGCLabel {
@@ -58,17 +63,21 @@ SetupPage {
                     VehicleSummaryRow {
                         labelText: qsTr("起飞前检查")
                         valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") :
                                    root.vehicle.armed ? qsTr("已解锁") :
                                    !root.vehicle.readyToFlyAvailable ? qsTr("未上报") :
                                    root.vehicle.readyToFly ? qsTr("检查通过") : qsTr("未通过")
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("当前飞控锁定状态")
-                        valueText: root.vehicle ? (root.vehicle.armed ? qsTr("已解锁") : qsTr("已锁定")) : qsTr("未连接")
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") :
+                                   (root.vehicle.armed ? qsTr("已解锁") : qsTr("已锁定"))
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("当前飞控模式")
-                        valueText: root.vehicle ? root.vehicle.flightMode : qsTr("未连接")
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") : root.vehicle.flightMode
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("通信链路")
@@ -77,7 +86,9 @@ SetupPage {
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("GNSS 定位")
-                        valueText: root.vehicle && root.vehicle.gps.telemetryAvailable
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("数据中断") :
+                                   root.vehicle.gps.telemetryAvailable
                                    ? root.vehicle.gps.lock.enumStringValue : qsTr("未上报")
                     }
                 }
