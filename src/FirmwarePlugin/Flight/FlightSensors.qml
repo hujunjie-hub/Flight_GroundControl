@@ -27,6 +27,13 @@ SetupPage {
     readonly property int _progress: vehicleComponent ? vehicleComponent.calibrationProgress : 0
     property int _selected: 0
 
+    function _angleText(fact) {
+        if (!fact)
+            return "—"
+        const value = Number(fact.rawValue)
+        return Number.isFinite(value) ? value.toFixed(1) + "°" : "—"
+    }
+
     readonly property var _steps: [
         { name: qsTr("陀螺仪"), kind: 1,
           help: qsTr("将载具放在稳固的台面上并保持静止，然后开始校准。") },
@@ -118,10 +125,10 @@ SetupPage {
                     Layout.fillWidth:   true
                     Layout.preferredWidth: Math.max(1, root.availableWidth - 128)
                     Layout.preferredHeight: Math.max(315, root.availableHeight - calibrationRow.y)
-                    color:              "#202d2a"
-                    radius:             2
+                    color:              "#06232B"
+                    radius:             8
                     border.width:       1
-                    border.color:       qgcPal.windowShadeDark
+                    border.color:       "#0B6873"
 
                     ColumnLayout {
                         anchors.fill:    parent
@@ -156,6 +163,56 @@ SetupPage {
                             text: root._steps[root._selected] ? root._steps[root._selected].help : ""
                         }
 
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 116
+                            visible: !!root._vehicle
+                            radius: 8
+                            color: "#0A2A33"
+                            border.width: 1
+                            border.color: "#0B6873"
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 12
+                                Image {
+                                    Layout.preferredWidth: 104
+                                    Layout.preferredHeight: 92
+                                    source: root._vehicle ? root._vehicle.vehicleImageOpaque : ""
+                                    sourceSize.width: width
+                                    fillMode: Image.PreserveAspectFit
+                                    mipmap: true
+                                    transform: Rotation {
+                                        origin.x: parent.width / 2
+                                        origin.y: parent.height / 2
+                                        angle: root._vehicle ? (Number(root._vehicle.heading.rawValue) || 0) : 0
+                                    }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    QGCLabel {
+                                        text: qsTr("飞行姿态参考 · 实时")
+                                        color: "#C8DCE1"
+                                        font.weight: Font.DemiBold
+                                    }
+                                    VehicleSummaryRow {
+                                        labelText: qsTr("横滚")
+                                        valueText: root._angleText(root._vehicle ? root._vehicle.roll : null)
+                                    }
+                                    VehicleSummaryRow {
+                                        labelText: qsTr("俯仰")
+                                        valueText: root._angleText(root._vehicle ? root._vehicle.pitch : null)
+                                    }
+                                    VehicleSummaryRow {
+                                        labelText: qsTr("航向")
+                                        valueText: root._angleText(root._vehicle ? root._vehicle.heading : null)
+                                    }
+                                }
+                            }
+                        }
+
                         ProgressBar {
                             Layout.fillWidth: true
                             visible: root._state === 1
@@ -183,9 +240,11 @@ SetupPage {
         id: lgcButton
         implicitHeight: Math.max(32, ScreenTools.defaultFontPixelHeight * 1.55)
         background: Rectangle {
-            radius: 3
-            color: !lgcButton.enabled ? "#2a3230" :
-                   lgcButton.down ? "#2f6258" : lgcButton.hovered ? "#4d6b65" : "#3f5b57"
+            radius: 6
+            color: !lgcButton.enabled ? "#14272D" :
+                   lgcButton.down ? "#07545E" : lgcButton.hovered ? "#104B55" : "#0A3942"
+            border.width: 1
+            border.color: lgcButton.enabled ? "#176B73" : "#24434A"
         }
     }
 }

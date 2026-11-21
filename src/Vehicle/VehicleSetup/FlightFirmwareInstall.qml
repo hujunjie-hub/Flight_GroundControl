@@ -20,7 +20,7 @@ Item {
 
     FileDialog {
         id: programmerDialog
-        title: qsTr("Select STM32CubeProgrammer CLI")
+        title: qsTr("选择 STM32CubeProgrammer CLI")
         onAccepted: {
             root.programmer = selectedFile
             FlightFirmwareInstaller.invalidateTarget()
@@ -29,7 +29,7 @@ Item {
 
     FileDialog {
         id: imageDialog
-        title: qsTr("Select Flight firmware")
+        title: qsTr("选择 Flight 固件")
         nameFilters: [qsTr("Flight binary (*.bin)")]
         onAccepted: root.image = selectedFile
     }
@@ -41,7 +41,7 @@ Item {
         spacing: 8
 
         QGCLabel {
-            text: qsTr("Flight Firmware (SWD)")
+            text: qsTr("固件刷写 · SWD")
             font.pointSize: ScreenTools.titleFontPointSize
         }
 
@@ -58,9 +58,9 @@ Item {
         anchors.top: heading.bottom
         anchors.topMargin: 10
         anchors.bottom: parent.bottom
-        color: "#202d2a"
-        border.color: "#354641"
-        radius: 4
+        color: "#06232B"
+        border.color: "#0B6873"
+        radius: 8
 
         ColumnLayout {
             anchors.fill: parent
@@ -70,8 +70,8 @@ Item {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 text: root.disconnected
-                      ? qsTr("Connect the Flight H723 board to ST-LINK. Probe the target before writing. Keep the same board connected until verification finishes.")
-                      : qsTr("Disconnect the vehicle link before using the firmware installer.")
+                      ? qsTr("请将 Flight H723 板连接至 ST-LINK。写入前先探测目标，并在校验完成前保持同一块板卡连接。")
+                      : qsTr("使用固件刷写工具前，请先断开飞控连接。")
             }
 
             RowLayout {
@@ -84,13 +84,13 @@ Item {
 
                     QGCButton {
                         Layout.fillWidth: true
-                        text: qsTr("Select programmer")
+                        text: qsTr("选择刷写工具")
                         enabled: !FlightFirmwareInstaller.busy
                         onClicked: programmerDialog.open()
                     }
                     QGCLabel {
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.programmer.toString() === "" ? qsTr("Not configured") : qsTr("Configured")
+                        text: root.programmer.toString() === "" ? qsTr("未配置") : qsTr("已配置")
                     }
                 }
 
@@ -100,13 +100,13 @@ Item {
 
                     QGCButton {
                         Layout.fillWidth: true
-                        text: qsTr("Select firmware")
+                        text: qsTr("选择固件")
                         enabled: !FlightFirmwareInstaller.busy
                         onClicked: imageDialog.open()
                     }
                     QGCLabel {
                         Layout.alignment: Qt.AlignHCenter
-                        text: root.image.toString() === "" ? qsTr("Not selected") : qsTr("Selected")
+                        text: root.image.toString() === "" ? qsTr("未选择") : qsTr("已选择")
                     }
                 }
             }
@@ -115,13 +115,13 @@ Item {
                 QGCTextField {
                     id: serialField
                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 29
-                    placeholderText: qsTr("ST-LINK serial number")
+                    placeholderText: qsTr("ST-LINK 序列号")
                     maximumLength: 24
                     enabled: !FlightFirmwareInstaller.busy
                     onTextEdited: FlightFirmwareInstaller.invalidateTarget()
                 }
                 QGCButton {
-                    text: qsTr("Probe target")
+                    text: qsTr("探测目标")
                     enabled: root.disconnected && !FlightFirmwareInstaller.busy &&
                              serialField.text.length === 24 && root.programmer.toString() !== ""
                     onClicked: FlightFirmwareInstaller.probe(root.programmer, serialField.text)
@@ -137,14 +137,14 @@ Item {
                 }
 
                 QGCButton {
-                    text: qsTr("Write and verify")
+                    text: qsTr("写入并校验")
                     primary: true
                     enabled: root.disconnected && FlightFirmwareInstaller.targetReady &&
                              !FlightFirmwareInstaller.busy && root.image.toString() !== ""
                     onClicked: {
                         const selectedImage = root.image
-                        QGroundControl.showMessageDialog(root, qsTr("Write Flight firmware"),
-                            qsTr("Write the selected firmware to %1 at 0x08000000 and verify it?").arg(FlightFirmwareInstaller.target),
+                        QGroundControl.showMessageDialog(root, qsTr("写入 Flight 固件"),
+                            qsTr("确定将所选固件写入目标 %1 的 0x08000000 地址并执行校验吗？").arg(FlightFirmwareInstaller.target),
                             Dialog.Yes | Dialog.Cancel, function() {
                                 if (root.disconnected) {
                                     FlightFirmwareInstaller.flash(selectedImage)

@@ -138,7 +138,7 @@ SetupPage {
                         Layout.fillWidth: true
                         Layout.topMargin: 12
                         implicitHeight: 1
-                        color: "#526460"
+                        color: "#91ADB6"
                     }
                     QGCLabel { text: qsTr("其他遥控器设置") }
                     Flow {
@@ -196,7 +196,7 @@ SetupPage {
                             text: root._channelCount > 0 ?
                                       qsTr("已收到 %1 路通道").arg(root._channelCount) :
                                       qsTr("等待通道数据")
-                            color: root._channelCount > 0 ? "#45D39A" : "#9BAAA5"
+                            color: root._channelCount > 0 ? "#37DF8A" : "#9BAAA5"
                         }
                     }
 
@@ -225,8 +225,8 @@ SetupPage {
                         implicitHeight: Math.max(220, Math.min(width, 520) * 420 / 900 + 16)
                         Layout.preferredHeight: implicitHeight
                         radius: 8
-                        color: "#0D1512"
-                        border.color: "#344A43"
+                        color: "#06232B"
+                        border.color: "#0B6873"
                         border.width: 1
 
                         Item {
@@ -279,14 +279,14 @@ SetupPage {
                                 text: qsTr("左摇杆 · CH%1 / CH%2")
                                           .arg(root.stickChannels[0] + 1)
                                           .arg(root.stickChannels[1] + 1)
-                                color: "#B9C8C2"
+                                color: "#C8DCE1"
                             }
                             QGCLabel {
                                 objectName: "flightRadio_leftGimbalReadout"
                                 text: qsTr("横向 %1  纵向 %2")
                                           .arg(root._channelText(root.stickChannels[0]))
                                           .arg(root._channelText(root.stickChannels[1]))
-                                color: "#8FA39B"
+                                color: "#91ADB6"
                             }
                         }
                         ColumnLayout {
@@ -297,14 +297,14 @@ SetupPage {
                                 text: qsTr("右摇杆 · CH%1 / CH%2")
                                           .arg(root.stickChannels[2] + 1)
                                           .arg(root.stickChannels[3] + 1)
-                                color: "#B9C8C2"
+                                color: "#C8DCE1"
                             }
                             QGCLabel {
                                 objectName: "flightRadio_rightGimbalReadout"
                                 text: qsTr("横向 %1  纵向 %2")
                                           .arg(root._channelText(root.stickChannels[2]))
                                           .arg(root._channelText(root.stickChannels[3]))
-                                color: "#8FA39B"
+                                color: "#91ADB6"
                             }
                         }
                     }
@@ -363,7 +363,7 @@ SetupPage {
             height: 5
             anchors.verticalCenter: parent.verticalCenter
             radius: height / 2
-            color: "#43524e"
+            color: "#10323C"
         }
         Rectangle {
             height: 12
@@ -372,7 +372,7 @@ SetupPage {
             anchors.verticalCenter: parent.verticalCenter
             visible: root._channelValue(track.channel) >= 0
             x: root._channelFraction(track.channel) * (parent.width - width)
-            color: "#36b5a1"
+            color: "#18DDE2"
         }
     }
 

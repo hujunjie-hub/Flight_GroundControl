@@ -11,9 +11,10 @@ SetupPage {
     readonly property var battery: vehicle && vehicle.batteries.count ? vehicle.batteries.get(0) : null
 
     function sensorStatus(bit) {
-        if (!vehicle || !(vehicle.sensorsPresentBits & bit)) return qsTr("Not reported")
-        if (!(vehicle.sensorsEnabledBits & bit)) return qsTr("Disabled")
-        return vehicle.sensorsHealthBits & bit ? qsTr("Healthy") : qsTr("Unhealthy")
+        if (!vehicle) return qsTr("未连接")
+        if (!(vehicle.sensorsPresentBits & bit)) return qsTr("未上报")
+        if (!(vehicle.sensorsEnabledBits & bit)) return qsTr("未启用")
+        return vehicle.sensorsHealthBits & bit ? qsTr("正常") : qsTr("异常")
     }
 
     pageDescription: ""
@@ -25,7 +26,7 @@ SetupPage {
             width: availableWidth
             spacing: 12
 
-            QGCLabel { text: qsTr("Flight Safety"); font.pointSize: ScreenTools.titleFontPointSize }
+            QGCLabel { text: qsTr("飞行安全与保护"); font.pointSize: ScreenTools.titleFontPointSize }
             GridLayout {
                 Layout.fillWidth: true
                 columns: availableWidth >= 760 ? 3 : 1
@@ -35,10 +36,10 @@ SetupPage {
                 StatusCard {
                     title: qsTr("电池保护")
                     VehicleSummaryRow {
-                        labelText: qsTr("Battery remaining")
+                        labelText: qsTr("电池剩余")
                         valueText: root.battery && Number.isFinite(root.battery.percentRemaining.rawValue)
                                    && root.battery.percentRemaining.rawValue >= 0
-                                   ? root.battery.percentRemaining.valueString + " %" : qsTr("Not reported")
+                                   ? root.battery.percentRemaining.valueString + " %" : qsTr("未上报")
                     }
                     QGCLabel {
                         Layout.fillWidth: true
@@ -50,18 +51,28 @@ SetupPage {
                     title: qsTr("解锁检查")
                     VehicleSummaryRow {
                         labelText: qsTr("起飞前检查")
-                        valueText: !root.vehicle ? qsTr("Not connected") :
-                                   root.vehicle.armed ? qsTr("Armed") :
-                                   !root.vehicle.readyToFlyAvailable ? qsTr("Not reported") :
-                                   root.vehicle.readyToFly ? qsTr("Ready to fly") : qsTr("Not ready")
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.armed ? qsTr("已解锁") :
+                                   !root.vehicle.readyToFlyAvailable ? qsTr("未上报") :
+                                   root.vehicle.readyToFly ? qsTr("检查通过") : qsTr("未通过")
                     }
                     VehicleSummaryRow {
                         labelText: qsTr("当前飞控锁定状态")
-                        valueText: root.vehicle ? (root.vehicle.armed ? qsTr("已解锁") : qsTr("已锁定")) : qsTr("Not connected")
+                        valueText: root.vehicle ? (root.vehicle.armed ? qsTr("已解锁") : qsTr("已锁定")) : qsTr("未连接")
                     }
                     VehicleSummaryRow {
-                        labelText: qsTr("Current flight mode")
-                        valueText: root.vehicle ? root.vehicle.flightMode : qsTr("Not connected")
+                        labelText: qsTr("当前飞控模式")
+                        valueText: root.vehicle ? root.vehicle.flightMode : qsTr("未连接")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("通信链路")
+                        valueText: !root.vehicle ? qsTr("未连接") :
+                                   root.vehicle.vehicleLinkManager.communicationLost ? qsTr("中断") : qsTr("正常")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("GNSS 定位")
+                        valueText: root.vehicle && root.vehicle.gps.telemetryAvailable
+                                   ? root.vehicle.gps.lock.enumStringValue : qsTr("未上报")
                     }
                 }
                 StatusCard {
@@ -69,10 +80,10 @@ SetupPage {
                     QGCLabel {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
-                        text: qsTr("In Flight SIL, Return to Launch returns to Home and lands. Mission geofences are managed in Plan View.")
+                        text: qsTr("Flight SIL 模式下，返航（RTL）会返回 Home 并降落。任务地理围栏在任务规划页管理，实际保护行为由飞控执行。")
                     }
                     QGCButton {
-                        text: qsTr("Open Plan View")
+                        text: qsTr("打开任务规划")
                         onClicked: { if (mainWindow.allowViewSwitch()) mainWindow.showPlanView() }
                     }
                 }
@@ -85,18 +96,18 @@ SetupPage {
                 }
                 Repeater {
                     model: [
-                        { name: qsTr("Gyroscope"), bit: 1 },
-                        { name: qsTr("Accelerometer"), bit: 2 },
-                        { name: qsTr("Compass"), bit: 4 },
-                        { name: qsTr("Barometer"), bit: 8 },
-                        { name: qsTr("GNSS"), bit: 32 },
-                        { name: qsTr("RC receiver"), bit: 65536 }
+                        { name: qsTr("陀螺仪"), bit: 1 },
+                        { name: qsTr("加速度计"), bit: 2 },
+                        { name: qsTr("罗盘"), bit: 4 },
+                        { name: qsTr("气压计"), bit: 8 },
+                        { name: qsTr("GNSS 定位"), bit: 32 },
+                        { name: qsTr("遥控接收机"), bit: 65536 }
                     ]
                     VehicleSummaryRow {
                         required property var modelData
                         labelText: modelData.name
                         valueText: root.sensorStatus(modelData.bit)
-                        visible: healthFilter.currentIndex === 0 || valueText !== qsTr("Healthy")
+                        visible: healthFilter.currentIndex === 0 || valueText !== qsTr("正常")
                     }
                 }
             }
@@ -111,16 +122,16 @@ SetupPage {
         Layout.fillHeight: true
         implicitWidth: 232
         implicitHeight: content.implicitHeight + 20
-        radius: 4
-        color: "#253330"
-        border.color: "#354641"
+        radius: 8
+        color: "#06232B"
+        border.color: "#0B6873"
 
         ColumnLayout {
             id: content
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
+            anchors.margins: 12
             spacing: 8
 
             QGCLabel { text: card.title; font.bold: true }

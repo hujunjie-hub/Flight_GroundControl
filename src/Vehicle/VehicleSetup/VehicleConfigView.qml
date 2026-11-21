@@ -291,12 +291,13 @@ Rectangle {
         }
     }
 
-    function _flightComponentIndex(componentName) {
+    function _flightComponentIndex(qmlFileName) {
         if (!_fullParameterVehicleAvailable || !_activeVehicle)
             return -1
         const components = _activeVehicle.autopilotPlugin.vehicleComponents
         for (let i = 0; i < components.length; i++) {
-            if (components[i] && components[i].name === componentName)
+            if (components[i] && components[i].setupSource &&
+                components[i].setupSource.toString().endsWith(qmlFileName))
                 return i
         }
         return -1
@@ -309,7 +310,7 @@ Rectangle {
 
     function _isFlightTelemetrySelected(pageIndex, sectionName) {
         return _selectedSpecial === "" &&
-               _selectedComponentIndex === _flightComponentIndex(qsTr("飞控诊断")) &&
+               _selectedComponentIndex === _flightComponentIndex("FlightTelemetry.qml") &&
                _selectedTelemetryPage === pageIndex &&
                _selectedTelemetrySection === sectionName
     }
@@ -334,7 +335,7 @@ Rectangle {
     function _showFlightTelemetryPage(pageIndex, sectionName) {
         if (!mainWindow.allowViewSwitch() || !_fullParameterVehicleAvailable)
             return
-        const index = _flightComponentIndex(qsTr("飞控诊断"))
+        const index = _flightComponentIndex("FlightTelemetry.qml")
         if (index < 0)
             return
         _selectedTelemetryPage = pageIndex
@@ -708,8 +709,8 @@ Rectangle {
                         Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
                         icon.source: "/qmlimages/SensorsComponentIcon.png"
                         text: qsTr("传感器校准")
-                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("传感器"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("传感器"))
+                        checked: vehicleConfigView._isFlightComponentSelected("FlightSensors.qml")
+                        onClicked: vehicleConfigView._showFlightComponent("FlightSensors.qml")
                     }
                     ConfigButton {
                         objectName: "vehicleConfig_flightRadio"
@@ -718,8 +719,8 @@ Rectangle {
                         Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
                         icon.source: "/qmlimages/RadioComponentIcon.png"
                         text: qsTr("遥控器配置")
-                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("遥控器"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("遥控器"))
+                        checked: vehicleConfigView._isFlightComponentSelected("FlightRadio.qml")
+                        onClicked: vehicleConfigView._showFlightComponent("FlightRadio.qml")
                     }
                     ConfigButton {
                         objectName: "vehicleConfig_flightModes"
@@ -728,8 +729,8 @@ Rectangle {
                         Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
                         icon.source: "/qmlimages/FlightModesComponentIcon.png"
                         text: qsTr("飞行模式")
-                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("飞行模式"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("飞行模式"))
+                        checked: vehicleConfigView._isFlightComponentSelected("FlightModesPage.qml")
+                        onClicked: vehicleConfigView._showFlightComponent("FlightModesPage.qml")
                     }
                     ConfigButton {
                         objectName: "vehicleConfig_flightSafety"
@@ -738,8 +739,8 @@ Rectangle {
                         Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
                         icon.source: "/qmlimages/SafetyComponentIcon.png"
                         text: qsTr("安全检查")
-                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("安全"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("安全"))
+                        checked: vehicleConfigView._isFlightComponentSelected("FlightSafety.qml")
+                        onClicked: vehicleConfigView._showFlightComponent("FlightSafety.qml")
                     }
                 }
 
@@ -825,7 +826,7 @@ Rectangle {
                         icon.source: "/qmlimages/CameraComponentIcon.png"
                         text: qsTr("云台设备")
                         checked: vehicleConfigView._isFlightComponentSelected(qsTr("云台"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("云台"))
+                        onClicked: vehicleConfigView._showFlightComponent("FlightGimbal.qml")
                     }
                     ConfigButton {
                         objectName: "vehicleConfig_flightStorage"
@@ -835,7 +836,7 @@ Rectangle {
                         icon.source: "/qmlimages/FlightStorageIcon.png"
                         text: qsTr("板载存储")
                         checked: vehicleConfigView._isFlightComponentSelected(qsTr("存储卡"))
-                        onClicked: vehicleConfigView._showFlightComponent(qsTr("存储卡"))
+                        onClicked: vehicleConfigView._showFlightComponent("FlightStorage.qml")
                     }
                 }
 
@@ -1147,10 +1148,10 @@ Rectangle {
         function onNavigateRequested(destination) {
             switch (destination) {
             case "sensors":
-                vehicleConfigView._showFlightComponent(qsTr("传感器"))
+                vehicleConfigView._showFlightComponent("FlightSensors.qml")
                 break
             case "radio":
-                vehicleConfigView._showFlightComponent(qsTr("遥控器"))
+                vehicleConfigView._showFlightComponent("FlightRadio.qml")
                 break
             case "diagnostics":
                 vehicleConfigView._showFlightTelemetryPage(1, "health")

@@ -288,9 +288,9 @@ SetupPage {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 126
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -320,9 +320,9 @@ SetupPage {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 126
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -352,9 +352,9 @@ SetupPage {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 126
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -386,9 +386,9 @@ SetupPage {
                 Layout.fillWidth: true
                 Layout.preferredHeight: detailColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                 radius: ScreenTools.defaultBorderRadius
-                color: qgcPal.windowShade
+                color: "#06232B"
                 border.width: 1
-                border.color: qgcPal.windowShadeDark
+                border.color: "#06232B"Dark
 
                 ColumnLayout {
                     id: detailColumn
@@ -499,9 +499,9 @@ SetupPage {
                 Layout.fillWidth: true
                 Layout.preferredHeight: noticeColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                 radius: ScreenTools.defaultBorderRadius
-                color: qgcPal.windowShade
+                color: "#06232B"
                 border.width: 1
-                border.color: qgcPal.windowShadeDark
+                border.color: "#06232B"Dark
 
                 ColumnLayout {
                     id: noticeColumn

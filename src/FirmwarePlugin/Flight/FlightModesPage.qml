@@ -90,7 +90,7 @@ SetupPage {
                             QGCLabel {
                                 Layout.preferredWidth: 80
                                 text: qsTr("飞行模式 %1").arg(index + 1)
-                                color: root.switchSlot === index ? "#f5d747" : qgcPal.text
+                                color: root.switchSlot === index ? "#18DDE2" : qgcPal.text
                             }
                             MappingCombo {
                                 fact: root.parameter("RC_MODE_" + (index + 1))
@@ -165,18 +165,18 @@ SetupPage {
         required property string title
         Layout.alignment: Qt.AlignTop
         implicitHeight: content.implicitHeight + 20
-        color: "#253330"
-        border.color: "#354641"
-        radius: 4
+        color: "#06232B"
+        border.color: "#0B6873"
+        radius: 8
 
         ColumnLayout {
             id: content
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 10
+            anchors.margins: 12
 
-            QGCLabel { text: card.title; font.bold: true }
+            QGCLabel { text: card.title; typographyRole: "section-heading"; color: "#E8F4F6" }
         }
     }
 }

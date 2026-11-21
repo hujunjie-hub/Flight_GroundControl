@@ -211,9 +211,9 @@ SetupPage {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 76
                 radius: ScreenTools.defaultBorderRadius
-                color: qgcPal.windowShade
+                color: "#06232B"
                 border.width: 1
-                border.color: qgcPal.windowShadeDark
+                border.color: "#06232B"Dark
 
                 RowLayout {
                     anchors.fill: parent
@@ -258,9 +258,9 @@ SetupPage {
                 Layout.fillWidth: true
                 Layout.preferredHeight: emptyColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                 radius: ScreenTools.defaultBorderRadius
-                color: qgcPal.windowShade
+                color: "#06232B"
                 border.width: 1
-                border.color: qgcPal.windowShadeDark
+                border.color: "#06232B"Dark
                 objectName: "flightGimbal_emptyState"
                 visible: root.deviceCount === 0
 
@@ -294,9 +294,9 @@ SetupPage {
                     Layout.fillWidth: true
                     Layout.preferredHeight: attitudeColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         id: attitudeColumn
@@ -361,9 +361,9 @@ SetupPage {
                     Layout.fillWidth: true
                     Layout.preferredHeight: controlColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         id: controlColumn
@@ -452,9 +452,9 @@ SetupPage {
                     Layout.columnSpan: root.availableWidth >= 900 ? 2 : 1
                     Layout.preferredHeight: rateColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
                     radius: ScreenTools.defaultBorderRadius
-                    color: qgcPal.windowShade
+                    color: "#06232B"
                     border.width: 1
-                    border.color: qgcPal.windowShadeDark
+                    border.color: "#06232B"Dark
 
                     ColumnLayout {
                         id: rateColumn
