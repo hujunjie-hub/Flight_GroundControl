@@ -112,6 +112,8 @@ SetupPage {
     property string _trendBootId: ""
     property int _trendSampleSequence: 0
     property int _activeDashboardPage: 0
+    property bool externalNavigation: false
+    property string navigationSection: "alerts"
     readonly property var _navigationTimelineOrder: _navigationTimelineOrderForData()
     readonly property var _dashboardPageInfo: [
         { title: qsTr("飞控诊断总览"), subtitle: "FLIGHT DIAGNOSTICS OVERVIEW", tab: qsTr("总览总控") },
@@ -2132,7 +2134,9 @@ SetupPage {
                             QGCLabel {
                                 objectName: "flightTelemetry_dashboardTitle"
                                 Layout.fillWidth: true
-                                text: root._dashboardPageInfo[root._activeDashboardPage].title
+                                text: root.externalNavigation && root._activeDashboardPage === 0 &&
+                                      root.navigationSection === "alerts"
+                                      ? qsTr("告警事件") : root._dashboardPageInfo[root._activeDashboardPage].title
                                 color: "#E7F0F4"
                                 typographyRole: "hero"
                                 wrapMode: Text.WordWrap
@@ -2140,7 +2144,9 @@ SetupPage {
                             QGCLabel {
                                 objectName: "flightTelemetry_dashboardSubtitle"
                                 visible: root.availableWidth >= 1280
-                                text: root._dashboardPageInfo[root._activeDashboardPage].subtitle
+                                text: root.externalNavigation && root._activeDashboardPage === 0 &&
+                                      root.navigationSection === "alerts"
+                                      ? "ALERTS & EVENTS" : root._dashboardPageInfo[root._activeDashboardPage].subtitle
                                 color: "#9CBFC7"
                                 font.pointSize: ScreenTools.secondaryFontPointSize
                                 Layout.alignment: Qt.AlignVCenter
@@ -2151,7 +2157,9 @@ SetupPage {
                             objectName: "flightTelemetry_dashboardSubtitleCompact"
                             Layout.fillWidth: true
                             visible: root.availableWidth >= 760 && root.availableWidth < 1280
-                            text: root._dashboardPageInfo[root._activeDashboardPage].subtitle
+                            text: root.externalNavigation && root._activeDashboardPage === 0 &&
+                                  root.navigationSection === "alerts"
+                                  ? "ALERTS & EVENTS" : root._dashboardPageInfo[root._activeDashboardPage].subtitle
                             color: "#82AEB8"
                             font.pointSize: ScreenTools.microFontPointSize
                             elide: Text.ElideRight
@@ -2204,6 +2212,7 @@ SetupPage {
             // Four reference-matched dashboard pages; the selected tab controls the visible content panel.
             GridLayout {
                 objectName: "flightTelemetry_visualTabs"
+                visible: !root.externalNavigation
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1000 ? 4 : 2
                 columnSpacing: root._dashboardTabColumnSpacing

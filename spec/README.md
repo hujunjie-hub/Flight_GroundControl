@@ -1,7 +1,7 @@
 # Flight_GroundControl 项目规范入口
 
 - 版本 5.26
-- 日期 2026-11-16
+- 日期 2026-11-21
 - 适用仓库 `hujunjie-hub/Flight_GroundControl`
 - 当前工作分支 `main`
 
@@ -23,16 +23,16 @@
 - `spec/`：保存正式规范、当前阶段、验收标准、Agent 操作指南和问题闭环规则。
 - `work/validation/`：保存集中验收阶段的本地日志和证据，不提交运行产物。
 
-### 2.1 当前执行阶段（2026-11-16）
+### 2.1 当前执行阶段（2026-11-21）
 
-当前工作为飞控诊断四个大屏页面的整体重构与视觉对齐：总览总控、飞行健康、导航时序、遥控与链路。
+当前工作扩展为用户确认的五大功能中心与九屏页面整体部署：总览总控、飞行准备（传感器校准/遥控器配置/飞行模式/安全检查）、飞行监控（飞行健康/导航时序/遥控与链路/告警事件）、设备与数据（云台/板载存储）、系统维护（参数中心/固件刷写）。
 
-- 开发期间不触发 GitHub Actions/CI，不运行 Unit、Integration、UI 自动化测试或完整产品验收。
+- 开发期间不触发 GitHub Actions/CI，不运行 Build、Unit、Integration、UI 自动化测试或完整产品验收；后续集中验收。
 - 允许源码审查、diff 检查和不触发测试的静态检查。
 - 所有未执行测试标记为 `NOT_RUN`，不得表述为测试通过。
-- 本轮用户已明确要求清理大屏专项测试：完整清理四个大屏页面专属的测试源文件、CMake/build 登记及仅服务这些测试的引用，不能只删除单个测试文件；保留其他功能模块测试。开发期间不运行任何测试。
-- 四个页面必须按既定参考图和专项 SPEC 完成整体布局与视觉迁移；不得只做局部图标/颜色/卡片调整，不得删减原有真实数据、遥测字段或功能。
-- 完成后统一汇报，不要每完成一小步就等待用户再次说“继续”。
+- 参考图是布局、信息层级和交互目标；必须使用真实 Vehicle/Facts/FactGroups/控制器，不得把示例值写入生产界面。
+- 保留现有校准、参数写入、云台控制权、存储只读和飞控安全门控；无能力/无数据时明确显示未知或未接入。
+- 完成五中心导航、总览总控及全部页面的视觉和交互移植后统一汇报，不要每完成一小步就等待用户再次说“继续”。
 
 ### 2.2 集中验收阶段
 
@@ -62,6 +62,7 @@
 17. [设置侧栏字体与状态颜色规范](UI-设置侧栏字体与颜色规范.md)：设置一级/二级菜单的专项规则，服从全项目字体系统规范。
 18. [参数中心 3.0 设计与适配规范](Parameter-Center-3.0-设计与适配规范.md)：单机型唯一绑定、参数域工作台、在线调参、响应验证和分阶段像素级移植。
 19. [Flight 存储与云台配置页规范](Flight-存储与云台功能设计规范.md)：存储 Profile/原因码/FCU 运行时间与遥测新鲜度、云台完整控制权配对校验、轴 capability 门控、SET_ATTITUDE 角速度控制、yaw-lock/retract 回读、MockLink 多 Manager 发现调度、重复设备 ID 隔离与独立控制及设备离线重发现、广播 interval 与参数边界验收（v2.2）。
+20. [Flight 五大功能中心与九屏部署规范](Flight-GroundControl-五大功能中心与九屏部署规范.md)：五中心信息架构、页面映射、真实数据约束、交互安全边界和视觉令牌。
 
 ## 4. 当前固定工程约束
 
@@ -129,6 +130,13 @@ Unit/Integration JUnit 报告由 CTest 写入 `build-win-release/`，归档脚�
 ## 8. 当前工作状态（更新至 2026-11-15；历史 CI 诊断保留原日期）
 
 本轮飞控诊断大屏改造开始时的 main 基线为 `64061a9e49f6d2ddeafcf588e60a4069470f75c6`。该基线的 pre-commit run [43574188042](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188042) 已成功；Windows Release run [43574188036](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574188036) 在本轮开始检查时仍为 IN_PROGRESS；Build Results run [43574834468](https://github.com/hujunjie-hub/Flight_GroundControl/actions/runs/43574834468) SUCCESS。后续 SPEC/产品提交触发的 CI 必须按新 HEAD 重新核对。
+
+### 8.1 五大功能中心与九屏部署（2026-11-21）
+
+- 本轮从 main@045b982 开始；按 main-only 策略直接更新 main，不创建新分支。
+- 五中心导航与总览总控首批实现：Flight 配置侧栏完成分组入口，新增只读 FlightOverview 页面，诊断页面改由外部侧栏选择页面并隐藏重复页签。
+- 传感器、遥控器、飞行模式、安全、飞控健康、导航时序、遥控与链路、告警事件、云台、板载存储、参数中心和固件刷写均继续复用现有功能页/控制器；其余页面视觉精修继续按本 SPEC 推进。
+- 本轮构建/测试/CI/运行截图均为 `NOT_RUN`；提交使用 `[skip ci]`，不触发集中验收。
 
 - 当前长期分支策略为 **只保留 `main`**。
 - FGC-0029 仍为 OPEN / S1 / BLOCKED；首次破坏引用计数的具体操作尚未证实。FGC-0043（EXIF typed-reader 畸形条目边界检查）实现和回归测试已在 main；历史 Windows Release/Unit 精确 HEAD 证据通过且相关源文件未变，但当前 MSVC ASan workflow 之前没有运行 ExifUtilityTest，已补入 20 次 ASan 专项矩阵，等待该 workflow 精确 HEAD 执行后再考虑关闭 Issue #43。

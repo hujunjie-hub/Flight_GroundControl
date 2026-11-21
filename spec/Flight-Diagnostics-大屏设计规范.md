@@ -1563,3 +1563,8 @@ main@866a8fbc9518249daf8824a850c017ebd487b188 的 Windows Release 结果：
 - 不改变 13 域矩阵、六个重点域、维护三卡、资源指标的字段/文案/单位/精度/对象名、freshness/validity、状态色或卡片响应式断点；不改变遥测、MAVLink、FactGroup、飞控行为和只读安全边界。
 - MockLink FlightTelemetryPageUITest 在真实 100%/150%/200% UI Scale 下验证健康单元和维护卡片装饰几何按比例增长且 100% 基准不变；同时检查 3:6:3 桌面、3:3:6 中屏、单列窄屏的三张主视觉卡片位置/比例/父容器边界，以及 13 域矩阵/六个重点域 freshness 色条和维护三卡强调色条的宽度、圆角与父子边界。
 - 按用户要求不运行、不触发 CI、Build、Unit、Integration 或 Windows Release；新增回归保持 NOT_RUN，等待后续集中 exact-HEAD 验收。
+
+
+## 74. 2026-11-21 五大功能中心外部导航接入
+
+五中心架构将“总览总控”提升为独立入口，飞行监控组内提供飞行健康、导航时序、遥控与链路、告警事件四个子入口。总览总控读取 Vehicle/Facts、GPS、电池和真实轨迹；不新增飞行控制命令。FlightTelemetry 保留现有四套真实诊断数据与事件状态，页面选择由 VehicleConfigView 侧栏驱动，内部页签在外部导航模式下隐藏，避免重复导航。缺失/过期/无效数据仍按原有 freshness 与 validity 语义显示，不合成健康结论。

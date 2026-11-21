@@ -41,6 +41,37 @@ Rectangle {
     property bool   _fullParameterVehicleAvailable: _activeVehicle && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !_activeVehicle.parameterManager.missingParameters
     readonly property bool _flightLayout: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
     readonly property bool _flightNavigation: _flightLayout && _fullParameterVehicleAvailable
+    readonly property var _flightBattery: _activeVehicle && _activeVehicle.batteries.count > 0
+                                           ? _activeVehicle.batteries.get(0) : null
+    readonly property string _flightLinkText: !_activeVehicle ? qsTr("未连接") :
+                                               _activeVehicle.vehicleLinkManager && _activeVehicle.vehicleLinkManager.communicationLost
+                                               ? qsTr("通信中断") : qsTr("已连接")
+    readonly property string _flightGpsText: {
+        if (!_activeVehicle || !_activeVehicle.gps.telemetryAvailable)
+            return qsTr("GNSS —")
+        const gps = _activeVehicle.gps
+        const hdop = Number(gps.hdop.rawValue)
+        return qsTr("GNSS %1 · HDOP %2").arg(gps.count.valueString)
+                .arg(Number.isFinite(hdop) ? hdop.toFixed(1) : "—")
+    }
+    readonly property string _flightBatteryText: {
+        if (!_flightBattery)
+            return qsTr("电池 —")
+        const percent = Number(_flightBattery.percentRemaining.rawValue)
+        return Number.isFinite(percent) && percent >= 0 && percent <= 100
+                ? qsTr("电池 %1%").arg(Math.round(percent)) : qsTr("电池 —")
+    }
+    readonly property string _flightClockText: {
+        _clockRefreshTick
+        return Qt.formatDateTime(new Date(), "hh:mm:ss")
+    }
+    property int _clockRefreshTick: 0
+    property bool _flightPreparationExpanded: true
+    property bool _flightMonitoringExpanded: true
+    property bool _deviceDataExpanded: true
+    property bool _systemMaintenanceExpanded: true
+    property int _selectedTelemetryPage: 0
+    property string _selectedTelemetrySection: "alerts"
     readonly property bool _parameterCenterFullPage: _flightLayout && _selectedSpecial === "parameters"
     readonly property bool _flightRebootAvailable: _flightLayout && !_activeVehicle.armed &&
                                                    !_activeVehicle.flying && !_activeVehicle.vehicleLinkManager.communicationLost
@@ -260,9 +291,65 @@ Rectangle {
         }
     }
 
+    function _flightComponentIndex(componentName) {
+        if (!_fullParameterVehicleAvailable || !_activeVehicle)
+            return -1
+        const components = _activeVehicle.autopilotPlugin.vehicleComponents
+        for (let i = 0; i < components.length; i++) {
+            if (components[i] && components[i].name === componentName)
+                return i
+        }
+        return -1
+    }
+
+    function _isFlightComponentSelected(componentName) {
+        return _selectedSpecial === "" &&
+               _selectedComponentIndex === _flightComponentIndex(componentName)
+    }
+
+    function _isFlightTelemetrySelected(pageIndex, sectionName) {
+        return _selectedSpecial === "" &&
+               _selectedComponentIndex === _flightComponentIndex(qsTr("飞控诊断")) &&
+               _selectedTelemetryPage === pageIndex &&
+               _selectedTelemetrySection === sectionName
+    }
+
+    function _showFlightComponent(componentName) {
+        if (!mainWindow.allowViewSwitch() || !_fullParameterVehicleAvailable)
+            return
+        const index = _flightComponentIndex(componentName)
+        if (index >= 0)
+            _navigateToComponent(index, -1)
+    }
+
+    function _syncFlightTelemetryPage() {
+        const page = panelLoader.item
+        if (!page || typeof page._activeDashboardPage === "undefined")
+            return
+        page.externalNavigation = true
+        page._activeDashboardPage = _selectedTelemetryPage
+        page.navigationSection = _selectedTelemetrySection
+    }
+
+    function _showFlightTelemetryPage(pageIndex, sectionName) {
+        if (!mainWindow.allowViewSwitch() || !_fullParameterVehicleAvailable)
+            return
+        const index = _flightComponentIndex(qsTr("飞控诊断"))
+        if (index < 0)
+            return
+        _selectedTelemetryPage = pageIndex
+        _selectedTelemetrySection = sectionName
+        _navigateToComponent(index, -1)
+        _syncFlightTelemetryPage()
+    }
+
+    function _showFlightOverview() {
+        showPanel("overview", "qrc:/qml/QGroundControl/FirmwarePlugin/Flight/FlightOverview.qml")
+    }
+
     function _showInitialPanel() {
         if (_flightNavigation) {
-            _navigateToComponent(0, -1)
+            _showFlightOverview()
         } else {
             _showSummaryPanel()
         }
@@ -432,8 +519,91 @@ Rectangle {
     }
 
     Rectangle {
+        id: appHeader
+        objectName: "vehicleConfig_flightHeader"
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.top: parent.top
+        height: _flightLayout ? Math.max(56, ScreenTools.defaultFontPixelHeight * 3.5) : 0
+        color: "#04151D"
+        visible: _flightLayout
+        border.width: 1
+        border.color: "#0B6873"
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+            anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 2
+            spacing: ScreenTools.defaultFontPixelWidth * 1.5
+            ColumnLayout {
+                spacing: 0
+                QGCLabel {
+                    text: "Flight"
+                    color: "#E8F4F6"
+                    font.pointSize: ScreenTools.titleFontPointSize
+                    font.weight: Font.DemiBold
+                }
+                QGCLabel {
+                    text: "GROUND CONTROL"
+                    color: "#18DDE2"
+                    font.pointSize: ScreenTools.microFontPointSize
+                }
+            }
+            Rectangle {
+                Layout.preferredWidth: 1
+                Layout.preferredHeight: parent.height * 0.55
+                color: "#176B73"
+            }
+            QGCLabel {
+                text: qsTr("飞行地面控制系统")
+                color: "#C8DCE1"
+                font.pointSize: ScreenTools.subtitleFontPointSize
+            }
+            Item { Layout.fillWidth: true }
+            Rectangle {
+                radius: 16
+                color: _activeVehicle && _flightLinkText === qsTr("已连接") ? "#0B382F" : "#3A2028"
+                border.width: 1
+                border.color: _activeVehicle && _flightLinkText === qsTr("已连接") ? "#1B9B75" : "#9B4652"
+                implicitWidth: headerConnectionText.implicitWidth + 22
+                implicitHeight: headerConnectionText.implicitHeight + 12
+                QGCLabel {
+                    id: headerConnectionText
+                    anchors.centerIn: parent
+                    text: _flightLinkText
+                    color: _activeVehicle && _flightLinkText === qsTr("已连接") ? "#54E0AC" : "#FF8792"
+                    font.weight: Font.DemiBold
+                }
+            }
+            QGCLabel {
+                text: _flightGpsText
+                color: "#9FC4CC"
+                font.pointSize: ScreenTools.captionFontPointSize
+            }
+            QGCLabel {
+                text: _flightBatteryText
+                color: "#9FC4CC"
+                font.pointSize: ScreenTools.captionFontPointSize
+            }
+            QGCLabel {
+                text: _flightClockText
+                color: "#E8F4F6"
+                font.family: ScreenTools.fixedFontFamily
+                font.pointSize: ScreenTools.bodyFontPointSize
+            }
+        }
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: _flightLayout
+        onTriggered: _clockRefreshTick++
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.top: appHeader.bottom
         anchors.bottom: parent.bottom
         width: leftPanel.x + leftPanel.width + _flightSidebarDividerInset
         color: _flightLayout ? "#061F27" : "#253330"
@@ -447,7 +617,7 @@ Rectangle {
         width:              _flightLayout ? _flightSidebarWidth :
                                 Math.max(buttonColumn.implicitWidth + _horizontalMargin, _defaultTextWidth * 22)
         anchors.topMargin:  _flightLayout ? _flightSidebarTopInset : _verticalMargin
-        anchors.top:        parent.top
+        anchors.top:        appHeader.bottom
         anchors.bottom:     parent.bottom
         anchors.leftMargin: _flightLayout ? _flightSidebarHorizontalInset : _horizontalMargin
         anchors.left:       parent.left
@@ -502,9 +672,217 @@ Rectangle {
                 }
 
                 // Vehicle component tree
+                // Flight five-center navigation. Existing component pages remain the
+                // source of truth; this layer only reorganizes their entry points.
+                ConfigButton {
+                    objectName: "vehicleConfig_flightOverview"
+                    flightStyle: true
+                    Layout.fillWidth: true
+                    icon.source: "/InstrumentValueIcons/dashboard.svg"
+                    text: qsTr("总览总控")
+                    visible: _flightNavigation
+                    checked: vehicleConfigView._selectedSpecial === "overview"
+                    onClicked: vehicleConfigView._showFlightOverview()
+                }
+
+                ConfigButton {
+                    objectName: "vehicleConfig_flightPreparationGroup"
+                    flightStyle: true
+                    Layout.fillWidth: true
+                    icon.source: "/qmlimages/SensorsComponentIcon.png"
+                    text: qsTr("飞行准备")
+                    visible: _flightNavigation
+                    expandable: true
+                    expanded: vehicleConfigView._flightPreparationExpanded
+                    onClicked: vehicleConfigView._flightPreparationExpanded = !vehicleConfigView._flightPreparationExpanded
+                    onToggleExpand: vehicleConfigView._flightPreparationExpanded = !vehicleConfigView._flightPreparationExpanded
+                }
+                ColumnLayout {
+                    visible: _flightNavigation && vehicleConfigView._flightPreparationExpanded
+                    Layout.fillWidth: true
+                    spacing: 3
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightSensors"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/SensorsComponentIcon.png"
+                        text: qsTr("传感器校准")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("传感器"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("传感器"))
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightRadio"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/RadioComponentIcon.png"
+                        text: qsTr("遥控器配置")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("遥控器"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("遥控器"))
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightModes"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/FlightModesComponentIcon.png"
+                        text: qsTr("飞行模式")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("飞行模式"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("飞行模式"))
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightSafety"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/SafetyComponentIcon.png"
+                        text: qsTr("安全检查")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("安全"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("安全"))
+                    }
+                }
+
+                ConfigButton {
+                    objectName: "vehicleConfig_flightMonitoringGroup"
+                    flightStyle: true
+                    Layout.fillWidth: true
+                    icon.source: "/InstrumentValueIcons/heart.svg"
+                    text: qsTr("飞行监控")
+                    visible: _flightNavigation
+                    expandable: true
+                    expanded: vehicleConfigView._flightMonitoringExpanded
+                    onClicked: vehicleConfigView._flightMonitoringExpanded = !vehicleConfigView._flightMonitoringExpanded
+                    onToggleExpand: vehicleConfigView._flightMonitoringExpanded = !vehicleConfigView._flightMonitoringExpanded
+                }
+                ColumnLayout {
+                    visible: _flightNavigation && vehicleConfigView._flightMonitoringExpanded
+                    Layout.fillWidth: true
+                    spacing: 3
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightHealth"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/InstrumentValueIcons/heart.svg"
+                        text: qsTr("飞行健康")
+                        checked: vehicleConfigView._isFlightTelemetrySelected(1, "health")
+                        onClicked: vehicleConfigView._showFlightTelemetryPage(1, "health")
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_navigationTimeline"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/InstrumentValueIcons/location-current.svg"
+                        text: qsTr("导航时序")
+                        checked: vehicleConfigView._isFlightTelemetrySelected(2, "navigation")
+                        onClicked: vehicleConfigView._showFlightTelemetryPage(2, "navigation")
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_rcLink"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/InstrumentValueIcons/radio.svg"
+                        text: qsTr("遥控与链路")
+                        checked: vehicleConfigView._isFlightTelemetrySelected(3, "radio")
+                        onClicked: vehicleConfigView._showFlightTelemetryPage(3, "radio")
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightAlerts"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/InstrumentValueIcons/shield.svg"
+                        text: qsTr("告警事件")
+                        checked: vehicleConfigView._isFlightTelemetrySelected(0, "alerts")
+                        onClicked: vehicleConfigView._showFlightTelemetryPage(0, "alerts")
+                    }
+                }
+
+                ConfigButton {
+                    objectName: "vehicleConfig_deviceDataGroup"
+                    flightStyle: true
+                    Layout.fillWidth: true
+                    icon.source: "/InstrumentValueIcons/layers.svg"
+                    text: qsTr("设备与数据")
+                    visible: _flightNavigation
+                    expandable: true
+                    expanded: vehicleConfigView._deviceDataExpanded
+                    onClicked: vehicleConfigView._deviceDataExpanded = !vehicleConfigView._deviceDataExpanded
+                    onToggleExpand: vehicleConfigView._deviceDataExpanded = !vehicleConfigView._deviceDataExpanded
+                }
+                ColumnLayout {
+                    visible: _flightNavigation && vehicleConfigView._deviceDataExpanded
+                    Layout.fillWidth: true
+                    spacing: 3
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightGimbal"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/CameraComponentIcon.png"
+                        text: qsTr("云台设备")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("云台"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("云台"))
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightStorage"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/FlightStorageIcon.png"
+                        text: qsTr("板载存储")
+                        checked: vehicleConfigView._isFlightComponentSelected(qsTr("存储卡"))
+                        onClicked: vehicleConfigView._showFlightComponent(qsTr("存储卡"))
+                    }
+                }
+
+                ConfigButton {
+                    objectName: "vehicleConfig_systemMaintenanceGroup"
+                    flightStyle: true
+                    Layout.fillWidth: true
+                    icon.source: "/qmlimages/FirmwareUpgradeIcon.png"
+                    text: qsTr("系统维护")
+                    visible: _flightNavigation
+                    expandable: true
+                    expanded: vehicleConfigView._systemMaintenanceExpanded
+                    onClicked: vehicleConfigView._systemMaintenanceExpanded = !vehicleConfigView._systemMaintenanceExpanded
+                    onToggleExpand: vehicleConfigView._systemMaintenanceExpanded = !vehicleConfigView._systemMaintenanceExpanded
+                }
+                ColumnLayout {
+                    visible: _flightNavigation && vehicleConfigView._systemMaintenanceExpanded
+                    Layout.fillWidth: true
+                    spacing: 3
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightParameters"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/subMenuButtonImage.png"
+                        text: qsTr("参数中心")
+                        checked: vehicleConfigView._selectedSpecial === "parameters"
+                        onClicked: vehicleConfigView.showParametersPanel()
+                    }
+                    ConfigButton {
+                        objectName: "vehicleConfig_flightFirmware"
+                        flightStyle: true
+                        Layout.fillWidth: true
+                        Layout.leftMargin: ScreenTools.defaultFontPixelWidth * 1.5
+                        icon.source: "/qmlimages/FirmwareUpgradeIcon.png"
+                        text: qsTr("固件刷写")
+                        checked: vehicleConfigView._selectedSpecial === "flightFirmware"
+                        onClicked: vehicleConfigView.showPanel("flightFirmware", "qrc:/qml/QGroundControl/VehicleSetup/FlightFirmwareInstall.qml")
+                    }
+                }
+
+                // Generic QGC component tree remains unchanged for non-Flight firmware.
                 Repeater {
-                    id:     componentRepeater
-                    model:  _fullParameterVehicleAvailable ? _activeVehicle.autopilotPlugin.vehicleComponents : 0
+                    id: componentRepeater
+                    visible: !_flightNavigation
+                    model: _flightNavigation ? 0 :
+                           (_fullParameterVehicleAvailable ? _activeVehicle.autopilotPlugin.vehicleComponents : 0)
 
                     ColumnLayout {
                         id:             compColumn
@@ -645,7 +1023,7 @@ Rectangle {
                 ConfigButton {
                     flightStyle: _flightLayout
                     id:                 opticalFlowButton
-                    visible:            _activeVehicle ? _activeVehicle.flowImageIndex > 0 : false
+                    visible:            !_flightNavigation && (_activeVehicle ? _activeVehicle.flowImageIndex > 0 : false)
                     text:               qsTr("Optical Flow")
                     Layout.fillWidth:   true
                     checked:            vehicleConfigView._selectedSpecial === "opticalflow"
@@ -664,7 +1042,7 @@ Rectangle {
                     objectName:         "vehicleConfig_parametersButton"
                     // Without a vehicle there is no parameter set to show; advertising the page
                     // leaves a dead entry and a dangling divider in the sidebar.
-                    visible:            _activeVehicle && vehicleConfigView._searchQuery.trim() === ""
+                    visible:            !_flightNavigation && _activeVehicle && vehicleConfigView._searchQuery.trim() === ""
                     text:               qsTr("Parameters")
                     Layout.fillWidth:   true
                     icon.source:        "/qmlimages/subMenuButtonImage.png"
@@ -679,7 +1057,7 @@ Rectangle {
                     icon.source:        "/qmlimages/FirmwareUpgradeIcon.png"
                     // Flight always uses the SWD page below; a disconnected
                     // vehicle must not advertise the PX4-style firmware page.
-                    visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade &&
+                    visible:            !_flightNavigation && !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade &&
                                         _activeVehicle && _activeVehicle.supports.firmwareUpgrade &&
                                         vehicleConfigView._searchQuery.trim() === ""
                     text:               qsTr("Firmware")
@@ -694,7 +1072,7 @@ Rectangle {
                     id:                 flightFirmwareButton
                     objectName:         "vehicleConfig_flightFirmwareButton"
                     icon.source:        "/qmlimages/FirmwareUpgradeIcon.png"
-                    visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade &&
+                    visible:            !_flightNavigation && !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade &&
                                         vehicleConfigView._searchQuery.trim() === ""
                     text:               _flightLayout ? qsTr("Firmware") : qsTr("Flight Firmware")
                     Layout.fillWidth:   true
@@ -728,7 +1106,7 @@ Rectangle {
         anchors.bottomMargin:   _verticalMargin
         anchors.leftMargin:     _flightLayout ? _flightSidebarDividerInset : _horizontalMargin
         anchors.left:           leftPanel.right
-        anchors.top:            parent.top
+        anchors.top:            appHeader.bottom
         anchors.bottom:         parent.bottom
         width:                  1
         visible:                !_parameterCenterFullPage
@@ -744,8 +1122,9 @@ Rectangle {
         anchors.rightMargin:    _parameterCenterFullPage ? 0 : _horizontalMargin
         anchors.left:           _parameterCenterFullPage ? parent.left : divider.right
         anchors.right:          parent.right
-        anchors.top:            parent.top
+        anchors.top:            appHeader.bottom
         anchors.bottom:         parent.bottom
+        onLoaded: vehicleConfigView._syncFlightTelemetryPage()
 
         function setSource(source, vehicleComponent) {
             panelLoader.source = ""
@@ -760,5 +1139,25 @@ Rectangle {
         }
 
         property var vehicleComponent
+    }
+
+    Connections {
+        target: panelLoader.item
+        ignoreUnknownSignals: true
+        function onNavigateRequested(destination) {
+            switch (destination) {
+            case "sensors":
+                vehicleConfigView._showFlightComponent(qsTr("传感器"))
+                break
+            case "radio":
+                vehicleConfigView._showFlightComponent(qsTr("遥控器"))
+                break
+            case "diagnostics":
+                vehicleConfigView._showFlightTelemetryPage(1, "health")
+                break
+            default:
+                break
+            }
+        }
     }
 }

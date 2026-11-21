@@ -33,6 +33,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flight_configure_pages
     PREFIX "/qml/QGroundControl/FirmwarePlugin/Flight"
     FILES
         FlightGimbal.qml
+        FlightOverview.qml
         FlightModesPage.qml
         FlightPlaceholder.qml
         FlightRadio.qml
