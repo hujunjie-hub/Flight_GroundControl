@@ -167,7 +167,7 @@ SetupPage {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 116
+                            Layout.preferredHeight: 136
                             visible: !!root._vehicle
                             radius: 8
                             color: "#0A2A33"
@@ -195,7 +195,7 @@ SetupPage {
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: 6
+                                    spacing: 4
                                     QGCLabel {
                                         text: qsTr("飞行姿态参考 · 实时")
                                         color: "#C8DCE1"
