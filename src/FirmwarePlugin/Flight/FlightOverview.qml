@@ -280,7 +280,7 @@ SetupPage {
                                    !root._linkHealthy ? qsTr("数据中断") :
                                    root._vehicle.sensorsPresentBits === 0 ? qsTr("未上报") :
                                    root._vehicle.allSensorsHealthy ? qsTr("正常") : qsTr("需检查")
-                        valueColor: root._vehicle && root._vehicle.allSensorsHealthy ? "#37DF8A" : "#E9B34F"
+                        valueColor: root._linkHealthy && root._vehicle && root._vehicle.allSensorsHealthy ? "#37DF8A" : "#E9B34F"
                     }
                     StatusRow {
                         labelText: qsTr("MAVLink 丢包率")
@@ -427,7 +427,7 @@ SetupPage {
                     }
                     QGCButton {
                         Layout.fillWidth: true
-                        text: qsTr("飞控诊断")
+                        text: qsTr("飞行健康")
                         primary: true
                         enabled: root._setupPagesAvailable
                         onClicked: root.navigateRequested("diagnostics")

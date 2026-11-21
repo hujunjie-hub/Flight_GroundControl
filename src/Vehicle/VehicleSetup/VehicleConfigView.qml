@@ -41,8 +41,8 @@ Rectangle {
     property bool   _fullParameterVehicleAvailable: _activeVehicle && QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !_activeVehicle.parameterManager.missingParameters
     readonly property bool _flightLayout: _activeVehicle && _activeVehicle.supports.flightConfigurationLayout
     readonly property bool _flightNavigation: _flightLayout && _fullParameterVehicleAvailable
-    readonly property string _flightLinkText: !_activeVehicle ? qsTr("未连接") :
-                                               _activeVehicle.vehicleLinkManager && _activeVehicle.vehicleLinkManager.communicationLost
+    readonly property string _flightLinkText: !_activeVehicle || !_activeVehicle.vehicleLinkManager ? qsTr("未连接") :
+                                               _activeVehicle.vehicleLinkManager.communicationLost
                                                ? qsTr("通信中断") : qsTr("已连接")
     readonly property string _flightVehicleLabel: _activeVehicle
                                                    ? qsTr("载具 #%1").arg(_activeVehicle.id)
