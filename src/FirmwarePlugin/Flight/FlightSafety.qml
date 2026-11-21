@@ -18,6 +18,12 @@ SetupPage {
         return vehicle.sensorsHealthBits & bit ? qsTr("正常") : qsTr("异常")
     }
 
+    function flightModeText(modeName) {
+        if (!vehicle) return qsTr("未连接")
+        if (vehicle.vehicleLinkManager.communicationLost) return qsTr("数据中断")
+        return modeName && modeName.length > 0 ? modeName : qsTr("未上报")
+    }
+
     pageDescription: ""
 
     Component {
@@ -94,10 +100,18 @@ SetupPage {
                 }
                 StatusCard {
                     title: qsTr("返航与地理围栏")
+                    VehicleSummaryRow {
+                        labelText: qsTr("返航模式标识")
+                        valueText: root.flightModeText(root.vehicle ? root.vehicle.rtlFlightMode : "")
+                    }
+                    VehicleSummaryRow {
+                        labelText: qsTr("降落模式标识")
+                        valueText: root.flightModeText(root.vehicle ? root.vehicle.landFlightMode : "")
+                    }
                     QGCLabel {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
-                        text: qsTr("Flight SIL 模式下，返航（RTL）会返回 Home 并降落。任务地理围栏在任务规划页管理，实际保护行为由飞控执行。")
+                        text: qsTr("返航、低电量和链路丢失等失效保护由飞控固件执行，具体动作与阈值以当前固件参数为准。地理围栏在任务规划页管理；未接入的保护参数不会显示为已配置。")
                     }
                     QGCButton {
                         text: qsTr("打开任务规划")
