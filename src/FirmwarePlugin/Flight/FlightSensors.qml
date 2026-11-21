@@ -167,7 +167,7 @@ SetupPage {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 136
+                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 8.5
                             visible: !!root._vehicle
                             radius: 8
                             color: "#0A2A33"
@@ -177,11 +177,11 @@ SetupPage {
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.margins: 10
-                                spacing: 12
+                                spacing: ScreenTools.defaultFontPixelWidth * 1.5
                                 Image {
                                     id: calibrationVehicleImage
-                                    Layout.preferredWidth: 104
-                                    Layout.preferredHeight: 92
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 6.5
+                                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 5.75
                                     source: root._vehicle && !root._vehicle.vehicleLinkManager.communicationLost
                                             ? root._vehicle.vehicleImageOpaque : ""
                                     sourceSize.width: width
@@ -195,7 +195,7 @@ SetupPage {
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: 4
+                                    spacing: ScreenTools.defaultFontPixelHeight * 0.25
                                     QGCLabel {
                                         text: qsTr("飞行姿态参考 · 实时")
                                         color: "#C8DCE1"

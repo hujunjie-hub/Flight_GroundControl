@@ -133,8 +133,8 @@ SetupPage {
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1280 ? 6 :
                          root.availableWidth >= 760 ? 3 : 2
-                columnSpacing: 10
-                rowSpacing: 10
+                columnSpacing: ScreenTools.defaultFontPixelWidth * 1.25
+                rowSpacing: ScreenTools.defaultFontPixelHeight * 0.625
                 MetricTile {
                     objectName: "flightOverview_mode"
                     titleText: qsTr("飞行模式")
@@ -194,8 +194,8 @@ SetupPage {
                 Layout.fillWidth: true
                 columns: root.availableWidth >= 1280 ? 12 :
                          root.availableWidth >= 760 ? 6 : 1
-                columnSpacing: 12
-                rowSpacing: 12
+                columnSpacing: ScreenTools.defaultFontPixelWidth * 1.5
+                rowSpacing: ScreenTools.defaultFontPixelHeight * 0.75
 
                 DashboardPanel {
                     objectName: "flightOverview_attitudePanel"
@@ -206,11 +206,11 @@ SetupPage {
                     Layout.alignment: Qt.AlignTop
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 10
+                        spacing: ScreenTools.defaultFontPixelWidth * 1.25
                         Image {
                             id: vehicleImage
-                            Layout.preferredWidth: Math.min(104, parent.width * 0.36)
-                            Layout.preferredHeight: 104
+                            Layout.preferredWidth: Math.min(ScreenTools.defaultFontPixelHeight * 6.5, parent.width * 0.36)
+                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 6.5
                             source: root._linkHealthy ? root._vehicle.vehicleImageOpaque : ""
                             sourceSize.width: width
                             fillMode: Image.PreserveAspectFit
@@ -310,7 +310,8 @@ SetupPage {
                     Layout.alignment: Qt.AlignTop
                     Item {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.availableHeight >= 760 ? 340 : 280
+                        Layout.preferredHeight: Math.max(ScreenTools.defaultFontPixelHeight * 10,
+                                Math.min(root.availableHeight * 0.42, ScreenTools.defaultFontPixelHeight * 22))
                         clip: true
                         FlightMap {
                             id: overviewMap
@@ -412,7 +413,7 @@ SetupPage {
                 Layout.fillWidth: true
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: ScreenTools.defaultFontPixelWidth
                     QGCButton {
                         Layout.fillWidth: true
                         text: qsTr("传感器校准")
@@ -459,15 +460,15 @@ SetupPage {
         required property string detailText
         property color accentColor: "#18DDE2"
         Layout.fillWidth: true
-        implicitHeight: 88
-        radius: 8
+        implicitHeight: ScreenTools.defaultFontPixelHeight * 5.5
+        radius: ScreenTools.defaultFontPixelHeight * 0.5
         color: "#06232B"
         border.width: 1
         border.color: "#0B6873"
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 3
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.25
+            spacing: ScreenTools.defaultFontPixelHeight * 0.2
             QGCLabel {
                 text: metricTile.titleText
                 color: "#91ADB6"
@@ -496,16 +497,16 @@ SetupPage {
         required property string titleText
         default property alias content: panelColumn.data
         Layout.fillWidth: true
-        implicitHeight: panelColumn.implicitHeight + 28
-        radius: 8
+        implicitHeight: panelColumn.implicitHeight + ScreenTools.defaultFontPixelHeight * 1.75
+        radius: ScreenTools.defaultFontPixelHeight * 0.5
         color: "#06232B"
         border.width: 1
         border.color: "#0B6873"
         ColumnLayout {
             id: panelColumn
             anchors.fill: parent
-            anchors.margins: 12
-            spacing: 10
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.5
+            spacing: ScreenTools.defaultFontPixelHeight * 0.625
             QGCLabel {
                 text: dashboardPanel.titleText
                 color: "#E6F0F4"
@@ -520,7 +521,7 @@ SetupPage {
         required property string labelText
         required property string valueText
         Layout.fillWidth: true
-        spacing: 6
+        spacing: ScreenTools.defaultFontPixelWidth * 0.75
         QGCLabel {
             Layout.fillWidth: true
             text: attitudeRow.labelText

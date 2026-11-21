@@ -153,7 +153,7 @@ SetupPage {
         Layout.fillHeight: true
         implicitWidth: 232
         implicitHeight: content.implicitHeight + 20
-        radius: 8
+        radius: ScreenTools.defaultFontPixelHeight * 0.5
         color: "#06232B"
         border.color: "#0B6873"
 
@@ -162,8 +162,8 @@ SetupPage {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 12
-            spacing: 8
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.5
+            spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
             QGCLabel { text: card.title; font.bold: true }
         }

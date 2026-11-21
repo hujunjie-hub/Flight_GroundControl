@@ -167,14 +167,14 @@ SetupPage {
         implicitHeight: content.implicitHeight + 20
         color: "#06232B"
         border.color: "#0B6873"
-        radius: 8
+        radius: ScreenTools.defaultFontPixelHeight * 0.5
 
         ColumnLayout {
             id: content
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 12
+            anchors.margins: ScreenTools.defaultFontPixelWidth * 1.5
 
             QGCLabel { text: card.title; typographyRole: "section-heading"; color: "#E8F4F6" }
         }
