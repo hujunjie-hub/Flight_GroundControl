@@ -22,6 +22,9 @@ SetupPage {
     readonly property var _battery: _vehicle && _vehicle.batteries.count > 0
                                      ? _vehicle.batteries.get(0) : null
     readonly property var _telemetry: _vehicle ? _vehicle.flightTelemetry : null
+    readonly property bool _setupPagesAvailable: !!_vehicle &&
+                                                 QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
+                                                 !_vehicle.parameterManager.missingParameters
     readonly property bool _linkHealthy: !!_vehicle && _vehicle.vehicleLinkManager &&
                                          !_vehicle.vehicleLinkManager.communicationLost
     readonly property bool _gpsAvailable: !!_vehicle && _vehicle.gps &&
@@ -377,17 +380,20 @@ SetupPage {
                     QGCButton {
                         Layout.fillWidth: true
                         text: qsTr("传感器校准")
+                        enabled: root._setupPagesAvailable
                         onClicked: root.navigateRequested("sensors")
                     }
                     QGCButton {
                         Layout.fillWidth: true
                         text: qsTr("遥控器配置")
+                        enabled: root._setupPagesAvailable
                         onClicked: root.navigateRequested("radio")
                     }
                     QGCButton {
                         Layout.fillWidth: true
                         text: qsTr("飞控诊断")
                         primary: true
+                        enabled: root._setupPagesAvailable
                         onClicked: root.navigateRequested("diagnostics")
                     }
                     QGCButton {
@@ -398,6 +404,13 @@ SetupPage {
                                 mainWindow.showPlanView()
                         }
                     }
+                }
+                QGCLabel {
+                    Layout.fillWidth: true
+                    visible: !root._setupPagesAvailable
+                    text: qsTr("完成飞控参数下载后，可使用传感器、遥控器和飞控诊断快捷入口。")
+                    color: "#91ADB6"
+                    font.pointSize: ScreenTools.captionFontPointSize
                 }
             }
         }

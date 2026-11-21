@@ -349,7 +349,7 @@ Rectangle {
     }
 
     function _showInitialPanel() {
-        if (_flightNavigation) {
+        if (_flightLayout) {
             _showFlightOverview()
         } else {
             _showSummaryPanel()
@@ -685,7 +685,7 @@ Rectangle {
                     Layout.fillWidth: true
                     icon.source: "/InstrumentValueIcons/dashboard.svg"
                     text: qsTr("总览总控")
-                    visible: _flightNavigation
+                    visible: _flightLayout
                     checked: vehicleConfigView._selectedSpecial === "overview"
                     onClicked: vehicleConfigView._showFlightOverview()
                 }
