@@ -299,16 +299,44 @@ SetupPage {
                             mapName: "FlightOverview"
                             planView: false
                             allowVehicleLocationCenter: true
-                            center: root._vehicle && root._vehicle.coordinate.isValid
-                                    ? root._vehicle.coordinate : QGroundControl.flightMapPosition
+                            center: QGroundControl.flightMapPosition
                             zoomLevel: QGroundControl.flightMapZoom
                             MapPolyline {
-                                path: root._vehicle && root._vehicle.trajectoryPoints
-                                      ? root._vehicle.trajectoryPoints.list() : []
+                                id: overviewTrajectory
+                                objectName: "flightOverview_trajectory"
                                 line.width: 3
                                 line.color: "#18DDE2"
-                                visible: path.length > 1
+                                visible: pathLength() > 1
                             }
+
+                            Component.onCompleted: {
+                                overviewTrajectory.path = root._vehicle && root._vehicle.trajectoryPoints
+                                        ? root._vehicle.trajectoryPoints.list() : []
+                            }
+
+                            Connections {
+                                target: root._vehicle ? root._vehicle.trajectoryPoints : null
+                                function onPointAdded(coordinate) {
+                                    overviewTrajectory.addCoordinate(coordinate)
+                                }
+                                function onUpdateLastPoint(coordinate) {
+                                    if (overviewTrajectory.pathLength() > 0) {
+                                        overviewTrajectory.replaceCoordinate(overviewTrajectory.pathLength() - 1, coordinate)
+                                    }
+                                }
+                                function onPointsCleared() {
+                                    overviewTrajectory.path = []
+                                }
+                            }
+
+                            Connections {
+                                target: QGroundControl.multiVehicleManager
+                                function onActiveVehicleChanged(activeVehicle) {
+                                    overviewTrajectory.path = activeVehicle && activeVehicle.trajectoryPoints
+                                            ? activeVehicle.trajectoryPoints.list() : []
+                                }
+                            }
+
                             MapItemView {
                                 model: QGroundControl.multiVehicleManager.vehicles
                                 delegate: VehicleMapItem {
