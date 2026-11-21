@@ -80,7 +80,7 @@ Rectangle {
     // Tree view state
     property int    _selectedComponentIndex: -1     // -1 = summary or special button
     property int    _selectedSectionIndex:   -1
-    property string _selectedSpecial:        ""     // "summary", "parameters", "firmware", "opticalflow"
+    property string _selectedSpecial:        ""     // "summary", "overview", "parameters", "firmware", "flightFirmware", "opticalflow"
     property bool   _showingPrereqMessage:   false  // Panel area shows prerequisite message instead of selected component
     property var    _expandedComponents:     ({})
     property int    _expandedRevision:       0
@@ -362,7 +362,10 @@ Rectangle {
         target: QGroundControl.corePlugin
         function onShowAdvancedUIChanged(showAdvancedUI) {
             if (!showAdvancedUI && _selectedSpecial !== "parameters") {
-                _showSummaryPanel()
+                if (_flightLayout)
+                    _showFlightOverview()
+                else
+                    _showSummaryPanel()
             }
         }
     }
